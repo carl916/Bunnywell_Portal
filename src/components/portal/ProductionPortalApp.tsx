@@ -190,12 +190,13 @@ export function ProductionPortalApp() {
   const [handovers, setHandovers] = useState<Handover[]>([]);
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([]);
   const [accessibleUnitIds, setAccessibleUnitIds] = useState<string[]>([]);
+  const [accessibleBuildingIds, setAccessibleBuildingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
-  const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds), [accessibleUnitIds, profile, snags]);
+  const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, snags]);
   const developerSnags = visibleSnags.filter((snag) => snag.source_type === "developer_snag");
   const leaseholderDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
   const openCount = visibleSnags.filter((snag) => !["closed", "resolved", "resolved_by_contractor"].includes(snag.status)).length;
@@ -255,6 +256,7 @@ export function ProductionPortalApp() {
       handoversResult,
       metersResult,
       accessResult,
+      buildingAccessResult,
     ] = await Promise.all([
       supabase.from("profiles").select("id,email,name,full_name,role,organisation_id").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
@@ -272,6 +274,7 @@ export function ProductionPortalApp() {
       supabase.from("handovers").select("*").order("created_at", { ascending: false }),
       supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
       supabase.from("user_unit_access").select("unit_id").eq("user_id", userId),
+      supabase.from("user_building_access").select("building_id").eq("user_id", userId),
     ]);
 
     const firstError = [
@@ -301,6 +304,7 @@ export function ProductionPortalApp() {
     setHandovers((handoversResult.data ?? []) as Handover[]);
     setMeterReadings((metersResult.data ?? []) as MeterReading[]);
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
+    setAccessibleBuildingIds((buildingAccessResult.data ?? []).map((row) => row.building_id));
   }
 
   async function uploadFile(dataUrl: string, folder: string) {
@@ -1635,15 +1639,12 @@ function SnagWorkflow({
 }) {
   const isContractorRole = profile?.role === "contractor" || profile?.role === "trade";
   const canUseDeveloperActions = !isContractorRole;
-  const workflowSnags = isContractorRole && profile?.organisation_id
-    ? snags.filter((snag) => snag.assigned_to_organisation_id === profile.organisation_id)
-    : snags;
 
   return (
     <SnagList
       title="Snags"
       buildings={buildings}
-      snags={workflowSnags}
+      snags={snags}
       units={units}
       areas={areas}
       trades={trades}
@@ -1659,7 +1660,7 @@ function SnagWorkflow({
       tradeControl={(snag, trade) => <ContractorTradeControl snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
       actions={(snag) => {
         const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
-        const canResolve = snag.status !== "closed" && snag.status !== "resolved_by_contractor";
+        const canResolve = isContractorRole && snag.status !== "closed" && snag.status !== "resolved_by_contractor";
         if (!canClose && !canResolve) return null;
 
         return (
@@ -2903,14 +2904,16 @@ async function imageUrlToDataUrl(url: string) {
   });
 }
 
-function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[]) {
+function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
   if (!profile) return [];
   if (profile.role === "leaseholder" || profile.role === "agent") {
     return snags.filter((snag) => snag.source_type === "leaseholder_defect" && snag.unit_id && accessibleUnitIds.includes(snag.unit_id));
   }
   if (profile.role === "contractor" || profile.role === "trade") {
-    if (!profile.organisation_id) return [];
-    return snags.filter((snag) => snag.assigned_to_organisation_id === profile.organisation_id);
+    return snags.filter((snag) => (
+      Boolean(snag.building_id && accessibleBuildingIds.includes(snag.building_id))
+      || Boolean(profile.organisation_id && snag.assigned_to_organisation_id === profile.organisation_id)
+    ));
   }
   return snags;
 }
