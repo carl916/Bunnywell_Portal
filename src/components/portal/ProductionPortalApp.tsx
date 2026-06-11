@@ -288,7 +288,8 @@ export function ProductionPortalApp() {
       setNotice(`Production schema is not ready yet: ${firstError.message}`);
     }
 
-    setProfile(profileResult.data as Profile | null);
+    const loadedProfile = profileResult.data as Profile | null;
+    setProfile(loadedProfile);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
     setAreas((areasResult.data ?? []) as Area[]);
@@ -304,7 +305,10 @@ export function ProductionPortalApp() {
     setHandovers((handoversResult.data ?? []) as Handover[]);
     setMeterReadings((metersResult.data ?? []) as MeterReading[]);
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
-    setAccessibleBuildingIds((buildingAccessResult.data ?? []).map((row) => row.building_id));
+    setAccessibleBuildingIds(Array.from(new Set([
+      ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
+      ...((loadedProfile?.role === "contractor" || loadedProfile?.role === "trade") ? (buildingsResult.data ?? []).map((building) => building.id) : []),
+    ])));
   }
 
   async function uploadFile(dataUrl: string, folder: string) {
@@ -2910,6 +2914,7 @@ function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, ac
     return snags.filter((snag) => snag.source_type === "leaseholder_defect" && snag.unit_id && accessibleUnitIds.includes(snag.unit_id));
   }
   if (profile.role === "contractor" || profile.role === "trade") {
+    if (accessibleBuildingIds.length === 0 && !profile.organisation_id) return snags;
     return snags.filter((snag) => (
       Boolean(snag.building_id && accessibleBuildingIds.includes(snag.building_id))
       || Boolean(profile.organisation_id && snag.assigned_to_organisation_id === profile.organisation_id)
