@@ -1,12 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import type { UserRole } from "@/lib/data/demo";
+import type { AppRole } from "@/lib/data/production";
 
 type CreateUserBody = {
   email?: string;
   password?: string;
   fullName?: string;
-  role?: UserRole;
+  role?: AppRole;
+  organisationId?: string;
+  buildingIds?: string[];
+  unitAccess?: { unitId: string; accessType: "leaseholder" | "agent" | "representative" }[];
 };
 
 function env(name: string) {
@@ -55,9 +58,36 @@ export async function POST(request: Request) {
     const email = body.email?.trim();
     const password = body.password?.trim();
     const role = body.role ?? "user";
+    const unitAccess = body.unitAccess ?? [];
+    let buildingIds = body.buildingIds ?? [];
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    }
+
+    if (role === "leaseholder" && unitAccess.length === 0) {
+      return NextResponse.json({ error: "Leaseholders must be assigned to at least one unit." }, { status: 400 });
+    }
+
+    if ((role === "agent" || role === "contractor" || role === "trade") && !body.organisationId) {
+      return NextResponse.json({ error: "Agents, contractors and trades must be linked to an organisation." }, { status: 400 });
+    }
+
+    if ((role === "agent" || role === "contractor" || role === "trade") && buildingIds.length === 0) {
+      return NextResponse.json({ error: "Agents, contractors and trades must be assigned to at least one building." }, { status: 400 });
+    }
+
+    if (role === "leaseholder" && unitAccess.length > 0) {
+      const { data: accessUnits, error: accessUnitsError } = await adminClient
+        .from("units")
+        .select("building_id")
+        .in("id", unitAccess.map((access) => access.unitId));
+
+      if (accessUnitsError) {
+        return NextResponse.json({ error: accessUnitsError.message }, { status: 400 });
+      }
+
+      buildingIds = Array.from(new Set((accessUnits ?? []).map((unit) => unit.building_id)));
     }
 
     const { data, error } = await adminClient.auth.admin.createUser({
@@ -75,8 +105,33 @@ export async function POST(request: Request) {
       id: data.user.id,
       email,
       full_name: body.fullName ?? null,
+      name: body.fullName ?? null,
       role,
+      organisation_id: body.organisationId || null,
+      active: true,
     });
+
+    if (buildingIds.length > 0) {
+      await adminClient.from("user_building_access").upsert(
+        buildingIds.map((buildingId) => ({
+          user_id: data.user.id,
+          building_id: buildingId,
+          role_on_building: role,
+        })),
+        { onConflict: "user_id,building_id" },
+      );
+    }
+
+    if (unitAccess.length > 0) {
+      await adminClient.from("user_unit_access").upsert(
+        unitAccess.map((access) => ({
+          user_id: data.user.id,
+          unit_id: access.unitId,
+          access_type: access.accessType,
+        })),
+        { onConflict: "user_id,unit_id,access_type" },
+      );
+    }
 
     return NextResponse.json({ id: data.user.id, email, role });
   } catch (error) {

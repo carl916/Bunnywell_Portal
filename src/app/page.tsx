@@ -1,5 +1,5 @@
-import { PortalApp } from "@/components/portal/PortalApp";
+import { ProductionPortalApp } from "@/components/portal/ProductionPortalApp";
 
 export default function Home() {
-  return <PortalApp />;
+  return <ProductionPortalApp />;
 }
