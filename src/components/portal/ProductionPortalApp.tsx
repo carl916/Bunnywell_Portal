@@ -15,6 +15,7 @@ import {
   type MeterReading,
   type Organisation,
   type ProductionSnag,
+  type ResidentType,
   type SnagEvent,
   type SnagPhoto,
   type Trade,
@@ -30,6 +31,7 @@ type Profile = {
   name: string | null;
   full_name: string | null;
   role: AppRole;
+  resident_type: ResidentType | null;
   organisation_id: string | null;
   created_at?: string | null;
 };
@@ -43,7 +45,7 @@ type UserBuildingAccess = {
 type UserUnitAccess = {
   user_id: string;
   unit_id: string;
-  access_type: "leaseholder" | "agent" | "representative";
+  access_type: ResidentType | "representative";
 };
 
 type AuditEvent = {
@@ -89,10 +91,24 @@ const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
   { value: "handed_over", label: "Handed Over" },
 ];
 
-const organisationTypes = [
-  { value: "agent", label: "Agent" },
+const appRoles: Array<{ value: AppRole; label: string }> = [
+  { value: "admin", label: "Admin" },
+  { value: "developer", label: "Developer" },
+  { value: "developer_representative", label: "Developer Representative" },
   { value: "contractor", label: "Contractor" },
-  { value: "trade", label: "Trade" },
+  { value: "resident", label: "Resident" },
+];
+
+const residentTypes: Array<{ value: ResidentType; label: string }> = [
+  { value: "leaseholder", label: "Leaseholder" },
+  { value: "tenant", label: "Tenant" },
+  { value: "letting_agent", label: "Letting Agent" },
+  { value: "managing_agent", label: "Managing Agent" },
+];
+
+const organisationTypes = [
+  { value: "developer_representative", label: "Developer Representative" },
+  { value: "contractor", label: "Contractor" },
 ];
 
 const brand = {
@@ -126,9 +142,10 @@ function formatDateTime(value?: string | null) {
 }
 
 function roleTabs(role: AppRole): Tab[] {
-  if (role === "admin" || role === "developer") return ["dashboard", "admin", "users", "add_snag", "snags", "handover", "leaseholder", "reports", "audit"];
-  if (role === "leaseholder" || role === "agent") return ["leaseholder"];
-  if (role === "contractor" || role === "trade") return ["dashboard", "snags"];
+  if (role === "admin") return ["dashboard", "admin", "users", "add_snag", "snags", "handover", "leaseholder", "reports", "audit"];
+  if (role === "developer" || role === "developer_representative") return ["dashboard", "add_snag", "snags", "handover", "leaseholder", "reports"];
+  if (role === "resident") return ["leaseholder"];
+  if (role === "contractor") return ["dashboard", "snags"];
 
   return ["dashboard"];
 }
@@ -141,7 +158,7 @@ function tabLabel(tab: Tab) {
     add_snag: "Add snag",
     snags: "Snags",
     handover: "Handover",
-    leaseholder: "Leaseholder",
+    leaseholder: "Resident",
     reports: "Reports",
     audit: "Audit",
   };
@@ -167,11 +184,33 @@ function statusLabel(status: string) {
     exchanged: "Exchanged",
     completed: "Completed",
     handed_over: "Handed Over",
+    developer_representative: "Developer Representative",
+    resident: "Resident",
+    leaseholder: "Leaseholder",
+    tenant: "Tenant",
+    letting_agent: "Letting Agent",
+    managing_agent: "Managing Agent",
     Open: "Open",
     Resolved: "Resolved",
   };
 
   return labels[status] ?? status.replaceAll("_", " ");
+}
+
+function entityLabel(entityType: string) {
+  const labels: Record<string, string> = {
+    area: "Area",
+    building: "Building",
+    organisation: "Organisation",
+    report: "Report",
+    snag: "Snag",
+    unit: "Unit",
+    user: "User",
+  };
+
+  return labels[entityType] ?? entityType
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function eventLabel(eventType: string) {
@@ -190,6 +229,8 @@ function eventLabel(eventType: string) {
     user_created: "User Created",
     user_updated: "User Updated",
     building_created: "Building Created",
+    building_updated: "Building Updated",
+    building_deleted: "Building Deleted",
     organisation_created: "Organisation Created",
     organisation_updated: "Organisation Updated",
     organisation_delete_blocked: "Organisation Delete Blocked",
@@ -236,7 +277,7 @@ export function ProductionPortalApp() {
   const tabs = roleTabs(role);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, snags]);
   const developerSnags = visibleSnags.filter((snag) => snag.source_type === "developer_snag");
-  const leaseholderDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
+  const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
   const openCount = visibleSnags.filter((snag) => !["closed", "resolved", "resolved_by_contractor"].includes(snag.status)).length;
   const resolvedCount = visibleSnags.filter((snag) => ["resolved", "resolved_by_contractor"].includes(snag.status)).length;
   const closedCount = visibleSnags.filter((snag) => snag.status === "closed").length;
@@ -309,7 +350,7 @@ export function ProductionPortalApp() {
       accessResult,
       buildingAccessResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id,created_at").eq("id", userId).single(),
+      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
       supabase.from("units").select("*").order("unit_number"),
       supabase.from("areas").select("*").order("sort_order"),
@@ -318,7 +359,7 @@ export function ProductionPortalApp() {
       supabase.from("unit_type_areas").select("*").order("sort_order"),
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
-      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id,created_at").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
@@ -366,7 +407,7 @@ export function ProductionPortalApp() {
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
     setAccessibleBuildingIds(Array.from(new Set([
       ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
-      ...((loadedProfile?.role === "contractor" || loadedProfile?.role === "trade") ? (buildingsResult.data ?? []).map((building) => building.id) : []),
+      ...(loadedProfile?.role === "contractor" ? (buildingsResult.data ?? []).map((building) => building.id) : []),
     ])));
   }
 
@@ -387,10 +428,13 @@ export function ProductionPortalApp() {
   async function recordAudit(event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) {
     if (!user?.id) return;
     const supabase = createSupabaseBrowserClient();
-    await supabase.from("audit_events").insert({
+    const { data } = await supabase.from("audit_events").insert({
       ...event,
       created_by_user_id: user.id,
-    });
+    }).select("*").single();
+    if (data) {
+      setAuditEvents((current) => [data as AuditEvent, ...current.filter((item) => item.id !== data.id)].slice(0, 200));
+    }
   }
 
   if (isLoading) {
@@ -415,7 +459,7 @@ export function ProductionPortalApp() {
           resolved={resolvedCount}
           closed={closedCount}
           overdue={overdueCount}
-          leaseholderDefects={leaseholderDefects}
+          leaseholderDefects={residentDefects}
           setTab={setTab}
         />
       )}
@@ -492,7 +536,7 @@ export function ProductionPortalApp() {
           buildings={buildings}
           units={units}
           areas={areas}
-          snags={leaseholderDefects}
+          snags={residentDefects}
           photos={photos}
           events={events}
           profiles={profiles}
@@ -646,9 +690,9 @@ function Dashboard({
       </div>
       <div className="grid gap-3 sm:grid-cols-4">
         <Metric label="Overdue SLA" value={overdue} />
-        <Metric label="Leaseholder P1" value={p1} onClick={() => setTab("leaseholder")} />
-        <Metric label="Leaseholder P2" value={p2} onClick={() => setTab("leaseholder")} />
-        <Metric label="Leaseholder P3" value={p3} onClick={() => setTab("leaseholder")} />
+        <Metric label="Resident P1" value={p1} onClick={() => setTab("leaseholder")} />
+        <Metric label="Resident P2" value={p2} onClick={() => setTab("leaseholder")} />
+        <Metric label="Resident P3" value={p3} onClick={() => setTab("leaseholder")} />
       </div>
       <section className="rounded-md border border-[#d9ded6] bg-white p-4">
         <h2 className="text-lg font-semibold">Buildings</h2>
@@ -886,10 +930,15 @@ function FloorBlock({
       onNotice("Unit number, size and unit type are required.");
       return;
     }
+    const duplicateUnit = units.some((unit) => unit.building_id === buildingId && unit.unit_number.toLowerCase() === unitNumber.trim().toLowerCase());
+    if (duplicateUnit) {
+      onNotice(`Unit ${unitNumber.trim()} already exists in this building.`);
+      return;
+    }
     const supabase = createSupabaseBrowserClient();
     const { data, error } = await supabase.from("units").insert({
       building_id: buildingId,
-      unit_number: unitNumber,
+      unit_number: unitNumber.trim(),
       floor: floorName,
       unit_type_id: unitTypeId,
       unit_type: unitTypes.find((type) => type.id === unitTypeId)?.name ?? null,
@@ -897,7 +946,7 @@ function FloorBlock({
       sale_status: "for_sale",
     }).select("id,building_id").single();
     if (error) {
-      onNotice(error.message);
+      onNotice(error.code === "23505" ? `Unit ${unitNumber.trim()} already exists in this building.` : error.message);
       return;
     }
     const templateAreas = unitTypeAreas.filter((area) => area.unit_type_id === unitTypeId && !area.optional);
@@ -981,11 +1030,16 @@ function UnitStructureCard({
   const [editSizeSqm, setEditSizeSqm] = useState(unit.size_sqm?.toString() ?? "");
   const [editUnitTypeId, setEditUnitTypeId] = useState(unit.unit_type_id ?? "");
   const [editSaleStatus, setEditSaleStatus] = useState<Unit["sale_status"]>(unit.sale_status);
+  const [areasToRemove, setAreasToRemove] = useState<string[]>([]);
+  const [pendingRooms, setPendingRooms] = useState<string[]>([]);
+  const [pendingAmenity, setPendingAmenity] = useState(false);
   const unitAreas = areas
     .filter((area) => area.unit_id === unit.id)
     .sort((a, b) => a.sort_order - b.sort_order);
   const rooms = unitAreas.filter((area) => area.area_type === "unit_room");
   const amenities = unitAreas.filter((area) => area.area_type === "private_amenity");
+  const visibleRooms = rooms.filter((area) => !areasToRemove.includes(area.id));
+  const visibleAmenities = amenities.filter((area) => !areasToRemove.includes(area.id));
   const floors = buildingFloors
     .filter((floor) => floor.building_id === unit.building_id)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -996,23 +1050,26 @@ function UnitStructureCard({
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
+    setAreasToRemove([]);
+    setPendingRooms([]);
+    setPendingAmenity(false);
   }, [unit.floor, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id]);
 
-  async function addArea(name: string, areaType: "unit_room" | "private_amenity") {
-    if (!name) return;
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("areas").insert({
-      building_id: unit.building_id,
-      unit_id: unit.id,
-      area_type: areaType,
-      name,
-      sort_order: unitAreas.length + 1,
-    });
-    if (error) onNotice(error.message);
-    else {
-      setRoomName("");
-      await reload();
+  function stageRoom() {
+    const trimmed = roomName.trim();
+    if (!trimmed) return;
+    const roomAlreadyExists = visibleRooms.some((area) => area.name.toLowerCase() === trimmed.toLowerCase())
+      || pendingRooms.some((name) => name.toLowerCase() === trimmed.toLowerCase());
+    if (roomAlreadyExists) {
+      onNotice(`${trimmed} already exists for this unit.`);
+      return;
     }
+    setPendingRooms((current) => [...current, trimmed]);
+    setRoomName("");
+  }
+
+  function removeAreaFromEdit(areaId: string) {
+    setAreasToRemove((current) => current.includes(areaId) ? current : [...current, areaId]);
   }
 
   async function saveUnit() {
@@ -1021,6 +1078,26 @@ function UnitStructureCard({
       return;
     }
     const supabase = createSupabaseBrowserClient();
+    if (areasToRemove.length > 0) {
+      const { data: linkedSnags, error: linkedSnagsError } = await supabase
+        .from("snags")
+        .select("area_id")
+        .in("area_id", areasToRemove);
+      if (linkedSnagsError) {
+        onNotice(linkedSnagsError.message);
+        return;
+      }
+      if ((linkedSnags ?? []).length > 0) {
+        const blockedAreaIds = new Set((linkedSnags ?? []).map((snag) => snag.area_id));
+        const blockedNames = unitAreas
+          .filter((area) => blockedAreaIds.has(area.id))
+          .map((area) => area.area_type === "private_amenity" ? "Private Amenity" : area.name)
+          .join(", ");
+        onNotice(`Cannot remove ${blockedNames}. Move or close the linked snags first.`);
+        return;
+      }
+    }
+
     const { error } = await supabase.from("units").update({
       unit_number: editNumber,
       floor: editFloor,
@@ -1031,6 +1108,39 @@ function UnitStructureCard({
     }).eq("id", unit.id);
     if (error) onNotice(error.message);
     else {
+      if (areasToRemove.length > 0) {
+        const { error: removeError } = await supabase.from("areas").delete().in("id", areasToRemove);
+        if (removeError) {
+          onNotice(removeError.message);
+          return;
+        }
+      }
+      const areasToAdd = [
+        ...pendingRooms.map((name, index) => ({
+          building_id: unit.building_id,
+          unit_id: unit.id,
+          area_type: "unit_room",
+          name,
+          sort_order: unitAreas.length + index + 1,
+        })),
+        ...(pendingAmenity && visibleAmenities.length === 0 ? [{
+          building_id: unit.building_id,
+          unit_id: unit.id,
+          area_type: "private_amenity",
+          name: "Private Amenity",
+          sort_order: unitAreas.length + pendingRooms.length + 1,
+        }] : []),
+      ];
+      if (areasToAdd.length > 0) {
+        const { error: addError } = await supabase.from("areas").insert(areasToAdd);
+        if (addError) {
+          onNotice(addError.message);
+          return;
+        }
+      }
+      setAreasToRemove([]);
+      setPendingRooms([]);
+      setPendingAmenity(false);
       setEditing(false);
       await reload();
     }
@@ -1042,6 +1152,10 @@ function UnitStructureCard({
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
+    setAreasToRemove([]);
+    setPendingRooms([]);
+    setPendingAmenity(false);
+    setRoomName("");
     setEditing(false);
   }
 
@@ -1070,6 +1184,65 @@ function UnitStructureCard({
                     <button className="primary" onClick={saveUnit} disabled={!editNumber || !editFloor || !editSizeSqm || !editUnitTypeId}>Save unit</button>
                     <button className="secondary" onClick={cancelEdit}>Cancel</button>
                   </div>
+                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                    <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                      {pendingRooms.map((name) => (
+                        <span key={name} className="inline-flex items-center gap-2 rounded-md bg-[#edf4f1] px-2 py-1 text-xs text-[#0F3D31]">
+                          {name}
+                          <button
+                            aria-label={`Remove pending ${name}`}
+                            className="rounded-full p-0.5 text-[#b42318] transition hover:bg-[#fee4e2]"
+                            onClick={() => setPendingRooms((current) => current.filter((item) => item !== name))}
+                            title={`Remove ${name}`}
+                          >
+                            <X size={13} strokeWidth={2.5} />
+                          </button>
+                        </span>
+                      ))}
+                      {visibleRooms.length === 0 && pendingRooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <input
+                        className="field"
+                        value={roomName}
+                        onChange={(event) => setRoomName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") stageRoom();
+                        }}
+                        placeholder="Add room"
+                      />
+                      <button className="secondary" onClick={stageRoom} disabled={!roomName.trim()}>Add room</button>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {visibleAmenities.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                          {pendingAmenity && (
+                            <span className="inline-flex items-center gap-2 rounded-md bg-[#f5eee3] px-2 py-1 text-xs text-[#735327]">
+                              Private Amenity
+                              <button
+                                aria-label="Remove pending Private Amenity"
+                                className="rounded-full p-0.5 text-[#b42318] transition hover:bg-[#fee4e2]"
+                                onClick={() => setPendingAmenity(false)}
+                                title="Remove Private Amenity"
+                              >
+                                <X size={13} strokeWidth={2.5} />
+                              </button>
+                            </span>
+                          )}
+                          {visibleAmenities.length === 0 && !pendingAmenity && <span className="text-sm text-[#617169]">None</span>}
+                        </div>
+                      </div>
+                      {visibleAmenities.length === 0 && !pendingAmenity && (
+                        <button className="secondary" onClick={() => setPendingAmenity(true)}>Add amenity</button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-2">
@@ -1086,38 +1259,21 @@ function UnitStructureCard({
               <div className="mt-3">
                 <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={editing} onNotice={onNotice} reload={reload} />)}
+                  {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)}
                   {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
                 </div>
-                {editing && (
-                  <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                    <input
-                      className="field"
-                      value={roomName}
-                      onChange={(event) => setRoomName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void addArea(roomName, "unit_room");
-                      }}
-                      placeholder="Add room"
-                    />
-                    <button className="secondary" onClick={() => addArea(roomName, "unit_room")} disabled={!roomName}>Add room</button>
-                  </div>
-                )}
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf0ec] pt-3">
                 <div>
                   <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {amenities.length > 0 ? (
-                      amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={editing} onNotice={onNotice} reload={reload} />)
+                      amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)
                     ) : (
                       <span className="text-sm text-[#617169]">None</span>
                     )}
                   </div>
                 </div>
-                {editing && amenities.length === 0 && (
-                  <button className="secondary" onClick={() => addArea("Private Amenity", "private_amenity")}>Add amenity</button>
-                )}
               </div>
             </article>
   );
@@ -1126,13 +1282,15 @@ function UnitStructureCard({
 function AreaChip({
   area,
   canRemove = true,
+  onRemove,
   onNotice,
   reload,
 }: {
   area: Area;
   canRemove?: boolean;
-  onNotice: (notice: string) => void;
-  reload: () => Promise<void>;
+  onRemove?: () => void;
+  onNotice?: (notice: string) => void;
+  reload?: () => Promise<void>;
 }) {
   const tone = area.area_type === "private_amenity"
     ? "bg-[#f5eee3] text-[#735327]"
@@ -1142,6 +1300,11 @@ function AreaChip({
   const label = area.area_type === "private_amenity" ? "Private Amenity" : area.name;
 
   async function deleteArea() {
+    if (onRemove) {
+      onRemove();
+      return;
+    }
+    if (!onNotice || !reload) return;
     const supabase = createSupabaseBrowserClient();
     const { count, error: countError } = await supabase
       .from("snags")
@@ -1447,8 +1610,6 @@ function UserDirectory({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  const editingProfile = profiles.find((profile) => profile.id === editingUserId);
-
   function organisationName(profile: Profile) {
     return organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "";
   }
@@ -1459,7 +1620,7 @@ function UserDirectory({
     const unitIds = userUnitAccess.filter((access) => access.user_id === profile.id).map((access) => access.unit_id);
     const buildingIds = userBuildingAccess.filter((access) => access.user_id === profile.id).map((access) => access.building_id);
 
-    if (profile.role === "leaseholder") {
+    if (profile.role === "resident") {
       const labels = unitIds.map((unitId) => {
         const unit = units.find((item) => item.id === unitId);
         const building = buildings.find((item) => item.id === unit?.building_id);
@@ -1489,6 +1650,7 @@ function UserDirectory({
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Role</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Resident Type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Organisation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
@@ -1496,41 +1658,56 @@ function UserDirectory({
             </tr>
           </thead>
           <tbody>
-            {profiles.map((profile) => (
-              <tr key={profile.id}>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                  <p className="font-medium">{profile.full_name || profile.name || "No name"}</p>
-                  <p className="text-xs text-[#617169]">{profile.email}</p>
-                </td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(profile.role)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{organisationName(profile) || <span className="text-xs text-[#9aa59f]">None</span>}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                  <p className="max-w-md truncate">{allocationLabel(profile)}</p>
-                </td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
-                  <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => onEditUser(profile.id)}>Edit</button>
-                </td>
-              </tr>
-            ))}
+            {profiles.map((profile) => {
+              const isEditing = profile.id === editingUserId;
+
+              return (
+                <Fragment key={profile.id}>
+                  <tr className={isEditing ? "bg-[#fff8ec]" : ""}>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      <p className="font-medium">{profile.full_name || profile.name || "No name"}</p>
+                      <p className="text-xs text-[#617169]">{profile.email}</p>
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(profile.role)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      {profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : <span className="text-xs text-[#9aa59f]">None</span>}
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{organisationName(profile) || <span className="text-xs text-[#9aa59f]">None</span>}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      <p className="max-w-md truncate">{allocationLabel(profile)}</p>
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
+                      <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => onEditUser(isEditing ? "" : profile.id)}>
+                        {isEditing ? "Close" : "Edit"}
+                      </button>
+                    </td>
+                  </tr>
+                  {isEditing && (
+                    <tr>
+                      <td colSpan={7} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                        <UserEditPanel
+                          profile={profile}
+                          buildings={buildings}
+                          units={units}
+                          organisations={organisations}
+                          userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === profile.id)}
+                          userUnitAccess={userUnitAccess.filter((access) => access.user_id === profile.id)}
+                          recordAudit={recordAudit}
+                          onClose={() => onEditUser("")}
+                          onNotice={onNotice}
+                          reload={reload}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
         {profiles.length === 0 && <p className="p-4 text-sm text-[#617169]">No users yet.</p>}
       </div>
-      {editingProfile && (
-        <UserEditPanel
-          profile={editingProfile}
-          buildings={buildings}
-          units={units}
-          organisations={organisations}
-          userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === editingProfile.id)}
-          userUnitAccess={userUnitAccess.filter((access) => access.user_id === editingProfile.id)}
-          recordAudit={recordAudit}
-          onClose={() => onEditUser("")}
-          onNotice={onNotice}
-          reload={reload}
-        />
-      )}
     </section>
   );
 }
@@ -1560,19 +1737,20 @@ function UserEditPanel({
 }) {
   const [fullName, setFullName] = useState(profile.full_name || profile.name || "");
   const [role, setRole] = useState<AppRole>(profile.role);
+  const [residentType, setResidentType] = useState<ResidentType>(profile.resident_type ?? "leaseholder");
   const [organisationId, setOrganisationId] = useState(profile.organisation_id ?? "");
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>(userBuildingAccess.map((access) => access.building_id));
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>(userUnitAccess.map((access) => access.unit_id));
   const [isSaving, setIsSaving] = useState(false);
-  const isLeaseholder = role === "leaseholder";
-  const needsOrganisationAndBuilding = role === "agent" || role === "contractor" || role === "trade";
+  const isResident = role === "resident";
+  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
-  const selectedLeaseholderBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
-  const buildingIdsForSave = isLeaseholder ? selectedLeaseholderBuildingIds : selectedBuildingIds;
+  const selectedResidentBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
+  const buildingIdsForSave = isResident ? selectedResidentBuildingIds : selectedBuildingIds;
   const canSave = Boolean(
     fullName &&
-    (!isLeaseholder || selectedUnitIds.length > 0) &&
+    (!isResident || (residentType && selectedUnitIds.length > 0)) &&
     (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
   );
 
@@ -1606,9 +1784,10 @@ function UserEditPanel({
           userId: profile.id,
           fullName,
           role,
+          residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : undefined,
           buildingIds: buildingIdsForSave,
-          unitAccess: isLeaseholder ? selectedUnitIds.map((unitId) => ({ unitId, accessType: "leaseholder" })) : [],
+          unitAccess: isResident ? selectedUnitIds.map((unitId) => ({ unitId, accessType: residentType })) : [],
         }),
       });
       const payload = (await response.json()) as { error?: string };
@@ -1626,6 +1805,7 @@ function UserEditPanel({
         metadata: {
           email: profile.email,
           role,
+          residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : null,
           buildingIds: buildingIdsForSave,
           unitIds: selectedUnitIds,
@@ -1640,8 +1820,8 @@ function UserEditPanel({
   }
 
   return (
-    <div className="border-t border-[#d9ded6] bg-[#f8faf7] p-4">
-      <div className="rounded-md border border-[#d9ded6] bg-white p-4">
+    <div className="bg-[#fff8ec] p-1">
+      <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Edit user</h3>
@@ -1656,18 +1836,19 @@ function UserEditPanel({
             value={role}
             onChange={(event) => {
               setRole(event.target.value as AppRole);
+              if (event.target.value !== "resident") setResidentType("leaseholder");
               setOrganisationId("");
               setSelectedBuildingIds([]);
               setSelectedUnitIds([]);
             }}
           >
-            <option value="leaseholder">Leaseholder</option>
-            <option value="agent">Agent</option>
-            <option value="developer">Developer</option>
-            <option value="contractor">Contractor</option>
-            <option value="trade">Trade</option>
-            <option value="admin">Admin</option>
+            {appRoles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
+          {isResident && (
+            <select className="field" value={residentType} onChange={(event) => setResidentType(event.target.value as ResidentType)}>
+              {residentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          )}
           {needsOrganisationAndBuilding && (
             <select className="field" value={organisationId} onChange={(event) => setOrganisationId(event.target.value)}>
               <option value="">Organisation</option>
@@ -1680,7 +1861,7 @@ function UserEditPanel({
         {needsOrganisationAndBuilding && (
           <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
         )}
-        {isLeaseholder && (
+        {isResident && (
           <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
         )}
         <button className="primary mt-4 w-full" onClick={saveUser} disabled={isSaving || !canSave}>
@@ -1756,22 +1937,23 @@ function UserEnrolment({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<AppRole>("leaseholder");
+  const [role, setRole] = useState<AppRole>("resident");
+  const [residentType, setResidentType] = useState<ResidentType>("leaseholder");
   const [organisationId, setOrganisationId] = useState("");
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>([]);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isLeaseholder = role === "leaseholder";
-  const needsOrganisationAndBuilding = role === "agent" || role === "contractor" || role === "trade";
+  const isResident = role === "resident";
+  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
-  const selectedLeaseholderBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
-  const selectedBuildingAccessIds = isLeaseholder ? selectedLeaseholderBuildingIds : selectedBuildingIds;
+  const selectedResidentBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
+  const selectedBuildingAccessIds = isResident ? selectedResidentBuildingIds : selectedBuildingIds;
   const canCreateUser = Boolean(
     fullName &&
     email &&
     password &&
-    (!isLeaseholder || selectedUnitIds.length > 0) &&
+    (!isResident || (residentType && selectedUnitIds.length > 0)) &&
     (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
   );
 
@@ -1793,8 +1975,8 @@ function UserEnrolment({
       return;
     }
 
-    if (isLeaseholder && selectedUnitIds.length === 0) {
-      onNotice("Assign at least one unit for leaseholders.");
+    if (isResident && selectedUnitIds.length === 0) {
+      onNotice("Assign at least one unit for residents.");
       return;
     }
 
@@ -1820,10 +2002,11 @@ function UserEnrolment({
           password,
           fullName,
           role,
+          residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : undefined,
           buildingIds: selectedBuildingAccessIds,
-          unitAccess: isLeaseholder
-            ? selectedUnitIds.map((unitId) => ({ unitId, accessType: "leaseholder" }))
+          unitAccess: isResident
+            ? selectedUnitIds.map((unitId) => ({ unitId, accessType: residentType }))
             : [],
         }),
       });
@@ -1837,7 +2020,8 @@ function UserEnrolment({
       setFullName("");
       setEmail("");
       setPassword("");
-      setRole("leaseholder");
+      setRole("resident");
+      setResidentType("leaseholder");
       setOrganisationId("");
       setSelectedBuildingIds([]);
       setSelectedUnitIds([]);
@@ -1849,6 +2033,7 @@ function UserEnrolment({
         metadata: {
           email: payload.email,
           role,
+          residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : null,
           buildingIds: selectedBuildingAccessIds,
           unitIds: selectedUnitIds,
@@ -1880,18 +2065,19 @@ function UserEnrolment({
           value={role}
           onChange={(event) => {
             setRole(event.target.value as AppRole);
+            if (event.target.value !== "resident") setResidentType("leaseholder");
             setOrganisationId("");
             setSelectedBuildingIds([]);
             setSelectedUnitIds([]);
           }}
         >
-          <option value="leaseholder">Leaseholder</option>
-          <option value="agent">Agent</option>
-          <option value="developer">Developer</option>
-          <option value="contractor">Contractor</option>
-          <option value="trade">Trade</option>
-          <option value="admin">Admin</option>
+          {appRoles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
+        {isResident && (
+          <select className="field" value={residentType} onChange={(event) => setResidentType(event.target.value as ResidentType)}>
+            {residentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        )}
         {needsOrganisationAndBuilding && (
           <select className="field" value={organisationId} onChange={(event) => setOrganisationId(event.target.value)}>
             <option value="">Organisation</option>
@@ -1904,7 +2090,7 @@ function UserEnrolment({
       {needsOrganisationAndBuilding && (
         <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
       )}
-      {isLeaseholder && (
+      {isResident && (
         <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
       )}
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
@@ -2107,7 +2293,7 @@ function SnagWorkflow({
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
-  const isContractorRole = profile?.role === "contractor" || profile?.role === "trade";
+  const isContractorRole = profile?.role === "contractor";
   const canUseDeveloperActions = !isContractorRole;
 
   return (
@@ -2295,7 +2481,7 @@ function LeaseholderDefects({
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
-  const userUnits = profile?.role === "leaseholder" || profile?.role === "agent" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units;
+  const userUnits = profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units;
   const [unitId, setUnitId] = useState(userUnits[0]?.id ?? "");
   const [areaId, setAreaId] = useState("");
   const [title, setTitle] = useState("");
@@ -2305,7 +2491,7 @@ function LeaseholderDefects({
 
   async function createDefect() {
     if (!title || !photo || !selectedUnit) {
-      onNotice("Leaseholder defects need a title and photo.");
+      onNotice("Resident defects need a title and photo.");
       return;
     }
 
@@ -2354,7 +2540,7 @@ function LeaseholderDefects({
         <button className="primary" onClick={createDefect}>Submit defect</button>
       </FormPanel>
       <SnagList
-        title="Leaseholder defects"
+        title="Resident defects"
         buildings={buildings}
         snags={snags}
         units={units}
@@ -2456,7 +2642,7 @@ function HandoverAndMeters({
       handover_by_user_id: user.id,
       recipient_name: recipient,
       number_of_keys: keys,
-      recipient_capacity: "leaseholder",
+      recipient_capacity: "resident",
     });
     if (error) onNotice(error.message);
     else {
@@ -2536,7 +2722,7 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
         <div className="mt-3 grid gap-2 md:grid-cols-2">
           <select className={`field ${entityFilter ? "filter-active" : ""}`} value={entityFilter} onChange={(event) => setEntityFilter(event.target.value)}>
             <option value="">All areas</option>
-            {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{statusLabel(entityType)}</option>)}
+            {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{entityLabel(entityType)}</option>)}
           </select>
           <select className={`field ${eventFilter ? "filter-active" : ""}`} value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
             <option value="">All events</option>
@@ -2560,7 +2746,7 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
               <tr key={event.id}>
                 <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{formatDateTime(event.created_at)}</td>
                 <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{eventLabel(event.event_type)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(event.entity_type)}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{entityLabel(event.entity_type)}</td>
                 <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{event.summary}</td>
                 <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{authorName(event.created_by_user_id)}</td>
               </tr>
@@ -3510,10 +3696,10 @@ async function imageUrlToDataUrl(url: string) {
 
 function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
   if (!profile) return [];
-  if (profile.role === "leaseholder" || profile.role === "agent") {
+  if (profile.role === "resident") {
     return snags.filter((snag) => snag.source_type === "leaseholder_defect" && snag.unit_id && accessibleUnitIds.includes(snag.unit_id));
   }
-  if (profile.role === "contractor" || profile.role === "trade") {
+  if (profile.role === "contractor") {
     if (accessibleBuildingIds.length === 0 && !profile.organisation_id) return snags;
     return snags.filter((snag) => (
       Boolean(snag.building_id && accessibleBuildingIds.includes(snag.building_id))
