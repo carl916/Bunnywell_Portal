@@ -31,9 +31,33 @@ type Profile = {
   full_name: string | null;
   role: AppRole;
   organisation_id: string | null;
+  created_at?: string | null;
 };
 
-type Tab = "dashboard" | "admin" | "users" | "add_snag" | "snags" | "handover" | "leaseholder" | "reports";
+type UserBuildingAccess = {
+  user_id: string;
+  building_id: string;
+  role_on_building: string | null;
+};
+
+type UserUnitAccess = {
+  user_id: string;
+  unit_id: string;
+  access_type: "leaseholder" | "agent" | "representative";
+};
+
+type AuditEvent = {
+  id: string;
+  event_type: string;
+  entity_type: string;
+  entity_id: string | null;
+  summary: string;
+  metadata: Record<string, unknown>;
+  created_by_user_id: string | null;
+  created_at: string;
+};
+
+type Tab = "dashboard" | "admin" | "users" | "add_snag" | "snags" | "handover" | "leaseholder" | "reports" | "audit";
 
 type SnagDraft = {
   buildingId: string;
@@ -102,7 +126,7 @@ function formatDateTime(value?: string | null) {
 }
 
 function roleTabs(role: AppRole): Tab[] {
-  if (role === "admin" || role === "developer") return ["dashboard", "admin", "users", "add_snag", "snags", "handover", "leaseholder", "reports"];
+  if (role === "admin" || role === "developer") return ["dashboard", "admin", "users", "add_snag", "snags", "handover", "leaseholder", "reports", "audit"];
   if (role === "leaseholder" || role === "agent") return ["leaseholder"];
   if (role === "contractor" || role === "trade") return ["dashboard", "snags"];
 
@@ -119,6 +143,7 @@ function tabLabel(tab: Tab) {
     handover: "Handover",
     leaseholder: "Leaseholder",
     reports: "Reports",
+    audit: "Audit",
   };
 
   return labels[tab];
@@ -156,9 +181,19 @@ function eventLabel(eventType: string) {
     created: "Created",
     note: "Note",
     photo_added: "Photo Added",
+    priority_changed: "Priority Changed",
+    report_generated: "Report Generated",
     status_change: "Status Change",
     submitted: "Submitted",
+    trade_changed: "Trade Changed",
     triage: "Triage",
+    user_created: "User Created",
+    user_updated: "User Updated",
+    building_created: "Building Created",
+    organisation_created: "Organisation Created",
+    organisation_updated: "Organisation Updated",
+    organisation_delete_blocked: "Organisation Delete Blocked",
+    organisation_deleted: "Organisation Deleted",
   };
 
   return labels[eventType] ?? eventType.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
@@ -184,9 +219,12 @@ export function ProductionPortalApp() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [userBuildingAccess, setUserBuildingAccess] = useState<UserBuildingAccess[]>([]);
+  const [userUnitAccess, setUserUnitAccess] = useState<UserUnitAccess[]>([]);
   const [snags, setSnags] = useState<ProductionSnag[]>([]);
   const [photos, setPhotos] = useState<SnagPhoto[]>([]);
   const [events, setEvents] = useState<SnagEvent[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [handovers, setHandovers] = useState<Handover[]>([]);
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([]);
   const [accessibleUnitIds, setAccessibleUnitIds] = useState<string[]>([]);
@@ -221,7 +259,10 @@ export function ProductionPortalApp() {
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) void loadAll(session.user.id);
+      if (session?.user) {
+        setNotice("");
+        void loadAll(session.user.id);
+      }
     });
 
     return () => data.subscription.unsubscribe();
@@ -234,6 +275,13 @@ export function ProductionPortalApp() {
   useEffect(() => {
     setNotice("");
   }, [tab]);
+
+  useEffect(() => {
+    if (!notice || notice === "Loading Bunnywell Portal...") return;
+    if (notice.startsWith("Supabase is not configured") || notice.startsWith("Production schema is not ready")) return;
+    const timer = window.setTimeout(() => setNotice(""), 7000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   async function loadAll(userId = user?.id) {
     if (!userId) return;
@@ -250,15 +298,18 @@ export function ProductionPortalApp() {
       tradesResult,
       orgsResult,
       profilesResult,
+      allBuildingAccessResult,
+      allUnitAccessResult,
       snagsResult,
       photosResult,
       eventsResult,
+      auditEventsResult,
       handoversResult,
       metersResult,
       accessResult,
       buildingAccessResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id").eq("id", userId).single(),
+      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id,created_at").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
       supabase.from("units").select("*").order("unit_number"),
       supabase.from("areas").select("*").order("sort_order"),
@@ -267,10 +318,13 @@ export function ProductionPortalApp() {
       supabase.from("unit_type_areas").select("*").order("sort_order"),
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
-      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,role,organisation_id,created_at").order("email"),
+      supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
+      supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
+      supabase.from("audit_events").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("handovers").select("*").order("created_at", { ascending: false }),
       supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
       supabase.from("user_unit_access").select("unit_id").eq("user_id", userId),
@@ -286,6 +340,8 @@ export function ProductionPortalApp() {
 
     if (firstError) {
       setNotice(`Production schema is not ready yet: ${firstError.message}`);
+    } else {
+      setNotice("");
     }
 
     const loadedProfile = profileResult.data as Profile | null;
@@ -299,9 +355,12 @@ export function ProductionPortalApp() {
     setTrades((tradesResult.data ?? []) as Trade[]);
     setOrganisations((orgsResult.data ?? []) as Organisation[]);
     setProfiles((profilesResult.data ?? []) as Profile[]);
+    setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
+    setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
     setSnags((snagsResult.data ?? []) as ProductionSnag[]);
     setPhotos((photosResult.data ?? []) as SnagPhoto[]);
     setEvents((eventsResult.data ?? []) as SnagEvent[]);
+    setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
     setHandovers((handoversResult.data ?? []) as Handover[]);
     setMeterReadings((metersResult.data ?? []) as MeterReading[]);
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
@@ -323,6 +382,15 @@ export function ProductionPortalApp() {
     if (error) throw error;
 
     return supabase.storage.from("snag-images").getPublicUrl(path).data.publicUrl;
+  }
+
+  async function recordAudit(event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) {
+    if (!user?.id) return;
+    const supabase = createSupabaseBrowserClient();
+    await supabase.from("audit_events").insert({
+      ...event,
+      created_by_user_id: user.id,
+    });
   }
 
   if (isLoading) {
@@ -359,6 +427,7 @@ export function ProductionPortalApp() {
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
+          recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
         />
@@ -368,6 +437,10 @@ export function ProductionPortalApp() {
           buildings={buildings}
           units={units}
           organisations={organisations}
+          profiles={profiles}
+          userBuildingAccess={userBuildingAccess}
+          userUnitAccess={userUnitAccess}
+          recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
         />
@@ -430,7 +503,10 @@ export function ProductionPortalApp() {
         />
       )}
       {tab === "reports" && (
-        <ReportsPanel buildings={buildings} units={units} areas={areas} trades={trades} snags={developerSnags} photos={photos} />
+        <ReportsPanel buildings={buildings} units={units} areas={areas} trades={trades} snags={developerSnags} photos={photos} recordAudit={recordAudit} />
+      )}
+      {tab === "audit" && (
+        <AuditPanel auditEvents={auditEvents} profiles={profiles} />
       )}
     </Shell>
   );
@@ -519,6 +595,7 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
   const [password, setPassword] = useState("");
 
   async function login() {
+    onNotice("");
     const { error } = await createSupabaseBrowserClient().auth.signInWithPassword({ email, password });
     if (error) onNotice(error.message);
   }
@@ -1109,6 +1186,7 @@ function AdminSetup({
   buildingFloors,
   unitTypes,
   unitTypeAreas,
+  recordAudit,
   onNotice,
   reload,
 }: {
@@ -1118,6 +1196,7 @@ function AdminSetup({
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
@@ -1131,7 +1210,7 @@ function AdminSetup({
   async function createBuilding() {
     const supabase = createSupabaseBrowserClient();
     const defectsEnd = pcDate ? new Date(new Date(pcDate).setFullYear(new Date(pcDate).getFullYear() + 1)).toISOString().slice(0, 10) : null;
-    const { error } = await supabase.from("buildings").insert({
+    const { data, error } = await supabase.from("buildings").insert({
       name: buildingName,
       address_line_1: addressLine1,
       address_line_2: addressLine2,
@@ -1140,9 +1219,16 @@ function AdminSetup({
       practical_completion_date: pcDate || null,
       defects_liability_end_date: defectsEnd,
       status: "active",
-    });
+    }).select("id").single();
     if (error) onNotice(error.message);
     else {
+      await recordAudit({
+        event_type: "building_created",
+        entity_type: "building",
+        entity_id: data.id,
+        summary: `Building created: ${buildingName}`,
+        metadata: { name: buildingName, postcode },
+      });
       setBuildingName("");
       setAddressLine1("");
       setAddressLine2("");
@@ -1281,19 +1367,371 @@ function UserAdmin({
   buildings,
   units,
   organisations,
+  profiles,
+  userBuildingAccess,
+  userUnitAccess,
+  recordAudit,
   onNotice,
   reload,
 }: {
   buildings: Building[];
   units: Unit[];
   organisations: Organisation[];
+  profiles: Profile[];
+  userBuildingAccess: UserBuildingAccess[];
+  userUnitAccess: UserUnitAccess[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
+  const [mode, setMode] = useState<"list" | "add">("list");
+  const [editingUserId, setEditingUserId] = useState("");
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
-      <UserEnrolment buildings={buildings} units={units} organisations={organisations} onNotice={onNotice} />
-      <OrganisationManagement organisations={organisations} onNotice={onNotice} reload={reload} />
+    <div className="grid gap-5">
+      {mode === "add" ? (
+        <UserEnrolment
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+          onCancel={() => setMode("list")}
+          recordAudit={recordAudit}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      ) : (
+        <UserDirectory
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+          profiles={profiles}
+          userBuildingAccess={userBuildingAccess}
+          userUnitAccess={userUnitAccess}
+          editingUserId={editingUserId}
+          recordAudit={recordAudit}
+          onAddUser={() => setMode("add")}
+          onEditUser={setEditingUserId}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+      <OrganisationManagement organisations={organisations} profiles={profiles} recordAudit={recordAudit} onNotice={onNotice} reload={reload} />
+    </div>
+  );
+}
+
+function UserDirectory({
+  buildings,
+  units,
+  organisations,
+  profiles,
+  userBuildingAccess,
+  userUnitAccess,
+  editingUserId,
+  recordAudit,
+  onAddUser,
+  onEditUser,
+  onNotice,
+  reload,
+}: {
+  buildings: Building[];
+  units: Unit[];
+  organisations: Organisation[];
+  profiles: Profile[];
+  userBuildingAccess: UserBuildingAccess[];
+  userUnitAccess: UserUnitAccess[];
+  editingUserId: string;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onAddUser: () => void;
+  onEditUser: (userId: string) => void;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  const editingProfile = profiles.find((profile) => profile.id === editingUserId);
+
+  function organisationName(profile: Profile) {
+    return organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "";
+  }
+
+  function allocationLabel(profile: Profile) {
+    if (profile.role === "admin" || profile.role === "developer") return "All buildings";
+
+    const unitIds = userUnitAccess.filter((access) => access.user_id === profile.id).map((access) => access.unit_id);
+    const buildingIds = userBuildingAccess.filter((access) => access.user_id === profile.id).map((access) => access.building_id);
+
+    if (profile.role === "leaseholder") {
+      const labels = unitIds.map((unitId) => {
+        const unit = units.find((item) => item.id === unitId);
+        const building = buildings.find((item) => item.id === unit?.building_id);
+        return unit ? `${building?.name ?? "Building"} ${unit.unit_number}` : "";
+      }).filter(Boolean);
+      return labels.length > 0 ? labels.join(", ") : "No units assigned";
+    }
+
+    const labels = buildingIds.map((buildingId) => buildings.find((building) => building.id === buildingId)?.name).filter(Boolean);
+    return labels.length > 0 ? labels.join(", ") : "No buildings assigned";
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded6] px-4 py-3">
+        <div>
+          <h2 className="text-lg font-semibold">Users</h2>
+          <p className="text-sm text-[#617169]">Roles, allocation and account dates.</p>
+        </div>
+        <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={onAddUser}>
+          <Plus size={16} /> Add user
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[980px] w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
+              <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Role</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Organisation</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {profiles.map((profile) => (
+              <tr key={profile.id}>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                  <p className="font-medium">{profile.full_name || profile.name || "No name"}</p>
+                  <p className="text-xs text-[#617169]">{profile.email}</p>
+                </td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(profile.role)}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{organisationName(profile) || <span className="text-xs text-[#9aa59f]">None</span>}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                  <p className="max-w-md truncate">{allocationLabel(profile)}</p>
+                </td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
+                  <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => onEditUser(profile.id)}>Edit</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {profiles.length === 0 && <p className="p-4 text-sm text-[#617169]">No users yet.</p>}
+      </div>
+      {editingProfile && (
+        <UserEditPanel
+          profile={editingProfile}
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+          userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === editingProfile.id)}
+          userUnitAccess={userUnitAccess.filter((access) => access.user_id === editingProfile.id)}
+          recordAudit={recordAudit}
+          onClose={() => onEditUser("")}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+    </section>
+  );
+}
+
+function UserEditPanel({
+  profile,
+  buildings,
+  units,
+  organisations,
+  userBuildingAccess,
+  userUnitAccess,
+  recordAudit,
+  onClose,
+  onNotice,
+  reload,
+}: {
+  profile: Profile;
+  buildings: Building[];
+  units: Unit[];
+  organisations: Organisation[];
+  userBuildingAccess: UserBuildingAccess[];
+  userUnitAccess: UserUnitAccess[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onClose: () => void;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  const [fullName, setFullName] = useState(profile.full_name || profile.name || "");
+  const [role, setRole] = useState<AppRole>(profile.role);
+  const [organisationId, setOrganisationId] = useState(profile.organisation_id ?? "");
+  const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>(userBuildingAccess.map((access) => access.building_id));
+  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>(userUnitAccess.map((access) => access.unit_id));
+  const [isSaving, setIsSaving] = useState(false);
+  const isLeaseholder = role === "leaseholder";
+  const needsOrganisationAndBuilding = role === "agent" || role === "contractor" || role === "trade";
+  const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
+  const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
+  const selectedLeaseholderBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
+  const buildingIdsForSave = isLeaseholder ? selectedLeaseholderBuildingIds : selectedBuildingIds;
+  const canSave = Boolean(
+    fullName &&
+    (!isLeaseholder || selectedUnitIds.length > 0) &&
+    (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
+  );
+
+  function toggleBuilding(buildingId: string) {
+    setSelectedBuildingIds((current) => (
+      current.includes(buildingId) ? current.filter((item) => item !== buildingId) : [...current, buildingId]
+    ));
+  }
+
+  function toggleUnit(unitId: string) {
+    setSelectedUnitIds((current) => (
+      current.includes(unitId) ? current.filter((item) => item !== unitId) : [...current, unitId]
+    ));
+  }
+
+  async function saveUser() {
+    if (!canSave) return;
+    setIsSaving(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          userId: profile.id,
+          fullName,
+          role,
+          organisationId: needsOrganisationAndBuilding ? organisationId : undefined,
+          buildingIds: buildingIdsForSave,
+          unitAccess: isLeaseholder ? selectedUnitIds.map((unitId) => ({ unitId, accessType: "leaseholder" })) : [],
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not update user.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: "user_updated",
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: `User updated: ${profile.email}`,
+        metadata: {
+          email: profile.email,
+          role,
+          organisationId: needsOrganisationAndBuilding ? organisationId : null,
+          buildingIds: buildingIdsForSave,
+          unitIds: selectedUnitIds,
+        },
+      });
+      onNotice("");
+      onClose();
+      await reload();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="rounded-md border border-[#d9ded6] bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold">Edit user</h3>
+            <p className="text-sm text-[#617169]">{profile.email}</p>
+          </div>
+          <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={onClose}>Cancel</button>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Name" />
+          <select
+            className="field"
+            value={role}
+            onChange={(event) => {
+              setRole(event.target.value as AppRole);
+              setOrganisationId("");
+              setSelectedBuildingIds([]);
+              setSelectedUnitIds([]);
+            }}
+          >
+            <option value="leaseholder">Leaseholder</option>
+            <option value="agent">Agent</option>
+            <option value="developer">Developer</option>
+            <option value="contractor">Contractor</option>
+            <option value="trade">Trade</option>
+            <option value="admin">Admin</option>
+          </select>
+          {needsOrganisationAndBuilding && (
+            <select className="field" value={organisationId} onChange={(event) => setOrganisationId(event.target.value)}>
+              <option value="">Organisation</option>
+              {organisationsForRole.map((organisation) => (
+                <option key={organisation.id} value={organisation.id}>{organisation.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
+        {needsOrganisationAndBuilding && (
+          <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
+        )}
+        {isLeaseholder && (
+          <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
+        )}
+        <button className="primary mt-4 w-full" onClick={saveUser} disabled={isSaving || !canSave}>
+          {isSaving ? "Saving user" : "Save user"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AccessBuildingPicker({ buildings, selectedBuildingIds, onToggle }: { buildings: Building[]; selectedBuildingIds: string[]; onToggle: (buildingId: string) => void }) {
+  return (
+    <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
+      <p className="text-sm font-semibold">Building access</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {buildings.map((building) => (
+          <label key={building.id} className="flex items-center gap-2 rounded-md border border-[#d9ded6] bg-white px-3 py-2 text-sm">
+            <input checked={selectedBuildingIds.includes(building.id)} onChange={() => onToggle(building.id)} type="checkbox" />
+            {building.name}
+          </label>
+        ))}
+        {buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+function AccessUnitPicker({ buildings, units, selectedUnitIds, onToggle }: { buildings: Building[]; units: Unit[]; selectedUnitIds: string[]; onToggle: (unitId: string) => void }) {
+  return (
+    <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
+      <p className="text-sm font-semibold">Unit access</p>
+      <div className="mt-3 grid gap-3">
+        {buildings.map((building) => {
+          const buildingUnits = units.filter((unit) => unit.building_id === building.id);
+          return (
+            <div key={building.id} className="rounded-md border border-[#d9ded6] bg-white p-3">
+              <p className="text-sm font-semibold">{building.name}</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {buildingUnits.map((unit) => (
+                  <label key={unit.id} className="flex items-center gap-2 rounded-md bg-[#f8faf7] px-3 py-2 text-sm">
+                    <input checked={selectedUnitIds.includes(unit.id)} onChange={() => onToggle(unit.id)} type="checkbox" />
+                    {unit.unit_number}
+                  </label>
+                ))}
+                {buildingUnits.length === 0 && <p className="text-sm text-[#617169]">No units yet.</p>}
+              </div>
+            </div>
+          );
+        })}
+        {buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings yet.</p>}
+      </div>
     </div>
   );
 }
@@ -1302,12 +1740,18 @@ function UserEnrolment({
   buildings,
   units,
   organisations,
+  onCancel,
+  recordAudit,
   onNotice,
+  reload,
 }: {
   buildings: Building[];
   units: Unit[];
   organisations: Organisation[];
+  onCancel: () => void;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
 }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -1383,7 +1827,7 @@ function UserEnrolment({
             : [],
         }),
       });
-      const payload = (await response.json()) as { error?: string; email?: string };
+      const payload = (await response.json()) as { error?: string; id?: string; email?: string };
 
       if (!response.ok) {
         onNotice(payload.error ?? "Could not enrol user.");
@@ -1397,15 +1841,36 @@ function UserEnrolment({
       setOrganisationId("");
       setSelectedBuildingIds([]);
       setSelectedUnitIds([]);
+      await recordAudit({
+        event_type: "user_created",
+        entity_type: "user",
+        entity_id: payload.id ?? null,
+        summary: `User created: ${payload.email}`,
+        metadata: {
+          email: payload.email,
+          role,
+          organisationId: needsOrganisationAndBuilding ? organisationId : null,
+          buildingIds: selectedBuildingAccessIds,
+          unitIds: selectedUnitIds,
+        },
+      });
       onNotice(`Enrolled ${payload.email}.`);
+      await reload();
+      onCancel();
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <section className="rounded-md border border-[#d9ded6] bg-white p-4 lg:col-span-2">
-      <h2 className="text-lg font-semibold">User enrolment</h2>
+    <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Add user</h2>
+          <p className="text-sm text-[#617169]">Create the account and assign access.</p>
+        </div>
+        <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={onCancel}>Back to users</button>
+      </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Name" />
         <input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" type="email" />
@@ -1437,51 +1902,10 @@ function UserEnrolment({
         )}
       </div>
       {needsOrganisationAndBuilding && (
-        <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
-          <p className="text-sm font-semibold">Building access</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {buildings.map((building) => (
-              <label key={building.id} className="flex items-center gap-2 rounded-md border border-[#d9ded6] bg-white px-3 py-2 text-sm">
-                <input
-                  checked={selectedBuildingIds.includes(building.id)}
-                  onChange={() => toggleBuilding(building.id)}
-                  type="checkbox"
-                />
-                {building.name}
-              </label>
-            ))}
-            {buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings yet.</p>}
-          </div>
-        </div>
+        <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
       )}
       {isLeaseholder && (
-        <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
-          <p className="text-sm font-semibold">Unit access</p>
-          <div className="mt-3 grid gap-3">
-            {buildings.map((building) => {
-              const buildingUnits = units.filter((unit) => unit.building_id === building.id);
-              return (
-                <div key={building.id} className="rounded-md border border-[#d9ded6] bg-white p-3">
-                  <p className="text-sm font-semibold">{building.name}</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                    {buildingUnits.map((unit) => (
-                      <label key={unit.id} className="flex items-center gap-2 rounded-md bg-[#f8faf7] px-3 py-2 text-sm">
-                        <input
-                          checked={selectedUnitIds.includes(unit.id)}
-                          onChange={() => toggleUnit(unit.id)}
-                          type="checkbox"
-                        />
-                        {unit.unit_number}
-                      </label>
-                    ))}
-                    {buildingUnits.length === 0 && <p className="text-sm text-[#617169]">No units yet.</p>}
-                  </div>
-                </div>
-              );
-            })}
-            {buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings yet.</p>}
-          </div>
-        </div>
+        <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
       )}
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
         {isSubmitting ? "Enrolling user" : "Create user and assign access"}
@@ -1495,10 +1919,14 @@ function UserEnrolment({
 
 function OrganisationManagement({
   organisations,
+  profiles,
+  recordAudit,
   onNotice,
   reload,
 }: {
   organisations: Organisation[];
+  profiles: Profile[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
@@ -1512,9 +1940,16 @@ function OrganisationManagement({
   async function createOrganisation() {
     if (!name) return;
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("organisations").insert({ name, type });
+    const { data, error } = await supabase.from("organisations").insert({ name, type }).select("id").single();
     if (error) onNotice(error.message);
     else {
+      await recordAudit({
+        event_type: "organisation_created",
+        entity_type: "organisation",
+        entity_id: data.id,
+        summary: `Organisation created: ${name}`,
+        metadata: { name, type },
+      });
       setName("");
       setType("contractor");
       await reload();
@@ -1533,6 +1968,13 @@ function OrganisationManagement({
     const { error } = await supabase.from("organisations").update({ name: editName, type: editType }).eq("id", editingId);
     if (error) onNotice(error.message);
     else {
+      await recordAudit({
+        event_type: "organisation_updated",
+        entity_type: "organisation",
+        entity_id: editingId,
+        summary: `Organisation updated: ${editName}`,
+        metadata: { name: editName, type: editType },
+      });
       setEditingId("");
       setEditName("");
       setEditType("contractor");
@@ -1542,6 +1984,7 @@ function OrganisationManagement({
 
   async function deleteOrganisation(organisation: Organisation) {
     const supabase = createSupabaseBrowserClient();
+    const linkedUsers = profiles.filter((profile) => profile.organisation_id === organisation.id);
     const [{ count: userCount, error: userError }, { count: snagCount, error: snagError }] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }).eq("organisation_id", organisation.id),
       supabase.from("snags").select("id", { count: "exact", head: true }).eq("assigned_to_organisation_id", organisation.id),
@@ -1551,14 +1994,37 @@ function OrganisationManagement({
       return;
     }
     if ((userCount ?? 0) > 0 || (snagCount ?? 0) > 0) {
-      onNotice("This organisation is linked to users or snags and cannot be deleted.");
+      const userNames = linkedUsers
+        .slice(0, 3)
+        .map((profile) => profile.full_name || profile.name || profile.email)
+        .join(", ");
+      const extraUsers = (userCount ?? linkedUsers.length) > 3 ? ` and ${(userCount ?? linkedUsers.length) - 3} more` : "";
+      const userText = (userCount ?? 0) > 0 ? ` Linked users: ${userNames}${extraUsers}.` : "";
+      const snagText = (snagCount ?? 0) > 0 ? ` Linked snags: ${snagCount}.` : "";
+      await recordAudit({
+        event_type: "organisation_delete_blocked",
+        entity_type: "organisation",
+        entity_id: organisation.id,
+        summary: `Organisation delete blocked: ${organisation.name}`,
+        metadata: { name: organisation.name, linkedUsers: userCount ?? 0, linkedSnags: snagCount ?? 0 },
+      });
+      onNotice(`This organisation cannot be deleted.${userText}${snagText}`);
       return;
     }
     const confirmed = window.confirm(`Delete ${organisation.name}?`);
     if (!confirmed) return;
     const { error } = await supabase.from("organisations").delete().eq("id", organisation.id);
     if (error) onNotice(error.message);
-    else await reload();
+    else {
+      await recordAudit({
+        event_type: "organisation_deleted",
+        entity_type: "organisation",
+        entity_id: organisation.id,
+        summary: `Organisation deleted: ${organisation.name}`,
+        metadata: { name: organisation.name, type: organisation.type },
+      });
+      await reload();
+    }
   }
 
   return (
@@ -1661,15 +2127,16 @@ function SnagWorkflow({
       uploadFile={uploadFile}
       showFilters
       canReject={canUseDeveloperActions}
-      tradeControl={(snag, trade) => <ContractorTradeControl snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
+      tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
       actions={(snag) => {
         const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
-        const canResolve = isContractorRole && snag.status !== "closed" && snag.status !== "resolved_by_contractor";
-        if (!canClose && !canResolve) return null;
+        const canRespondToInfoRequest = canUseDeveloperActions && snag.status === "needs_more_info";
+        const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+        if (!canClose && !canRespondToInfoRequest && !canResolve) return null;
 
         return (
           <>
-            {canClose && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+            {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
             {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
           </>
         );
@@ -1690,36 +2157,60 @@ function DeveloperActions({
   reload: () => Promise<void>;
 }) {
   const isContractorResolved = snag.status === "resolved_by_contractor";
+  const needsMoreInfo = snag.status === "needs_more_info";
+  const [responseNote, setResponseNote] = useState("");
 
-  async function updateStatus(status: string) {
+  async function updateStatus(status: string, comment?: string) {
     const supabase = createSupabaseBrowserClient();
     await supabase.from("snags").update({ status, closed_at: status === "closed" ? new Date().toISOString() : null }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status, created_by_user_id: user.id });
+    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status, comment: comment ?? null, created_by_user_id: user.id });
     onNotice("");
     await reload();
   }
 
-  if (!isContractorResolved) return null;
+  if (!isContractorResolved && !needsMoreInfo) return null;
 
   return (
     <div className="grid gap-2">
-      <div className="flex flex-wrap justify-end gap-2">
-        <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => updateStatus("closed")}>Close</button>
-      </div>
+      {isContractorResolved && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => updateStatus("closed")}>Close</button>
+        </div>
+      )}
+      {needsMoreInfo && (
+        <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
+          <input className="field" value={responseNote} onChange={(event) => setResponseNote(event.target.value)} placeholder="Information for contractor" />
+          <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={() => updateStatus("open", responseNote)} disabled={!responseNote.trim()}>Send info</button>
+        </div>
+      )}
     </div>
   );
 }
 
-function ContractorTradeControl({ snag, trade, trades, onNotice, reload }: { snag: ProductionSnag; trade?: Trade; trades: Trade[]; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+function ContractorTradeControl({ user, snag, trade, trades, onNotice, reload }: { user: User; snag: ProductionSnag; trade?: Trade; trades: Trade[]; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
   const [editing, setEditing] = useState(false);
   const [tradeId, setTradeId] = useState(snag.trade_id ?? "");
 
   async function save(nextTradeId: string) {
+    if ((snag.trade_id ?? "") === nextTradeId) {
+      setEditing(false);
+      return;
+    }
     setTradeId(nextTradeId);
     const supabase = createSupabaseBrowserClient();
     const { error } = await supabase.from("snags").update({ trade_id: nextTradeId || null }).eq("id", snag.id);
     if (error) onNotice(error.message);
     else {
+      const oldTrade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
+      const newTrade = trades.find((item) => item.id === nextTradeId)?.name ?? "No trade";
+      await supabase.from("snag_events").insert({
+        snag_id: snag.id,
+        event_type: "trade_changed",
+        old_value: oldTrade,
+        new_value: newTrade,
+        comment: `Trade changed from ${oldTrade} to ${newTrade}`,
+        created_by_user_id: user.id,
+      });
       setEditing(false);
       await reload();
     }
@@ -1746,21 +2237,31 @@ function ContractorTradeControl({ snag, trade, trades, onNotice, reload }: { sna
 }
 
 function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
-  async function save(status?: string) {
+  const [showInfoRequest, setShowInfoRequest] = useState(false);
+  const [infoRequest, setInfoRequest] = useState("");
+
+  async function save(status?: string, comment?: string) {
     const supabase = createSupabaseBrowserClient();
     await supabase.from("snags").update({ status: status ?? snag.status }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status ?? snag.status, created_by_user_id: user.id });
+    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status ?? snag.status, comment: comment ?? null, created_by_user_id: user.id });
     onNotice("");
     await reload();
   }
 
-  if (snag.status === "closed" || snag.status === "resolved_by_contractor") return null;
+  if (snag.status === "closed" || snag.status === "resolved_by_contractor" || snag.status === "needs_more_info") return null;
 
   return (
     <div className="grid gap-2">
       <div className="flex flex-wrap justify-end gap-2">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowInfoRequest((current) => !current)}>Request info</button>
         <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={() => save("resolved_by_contractor")}>Mark as Resolved</button>
       </div>
+      {showInfoRequest && (
+        <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
+          <input className="field" value={infoRequest} onChange={(event) => setInfoRequest(event.target.value)} placeholder="What information is needed?" />
+          <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={() => save("needs_more_info", infoRequest)} disabled={!infoRequest.trim()}>Send request</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1866,14 +2367,14 @@ function LeaseholderDefects({
         onNotice={onNotice}
         reload={reload}
         uploadFile={uploadFile}
-        actions={(snag) => <TriageActions snag={snag} buildings={buildings} organisations={[]} onNotice={onNotice} reload={reload} />}
+        actions={(snag) => <TriageActions user={user} snag={snag} buildings={buildings} organisations={[]} onNotice={onNotice} reload={reload} />}
       />
     </div>
   );
 }
 
-function TriageActions({ snag, buildings, organisations, onNotice, reload }: { snag: ProductionSnag; buildings: Building[]; organisations: Organisation[]; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
-  const [priority, setPriority] = useState<"P1" | "P2" | "P3">("P2");
+function TriageActions({ user, snag, buildings, organisations, onNotice, reload }: { user: User; snag: ProductionSnag; buildings: Building[]; organisations: Organisation[]; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+  const [priority, setPriority] = useState<"P1" | "P2" | "P3">(snag.priority_code ?? "P2");
   const [comment, setComment] = useState("");
   const building = buildings.find((item) => item.id === snag.building_id);
 
@@ -1889,7 +2390,17 @@ function TriageActions({ snag, buildings, organisations, onNotice, reload }: { s
       priority_code: status === "accepted" ? priority : snag.priority_code,
       sla_due_date: status === "accepted" ? slaForPriority(priority, building?.defects_liability_end_date) : snag.sla_due_date,
     }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "triage", old_value: snag.status, new_value: status, comment });
+    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "triage", old_value: snag.status, new_value: status, comment, created_by_user_id: user.id });
+    if (status === "accepted" && snag.priority_code !== priority) {
+      await supabase.from("snag_events").insert({
+        snag_id: snag.id,
+        event_type: "priority_changed",
+        old_value: snag.priority_code,
+        new_value: priority,
+        comment: `Priority changed from ${snag.priority_code ?? "None"} to ${priority}`,
+        created_by_user_id: user.id,
+      });
+    }
     setComment("");
     await reload();
   }
@@ -2001,7 +2512,84 @@ function HandoverAndMeters({
   );
 }
 
-function ReportsPanel({ buildings, units, areas, trades, snags, photos }: { buildings: Building[]; units: Unit[]; areas: Area[]; trades: Trade[]; snags: ProductionSnag[]; photos: SnagPhoto[] }) {
+function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; profiles: Profile[] }) {
+  const [entityFilter, setEntityFilter] = useState("");
+  const [eventFilter, setEventFilter] = useState("");
+  const entityTypes = Array.from(new Set(auditEvents.map((event) => event.entity_type))).sort();
+  const eventTypes = Array.from(new Set(auditEvents.map((event) => event.event_type))).sort();
+  const filtered = auditEvents
+    .filter((event) => !entityFilter || event.entity_type === entityFilter)
+    .filter((event) => !eventFilter || event.event_type === eventFilter)
+    .slice(0, 100);
+
+  function authorName(userId?: string | null) {
+    if (!userId) return "System";
+    const profile = profiles.find((item) => item.id === userId);
+    return profile?.full_name || profile?.name || profile?.email || "Unknown user";
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-white">
+      <div className="border-b border-[#d9ded6] px-4 py-3">
+        <h2 className="text-lg font-semibold">Audit trail</h2>
+        <p className="text-sm text-[#617169]">Recent admin, setup and report events.</p>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          <select className={`field ${entityFilter ? "filter-active" : ""}`} value={entityFilter} onChange={(event) => setEntityFilter(event.target.value)}>
+            <option value="">All areas</option>
+            {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{statusLabel(entityType)}</option>)}
+          </select>
+          <select className={`field ${eventFilter ? "filter-active" : ""}`} value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
+            <option value="">All events</option>
+            {eventTypes.map((eventType) => <option key={eventType} value={eventType}>{eventLabel(eventType)}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
+              <th className="border-b border-[#d9ded6] px-3 py-2">Date</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Event</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Area</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Summary</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((event) => (
+              <tr key={event.id}>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{formatDateTime(event.created_at)}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{eventLabel(event.event_type)}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(event.entity_type)}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{event.summary}</td>
+                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{authorName(event.created_by_user_id)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && <p className="p-4 text-sm text-[#617169]">No audit events to show.</p>}
+      </div>
+    </section>
+  );
+}
+
+function ReportsPanel({
+  buildings,
+  units,
+  areas,
+  trades,
+  snags,
+  photos,
+  recordAudit,
+}: {
+  buildings: Building[];
+  units: Unit[];
+  areas: Area[];
+  trades: Trade[];
+  snags: ProductionSnag[];
+  photos: SnagPhoto[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+}) {
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const buildingUnits = units.filter((unit) => !buildingId || unit.building_id === buildingId);
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
@@ -2211,6 +2799,19 @@ function ReportsPanel({ buildings, units, areas, trades, snags, photos }: { buil
 
     addFooter();
     pdf.save(`unit-${unit?.unit_number ?? "snags"}-report.pdf`);
+    await recordAudit({
+      event_type: "report_generated",
+      entity_type: "unit",
+      entity_id: unit?.id ?? null,
+      summary: `Snagging report generated: ${building?.name ?? "Building"} / Unit ${unit?.unit_number ?? ""}`,
+      metadata: {
+        buildingId,
+        buildingName: building?.name,
+        unitId,
+        unitNumber: unit?.unit_number,
+        snagCount: reportSnags.length,
+      },
+    });
   }
 
   return (
@@ -2604,8 +3205,7 @@ function SnagDetailPage({
   }
 
   async function rejectBack() {
-    if (!rejectNote.trim() && !rejectPhoto) {
-      onNotice("Rejection requires a comment or photo.");
+    if (!rejectNote.trim()) {
       return;
     }
     const supabase = createSupabaseBrowserClient();
@@ -2687,7 +3287,7 @@ function SnagDetailPage({
                 <div className="mt-3 grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
                   <input className="field" value={rejectNote} onChange={(event) => setRejectNote(event.target.value)} placeholder="Reason for rejection" />
                   <PhotoInput value={rejectPhoto} onChange={setRejectPhoto} />
-                  <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack}>Reject</button>
+                  <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack} disabled={!rejectNote.trim()}>Reject</button>
                 </div>
               )}
             </div>
