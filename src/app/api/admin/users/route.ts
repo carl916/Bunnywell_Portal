@@ -1,15 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import type { AppRole } from "@/lib/data/production";
+import type { AppRole, ResidentType } from "@/lib/data/production";
 
 type CreateUserBody = {
   email?: string;
   password?: string;
   fullName?: string;
   role?: AppRole;
+  residentType?: ResidentType | null;
   organisationId?: string;
   buildingIds?: string[];
-  unitAccess?: { unitId: string; accessType: "leaseholder" | "agent" | "representative" }[];
+  unitAccess?: { unitId: string; accessType: ResidentType | "representative" }[];
 };
 
 type UpdateUserBody = Omit<CreateUserBody, "email" | "password"> & {
@@ -24,6 +25,17 @@ function env(name: string) {
   }
 
   return value;
+}
+
+const validRoles: AppRole[] = ["admin", "developer", "developer_representative", "contractor", "resident", "user"];
+const validResidentTypes: ResidentType[] = ["leaseholder", "tenant", "letting_agent", "managing_agent"];
+
+function isValidRole(role: AppRole) {
+  return validRoles.includes(role);
+}
+
+function isValidResidentType(value?: ResidentType | null) {
+  return Boolean(value && validResidentTypes.includes(value));
 }
 
 async function getAdminClientForRequest(request: Request) {
@@ -69,6 +81,7 @@ export async function POST(request: Request) {
     const email = body.email?.trim();
     const password = body.password?.trim();
     const role = body.role ?? "user";
+    const residentType = body.residentType ?? null;
     const unitAccess = body.unitAccess ?? [];
     let buildingIds = body.buildingIds ?? [];
 
@@ -76,19 +89,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
-    if (role === "leaseholder" && unitAccess.length === 0) {
-      return NextResponse.json({ error: "Leaseholders must be assigned to at least one unit." }, { status: 400 });
+    if (!isValidRole(role) || role === "user") {
+      return NextResponse.json({ error: "Choose a valid user role." }, { status: 400 });
     }
 
-    if ((role === "agent" || role === "contractor" || role === "trade") && !body.organisationId) {
-      return NextResponse.json({ error: "Agents, contractors and trades must be linked to an organisation." }, { status: 400 });
+    if (role === "resident" && unitAccess.length === 0) {
+      return NextResponse.json({ error: "Residents must be assigned to at least one unit." }, { status: 400 });
     }
 
-    if ((role === "agent" || role === "contractor" || role === "trade") && buildingIds.length === 0) {
-      return NextResponse.json({ error: "Agents, contractors and trades must be assigned to at least one building." }, { status: 400 });
+    if (role === "resident" && !isValidResidentType(residentType)) {
+      return NextResponse.json({ error: "Resident type is required for resident users." }, { status: 400 });
     }
 
-    if (role === "leaseholder" && unitAccess.length > 0) {
+    if ((role === "developer_representative" || role === "contractor") && !body.organisationId) {
+      return NextResponse.json({ error: "Developer representatives and contractors must be linked to an organisation." }, { status: 400 });
+    }
+
+    if ((role === "developer_representative" || role === "contractor") && buildingIds.length === 0) {
+      return NextResponse.json({ error: "Developer representatives and contractors must be assigned to at least one building." }, { status: 400 });
+    }
+
+    if (role === "resident" && unitAccess.length > 0) {
       const { data: accessUnits, error: accessUnitsError } = await adminClient
         .from("units")
         .select("building_id")
@@ -118,7 +139,8 @@ export async function POST(request: Request) {
       full_name: body.fullName ?? null,
       name: body.fullName ?? null,
       role,
-      organisation_id: body.organisationId || null,
+      resident_type: role === "resident" ? residentType : null,
+      organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
       active: true,
     });
 
@@ -161,6 +183,7 @@ export async function PATCH(request: Request) {
     const body = (await request.json()) as UpdateUserBody;
     const userId = body.userId;
     const role = body.role ?? "user";
+    const residentType = body.residentType ?? null;
     const unitAccess = body.unitAccess ?? [];
     let buildingIds = body.buildingIds ?? [];
 
@@ -168,19 +191,27 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "User is required." }, { status: 400 });
     }
 
-    if (role === "leaseholder" && unitAccess.length === 0) {
-      return NextResponse.json({ error: "Leaseholders must be assigned to at least one unit." }, { status: 400 });
+    if (!isValidRole(role) || role === "user") {
+      return NextResponse.json({ error: "Choose a valid user role." }, { status: 400 });
     }
 
-    if ((role === "agent" || role === "contractor" || role === "trade") && !body.organisationId) {
-      return NextResponse.json({ error: "Agents, contractors and trades must be linked to an organisation." }, { status: 400 });
+    if (role === "resident" && unitAccess.length === 0) {
+      return NextResponse.json({ error: "Residents must be assigned to at least one unit." }, { status: 400 });
     }
 
-    if ((role === "agent" || role === "contractor" || role === "trade") && buildingIds.length === 0) {
-      return NextResponse.json({ error: "Agents, contractors and trades must be assigned to at least one building." }, { status: 400 });
+    if (role === "resident" && !isValidResidentType(residentType)) {
+      return NextResponse.json({ error: "Resident type is required for resident users." }, { status: 400 });
     }
 
-    if (role === "leaseholder" && unitAccess.length > 0) {
+    if ((role === "developer_representative" || role === "contractor") && !body.organisationId) {
+      return NextResponse.json({ error: "Developer representatives and contractors must be linked to an organisation." }, { status: 400 });
+    }
+
+    if ((role === "developer_representative" || role === "contractor") && buildingIds.length === 0) {
+      return NextResponse.json({ error: "Developer representatives and contractors must be assigned to at least one building." }, { status: 400 });
+    }
+
+    if (role === "resident" && unitAccess.length > 0) {
       const { data: accessUnits, error: accessUnitsError } = await adminClient
         .from("units")
         .select("building_id")
@@ -197,7 +228,8 @@ export async function PATCH(request: Request) {
       full_name: body.fullName ?? null,
       name: body.fullName ?? null,
       role,
-      organisation_id: body.organisationId || null,
+      resident_type: role === "resident" ? residentType : null,
+      organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
     }).eq("id", userId);
 
     if (profileError) {

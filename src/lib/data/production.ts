@@ -1,4 +1,5 @@
-export type AppRole = "admin" | "developer" | "contractor" | "trade" | "leaseholder" | "agent" | "user";
+export type AppRole = "admin" | "developer" | "developer_representative" | "contractor" | "resident" | "user";
+export type ResidentType = "leaseholder" | "tenant" | "letting_agent" | "managing_agent";
 
 export type Building = {
   id: string;
@@ -11,6 +12,9 @@ export type Building = {
   defects_liability_end_date: string | null;
   status: string;
   notes: string | null;
+  photo_url: string | null;
+  documents_url: string | null;
+  home_user_guide_url: string | null;
 };
 
 export type Organisation = {
@@ -40,6 +44,7 @@ export type Unit = {
   sale_status: "for_sale" | "reserved" | "exchanged" | "completed" | "handed_over";
   completion_date: string | null;
   handover_date: string | null;
+  parking_bays: number[] | null;
   notes: string | null;
 };
 
@@ -127,7 +132,32 @@ export type Handover = {
   number_of_keys: number;
   signature_url: string | null;
   handover_date: string;
+  handover_datetime: string | null;
+  recipient_relationship: string | null;
+  recipient_relationship_other: string | null;
+  declaration_accepted: boolean | null;
   notes: string | null;
+  created_at: string;
+};
+
+export type HandoverKeyItem = {
+  id: string;
+  handover_id: string;
+  key_type: string;
+  quantity: number;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type HandoverPhoto = {
+  id: string;
+  handover_id: string;
+  file_url: string;
+  photo_type: "keys" | "other";
+  caption: string | null;
+  uploaded_by_user_id: string | null;
+  created_at: string;
 };
 
 export type MeterReading = {
@@ -141,6 +171,8 @@ export type MeterReading = {
   reading_date: string;
   photo_url: string | null;
   notes: string | null;
+  created_by_user_id: string | null;
+  created_at: string;
 };
 
 export function slaForPriority(priority: "P1" | "P2" | "P3", defectsLiabilityEnd?: string | null) {

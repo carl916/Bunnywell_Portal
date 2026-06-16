@@ -3,10 +3,12 @@
 -- later in policies, defaults, checks, or inserts.
 
 alter type public.user_role add value if not exists 'developer';
+alter type public.user_role add value if not exists 'developer_representative';
 alter type public.user_role add value if not exists 'contractor';
 alter type public.user_role add value if not exists 'trade';
 alter type public.user_role add value if not exists 'leaseholder';
 alter type public.user_role add value if not exists 'agent';
+alter type public.user_role add value if not exists 'resident';
 
 alter type public.snag_status add value if not exists 'open';
 alter type public.snag_status add value if not exists 'resolved_by_contractor';
