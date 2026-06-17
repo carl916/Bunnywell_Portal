@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Building2, Camera, ChevronDown, ChevronRight, ClipboardList, Download, FileText, Home, LogIn, Menu, Plus, RefreshCw, Shield, UserRound, UsersRound, X } from "lucide-react";
+import { BarChart3, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Download, FileText, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, UserRound, UsersRound, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -157,12 +157,13 @@ function formatDateTime(value?: string | null) {
 }
 
 function roleTabs(role: AppRole): Tab[] {
-  if (role === "admin") return ["dashboard", "admin", "users", "add_snag", "snags", "handover", "leaseholder", "reports", "audit"];
-  if (role === "developer" || role === "developer_representative") return ["dashboard", "add_snag", "snags", "handover", "leaseholder", "reports"];
+  if (role === "admin") return ["dashboard", "admin", "users", "add_snag", "snags", "leaseholder", "reports", "audit"];
+  if (role === "developer") return ["dashboard", "add_snag", "snags", "leaseholder", "reports"];
+  if (role === "developer_representative") return ["dashboard", "add_snag", "snags", "reports"];
   if (role === "resident") return ["leaseholder"];
-  if (role === "contractor") return ["dashboard", "snags"];
+  if (role === "contractor") return ["dashboard", "snags", "reports"];
 
-  return ["dashboard"];
+  return ["dashboard", "reports"];
 }
 
 function tabLabel(tab: Tab) {
@@ -558,21 +559,6 @@ export function ProductionPortalApp() {
           uploadFile={uploadFile}
         />
       )}
-      {tab === "handover" && (
-        <HandoverAndMeters
-          user={user}
-          buildings={buildings}
-          units={units}
-          handovers={handovers}
-          handoverKeyItems={handoverKeyItems}
-          handoverPhotos={handoverPhotos}
-          meterReadings={meterReadings}
-          onNotice={setNotice}
-          recordAudit={recordAudit}
-          reload={loadAll}
-          uploadFile={uploadFile}
-        />
-      )}
       {tab === "leaseholder" && (
         <LeaseholderDefects
           user={user}
@@ -581,12 +567,15 @@ export function ProductionPortalApp() {
           units={units}
           areas={areas}
           snags={residentDefects}
+          handovers={handovers}
+          handoverKeyItems={handoverKeyItems}
           meterReadings={meterReadings}
           photos={photos}
           events={events}
           profiles={profiles}
           accessibleUnitIds={accessibleUnitIds}
           onNotice={setNotice}
+          recordAudit={recordAudit}
           reload={loadAll}
           uploadFile={uploadFile}
         />
@@ -619,14 +608,13 @@ function Shell({
   children?: React.ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
-  const coreTabs: Tab[] = ["dashboard", "snags", "add_snag", "handover"];
+  const coreTabs: Tab[] = ["dashboard", "snags", "add_snag"];
   const visibleCoreTabs = coreTabs.filter((item) => tabs.includes(item));
   const moreTabs = tabs.filter((item) => !visibleCoreTabs.includes(item));
   const mobileNavItems: Array<{ tab?: Tab; label: string; icon: React.ReactNode; isMore?: boolean }> = [
     ...(tabs.includes("dashboard") ? [{ tab: "dashboard" as Tab, label: "Home", icon: <Home size={19} aria-hidden /> }] : []),
     ...(tabs.includes("snags") ? [{ tab: "snags" as Tab, label: "Snags", icon: <ClipboardList size={19} aria-hidden /> }] : []),
     ...(tabs.includes("add_snag") ? [{ tab: "add_snag" as Tab, label: "Add", icon: <Plus size={22} aria-hidden /> }] : []),
-    ...(tabs.includes("handover") ? [{ tab: "handover" as Tab, label: "Handover", icon: <Building2 size={19} aria-hidden /> }] : []),
     { label: "More", icon: <Menu size={20} aria-hidden />, isMore: true },
   ].slice(0, 5);
 
@@ -1393,7 +1381,6 @@ function FloorBlock({
   const [unitParkingBays, setUnitParkingBays] = useState("");
   const [unitTypeId, setUnitTypeId] = useState("");
   const [communalName, setCommunalName] = useState("");
-  const [communalCategory, setCommunalCategory] = useState("Corridor");
   const [collapsed, setCollapsed] = useState(!warning);
   const canDeleteFloor = Boolean(floor && units.length === 0 && communalAreas.length === 0);
   const deleteFloorHelp = "Move or delete units and communal areas before deleting this floor.";
@@ -1455,7 +1442,6 @@ function FloorBlock({
     if (error) onNotice(error.message);
     else {
       setCommunalName("");
-      setCommunalCategory("Corridor");
       await reload();
     }
   }
@@ -1489,12 +1475,13 @@ function FloorBlock({
           <span className="text-sm text-[#617169]">{communalAreas.length} communal</span>
           {floor && (
             <button
-              className="secondary h-8 min-h-8 px-3 py-0 text-xs"
+              className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#b42318]"
               onClick={deleteFloor}
               disabled={!canDeleteFloor}
+              aria-label={`Delete floor ${floor.name}`}
               title={canDeleteFloor ? `Delete ${floor.name}` : deleteFloorHelp}
             >
-              Delete
+              <Trash2 size={14} aria-hidden />
             </button>
           )}
           <button
@@ -1560,13 +1547,7 @@ function FloorBlock({
               {communalAreas.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No communal areas added to this floor yet.</p>}
             </div>
             {!warning && (
-              <div className="mt-3 grid gap-2 lg:grid-cols-[180px_minmax(0,1fr)_auto]">
-                <select className="field" value={communalCategory} onChange={(event) => {
-                  setCommunalCategory(event.target.value);
-                  if (!communalName.trim() && event.target.value !== "Other") setCommunalName(event.target.value);
-                }}>
-                  {["Corridor", "Bin store", "Bike store", "Car park", "Plant room", "Store", "Other"].map((category) => <option key={category} value={category}>{category}</option>)}
-                </select>
+              <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
                 <input
                   className="field"
                   value={communalName}
@@ -1590,11 +1571,13 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(area.name);
   const [floor, setFloor] = useState(area.floor ?? "");
+  const [deleteWarning, setDeleteWarning] = useState("");
   const category = inferCommunalCategory(area.name);
 
   useEffect(() => {
     setName(area.name);
     setFloor(area.floor ?? "");
+    setDeleteWarning("");
   }, [area.floor, area.name]);
 
   async function save() {
@@ -1618,17 +1601,20 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
       .select("id", { count: "exact", head: true })
       .eq("area_id", area.id);
     if (countError) {
-      onNotice(countError.message);
+      setDeleteWarning(countError.message);
       return;
     }
     if ((count ?? 0) > 0) {
-      onNotice(`Cannot remove ${area.name}. Move or close the linked snags first.`);
+      setDeleteWarning(`Cannot remove ${area.name}. Move or close the linked snags first.`);
       return;
     }
     if (!window.confirm(`Delete communal area ${area.name}?`)) return;
     const { error } = await supabase.from("areas").delete().eq("id", area.id);
-    if (error) onNotice(error.message);
-    else await reload();
+    if (error) setDeleteWarning(error.message);
+    else {
+      setDeleteWarning("");
+      await reload();
+    }
   }
 
   if (editing) {
@@ -1648,17 +1634,22 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] px-3 py-2">
-      <div>
-        <p className="font-medium text-[#1F2A24]">{area.name}</p>
-        <p className="text-xs text-[#617169]">{category}</p>
+    <div className="rounded-md border border-[#d9ded6] bg-[#f8faf7] px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-medium text-[#1F2A24]">{area.name}</p>
+          <p className="text-xs text-[#617169]">{category}</p>
+        </div>
+        <div className="flex gap-2">
+          <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit ${area.name}`} aria-label={`Edit ${area.name}`}>
+            <Pencil size={14} aria-hidden />
+          </button>
+          <button className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]" onClick={deleteCommunalArea} title={`Delete ${area.name}`} aria-label={`Delete ${area.name}`}>
+            <Trash2 size={14} aria-hidden />
+          </button>
+        </div>
       </div>
-      <div className="flex gap-2">
-        <button className="secondary min-h-8 px-3 py-1 text-xs" onClick={() => setEditing(true)}>Edit</button>
-        <button className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]" onClick={deleteCommunalArea} title={`Delete ${area.name}`} aria-label={`Delete ${area.name}`}>
-          <X size={14} />
-        </button>
-      </div>
+      {deleteWarning && <p className="mt-2 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
     </div>
   );
 }
@@ -1702,6 +1693,7 @@ function UnitStructureCard({
   const [areasToRemove, setAreasToRemove] = useState<string[]>([]);
   const [pendingRooms, setPendingRooms] = useState<string[]>([]);
   const [pendingAmenity, setPendingAmenity] = useState(false);
+  const [deleteWarning, setDeleteWarning] = useState("");
   const unitAreas = areas
     .filter((area) => area.unit_id === unit.id)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -1723,6 +1715,7 @@ function UnitStructureCard({
     setAreasToRemove([]);
     setPendingRooms([]);
     setPendingAmenity(false);
+    setDeleteWarning("");
   }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id]);
 
   function stageRoom() {
@@ -1835,6 +1828,34 @@ function UnitStructureCard({
     setEditing(false);
   }
 
+  async function deleteUnit() {
+    const supabase = createSupabaseBrowserClient();
+    const { count, error: countError } = await supabase
+      .from("snags")
+      .select("id", { count: "exact", head: true })
+      .eq("unit_id", unit.id);
+    if (countError) {
+      setDeleteWarning(countError.message);
+      return;
+    }
+    if ((count ?? 0) > 0) {
+      setDeleteWarning(`Cannot delete unit ${unit.unit_number}. Move or close the linked snags first.`);
+      return;
+    }
+    if (!window.confirm(`Delete unit ${unit.unit_number}? This will also remove its rooms and private amenity records.`)) return;
+    const { error: areaError } = await supabase.from("areas").delete().eq("unit_id", unit.id);
+    if (areaError) {
+      setDeleteWarning(areaError.message);
+      return;
+    }
+    const { error } = await supabase.from("units").delete().eq("id", unit.id);
+    if (error) setDeleteWarning(error.message);
+    else {
+      setDeleteWarning("");
+      await reload();
+    }
+  }
+
   return (
     <article className="rounded-md border border-[#d9ded6] bg-white p-3">
               {editing ? (
@@ -1938,10 +1959,23 @@ function UnitStructureCard({
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>
-                    <button className="secondary px-2 py-1 text-xs" onClick={() => setEditing(true)}>Edit</button>
+                    <div className="flex gap-2">
+                      <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
+                        <Pencil size={14} aria-hidden />
+                      </button>
+                      <button
+                        className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]"
+                        onClick={deleteUnit}
+                        title={`Delete unit ${unit.unit_number}`}
+                        aria-label={`Delete unit ${unit.unit_number}`}
+                      >
+                        <Trash2 size={14} aria-hidden />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
+              {!editing && deleteWarning && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
               {!editing && (
                 <>
                   <div className="mt-3">
@@ -2164,6 +2198,7 @@ function DeveloperSnagging({
   requestedFilters?: SnagListFilters;
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
+  const [isSaving, setIsSaving] = useState(false);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
   const selectedArea = areas.find((area) => area.id === draft.areaId);
   const selectedBuilding = buildings.find((building) => building.id === (draft.buildingId || selectedUnit?.building_id || selectedArea?.building_id));
@@ -2183,6 +2218,7 @@ function DeveloperSnagging({
   const snagUnitId = draft.locationType === "unit" ? draft.unitId : null;
 
   async function createDeveloperSnag() {
+    if (isSaving) return;
     if (!draft.title || !draft.photoDataUrl || !draft.areaId || !snagBuildingId) {
       onNotice("Developer snags need a location, title and photo.");
       return;
@@ -2193,51 +2229,59 @@ function DeveloperSnagging({
       return;
     }
 
+    setIsSaving(true);
     const supabase = createSupabaseBrowserClient();
-    const photoUrl = await uploadFile(draft.photoDataUrl, "snags");
-    const { data, error } = await supabase.from("snags").insert({
-      building_id: snagBuildingId,
-      unit_id: snagUnitId,
-      area_id: draft.areaId || null,
-      source_type: "developer_snag",
-      created_by: user.id,
-      created_by_user_id: user.id,
-      title: draft.title,
-      description: draft.description,
-      trade_id: draft.tradeId || null,
-      priority: null,
-      priority_code: null,
-      status: "open",
-      sla_due_date: null,
-    }).select("id").single();
+    try {
+      const photoUrl = await uploadFile(draft.photoDataUrl, "snags");
+      const { data, error } = await supabase.from("snags").insert({
+        building_id: snagBuildingId,
+        unit_id: snagUnitId,
+        area_id: draft.areaId || null,
+        source_type: "developer_snag",
+        created_by: user.id,
+        created_by_user_id: user.id,
+        title: draft.title,
+        description: draft.description,
+        trade_id: draft.tradeId || null,
+        priority: null,
+        priority_code: null,
+        status: "open",
+        sla_due_date: null,
+      }).select("id").single();
 
-    if (error) {
-      onNotice(error.message);
-      return;
+      if (error) throw error;
+
+      const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
+      if (photoError) throw photoError;
+
+      const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
+      if (eventError) throw eventError;
+
+      setDraft({
+        ...emptySnagDraft,
+        buildingId: draft.buildingId,
+        floor: draft.floor,
+        locationType: draft.locationType,
+        unitId: draft.unitId,
+        areaId: draft.areaId,
+      });
+      onNotice("Snag added.");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Unable to add snag. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
-
-    await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
-    await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
-    setDraft({
-      ...emptySnagDraft,
-      buildingId: draft.buildingId,
-      floor: draft.floor,
-      locationType: draft.locationType,
-      unitId: draft.unitId,
-      areaId: draft.areaId,
-    });
-    onNotice("");
-    await reload();
   }
 
   return (
     <div className="max-w-xl">
       <FormPanel title="Add developer snag">
-        <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "" })}>
+        <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "" })} disabled={isSaving}>
           <option value="">Select building</option>
           {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
         </select>
-        <select className={`field ${draft.floor ? "filter-active" : ""}`} value={draft.floor} onChange={(event) => setDraft({ ...draft, floor: event.target.value, unitId: "", areaId: "" })} disabled={!draft.buildingId}>
+        <select className={`field ${draft.floor ? "filter-active" : ""}`} value={draft.floor} onChange={(event) => setDraft({ ...draft, floor: event.target.value, unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId}>
           <option value="">All floors</option>
           {availableFloors.map((floor) => <option key={floor.id} value={floor.name}>{floor.name}</option>)}
         </select>
@@ -2245,7 +2289,7 @@ function DeveloperSnagging({
           <button
             className={draft.locationType === "unit" ? "primary" : "secondary"}
             onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })}
-            disabled={!draft.buildingId}
+            disabled={isSaving || !draft.buildingId}
             type="button"
           >
             Unit
@@ -2253,19 +2297,19 @@ function DeveloperSnagging({
           <button
             className={draft.locationType === "communal" ? "primary" : "secondary"}
             onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })}
-            disabled={!draft.buildingId}
+            disabled={isSaving || !draft.buildingId}
             type="button"
           >
             Communal
           </button>
         </div>
         {draft.locationType === "unit" && (
-          <select className="field" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={!draft.buildingId}>
+          <select className="field" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={isSaving || !draft.buildingId}>
             <option value="">Select unit</option>
-            {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}{unit.floor ? ` / ${unit.floor}` : ""}</option>)}
+            {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
           </select>
         )}
-        <select className="field" value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={!draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
+        <select className="field" value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={isSaving || !draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
           <option value="">{draft.locationType === "unit" ? "Select room / private area" : "Select communal area"}</option>
           {areaOptions.map((area) => (
             <option key={area.id} value={area.id}>
@@ -2273,14 +2317,14 @@ function DeveloperSnagging({
             </option>
           ))}
         </select>
-        <input className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={!draft.buildingId} />
-        <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={!draft.buildingId} />
-        <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={!draft.buildingId}>
+        <input className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={isSaving || !draft.buildingId} />
+        <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
+        <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
           <option value="">Trade</option>
           {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
         </select>
-        <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={!draft.buildingId} />
-        <button className="primary" onClick={createDeveloperSnag} disabled={!draft.buildingId || !draft.areaId || !draft.title || !draft.photoDataUrl}><Plus size={16} /> Save and add another</button>
+        <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
+        <button className="primary" onClick={createDeveloperSnag} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title || !draft.photoDataUrl}><Plus size={16} /> {isSaving ? "Saving..." : "Save and add another"}</button>
       </FormPanel>
     </div>
   );
@@ -3230,28 +3274,44 @@ function DeveloperActions({
   const isContractorResolved = snag.status === "resolved_by_contractor";
   const needsMoreInfo = snag.status === "needs_more_info";
   const [responseNote, setResponseNote] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   async function updateStatus(status: string, comment?: string) {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.from("snags").update({ status, closed_at: status === "closed" ? new Date().toISOString() : null }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status, comment: comment ?? null, created_by_user_id: user.id });
-    onNotice("");
-    await reload();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSnagStatusChange({
+        user,
+        snag,
+        nextStatus: status,
+        comment,
+        closedAt: status === "closed" ? new Date().toISOString() : null,
+      });
+      if (status === "open") setResponseNote("");
+      onNotice(status === "closed" ? "Snag closed" : "Information sent and status updated");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not update snag status.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (!isContractorResolved && !needsMoreInfo) return null;
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
       {isContractorResolved && (
         <div className="flex flex-wrap justify-end gap-2">
-          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => updateStatus("closed")}>Close</button>
+          <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("closed")} disabled={isSaving}>
+            <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
+          </button>
         </div>
       )}
       {needsMoreInfo && (
         <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
-          <input className="field" value={responseNote} onChange={(event) => setResponseNote(event.target.value)} placeholder="Information for contractor" />
-          <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={() => updateStatus("open", responseNote)} disabled={!responseNote.trim()}>Send info</button>
+          <input className="field" value={responseNote} onChange={(event) => setResponseNote(event.target.value)} placeholder="Information for contractor" disabled={isSaving} />
+          <button className="inline-flex min-h-9 items-center gap-1.5 justify-self-end rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("open", responseNote)} disabled={isSaving || !responseNote.trim()}>{isSaving ? "Sending..." : "Send info"}</button>
         </div>
       )}
     </div>
@@ -3289,7 +3349,7 @@ function ContractorTradeControl({ user, snag, trade, trades, onNotice, reload }:
 
   if (editing) {
     return (
-      <select className="field min-w-36 py-1 text-sm" value={tradeId} onChange={(event) => save(event.target.value)} onBlur={() => setEditing(false)}>
+      <select className="field min-w-36 py-1 text-sm" value={tradeId} onClick={(event) => event.stopPropagation()} onChange={(event) => save(event.target.value)} onBlur={() => setEditing(false)}>
         <option value="">No trade</option>
         {trades.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
       </select>
@@ -3299,7 +3359,10 @@ function ContractorTradeControl({ user, snag, trade, trades, onNotice, reload }:
   return (
     <button
       className={`text-left underline underline-offset-2 ${trade ? "text-sm text-[#34413a] hover:text-[#0F3D31]" : "text-xs text-[#9aa59f] hover:text-[#617169]"}`}
-      onClick={() => setEditing(true)}
+      onClick={(event) => {
+        event.stopPropagation();
+        setEditing(true);
+      }}
       title="Change trade"
     >
       {trade?.name ?? "No trade"}
@@ -3307,30 +3370,107 @@ function ContractorTradeControl({ user, snag, trade, trades, onNotice, reload }:
   );
 }
 
+async function saveSnagStatusChange({
+  user,
+  snag,
+  nextStatus,
+  comment,
+  closedAt,
+}: {
+  user: User;
+  snag: ProductionSnag;
+  nextStatus: string;
+  comment?: string | null;
+  closedAt?: string | null;
+}) {
+  if (snag.status === nextStatus) return;
+
+  const supabase = createSupabaseBrowserClient();
+  const updatePayload: { status: string; closed_at?: string | null } = { status: nextStatus };
+  if (closedAt !== undefined) updatePayload.closed_at = closedAt;
+
+  const { error: statusError } = await supabase
+    .from("snags")
+    .update(updatePayload)
+    .eq("id", snag.id);
+
+  if (statusError) throw new Error(statusError.message);
+
+  const { error: eventError } = await supabase.from("snag_events").insert({
+    snag_id: snag.id,
+    event_type: "status_change",
+    old_value: snag.status,
+    new_value: nextStatus,
+    comment: comment?.trim() || null,
+    created_by_user_id: user.id,
+  });
+
+  if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
+}
+
 function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
   const [showInfoRequest, setShowInfoRequest] = useState(false);
   const [infoRequest, setInfoRequest] = useState("");
+  const [isSaving, setIsSaving] = useState<"request" | "resolve" | null>(null);
 
-  async function save(status?: string, comment?: string) {
-    const supabase = createSupabaseBrowserClient();
-    await supabase.from("snags").update({ status: status ?? snag.status }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "status_change", old_value: snag.status, new_value: status ?? snag.status, comment: comment ?? null, created_by_user_id: user.id });
-    onNotice("");
-    await reload();
+  async function requestInfo() {
+    const trimmed = infoRequest.trim();
+    if (!trimmed || isSaving) return;
+    setIsSaving("request");
+    try {
+      await saveSnagStatusChange({ user, snag, nextStatus: "needs_more_info", comment: trimmed });
+      setInfoRequest("");
+      setShowInfoRequest(false);
+      onNotice("Request sent and status updated to Needs more info");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not send request.");
+    } finally {
+      setIsSaving(null);
+    }
+  }
+
+  async function markResolved() {
+    if (isSaving) return;
+    setIsSaving("resolve");
+    try {
+      await saveSnagStatusChange({ user, snag, nextStatus: "resolved_by_contractor" });
+      onNotice("Snag marked as resolved");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not mark snag as resolved.");
+    } finally {
+      setIsSaving(null);
+    }
   }
 
   if (snag.status === "closed" || snag.status === "resolved_by_contractor" || snag.status === "needs_more_info") return null;
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
       <div className="flex flex-wrap justify-end gap-2">
-        <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowInfoRequest((current) => !current)}>Request info</button>
-        <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={() => save("resolved_by_contractor")}>Mark as Resolved</button>
+        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)}>
+          <CircleHelp size={16} aria-hidden /> Request info
+        </button>
+        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={markResolved} disabled={Boolean(isSaving)}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving === "resolve" ? "Updating..." : "Resolve"}
+        </button>
       </div>
       {showInfoRequest && (
         <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
-          <input className="field" value={infoRequest} onChange={(event) => setInfoRequest(event.target.value)} placeholder="What information is needed?" />
-          <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={() => save("needs_more_info", infoRequest)} disabled={!infoRequest.trim()}>Send request</button>
+          <input
+            className="field"
+            value={infoRequest}
+            onChange={(event) => setInfoRequest(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void requestInfo();
+            }}
+            placeholder="What information is needed?"
+            disabled={Boolean(isSaving)}
+          />
+          <button className="inline-flex min-h-9 items-center gap-1.5 justify-self-end rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={requestInfo} disabled={Boolean(isSaving) || !infoRequest.trim()}>
+            <CircleHelp size={16} aria-hidden /> {isSaving === "request" ? "Sending..." : "Send request"}
+          </button>
         </div>
       )}
     </div>
@@ -3344,12 +3484,15 @@ function LeaseholderDefects({
   units,
   areas,
   snags,
+  handovers,
+  handoverKeyItems,
   meterReadings,
   photos,
   events,
   profiles,
   accessibleUnitIds,
   onNotice,
+  recordAudit,
   reload,
   uploadFile,
 }: {
@@ -3359,12 +3502,15 @@ function LeaseholderDefects({
   units: Unit[];
   areas: Area[];
   snags: ProductionSnag[];
+  handovers: Handover[];
+  handoverKeyItems: HandoverKeyItem[];
   meterReadings: MeterReading[];
   photos: SnagPhoto[];
   events: SnagEvent[];
   profiles: Profile[];
   accessibleUnitIds: string[];
   onNotice: (notice: string) => void;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
@@ -3383,6 +3529,7 @@ function LeaseholderDefects({
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState("");
   const [defectAttempted, setDefectAttempted] = useState(false);
+  const [isSubmittingDefect, setIsSubmittingDefect] = useState(false);
   const [defectStatusFilter, setDefectStatusFilter] = useState("");
   const [defectPriorityFilter, setDefectPriorityFilter] = useState("");
   const [meterType, setMeterType] = useState<"water" | "electricity">("water");
@@ -3390,6 +3537,8 @@ function LeaseholderDefects({
   const [meterPhoto, setMeterPhoto] = useState("");
   const selectedUnit = units.find((unit) => unit.id === unitId);
   const selectedBuilding = buildings.find((building) => building.id === selectedUnit?.building_id);
+  const existingHandover = handovers.find((handover) => handover.unit_id === unitId);
+  const selectedHandoverKeys = handoverKeyItems.filter((item) => item.handover_id === existingHandover?.id);
   const selectedUnitAreas = areas.filter((area) => area.unit_id === unitId);
   const selectedUnitDefects = snags.filter((snag) => snag.unit_id === unitId);
   const filteredDefects = selectedUnitDefects
@@ -3420,6 +3569,7 @@ function LeaseholderDefects({
   }, [buildingFilter, filteredUserUnits, hasMultipleBuildings, hasSingleUnit, residentBuildingIds, unitId, userUnits]);
 
   async function createDefect() {
+    if (isSubmittingDefect) return;
     setDefectAttempted(true);
     if (!selectedUnit) {
       onNotice("Select a unit before submitting a defect.");
@@ -3432,6 +3582,7 @@ function LeaseholderDefects({
     if (!areaId || !title.trim() || !description.trim() || !photo) return;
 
     const supabase = createSupabaseBrowserClient();
+    setIsSubmittingDefect(true);
     try {
       const photoUrl = await uploadFile(photo, "defects");
       const { data, error } = await supabase.from("snags").insert({
@@ -3450,17 +3601,23 @@ function LeaseholderDefects({
 
       if (error) throw error;
 
-      await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
-      await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "submitted", new_value: "submitted", created_by_user_id: user.id });
+      const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
+      if (photoError) throw photoError;
+
+      const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "submitted", new_value: "submitted", created_by_user_id: user.id });
+      if (eventError) throw eventError;
+
       setAreaId("");
       setTitle("");
       setDescription("");
       setPhoto("");
       setDefectAttempted(false);
-      onNotice("");
+      onNotice("Defect submitted.");
       await reload();
     } catch {
       onNotice("Unable to submit defect. Please try again or contact support.");
+    } finally {
+      setIsSubmittingDefect(false);
     }
   }
 
@@ -3543,6 +3700,26 @@ function LeaseholderDefects({
             <p className="mt-1 text-sm text-[#617169]">
               Parking bay{(selectedUnit?.parking_bays?.length ?? 0) === 1 ? "" : "s"}: {formatParkingBays(selectedUnit?.parking_bays)}
             </p>
+            {selectedUnit && (
+              <div className="mt-3 grid gap-3 rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-[#0F3D2E]">Flat status</p>
+                  <span className={statusTone(existingHandover ? "handed_over" : selectedUnit.sale_status)}>{existingHandover ? "Handed Over" : statusLabel(selectedUnit.sale_status)}</span>
+                </div>
+                <SelectedUnitHandover
+                  building={selectedBuilding}
+                  existingHandover={existingHandover}
+                  existingKeyItems={selectedHandoverKeys}
+                  profile={profile}
+                  recordAudit={recordAudit}
+                  reload={reload}
+                  selectedUnit={selectedUnit}
+                  onNotice={onNotice}
+                  uploadFile={uploadFile}
+                  user={user}
+                />
+              </div>
+            )}
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -3567,13 +3744,13 @@ function LeaseholderDefects({
               {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
             </select>
             {showDefectValidation && !areaId && <p className="text-sm text-[#B42318]">Select the room or area for this defect.</p>}
-            <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={!selectedUnit} />
+            <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
             {showDefectValidation && !title.trim() && <p className="text-sm text-[#B42318]">Enter a short title.</p>}
-            <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={!selectedUnit} />
+            <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
             {showDefectValidation && !description.trim() && <p className="text-sm text-[#B42318]">Enter a description so the team knows what to review.</p>}
-            <PhotoInput value={photo} onChange={setPhoto} disabled={!selectedUnit} />
+            <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
             {showDefectValidation && !photo && <p className="text-sm text-[#B42318]">Add a photo of the defect.</p>}
-            <button className="primary" onClick={createDefect} disabled={!canSubmitDefect}>Submit defect</button>
+            <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Submit defect"}</button>
           </FormPanel>
           <FormPanel title="Meter reading">
             <select className="field" value={meterType} onChange={(event) => setMeterType(event.target.value as "water" | "electricity")} disabled={!selectedUnit}>
@@ -3646,6 +3823,250 @@ function LeaseholderDefects({
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SelectedUnitHandover({
+  building,
+  existingHandover,
+  existingKeyItems,
+  profile,
+  recordAudit,
+  reload,
+  selectedUnit,
+  onNotice,
+  uploadFile,
+  user,
+}: {
+  building?: Building;
+  existingHandover?: Handover;
+  existingKeyItems: HandoverKeyItem[];
+  profile: Profile | null;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  reload: () => Promise<void>;
+  selectedUnit: Unit;
+  onNotice: (notice: string) => void;
+  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  user: User;
+}) {
+  const [showFlow, setShowFlow] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [relationship, setRelationship] = useState("Buyer");
+  const [relationshipOther, setRelationshipOther] = useState("");
+  const [keyItems, setKeyItems] = useState<Array<{ key_type: string; quantity: number; notes: string }>>([{ key_type: "Front Door Key", quantity: 2, notes: "" }]);
+  const [keyPhoto, setKeyPhoto] = useState("");
+  const [electricityReading, setElectricityReading] = useState("");
+  const [electricityPhoto, setElectricityPhoto] = useState("");
+  const [waterReading, setWaterReading] = useState("");
+  const [waterPhoto, setWaterPhoto] = useState("");
+  const [signature, setSignature] = useState("");
+  const [handoverDateTime, setHandoverDateTime] = useState(() => new Date().toISOString().slice(0, 16));
+  const canManageHandover = profile?.role === "admin" || profile?.role === "developer";
+  const totalKeys = keyItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const formComplete = Boolean(
+    selectedUnit.sale_status === "completed"
+    && !existingHandover
+    && recipientName.trim()
+    && recipientEmail.trim()
+    && recipientPhone.trim()
+    && relationship
+    && (relationship !== "Other" || relationshipOther.trim())
+    && keyItems.some((item) => item.key_type.trim() && Number(item.quantity) > 0)
+    && keyPhoto
+    && electricityReading.trim()
+    && electricityPhoto
+    && waterReading.trim()
+    && waterPhoto
+    && signature
+    && handoverDateTime,
+  );
+
+  function updateKeyItem(index: number, patch: Partial<{ key_type: string; quantity: number; notes: string }>) {
+    setKeyItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
+  }
+
+  function resetDraft() {
+    setShowFlow(false);
+    setRecipientName("");
+    setRecipientEmail("");
+    setRecipientPhone("");
+    setRelationship("Buyer");
+    setRelationshipOther("");
+    setKeyItems([{ key_type: "Front Door Key", quantity: 2, notes: "" }]);
+    setKeyPhoto("");
+    setElectricityReading("");
+    setElectricityPhoto("");
+    setWaterReading("");
+    setWaterPhoto("");
+    setSignature("");
+    setHandoverDateTime(new Date().toISOString().slice(0, 16));
+  }
+
+  async function submitHandover() {
+    if (!formComplete) return;
+    setIsSubmitting(true);
+    const supabase = createSupabaseBrowserClient();
+    try {
+      const [keyPhotoUrl, electricityPhotoUrl, waterPhotoUrl, signatureUrl] = await Promise.all([
+        uploadFile(keyPhoto, "handover-keys"),
+        uploadFile(electricityPhoto, "meter-readings"),
+        uploadFile(waterPhoto, "meter-readings"),
+        uploadFile(signature, "handover-signatures"),
+      ]);
+      const { data: handover, error: handoverError } = await supabase.from("handovers").insert({
+        unit_id: selectedUnit.id,
+        handover_by_user_id: user.id,
+        recipient_name: recipientName.trim(),
+        recipient_email: recipientEmail.trim(),
+        recipient_phone: recipientPhone.trim(),
+        recipient_capacity: relationship === "Other" ? relationshipOther.trim() : relationship,
+        recipient_relationship: relationship,
+        recipient_relationship_other: relationship === "Other" ? relationshipOther.trim() : null,
+        number_of_keys: totalKeys,
+        signature_url: signatureUrl,
+        handover_date: handoverDateTime.slice(0, 10),
+        handover_datetime: new Date(handoverDateTime).toISOString(),
+        declaration_accepted: true,
+      }).select("*").single();
+      if (handoverError) throw handoverError;
+
+      const handoverId = (handover as Handover).id;
+      const keyRows = keyItems.filter((item) => item.key_type.trim() && Number(item.quantity) > 0).map((item, index) => ({
+        handover_id: handoverId,
+        key_type: item.key_type.trim(),
+        quantity: Number(item.quantity),
+        notes: item.notes.trim() || null,
+        sort_order: index,
+      }));
+      const { error: keysError } = await supabase.from("handover_key_items").insert(keyRows);
+      if (keysError) throw keysError;
+      const { error: photoError } = await supabase.from("handover_photos").insert({
+        handover_id: handoverId,
+        file_url: keyPhotoUrl,
+        photo_type: "keys",
+        caption: "Keys and fobs handed over",
+        uploaded_by_user_id: user.id,
+      });
+      if (photoError) throw photoError;
+      const { error: meterError } = await supabase.from("meter_readings").insert([
+        {
+          building_id: selectedUnit.building_id,
+          unit_id: selectedUnit.id,
+          handover_id: handoverId,
+          meter_type: "electricity",
+          reading_value: electricityReading.trim(),
+          reading_date: handoverDateTime.slice(0, 10),
+          photo_url: electricityPhotoUrl,
+          created_by_user_id: user.id,
+        },
+        {
+          building_id: selectedUnit.building_id,
+          unit_id: selectedUnit.id,
+          handover_id: handoverId,
+          meter_type: "water",
+          reading_value: waterReading.trim(),
+          reading_date: handoverDateTime.slice(0, 10),
+          photo_url: waterPhotoUrl,
+          created_by_user_id: user.id,
+        },
+      ]);
+      if (meterError) throw meterError;
+      await recordAudit({
+        event_type: "handover_completed",
+        entity_type: "unit",
+        entity_id: selectedUnit.id,
+        summary: `Handover completed for unit ${selectedUnit.unit_number}`,
+        metadata: { unit_number: selectedUnit.unit_number, building: building?.name, recipient_relationship: relationship, total_keys: totalKeys },
+      });
+      onNotice(`Handover completed for unit ${selectedUnit.unit_number}.`);
+      resetDraft();
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Unable to complete handover.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (existingHandover) {
+    return (
+      <div className="rounded-lg border border-[#d9ded6] bg-white p-3 text-sm">
+        <p className="font-semibold text-[#0F3D2E]">Handover completed</p>
+        <p className="mt-1 text-[#34413a]">{formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}</p>
+        <p className="mt-1 text-[#617169]">Keys collected by {existingHandover.recipient_name || "recipient"}.</p>
+        {existingKeyItems.length > 0 && <p className="mt-1 text-xs text-[#617169]">{existingKeyItems.reduce((sum, item) => sum + item.quantity, 0)} key/fob item{existingKeyItems.length === 1 ? "" : "s"} recorded.</p>}
+      </div>
+    );
+  }
+
+  if (selectedUnit.sale_status !== "completed") {
+    return (
+      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+        {["for_sale", "reserved", "exchanged"].includes(selectedUnit.sale_status)
+          ? "Handover is not available until the sale has completed."
+          : `Handover unavailable. This flat is currently marked as ${statusLabel(selectedUnit.sale_status)}.`}
+      </div>
+    );
+  }
+
+  if (!canManageHandover) {
+    return <p className="text-sm text-[#617169]">Handover is ready once Bunnywell completes the appointment.</p>;
+  }
+
+  return (
+    <div className="grid gap-3">
+      {!showFlow ? (
+        <button className="secondary min-h-10 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowFlow(true)}>Start handover</button>
+      ) : (
+        <div className="grid gap-4 rounded-xl border border-[#d9ded6] bg-white p-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="field-label">Full name<input className="field" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></label>
+            <label className="field-label">Email address<input className="field" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} type="email" /></label>
+            <label className="field-label">Phone number<input className="field" value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} /></label>
+            <label className="field-label">Relationship to flat
+              <select className="field" value={relationship} onChange={(event) => setRelationship(event.target.value)}>
+                {["Buyer", "Tenant", "Family Member", "Letting Agent", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
+            {relationship === "Other" && <label className="field-label md:col-span-2">Relationship details<input className="field" value={relationshipOther} onChange={(event) => setRelationshipOther(event.target.value)} /></label>}
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-semibold text-[#0F3D2E]">Keys and fobs</p>
+            {keyItems.map((item, index) => (
+              <div key={index} className="grid gap-2 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
+                <select className="field" value={item.key_type} onChange={(event) => updateKeyItem(index, { key_type: event.target.value })}>
+                  {["Front Door Key", "Post Box Key", "Window Key", "Meter Cupboard Key", "Communal Entrance Fob", "Parking Fob", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+                <input className="field" type="number" min={1} value={item.quantity} onChange={(event) => updateKeyItem(index, { quantity: Number(event.target.value) })} />
+                <input className="field" value={item.notes} onChange={(event) => updateKeyItem(index, { notes: event.target.value })} placeholder="Optional notes" />
+                <button className="secondary px-3" onClick={() => setKeyItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} disabled={keyItems.length === 1}>Remove</button>
+              </div>
+            ))}
+            <button className="secondary w-fit" onClick={() => setKeyItems((current) => [...current, { key_type: "Other", quantity: 1, notes: "" }])}>Add key/fob</button>
+            <SimplePhotoInput value={keyPhoto} onChange={setKeyPhoto} label="Add or take keys/fobs photo" />
+          </div>
+          <div className="grid items-stretch gap-4 md:grid-cols-2">
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+              <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} /></label>
+              <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} label="Add or take electricity meter photo" />
+            </div>
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+              <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} /></label>
+              <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} label="Add or take water meter photo" />
+            </div>
+          </div>
+          <label className="field-label">Handover date/time<input className="field" type="datetime-local" value={handoverDateTime} onChange={(event) => setHandoverDateTime(event.target.value)} /></label>
+          <SignaturePad value={signature} onChange={setSignature} />
+          <div className="flex flex-wrap justify-end gap-2">
+            <button className="secondary" onClick={resetDraft}>Cancel</button>
+            <button className="primary" onClick={submitHandover} disabled={!formComplete || isSubmitting}>{isSubmitting ? "Submitting..." : "Complete handover"}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4189,18 +4610,28 @@ function ReportsPanel({
   photos: SnagPhoto[];
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
 }) {
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
-  const buildingUnits = units.filter((unit) => !buildingId || unit.building_id === buildingId);
+  const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
+  const reportUnitIds = Array.from(new Set(snags.map((snag) => snag.unit_id).filter(Boolean))) as string[];
+  const reportBuildings = buildings.filter((building) => reportBuildingIds.includes(building.id));
+  const [buildingId, setBuildingId] = useState(reportBuildings[0]?.id ?? "");
+  const buildingUnits = units
+    .filter((unit) => reportUnitIds.includes(unit.id))
+    .filter((unit) => !buildingId || unit.building_id === buildingId)
+    .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
   const reportSnags = snags.filter((snag) => snag.unit_id === unitId);
   const unit = units.find((item) => item.id === unitId);
   const building = buildings.find((item) => item.id === buildingId);
 
   useEffect(() => {
+    if (!reportBuildings.some((building) => building.id === buildingId)) {
+      setBuildingId(reportBuildings[0]?.id ?? "");
+      return;
+    }
     if (!buildingUnits.some((unit) => unit.id === unitId)) {
       setUnitId(buildingUnits[0]?.id ?? "");
     }
-  }, [buildingId, buildingUnits, unitId]);
+  }, [buildingId, buildingUnits, reportBuildings, unitId]);
 
   async function download() {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
@@ -4415,8 +4846,11 @@ function ReportsPanel({
 
   return (
     <FormPanel title="PDF snag report">
+      {snags.length === 0 && (
+        <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
+      )}
       <select className="field" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
-        {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+        {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
       </select>
       <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
         {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
@@ -4672,7 +5106,19 @@ function SnagList({
             const rowActions = actions?.(snag);
 
             return (
-              <article key={snag.id} className="mobile-card">
+              <article
+                key={snag.id}
+                className="mobile-card cursor-pointer transition hover:border-[#D6A23A]"
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedSnagId(snag.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedSnagId(snag.id);
+                  }
+                }}
+              >
                 <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-base font-bold text-[#1F2A24]">{snag.title}</p>
@@ -4684,7 +5130,10 @@ function SnagList({
                   </div>
                   <div className="h-16 w-16 justify-self-end overflow-hidden rounded-xl border border-[#E2DED3] bg-[#FBFAF6]">
                     {photo?.file_url ? (
-                      <button className="block h-full w-full cursor-pointer" onClick={() => setPreviewPhoto(photo)}>
+                      <button className="block h-full w-full cursor-pointer" onClick={(event) => {
+                        event.stopPropagation();
+                        setPreviewPhoto(photo);
+                      }}>
                         <img src={photo.file_url} alt="" className="h-full w-full object-cover" />
                       </button>
                     ) : (
@@ -4704,7 +5153,6 @@ function SnagList({
                 </div>
                 <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-3">
                   {rowActions}
-                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setSelectedSnagId(snag.id)}>Details</button>
                 </div>
               </article>
             );
@@ -4742,7 +5190,18 @@ function SnagList({
                   const rowActions = actions?.(snag);
 
                   return (
-                    <tr key={snag.id} className="align-middle">
+                    <tr
+                      key={snag.id}
+                      className="cursor-pointer align-middle transition hover:bg-[#f8faf7]"
+                      onClick={() => setSelectedSnagId(snag.id)}
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedSnagId(snag.id);
+                        }
+                      }}
+                    >
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         <p className="max-w-xs truncate font-medium">{snag.title}</p>
                         {snag.description && <p className="mt-0.5 max-w-xs truncate text-xs text-[#617169]">{snag.description}</p>}
@@ -4764,7 +5223,6 @@ function SnagList({
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         <div className="flex min-w-44 flex-wrap justify-end gap-2">
                           {rowActions}
-                          <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => setSelectedSnagId(snag.id)}>Details</button>
                         </div>
                       </td>
                     </tr>
@@ -4800,7 +5258,10 @@ function PhotoThumb({ photo, onOpen }: { photo: SnagPhoto; onOpen: (photo: SnagP
   }
 
   return (
-    <button className="cursor-pointer" onClick={() => onOpen(photo)} title="View photo">
+    <button className="cursor-pointer" onClick={(event) => {
+      event.stopPropagation();
+      onOpen(photo);
+    }} title="View photo">
       <img
         src={photo.file_url}
         alt=""
@@ -4880,10 +5341,19 @@ function SnagDetailPage({
     { key: "audit", label: "Audit" },
   ];
 
-  function authorName(userId?: string | null) {
+  function authorName(userId?: string | null, fallback = "Unknown user") {
     if (!userId) return "System";
     const profile = profiles.find((item) => item.id === userId);
-    return profile?.full_name || profile?.name || profile?.email || "Unknown user";
+    if (profile) return profile.full_name || profile.name || profile.email || fallback;
+    if (userId === user.id) {
+      const metadataName = typeof user.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name
+        : typeof user.user_metadata?.name === "string"
+          ? user.user_metadata.name
+          : "";
+      return metadataName || user.email || fallback;
+    }
+    return fallback;
   }
 
   function timelineHeading(event: SnagEvent) {
@@ -4903,6 +5373,12 @@ function SnagDetailPage({
     return "border-[#d9ded6] bg-white";
   }
 
+  function timelineAuthorName(event: SnagEvent) {
+    const actorId = event.created_by_user_id ?? snag.created_by_user_id ?? snag.created_by ?? null;
+    const fallback = snag.source_type === "leaseholder_defect" ? "Resident" : "Unknown user";
+    return authorName(actorId, fallback);
+  }
+
   function toggleNoteGroup(groupId: string) {
     setExpandedNoteGroups((current) => current.includes(groupId) ? current.filter((item) => item !== groupId) : [...current, groupId]);
   }
@@ -4919,7 +5395,7 @@ function SnagDetailPage({
       old_value: null,
       new_value: snag.status,
       comment: null,
-      created_by_user_id: snag.created_by_user_id,
+      created_by_user_id: snag.created_by_user_id ?? snag.created_by ?? null,
       created_at: snag.created_at,
     }];
   const noteGroups = noteEvents.reduce<{ id: string; userId: string | null; createdAt: string; events: SnagEvent[] }[]>((groups, event) => {
@@ -5125,7 +5601,7 @@ function SnagDetailPage({
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-[#0F3D2E]">{timelineHeading(event)}</p>
-                      <p className="mt-1 text-xs text-[#617169]">{formatDateTime(event.created_at)} / {authorName(event.created_by_user_id)}</p>
+                      <p className="mt-1 text-xs text-[#617169]">{formatDateTime(event.created_at)} / {timelineAuthorName(event)}</p>
                     </div>
                     {event.new_value && <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(event.new_value)}`}>{statusLabel(event.new_value)}</span>}
                   </div>
@@ -5296,6 +5772,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
   const [baseImage, setBaseImage] = useState("");
   const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
   const [drawing, setDrawing] = useState(false);
+  const [isAnnotating, setIsAnnotating] = useState(false);
 
   useEffect(() => {
     if (!baseImage) return;
@@ -5355,17 +5832,32 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
     const reader = new FileReader();
     reader.onload = () => {
       setStrokes([]);
-      setBaseImage(String(reader.result));
+      setBaseImage("");
+      setIsAnnotating(false);
       onChange(String(reader.result));
     };
     reader.readAsDataURL(file);
+  }
+
+  function openAnnotationEditor() {
+    if (!value || disabled) return;
+    setStrokes([]);
+    setBaseImage(value);
+    setIsAnnotating(true);
+  }
+
+  function removePhoto() {
+    setBaseImage("");
+    setStrokes([]);
+    setIsAnnotating(false);
+    onChange("");
   }
 
   return (
     <div className="grid gap-2">
       <label className={`camera-action ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
-        Add or take photo
+        {value ? "Replace photo" : "Add or take photo"}
         <input
           type="file"
           accept="image/*"
@@ -5379,42 +5871,67 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
       </label>
       {value && (
         <div className="grid gap-2">
-          <canvas
-            ref={canvasRef}
-            className="aspect-video w-full rounded-md border border-[#d9ded6] bg-[#eef1ec]"
-            onPointerDown={(event) => {
-              if (disabled) return;
-              event.currentTarget.setPointerCapture(event.pointerId);
-              setDrawing(true);
-              setStrokes((current) => [...current, [point(event)]]);
-            }}
-            onPointerMove={(event) => {
-              if (!drawing || disabled) return;
-              setStrokes((current) => {
-                const next = [...current];
-                const latest = next[next.length - 1] ?? [];
-                next[next.length - 1] = [...latest, point(event)];
-                return next;
-              });
-            }}
-            onPointerUp={() => setDrawing(false)}
-            onPointerCancel={() => setDrawing(false)}
-          />
-          <div className="grid grid-cols-3 gap-2">
-            <button className="secondary" onClick={() => setStrokes((current) => current.slice(0, -1))} disabled={disabled}>Undo</button>
-            <button className="secondary" onClick={() => setStrokes([])} disabled={disabled}>Clear</button>
-            <button
-              className="secondary"
-              disabled={disabled}
-              onClick={() => {
-                setBaseImage("");
-                setStrokes([]);
-                onChange("");
-              }}
-            >
-              Remove
-            </button>
-          </div>
+          {!isAnnotating && (
+            <>
+              <button className="secondary min-h-11 w-full justify-center px-4 py-2 text-sm" onClick={openAnnotationEditor} disabled={disabled} aria-label="Annotate photo">
+                <Pencil size={17} aria-hidden />
+                Annotate Photo
+              </button>
+              <button
+                className="group relative cursor-pointer overflow-hidden rounded-md border border-[#d9ded6] bg-[#eef1ec] text-left transition hover:border-[#D6A23A] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={openAnnotationEditor}
+                disabled={disabled}
+                aria-label="Open photo annotation editor"
+              >
+                <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0F3D2E]/92 px-2.5 py-1 text-xs font-semibold text-white shadow-md sm:text-sm">
+                  ✏️ Tap to annotate
+                </span>
+                <img
+                  src={value}
+                  alt="Uploaded defect photo. Tap to annotate."
+                  className="max-h-[28rem] min-h-44 w-full cursor-pointer object-contain transition group-hover:scale-[1.01] group-hover:opacity-95"
+                />
+              </button>
+              <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={disabled} onClick={removePhoto}>Remove photo</button>
+            </>
+          )}
+          {isAnnotating && (
+            <>
+              <canvas
+                ref={canvasRef}
+                className="aspect-video w-full touch-none cursor-crosshair rounded-md border border-[#d9ded6] bg-[#eef1ec]"
+                aria-label="Photo annotation editor"
+                onPointerDown={(event) => {
+                  if (disabled) return;
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  setDrawing(true);
+                  setStrokes((current) => [...current, [point(event)]]);
+                }}
+                onPointerMove={(event) => {
+                  if (!drawing || disabled) return;
+                  setStrokes((current) => {
+                    const next = [...current];
+                    const latest = next[next.length - 1] ?? [];
+                    next[next.length - 1] = [...latest, point(event)];
+                    return next;
+                  });
+                }}
+                onPointerUp={() => setDrawing(false)}
+                onPointerCancel={() => setDrawing(false)}
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <button className="secondary" onClick={() => setStrokes((current) => current.slice(0, -1))} disabled={disabled}>Undo</button>
+                <button className="secondary" onClick={() => setStrokes([])} disabled={disabled}>Clear</button>
+                <button
+                  className="secondary"
+                  disabled={disabled}
+                  onClick={removePhoto}
+                >
+                  Remove
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

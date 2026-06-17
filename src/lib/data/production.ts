@@ -85,6 +85,7 @@ export type ProductionSnag = {
   unit_id: string | null;
   area_id: string | null;
   source_type: "developer_snag" | "leaseholder_defect" | "imported_report";
+  created_by?: string | null;
   created_by_user_id: string | null;
   title: string;
   description: string | null;
