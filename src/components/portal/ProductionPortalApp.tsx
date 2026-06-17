@@ -63,6 +63,14 @@ type AuditEvent = {
 
 type Tab = "dashboard" | "admin" | "users" | "add_snag" | "snags" | "handover" | "leaseholder" | "reports" | "audit";
 
+type SnagListFilters = {
+  buildingId?: string;
+  unitFilter?: string;
+  statusFilter?: string;
+  tradeFilter?: string;
+  quickFilter?: "overdue" | "due_soon" | "recent";
+};
+
 type SnagDraft = {
   buildingId: string;
   floor: string;
@@ -96,6 +104,7 @@ const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
   { value: "completed", label: "Completed" },
   { value: "handed_over", label: "Handed Over" },
 ];
+const adminEditableUnitSaleStatuses = unitSaleStatuses.filter((status) => status.value !== "handed_over");
 
 const appRoles: Array<{ value: AppRole; label: string }> = [
   { value: "admin", label: "Admin" },
@@ -196,6 +205,8 @@ function statusLabel(status: string) {
     tenant: "Tenant",
     letting_agent: "Letting Agent",
     managing_agent: "Managing Agent",
+    electricity: "Electricity",
+    water: "Water",
     Open: "Open",
     Resolved: "Resolved",
   };
@@ -272,6 +283,7 @@ export function ProductionPortalApp() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [snagListFilters, setSnagListFilters] = useState<SnagListFilters>({});
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
@@ -486,6 +498,7 @@ export function ProductionPortalApp() {
           trades={trades}
           units={units}
           setTab={setTab}
+          setSnagFilters={setSnagListFilters}
         />
       )}
       {tab === "admin" && (
@@ -525,6 +538,7 @@ export function ProductionPortalApp() {
           onNotice={setNotice}
           reload={loadAll}
           uploadFile={uploadFile}
+          requestedFilters={snagListFilters}
         />
       )}
       {tab === "snags" && (
@@ -798,6 +812,7 @@ function Dashboard({
   trades,
   units,
   setTab,
+  setSnagFilters,
 }: {
   buildings: Building[];
   events: SnagEvent[];
@@ -807,12 +822,17 @@ function Dashboard({
   trades: Trade[];
   units: Unit[];
   setTab: (tab: Tab) => void;
+  setSnagFilters: (filters: SnagListFilters) => void;
 }) {
   const model = buildDashboardModel({ buildings, events, handovers, snags, trades, units });
   const isContractor = profile?.role === "contractor";
   const attentionItems = isContractor
     ? model.attention.filter((item) => ["needs_trade", "overdue", "due_soon", "recent"].includes(item.id))
     : model.attention;
+  function openSnags(filters: SnagListFilters = {}) {
+    setSnagFilters(filters);
+    setTab("snags");
+  }
 
   return (
     <div className="grid gap-5">
@@ -831,7 +851,7 @@ function Dashboard({
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {attentionItems.map((item) => (
-          <ActionCard key={item.id} item={item} onClick={() => setTab("snags")} />
+          <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
         ))}
       </section>
 
@@ -911,16 +931,16 @@ function Dashboard({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">
-        <BreakdownPanel title="Priority breakdown" items={model.priorityBreakdown} onClick={() => setTab("snags")} />
-        <BreakdownPanel title="Status breakdown" items={model.statusBreakdown} onClick={() => setTab("snags")} />
-        <BreakdownPanel title="Trade breakdown" items={model.tradeBreakdown} onClick={() => setTab("snags")} />
+        <BreakdownPanel title="Priority breakdown" items={model.priorityBreakdown} onClick={() => openSnags()} />
+        <BreakdownPanel title="Status breakdown" items={model.statusBreakdown} onClick={() => openSnags()} />
+        <BreakdownPanel title="Trade breakdown" items={model.tradeBreakdown} onClick={() => openSnags()} />
       </div>
 
       <section className="panel">
         <SectionHeader title="Recent activity" subtitle="Latest comments, status changes, photos and allocation updates." />
         <div className="mt-4 grid gap-3">
           {model.recentActivity.map((activity) => (
-            <button key={activity.id} className="dashboard-activity-card" onClick={() => setTab("snags")}>
+            <button key={activity.id} className="dashboard-activity-card" onClick={() => openSnags({ quickFilter: "recent" })}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[#1F2A24]">{activity.title}</p>
@@ -936,6 +956,17 @@ function Dashboard({
       </section>
     </div>
   );
+}
+
+function filtersForAttention(id: string): SnagListFilters {
+  if (id === "needs_trade") return { tradeFilter: "__none__" };
+  if (id === "overdue") return { quickFilter: "overdue" };
+  if (id === "due_soon") return { quickFilter: "due_soon" };
+  if (id === "review") return { statusFilter: "resolved_by_contractor" };
+  if (id === "contractor_reject") return { statusFilter: "needs_more_info" };
+  if (id === "developer_reject") return { statusFilter: "__rejected__" };
+  if (id === "recent") return { quickFilter: "recent" };
+  return {};
 }
 
 function buildDashboardModel({
@@ -1166,9 +1197,7 @@ function BuildingStructureView({
 }) {
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const [floorName, setFloorName] = useState("");
-  const [communalName, setCommunalName] = useState("");
-  const [communalFloor, setCommunalFloor] = useState("");
-  const [floorSorts, setFloorSorts] = useState<Record<string, string>>({});
+  const [editingFloorOrder, setEditingFloorOrder] = useState(false);
   const building = buildings.find((item) => item.id === buildingId) ?? buildings[0];
   const floors = buildingFloors
     .filter((floor) => floor.building_id === building?.id)
@@ -1177,6 +1206,7 @@ function BuildingStructureView({
   const communalAreas = areas
     .filter((area) => area.building_id === building?.id && area.area_type === "communal_area")
     .sort((a, b) => a.sort_order - b.sort_order);
+  const unassignedCommunalAreas = communalAreas.filter((area) => !area.floor || !floors.some((floor) => floor.name === area.floor));
   const unmatchedUnits = buildingUnits.filter((unit) => unit.floor && !floors.some((floor) => floor.name === unit.floor));
   const noFloorUnits = buildingUnits.filter((unit) => !unit.floor);
 
@@ -1184,36 +1214,20 @@ function BuildingStructureView({
     if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
   }, [buildingId, buildings]);
 
-  useEffect(() => {
-    setFloorSorts(Object.fromEntries(floors.map((floor) => [floor.id, String(floor.sort_order)])));
-  }, [buildingId, buildingFloors]);
-
-  async function updateFloorSort(floor: BuildingFloor) {
-    const nextSort = Number(floorSorts[floor.id]);
-    if (!Number.isFinite(nextSort) || nextSort === floor.sort_order) return;
+  async function moveFloor(floorId: string, direction: -1 | 1) {
+    const currentIndex = floors.findIndex((floor) => floor.id === floorId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= floors.length) return;
+    const reordered = [...floors];
+    const [floor] = reordered.splice(currentIndex, 1);
+    reordered.splice(nextIndex, 0, floor);
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("building_floors").update({ sort_order: nextSort }).eq("id", floor.id);
+    const { error } = await supabase.from("building_floors").upsert(reordered.map((item, index) => ({
+      ...item,
+      sort_order: (index + 1) * 10,
+    })));
     if (error) onNotice(error.message);
     else await reload();
-  }
-
-  async function addCommunalArea() {
-    if (!building || !communalName) return;
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("areas").insert({
-      building_id: building.id,
-      unit_id: null,
-      area_type: "communal_area",
-      name: communalName,
-      floor: communalFloor || null,
-      sort_order: communalAreas.length + 1,
-    });
-    if (error) onNotice(error.message);
-    else {
-      setCommunalName("");
-      setCommunalFloor("");
-      await reload();
-    }
   }
 
   async function addFloor() {
@@ -1222,7 +1236,7 @@ function BuildingStructureView({
     const { error } = await supabase.from("building_floors").insert({
       building_id: building.id,
       name: floorName,
-      sort_order: floors.length + 1,
+      sort_order: floors.length === 0 ? 10 : Math.max(...floors.map((floor) => floor.sort_order)) + 10,
     });
     if (error) onNotice(error.message);
     else {
@@ -1248,28 +1262,29 @@ function BuildingStructureView({
       {building && (
         <div className="mt-5 grid gap-4">
           <div className="rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
-            <h3 className="font-semibold">Floors</h3>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {floors.map((floor) => (
-                <div key={floor.id} className="grid gap-2 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
-                  <span className="font-medium">{floor.name}</span>
-                  <label className="grid gap-1 text-xs text-[#617169]">
-                    Sort order
-                    <input
-                      className="field py-1 text-sm"
-                      value={floorSorts[floor.id] ?? String(floor.sort_order)}
-                      onBlur={() => updateFloorSort(floor)}
-                      onChange={(event) => setFloorSorts((current) => ({ ...current, [floor.id]: event.target.value }))}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void updateFloorSort(floor);
-                      }}
-                      type="number"
-                    />
-                  </label>
-                </div>
-              ))}
-              {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold">Floors</h3>
+                <p className="text-sm text-[#617169]">Building &gt; floors &gt; units and communal areas.</p>
+              </div>
+              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditingFloorOrder((current) => !current)}>
+                {editingFloorOrder ? "Done ordering" : "Edit floor order"}
+              </button>
             </div>
+            {editingFloorOrder && (
+              <div className="mt-3 grid gap-2">
+                {floors.map((floor, index) => (
+                  <div key={floor.id} className="flex items-center justify-between gap-3 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
+                    <span className="font-medium">{floor.name}</span>
+                    <div className="flex gap-2">
+                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, -1)} disabled={index === 0} title="Move up">{"<"}</button>
+                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, 1)} disabled={index === floors.length - 1} title="Move down">{">"}</button>
+                    </div>
+                  </div>
+                ))}
+                {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
+              </div>
+            )}
             <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <input
                 className="field"
@@ -1286,9 +1301,11 @@ function BuildingStructureView({
           {floors.map((floor) => (
             <FloorBlock
               key={floor.id}
+              floor={floor}
               floorName={floor.name}
               units={buildingUnits.filter((unit) => unit.floor === floor.name)}
               areas={areas}
+              communalAreas={communalAreas.filter((area) => area.floor === floor.name)}
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
@@ -1302,6 +1319,7 @@ function BuildingStructureView({
               floorName="Units with floor not in building floor list"
               units={unmatchedUnits}
               areas={areas}
+              communalAreas={[]}
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
@@ -1316,6 +1334,7 @@ function BuildingStructureView({
               floorName="Units without floor"
               units={noFloorUnits}
               areas={areas}
+              communalAreas={[]}
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
@@ -1325,29 +1344,17 @@ function BuildingStructureView({
               warning
             />
           )}
-          <div className="rounded-md border border-[#c4ccc6] bg-[#f8faf7] p-4">
-            <h3 className="font-semibold">Communal areas</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {communalAreas.map((area) => <AreaChip key={area.id} area={area} onNotice={onNotice} reload={reload} />)}
-              {communalAreas.length === 0 && <p className="text-sm text-[#617169]">No communal areas yet.</p>}
+          {unassignedCommunalAreas.length > 0 && (
+            <div className="rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-4">
+              <h3 className="font-semibold">Unassigned / External communal areas</h3>
+              <p className="mt-1 text-sm text-[#617169]">Assign these areas to a floor so they appear in the building hierarchy.</p>
+              <div className="mt-3 grid gap-2">
+                {unassignedCommunalAreas.map((area) => (
+                  <CommunalAreaRow key={area.id} area={area} floors={floors} onNotice={onNotice} reload={reload} />
+                ))}
+              </div>
             </div>
-            <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
-              <input
-                className="field"
-                value={communalName}
-                onChange={(event) => setCommunalName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void addCommunalArea();
-                }}
-                placeholder="Add communal area"
-              />
-              <select className="field" value={communalFloor} onChange={(event) => setCommunalFloor(event.target.value)}>
-                <option value="">No floor / external</option>
-                {floors.map((floor) => <option key={floor.id} value={floor.name}>{floor.name}</option>)}
-              </select>
-              <button className="secondary" onClick={addCommunalArea} disabled={!communalName}>Add communal</button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </section>
@@ -1355,10 +1362,12 @@ function BuildingStructureView({
 }
 
 function FloorBlock({
+  floor,
   buildingId,
   floorName,
   units,
   areas,
+  communalAreas,
   buildingFloors,
   unitTypes,
   unitTypeAreas,
@@ -1366,10 +1375,12 @@ function FloorBlock({
   reload,
   warning = false,
 }: {
+  floor?: BuildingFloor;
   buildingId: string;
   floorName: string;
   units: Unit[];
   areas: Area[];
+  communalAreas: Area[];
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
@@ -1381,7 +1392,11 @@ function FloorBlock({
   const [unitSizeSqm, setUnitSizeSqm] = useState("");
   const [unitParkingBays, setUnitParkingBays] = useState("");
   const [unitTypeId, setUnitTypeId] = useState("");
+  const [communalName, setCommunalName] = useState("");
+  const [communalCategory, setCommunalCategory] = useState("Corridor");
   const [collapsed, setCollapsed] = useState(!warning);
+  const canDeleteFloor = Boolean(floor && units.length === 0 && communalAreas.length === 0);
+  const deleteFloorHelp = "Move or delete units and communal areas before deleting this floor.";
 
   async function addUnitToFloor() {
     if (!unitNumber || !unitSizeSqm || !unitTypeId) {
@@ -1426,6 +1441,38 @@ function FloorBlock({
     await reload();
   }
 
+  async function addCommunalAreaToFloor() {
+    if (!communalName.trim()) return;
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from("areas").insert({
+      building_id: buildingId,
+      unit_id: null,
+      area_type: "communal_area",
+      name: communalName.trim(),
+      floor: floorName,
+      sort_order: communalAreas.length + 1,
+    });
+    if (error) onNotice(error.message);
+    else {
+      setCommunalName("");
+      setCommunalCategory("Corridor");
+      await reload();
+    }
+  }
+
+  async function deleteFloor() {
+    if (!floor) return;
+    if (!canDeleteFloor) {
+      onNotice(deleteFloorHelp);
+      return;
+    }
+    if (!window.confirm(`Delete floor ${floor.name}?`)) return;
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from("building_floors").delete().eq("id", floor.id);
+    if (error) onNotice(error.message);
+    else await reload();
+  }
+
   return (
     <div className={`rounded-md border p-4 ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1439,53 +1486,192 @@ function FloorBlock({
         </button>
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"}</span>
+          <span className="text-sm text-[#617169]">{communalAreas.length} communal</span>
+          {floor && (
+            <button
+              className="secondary h-8 min-h-8 px-3 py-0 text-xs"
+              onClick={deleteFloor}
+              disabled={!canDeleteFloor}
+              title={canDeleteFloor ? `Delete ${floor.name}` : deleteFloorHelp}
+            >
+              Delete
+            </button>
+          )}
           <button
-            className="secondary h-8 min-h-8 w-8 px-0 py-0"
+            className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#0F3D2E]"
             onClick={() => setCollapsed((current) => !current)}
             aria-label={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
             title={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
           >
-            {collapsed ? <ChevronRight size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+            {collapsed ? <ChevronRight className="block" size={16} strokeWidth={2.5} aria-hidden /> : <ChevronDown className="block" size={16} strokeWidth={2.5} aria-hidden />}
           </button>
         </div>
       </div>
+      {floor && !canDeleteFloor && (
+        <p className="mt-2 text-xs text-[#617169]">{deleteFloorHelp}</p>
+      )}
       {!collapsed && (
         <>
-          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {units.map((unit) => {
-              const unitType = unitTypes.find((type) => type.id === unit.unit_type_id)?.name ?? unit.unit_type ?? "No type";
+          <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
+            <h4 className="font-semibold text-[#0F3D2E]">Units</h4>
+            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {units.map((unit) => {
+                const unitType = unitTypes.find((type) => type.id === unit.unit_type_id)?.name ?? unit.unit_type ?? "No type";
 
-              return (
-                <UnitStructureCard
-                  key={unit.id}
-                  unit={unit}
-                  areas={areas}
-                  buildingFloors={buildingFloors}
-                  unitTypes={unitTypes}
-                  unitType={unitType}
-                  onNotice={onNotice}
-                  reload={reload}
-                />
-              );
-            })}
-            {units.length === 0 && <p className="text-sm text-[#617169]">No units on this floor.</p>}
-          </div>
-          {!warning && (
-            <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-white p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-              <input className="field" value={unitNumber} onChange={(event) => setUnitNumber(event.target.value)} placeholder={`Add unit to ${floorName}`} />
-              <input className="field" value={unitSizeSqm} onChange={(event) => setUnitSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
-              <input className="field" value={unitParkingBays} onChange={(event) => setUnitParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
-              <select className="field" value={unitTypeId} onChange={(event) => setUnitTypeId(event.target.value)}>
-                <option value="">Unit type</option>
-                {unitTypes.map((unitType) => <option key={unitType.id} value={unitType.id}>{unitType.name}</option>)}
-              </select>
-              <button className="secondary" onClick={addUnitToFloor} disabled={!unitNumber || !unitSizeSqm || !unitTypeId}>Add unit</button>
+                return (
+                  <UnitStructureCard
+                    key={unit.id}
+                    unit={unit}
+                    areas={areas}
+                    buildingFloors={buildingFloors}
+                    unitTypes={unitTypes}
+                    unitType={unitType}
+                    onNotice={onNotice}
+                    reload={reload}
+                  />
+                );
+              })}
+              {units.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
             </div>
-          )}
+            {!warning && (
+              <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+                <input className="field" value={unitNumber} onChange={(event) => setUnitNumber(event.target.value)} placeholder={`Add unit to ${floorName}`} />
+                <input className="field" value={unitSizeSqm} onChange={(event) => setUnitSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
+                <input className="field" value={unitParkingBays} onChange={(event) => setUnitParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
+                <select className="field" value={unitTypeId} onChange={(event) => setUnitTypeId(event.target.value)}>
+                  <option value="">Unit type</option>
+                  {unitTypes.map((unitType) => <option key={unitType.id} value={unitType.id}>{unitType.name}</option>)}
+                </select>
+                <button className="secondary" onClick={addUnitToFloor} disabled={!unitNumber || !unitSizeSqm || !unitTypeId}>Add unit</button>
+              </div>
+            )}
+          </div>
+          <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h4 className="font-semibold text-[#0F3D2E]">Communal areas</h4>
+                <p className="text-sm text-[#617169]">Shared areas on {floorName}.</p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {communalAreas.map((area) => (
+                <CommunalAreaRow key={area.id} area={area} floors={buildingFloors.filter((item) => item.building_id === buildingId)} onNotice={onNotice} reload={reload} />
+              ))}
+              {communalAreas.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No communal areas added to this floor yet.</p>}
+            </div>
+            {!warning && (
+              <div className="mt-3 grid gap-2 lg:grid-cols-[180px_minmax(0,1fr)_auto]">
+                <select className="field" value={communalCategory} onChange={(event) => {
+                  setCommunalCategory(event.target.value);
+                  if (!communalName.trim() && event.target.value !== "Other") setCommunalName(event.target.value);
+                }}>
+                  {["Corridor", "Bin store", "Bike store", "Car park", "Plant room", "Store", "Other"].map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <input
+                  className="field"
+                  value={communalName}
+                  onChange={(event) => setCommunalName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void addCommunalAreaToFloor();
+                  }}
+                  placeholder={`Add communal area to ${floorName}`}
+                />
+                <button className="secondary" onClick={addCommunalAreaToFloor} disabled={!communalName.trim()}>Add communal</button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
   );
+}
+
+function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floors: BuildingFloor[]; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(area.name);
+  const [floor, setFloor] = useState(area.floor ?? "");
+  const category = inferCommunalCategory(area.name);
+
+  useEffect(() => {
+    setName(area.name);
+    setFloor(area.floor ?? "");
+  }, [area.floor, area.name]);
+
+  async function save() {
+    if (!name.trim() || !floor) {
+      onNotice("Communal area name and floor are required.");
+      return;
+    }
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from("areas").update({ name: name.trim(), floor }).eq("id", area.id);
+    if (error) onNotice(error.message);
+    else {
+      setEditing(false);
+      await reload();
+    }
+  }
+
+  async function deleteCommunalArea() {
+    const supabase = createSupabaseBrowserClient();
+    const { count, error: countError } = await supabase
+      .from("snags")
+      .select("id", { count: "exact", head: true })
+      .eq("area_id", area.id);
+    if (countError) {
+      onNotice(countError.message);
+      return;
+    }
+    if ((count ?? 0) > 0) {
+      onNotice(`Cannot remove ${area.name}. Move or close the linked snags first.`);
+      return;
+    }
+    if (!window.confirm(`Delete communal area ${area.name}?`)) return;
+    const { error } = await supabase.from("areas").delete().eq("id", area.id);
+    if (error) onNotice(error.message);
+    else await reload();
+  }
+
+  if (editing) {
+    return (
+      <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3 md:grid-cols-[minmax(0,1fr)_180px_auto]">
+        <input className="field" value={name} onChange={(event) => setName(event.target.value)} placeholder="Communal area name" />
+        <select className="field" value={floor} onChange={(event) => setFloor(event.target.value)}>
+          <option value="">Assign floor</option>
+          {floors.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
+        </select>
+        <div className="flex gap-2">
+          <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={save} disabled={!name.trim() || !floor}>Save</button>
+          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditing(false)}>Cancel</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] px-3 py-2">
+      <div>
+        <p className="font-medium text-[#1F2A24]">{area.name}</p>
+        <p className="text-xs text-[#617169]">{category}</p>
+      </div>
+      <div className="flex gap-2">
+        <button className="secondary min-h-8 px-3 py-1 text-xs" onClick={() => setEditing(true)}>Edit</button>
+        <button className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]" onClick={deleteCommunalArea} title={`Delete ${area.name}`} aria-label={`Delete ${area.name}`}>
+          <X size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function inferCommunalCategory(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("bin")) return "Bin store";
+  if (normalized.includes("bike") || normalized.includes("cycle")) return "Bike store";
+  if (normalized.includes("car") || normalized.includes("parking")) return "Car park";
+  if (normalized.includes("plant")) return "Plant room";
+  if (normalized.includes("store")) return "Store";
+  if (normalized.includes("corridor")) return "Corridor";
+  return "Communal area";
 }
 
 function UnitStructureCard({
@@ -1559,6 +1745,10 @@ function UnitStructureCard({
   async function saveUnit() {
     if (!editNumber || !editFloor || !editSizeSqm || !editUnitTypeId) {
       onNotice("Unit number, floor, size and unit type are required.");
+      return;
+    }
+    if (editSaleStatus === "handed_over" && unit.sale_status !== "handed_over") {
+      onNotice("Handed Over can only be set by completing the handover workflow.");
       return;
     }
     const supabase = createSupabaseBrowserClient();
@@ -1665,13 +1855,15 @@ function UnitStructureCard({
                       <option value="">Unit type</option>
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
-                    <select className="field" value={editSaleStatus} onChange={(event) => setEditSaleStatus(event.target.value as Unit["sale_status"])}>
-                      {unitSaleStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button className="primary" onClick={saveUnit} disabled={!editNumber || !editFloor || !editSizeSqm || !editUnitTypeId}>Save unit</button>
-                    <button className="secondary" onClick={cancelEdit}>Cancel</button>
+                    {unit.sale_status === "handed_over" ? (
+                      <select className="field" value="handed_over" disabled title="Handed Over is controlled by the handover workflow">
+                        <option value="handed_over">Handed Over</option>
+                      </select>
+                    ) : (
+                      <select className="field" value={editSaleStatus} onChange={(event) => setEditSaleStatus(event.target.value as Unit["sale_status"])}>
+                        {adminEditableUnitSaleStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                      </select>
+                    )}
                   </div>
                   <div className="rounded-md border border-[#d9ded6] bg-white p-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
@@ -1732,6 +1924,10 @@ function UnitStructureCard({
                       )}
                     </div>
                   </div>
+                  <div className="flex flex-wrap gap-2 border-t border-[#d9ded6] pt-3">
+                    <button className="primary" onClick={saveUnit} disabled={!editNumber || !editFloor || !editSizeSqm || !editUnitTypeId}>Save unit</button>
+                    <button className="secondary" onClick={cancelEdit}>Cancel</button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-2">
@@ -1746,25 +1942,29 @@ function UnitStructureCard({
                   </div>
                 </div>
               )}
-              <div className="mt-3">
-                <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)}
-                  {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf0ec] pt-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {amenities.length > 0 ? (
-                      amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)
-                    ) : (
-                      <span className="text-sm text-[#617169]">None</span>
-                    )}
+              {!editing && (
+                <>
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)}
+                      {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
+                    </div>
                   </div>
-                </div>
-              </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf0ec] pt-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {amenities.length > 0 ? (
+                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)
+                        ) : (
+                          <span className="text-sm text-[#617169]">None</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </article>
   );
 }
@@ -1950,6 +2150,7 @@ function DeveloperSnagging({
   onNotice,
   reload,
   uploadFile,
+  requestedFilters,
 }: {
   user: User;
   buildings: Building[];
@@ -1960,6 +2161,7 @@ function DeveloperSnagging({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  requestedFilters?: SnagListFilters;
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
@@ -2958,6 +3160,7 @@ function SnagWorkflow({
   onNotice,
   reload,
   uploadFile,
+  requestedFilters,
 }: {
   user: User;
   profile: Profile | null;
@@ -2972,6 +3175,7 @@ function SnagWorkflow({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  requestedFilters?: SnagListFilters;
 }) {
   const isContractorRole = profile?.role === "contractor";
   const canUseDeveloperActions = !isContractorRole;
@@ -2991,6 +3195,7 @@ function SnagWorkflow({
       onNotice={onNotice}
       reload={reload}
       uploadFile={uploadFile}
+      requestedFilters={requestedFilters}
       showFilters
       canReject={canUseDeveloperActions}
       tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
@@ -3163,15 +3368,21 @@ function LeaseholderDefects({
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
-  const userUnits = profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units;
-  const residentFloors = Array.from(new Set(userUnits.map((unit) => unit.floor).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const [floor, setFloor] = useState("");
-  const filteredUserUnits = userUnits.filter((unit) => !floor || unit.floor === floor);
+  const userUnits = (profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units)
+    .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+  const residentBuildingIds = Array.from(new Set(userUnits.map((unit) => unit.building_id)));
+  const hasMultipleBuildings = residentBuildingIds.length > 1;
+  const hasSingleUnit = userUnits.length === 1;
+  const [buildingFilter, setBuildingFilter] = useState("");
+  const filteredUserUnits = hasMultipleBuildings && buildingFilter
+    ? userUnits.filter((unit) => unit.building_id === buildingFilter)
+    : userUnits;
   const [unitId, setUnitId] = useState(userUnits[0]?.id ?? "");
   const [areaId, setAreaId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState("");
+  const [defectAttempted, setDefectAttempted] = useState(false);
   const [defectStatusFilter, setDefectStatusFilter] = useState("");
   const [defectPriorityFilter, setDefectPriorityFilter] = useState("");
   const [meterType, setMeterType] = useState<"water" | "electricity">("water");
@@ -3189,48 +3400,68 @@ function LeaseholderDefects({
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const activeDefectCount = selectedUnitDefects.filter((snag) => !["closed", "rejected"].includes(snag.status)).length;
   const closedDefectCount = selectedUnitDefects.filter((snag) => snag.status === "closed").length;
+  const canSubmitDefect = Boolean(selectedUnit && areaId && title.trim() && description.trim() && photo);
+  const showDefectValidation = defectAttempted || Boolean(areaId || title || description || photo);
 
   useEffect(() => {
+    if (hasSingleUnit && userUnits[0]?.id && unitId !== userUnits[0].id) {
+      setUnitId(userUnits[0].id);
+      setAreaId("");
+      return;
+    }
+    if (hasMultipleBuildings && !buildingFilter && residentBuildingIds[0]) {
+      setBuildingFilter(residentBuildingIds[0]);
+      return;
+    }
     if (filteredUserUnits.length > 0 && !filteredUserUnits.some((unit) => unit.id === unitId)) {
       setUnitId(filteredUserUnits[0].id);
       setAreaId("");
     }
-  }, [filteredUserUnits, unitId]);
+  }, [buildingFilter, filteredUserUnits, hasMultipleBuildings, hasSingleUnit, residentBuildingIds, unitId, userUnits]);
 
   async function createDefect() {
-    if (!title || !photo || !selectedUnit) {
-      onNotice("Defects need a title and photo.");
+    setDefectAttempted(true);
+    if (!selectedUnit) {
+      onNotice("Select a unit before submitting a defect.");
       return;
     }
+    if (!accessibleUnitIds.includes(selectedUnit.id) && profile?.role === "resident") {
+      onNotice("This unit is not linked to your account. Please contact support.");
+      return;
+    }
+    if (!areaId || !title.trim() || !description.trim() || !photo) return;
 
     const supabase = createSupabaseBrowserClient();
-    const photoUrl = await uploadFile(photo, "defects");
-    const { data, error } = await supabase.from("snags").insert({
-      building_id: selectedUnit.building_id,
-      unit_id: selectedUnit.id,
-      area_id: areaId || null,
-      source_type: "leaseholder_defect",
-      created_by: user.id,
-      created_by_user_id: user.id,
-      title,
-      description,
-      priority: null,
-      priority_code: null,
-      status: "submitted",
-    }).select("id").single();
+    try {
+      const photoUrl = await uploadFile(photo, "defects");
+      const { data, error } = await supabase.from("snags").insert({
+        building_id: selectedUnit.building_id,
+        unit_id: selectedUnit.id,
+        area_id: areaId,
+        source_type: "leaseholder_defect",
+        created_by: user.id,
+        created_by_user_id: user.id,
+        title: title.trim(),
+        description: description.trim(),
+        priority: null,
+        priority_code: null,
+        status: "submitted",
+      }).select("id").single();
 
-    if (error) {
-      onNotice(error.message);
-      return;
+      if (error) throw error;
+
+      await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
+      await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "submitted", new_value: "submitted", created_by_user_id: user.id });
+      setAreaId("");
+      setTitle("");
+      setDescription("");
+      setPhoto("");
+      setDefectAttempted(false);
+      onNotice("");
+      await reload();
+    } catch {
+      onNotice("Unable to submit defect. Please try again or contact support.");
     }
-
-    await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
-    await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "submitted", new_value: "submitted", created_by_user_id: user.id });
-    setTitle("");
-    setDescription("");
-    setPhoto("");
-    onNotice("");
-    await reload();
   }
 
   async function createMeterReading() {
@@ -3246,49 +3477,65 @@ function LeaseholderDefects({
     }
 
     const supabase = createSupabaseBrowserClient();
-    const photoUrl = await uploadFile(meterPhoto, "meter-readings");
-    const { error } = await supabase.from("meter_readings").insert({
-      building_id: selectedUnit.building_id,
-      unit_id: selectedUnit.id,
-      meter_type: meterType,
-      reading_value: parsedReading,
-      reading_date: new Date().toISOString().slice(0, 10),
-      photo_url: photoUrl,
-      created_by_user_id: user.id,
-    });
+    try {
+      const photoUrl = await uploadFile(meterPhoto, "meter-readings");
+      const { error } = await supabase.from("meter_readings").insert({
+        building_id: selectedUnit.building_id,
+        unit_id: selectedUnit.id,
+        meter_type: meterType,
+        reading_value: parsedReading,
+        reading_date: new Date().toISOString().slice(0, 10),
+        photo_url: photoUrl,
+        created_by_user_id: user.id,
+      });
 
-    if (error) {
-      onNotice(error.message);
-      return;
+      if (error) throw error;
+
+      setMeterType("water");
+      setMeterReading("");
+      setMeterPhoto("");
+      onNotice("");
+      await reload();
+    } catch {
+      onNotice("Unable to submit meter reading. Please try again or contact support.");
     }
-
-    setMeterType("water");
-    setMeterReading("");
-    setMeterPhoto("");
-    onNotice("");
-    await reload();
   }
 
   return (
     <div className="grid gap-5">
       <section className="rounded-md border border-[#d9ded6] bg-white p-4">
-        <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="grid gap-3 md:grid-cols-[260px_minmax(0,1fr)]">
           <div className="grid gap-3">
-            {residentFloors.length > 0 && (
-              <select className={`field ${floor ? "filter-active" : ""}`} value={floor} onChange={(event) => {
-                setFloor(event.target.value);
-                setAreaId("");
-              }}>
-                <option value="">All floors</option>
-                {residentFloors.map((floorName) => <option key={floorName} value={floorName}>{floorName}</option>)}
-              </select>
+            {hasSingleUnit ? (
+              <div className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
+                <p className="font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"}</p>
+                <p className="mt-1 text-[#34413a]">Unit {selectedUnit?.unit_number ?? "-"}</p>
+              </div>
+            ) : (
+              <>
+                {hasMultipleBuildings && (
+                  <select className="field" value={buildingFilter} onChange={(event) => {
+                    setBuildingFilter(event.target.value);
+                    setAreaId("");
+                  }}>
+                    {residentBuildingIds.map((buildingId) => {
+                      const building = buildings.find((item) => item.id === buildingId);
+                      return <option key={buildingId} value={buildingId}>{building?.name ?? "Building"}</option>;
+                    })}
+                  </select>
+                )}
+                <select className="field" value={unitId} onChange={(event) => {
+                  setUnitId(event.target.value);
+                  setAreaId("");
+                }}>
+                  {filteredUserUnits.map((unit) => {
+                    const building = buildings.find((item) => item.id === unit.building_id);
+                    const includeBuilding = hasMultipleBuildings && !buildingFilter;
+                    return <option key={unit.id} value={unit.id}>{includeBuilding ? `${building?.name ?? "Building"}, ` : ""}Unit {unit.unit_number}</option>;
+                  })}
+                </select>
+              </>
             )}
-            <select className="field" value={unitId} onChange={(event) => {
-              setUnitId(event.target.value);
-              setAreaId("");
-            }}>
-              {filteredUserUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}{unit.floor ? ` / ${unit.floor}` : ""}</option>)}
-            </select>
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0F3D31]">{selectedBuilding?.name ?? "No building"}</p>
@@ -3298,11 +3545,10 @@ function LeaseholderDefects({
             </p>
           </div>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
           <SummaryTile label="Open defects" value={activeDefectCount} />
           <SummaryTile label="Closed defects" value={closedDefectCount} />
           <SummaryTile label="Meter readings" value={selectedMeterReadings.length} />
-          <SummaryTile label="Rooms" value={selectedUnitAreas.length} />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {selectedBuilding?.documents_url && (
@@ -3320,10 +3566,14 @@ function LeaseholderDefects({
               <option value="">Room / area</option>
               {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
             </select>
+            {showDefectValidation && !areaId && <p className="text-sm text-[#B42318]">Select the room or area for this defect.</p>}
             <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={!selectedUnit} />
+            {showDefectValidation && !title.trim() && <p className="text-sm text-[#B42318]">Enter a short title.</p>}
             <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={!selectedUnit} />
+            {showDefectValidation && !description.trim() && <p className="text-sm text-[#B42318]">Enter a description so the team knows what to review.</p>}
             <PhotoInput value={photo} onChange={setPhoto} disabled={!selectedUnit} />
-            <button className="primary" onClick={createDefect} disabled={!selectedUnit || !title || !photo}>Submit defect</button>
+            {showDefectValidation && !photo && <p className="text-sm text-[#B42318]">Add a photo of the defect.</p>}
+            <button className="primary" onClick={createDefect} disabled={!canSubmitDefect}>Submit defect</button>
           </FormPanel>
           <FormPanel title="Meter reading">
             <select className="field" value={meterType} onChange={(event) => setMeterType(event.target.value as "water" | "electricity")} disabled={!selectedUnit}>
@@ -3331,7 +3581,7 @@ function LeaseholderDefects({
               <option value="electricity">Electricity</option>
             </select>
             <input className="field" value={meterReading} onChange={(event) => setMeterReading(event.target.value)} placeholder="Reading" inputMode="decimal" disabled={!selectedUnit} />
-            <PhotoInput value={meterPhoto} onChange={setMeterPhoto} disabled={!selectedUnit} />
+            <SimplePhotoInput value={meterPhoto} onChange={setMeterPhoto} disabled={!selectedUnit} />
             <button className="primary" onClick={createMeterReading} disabled={!selectedUnit || !meterReading || !meterPhoto}>Submit reading</button>
           </FormPanel>
         </div>
@@ -3725,20 +3975,20 @@ function HandoverAndMeters({
                 ))}
               </div>
               <button className="secondary w-fit" onClick={() => setKeyItems((current) => [...current, { key_type: "Other", quantity: 1, notes: "" }])} disabled={!handoverAllowed}>Add key/fob</button>
-              <PhotoInput value={keyPhoto} onChange={setKeyPhoto} disabled={!handoverAllowed} />
+              <SimplePhotoInput value={keyPhoto} onChange={setKeyPhoto} disabled={!handoverAllowed} label="Add or take keys/fobs photo" />
             </div>
           )}
           {step === 2 && (
             <div className="grid gap-4">
               <SectionHeader title="Meter readings" subtitle="Electricity and water readings need a value and photograph." />
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="grid gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+              <div className="grid items-stretch gap-4 md:grid-cols-2">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} disabled={!handoverAllowed} /></label>
-                  <PhotoInput value={electricityPhoto} onChange={setElectricityPhoto} disabled={!handoverAllowed} />
+                  <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} disabled={!handoverAllowed} label="Add or take electricity meter photo" />
                 </div>
-                <div className="grid gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} disabled={!handoverAllowed} /></label>
-                  <PhotoInput value={waterPhoto} onChange={setWaterPhoto} disabled={!handoverAllowed} />
+                  <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} disabled={!handoverAllowed} label="Add or take water meter photo" />
                 </div>
               </div>
               <label className="field-label">Meter notes<input className="field" value={meterNotes} onChange={(event) => setMeterNotes(event.target.value)} placeholder="Optional notes if a meter is difficult to access" disabled={!handoverAllowed} /></label>
@@ -4195,6 +4445,7 @@ function SnagList({
   canReject = false,
   tradeControl,
   showFilters = false,
+  requestedFilters,
 }: {
   title: string;
   buildings: Building[];
@@ -4213,11 +4464,13 @@ function SnagList({
   canReject?: boolean;
   tradeControl?: (snag: ProductionSnag, trade?: Trade) => React.ReactNode;
   showFilters?: boolean;
+  requestedFilters?: SnagListFilters;
 }) {
   const [buildingFilter, setBuildingFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState("");
+  const [quickFilter, setQuickFilter] = useState<SnagListFilters["quickFilter"] | "">("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
@@ -4226,15 +4479,42 @@ function SnagList({
   const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
   const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
   const buildingUnits = units.filter((unit) => unit.building_id === selectedBuildingId);
+  const buildingCommunalAreas = areas
+    .filter((area) => area.building_id === selectedBuildingId && area.area_type === "communal_area")
+    .sort((a, b) => a.name.localeCompare(b.name));
   const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
   const statuses = Array.from(new Set(buildingSnags.map((snag) => snag.status)))
     .filter((status) => status.toLowerCase() !== "pending")
     .sort();
+  const now = new Date();
+  const in7 = new Date(now);
+  in7.setDate(in7.getDate() + 7);
+  const recentThreshold = new Date(now);
+  recentThreshold.setDate(recentThreshold.getDate() - 7);
   const filtered = snags
     .filter((snag) => snag.building_id === selectedBuildingId)
-    .filter((snag) => !unitFilter || snag.unit_id === unitFilter)
-    .filter((snag) => !statusFilter || snag.status === statusFilter)
-    .filter((snag) => !tradeFilter || snag.trade_id === tradeFilter)
+    .filter((snag) => {
+      if (!unitFilter) return true;
+      if (unitFilter === "__communal__") return !snag.unit_id;
+      if (unitFilter.startsWith("area:")) return snag.area_id === unitFilter.replace("area:", "");
+      return snag.unit_id === unitFilter;
+    })
+    .filter((snag) => {
+      if (!statusFilter) return true;
+      if (statusFilter === "__rejected__") return ["rejected", "rejected_back_to_contractor"].includes(snag.status);
+      return snag.status === statusFilter;
+    })
+    .filter((snag) => {
+      if (!tradeFilter) return true;
+      if (tradeFilter === "__none__") return !snag.trade_id;
+      return snag.trade_id === tradeFilter;
+    })
+    .filter((snag) => {
+      if (quickFilter === "overdue") return Boolean(snag.sla_due_date && new Date(snag.sla_due_date) < now && !["closed", "resolved"].includes(snag.status));
+      if (quickFilter === "due_soon") return Boolean(snag.sla_due_date && new Date(snag.sla_due_date) >= now && new Date(snag.sla_due_date) <= in7 && !["closed", "resolved"].includes(snag.status));
+      if (quickFilter === "recent") return new Date(snag.updated_at || snag.created_at) >= recentThreshold;
+      return true;
+    })
     .sort((a, b) => {
       const unitA = units.find((unit) => unit.id === a.unit_id)?.unit_number ?? "Communal";
       const unitB = units.find((unit) => unit.id === b.unit_id)?.unit_number ?? "Communal";
@@ -4271,8 +4551,17 @@ function SnagList({
   }, [selectedBuildingId]);
 
   useEffect(() => {
+    if (!requestedFilters) return;
+    if (requestedFilters.buildingId) setBuildingFilter(requestedFilters.buildingId);
+    setUnitFilter(requestedFilters.unitFilter ?? "");
+    setStatusFilter(requestedFilters.statusFilter ?? "");
+    setTradeFilter(requestedFilters.tradeFilter ?? "");
+    setQuickFilter(requestedFilters.quickFilter ?? "");
+  }, [requestedFilters]);
+
+  useEffect(() => {
     setPage(1);
-  }, [selectedBuildingId, unitFilter, statusFilter, tradeFilter, pageSize]);
+  }, [selectedBuildingId, unitFilter, statusFilter, tradeFilter, quickFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -4340,16 +4629,35 @@ function SnagList({
             </select>
             <select className={`field ${unitFilter ? "filter-active" : ""}`} value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
               <option value="">All units</option>
-              {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+              {buildingUnits.length > 0 && (
+                <optgroup label="Flats">
+                  {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+                </optgroup>
+              )}
+              <optgroup label="Communal">
+                <option value="__communal__">All communal spaces</option>
+                {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{area.name}</option>)}
+              </optgroup>
             </select>
             <select className={`field ${tradeFilter ? "filter-active" : ""}`} value={tradeFilter} onChange={(event) => setTradeFilter(event.target.value)}>
-              <option value="">All trades</option>
-              {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
+              <optgroup label="Filter options">
+                <option value="">All trades</option>
+                <option value="__none__">Trade not set</option>
+              </optgroup>
+              <optgroup label="Trades">
+                {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
+              </optgroup>
             </select>
             <select className={`field ${statusFilter ? "filter-active" : ""}`} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">All statuses</option>
+              <option value="__rejected__">Rejected / disputed</option>
               {statuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
             </select>
+            {quickFilter && (
+              <button className="secondary md:col-span-4" onClick={() => setQuickFilter("")}>
+                Clear {quickFilter === "overdue" ? "overdue SLA" : quickFilter === "due_soon" ? "due soon" : "recently updated"} filter
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -4503,6 +4811,8 @@ function PhotoThumb({ photo, onOpen }: { photo: SnagPhoto; onOpen: (photo: SnagP
   );
 }
 
+type ActivityTab = "timeline" | "notes" | "photos" | "audit";
+
 function SnagDetailPage({
   actions,
   areas,
@@ -4552,14 +4862,74 @@ function SnagDetailPage({
   const [rejectPhoto, setRejectPhoto] = useState("");
   const [showReject, setShowReject] = useState(false);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
+  const [activityTab, setActivityTab] = useState<ActivityTab>("timeline");
+  const [showAllAudit, setShowAllAudit] = useState(false);
+  const [expandedNoteGroups, setExpandedNoteGroups] = useState<string[]>([]);
   const primaryPhoto = photos[0];
   const area = areas.find((item) => item.id === snag.area_id);
+  const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [events]);
+  const sortedPhotos = useMemo(() => [...photos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [photos]);
+  const noteEvents = sortedEvents.filter((event) => ["note", "access_note"].includes(event.event_type));
+  const statusChangeCount = sortedEvents.filter((event) => event.event_type === "status_change" || event.event_type === "triage").length;
+  const lastUpdatedTime = Math.max(new Date(snag.updated_at).getTime(), sortedEvents[0] ? new Date(sortedEvents[0].created_at).getTime() : 0);
+  const auditEvents = showAllAudit ? sortedEvents : sortedEvents.slice(0, 10);
+  const activityTabs: { key: ActivityTab; label: string }[] = [
+    { key: "timeline", label: "Timeline" },
+    { key: "notes", label: "Notes" },
+    { key: "photos", label: "Photos" },
+    { key: "audit", label: "Audit" },
+  ];
 
   function authorName(userId?: string | null) {
     if (!userId) return "System";
     const profile = profiles.find((item) => item.id === userId);
     return profile?.full_name || profile?.name || profile?.email || "Unknown user";
   }
+
+  function timelineHeading(event: SnagEvent) {
+    if (event.event_type === "status_change" || event.event_type === "triage") return statusLabel(event.new_value ?? event.event_type);
+    if (event.event_type === "trade_changed") return event.new_value ? `Trade set to ${event.new_value}` : "Trade changed";
+    if (event.event_type === "priority_changed") return event.new_value ? `Priority set to ${event.new_value}` : "Priority changed";
+    return eventLabel(event.event_type);
+  }
+
+  function timelineCardClass(value?: string | null) {
+    if (value && ["rejected", "rejected_back_to_contractor", "needs_more_info"].includes(value)) {
+      return "border-[#e2a74d] bg-[#fff8ec]";
+    }
+    if (value && ["closed", "resolved", "resolved_by_contractor"].includes(value)) {
+      return "border-[#cfe1d4] bg-[#f6fbf7]";
+    }
+    return "border-[#d9ded6] bg-white";
+  }
+
+  function toggleNoteGroup(groupId: string) {
+    setExpandedNoteGroups((current) => current.includes(groupId) ? current.filter((item) => item !== groupId) : [...current, groupId]);
+  }
+
+  const lifecycleEvents = sortedEvents
+    .filter((event) => ["created", "submitted", "assigned", "triage", "status_change", "trade_changed", "priority_changed"].includes(event.event_type))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const timelineItems = lifecycleEvents.length > 0
+    ? lifecycleEvents
+    : [{
+      id: "created",
+      snag_id: snag.id,
+      event_type: "created",
+      old_value: null,
+      new_value: snag.status,
+      comment: null,
+      created_by_user_id: snag.created_by_user_id,
+      created_at: snag.created_at,
+    }];
+  const noteGroups = noteEvents.reduce<{ id: string; userId: string | null; createdAt: string; events: SnagEvent[] }[]>((groups, event) => {
+    const minute = new Date(event.created_at).toISOString().slice(0, 16);
+    const id = `${event.created_by_user_id ?? "system"}-${minute}`;
+    const existing = groups.find((group) => group.id === id);
+    if (existing) existing.events.push(event);
+    else groups.push({ id, userId: event.created_by_user_id, createdAt: event.created_at, events: [event] });
+    return groups;
+  }, []);
 
   async function addNote() {
     if (!note.trim()) return;
@@ -4708,32 +5078,146 @@ function SnagDetailPage({
           </div>
         </div>
         <aside className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
-          <h3 className="font-semibold">Comments and audit trail</h3>
-          <div className="mt-3 grid gap-3">
-            {events.map((event) => (
-              <div key={event.id} className="rounded-md border border-[#d9ded6] bg-white p-3 text-sm">
-                <p className="font-semibold">{eventLabel(event.event_type)} <span className="font-normal text-[#617169]">{formatDateTime(event.created_at)} / {authorName(event.created_by_user_id)}</span></p>
-                {event.comment && <p className="mt-2 text-[#34413a]">{event.comment}</p>}
-                {event.new_value && <p className="mt-2 text-xs text-[#617169]">{statusLabel(event.new_value)}</p>}
-              </div>
-            ))}
-            {events.length === 0 && <p className="text-sm text-[#617169]">No comments or audit entries yet.</p>}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-[#0F3D2E]">Activity</h3>
+              <p className="mt-1 text-sm text-[#617169]">Status, notes, photos and audit history for this snag.</p>
+            </div>
+            <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{statusLabel(snag.status)}</span>
           </div>
-          <div className="mt-4 grid gap-2 rounded-md border border-[#d9ded6] bg-white p-3">
-            <p className="text-sm font-semibold">Add note</p>
-            <input
-              className="field py-2 text-sm"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && note.trim()) void addNote();
-              }}
-              placeholder="Type a note and press Enter"
-            />
-            <div className="flex flex-wrap justify-end gap-2">
-              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={addNote} disabled={!note.trim()}>Save note</button>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+            <div className="rounded-md border border-[#d9ded6] bg-white p-2">
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Created</p>
+              <p className="mt-1 text-xs text-[#34413a]">{formatDateTime(snag.created_at)}</p>
+            </div>
+            <div className="rounded-md border border-[#d9ded6] bg-white p-2">
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Updated</p>
+              <p className="mt-1 text-xs text-[#34413a]">{formatDateTime(new Date(lastUpdatedTime).toISOString())}</p>
+            </div>
+            <div className="rounded-md border border-[#d9ded6] bg-white p-2">
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Notes</p>
+              <p className="mt-1 text-lg font-semibold text-[#0F3D2E]">{noteEvents.length}</p>
+            </div>
+            <div className="rounded-md border border-[#d9ded6] bg-white p-2">
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Photos</p>
+              <p className="mt-1 text-lg font-semibold text-[#0F3D2E]">{photos.length}</p>
+            </div>
+            <div className="rounded-md border border-[#d9ded6] bg-white p-2 sm:col-span-2">
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Status changes</p>
+              <p className="mt-1 text-lg font-semibold text-[#0F3D2E]">{statusChangeCount}</p>
             </div>
           </div>
+          <div className="mt-4 flex gap-2 overflow-x-auto border-b border-[#d9ded6] pb-2">
+            {activityTabs.map((tab) => (
+              <button
+                key={tab.key}
+                className={`min-h-9 shrink-0 rounded-full border px-3 text-sm font-semibold transition ${activityTab === tab.key ? "border-[#0F3D2E] bg-[#0F3D2E] text-white shadow-sm" : "border-[#d9ded6] bg-white text-[#0F3D2E] hover:border-[#D6A23A]"}`}
+                onClick={() => setActivityTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {activityTab === "timeline" && (
+            <div className="mt-4 grid gap-3">
+              {timelineItems.map((event) => (
+                <div key={event.id} className={`rounded-md border p-3 text-sm ${timelineCardClass(event.new_value)}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-[#0F3D2E]">{timelineHeading(event)}</p>
+                      <p className="mt-1 text-xs text-[#617169]">{formatDateTime(event.created_at)} / {authorName(event.created_by_user_id)}</p>
+                    </div>
+                    {event.new_value && <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(event.new_value)}`}>{statusLabel(event.new_value)}</span>}
+                  </div>
+                  {event.comment && <p className="mt-3 text-[#34413a]">{event.comment}</p>}
+                </div>
+              ))}
+              {timelineItems.length === 0 && <p className="text-sm text-[#617169]">No activity recorded.</p>}
+            </div>
+          )}
+          {activityTab === "notes" && (
+            <div className="mt-4 grid gap-3">
+              {noteGroups.map((group) => {
+                const expanded = expandedNoteGroups.includes(group.id);
+                const grouped = group.events.length > 1;
+                return (
+                  <div key={group.id} className="rounded-md border border-[#d9ded6] bg-white p-3 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-semibold text-[#0F3D2E]">
+                        {grouped ? `${authorName(group.userId)} added ${group.events.length} notes` : authorName(group.userId)}
+                      </p>
+                      <p className="text-xs text-[#617169]">{formatDateTime(group.createdAt)}</p>
+                    </div>
+                    {grouped && (
+                      <button className="mt-2 text-xs font-semibold text-[#0F3D2E] underline" onClick={() => toggleNoteGroup(group.id)}>
+                        {expanded ? "Collapse notes" : "View notes"}
+                      </button>
+                    )}
+                    {(!grouped || expanded) && (
+                      <div className="mt-3 grid gap-2">
+                        {group.events.map((event) => (
+                          <p key={event.id} className="rounded-md bg-[#f8faf7] px-3 py-2 text-[#34413a]">{event.comment || "No note text recorded."}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {noteGroups.length === 0 && <p className="text-sm text-[#617169]">No notes yet.</p>}
+              <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-white p-3">
+                <p className="text-sm font-semibold">Add note</p>
+                <input
+                  className="field py-2 text-sm"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && note.trim()) void addNote();
+                  }}
+                  placeholder="Type a note and press Enter"
+                />
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={addNote} disabled={!note.trim()}>Save note</button>
+                </div>
+              </div>
+            </div>
+          )}
+          {activityTab === "photos" && (
+            <div className="mt-4 grid gap-3">
+              {sortedPhotos.map((item) => (
+                <button key={item.id} className="grid cursor-pointer grid-cols-[5rem_minmax(0,1fr)] gap-3 rounded-md border border-[#d9ded6] bg-white p-2 text-left transition hover:border-[#D6A23A]" onClick={() => onOpenPhoto(item)}>
+                  <img src={item.file_url} alt="" className="h-16 w-20 rounded-md border border-[#d9ded6] object-cover" />
+                  <span className="self-center text-sm">
+                    <span className="block font-semibold text-[#0F3D2E]">{item.photo_type === "resolution_photo" ? "Follow-up photo" : "Snag photo"}</span>
+                    <span className="mt-1 block text-xs text-[#617169]">{formatDateTime(item.created_at)} / {authorName(item.uploaded_by_user_id)}</span>
+                  </span>
+                </button>
+              ))}
+              {sortedPhotos.length === 0 && <p className="text-sm text-[#617169]">No photos added.</p>}
+            </div>
+          )}
+          {activityTab === "audit" && (
+            <div className="mt-4 grid gap-3">
+              {auditEvents.map((event) => (
+                <div key={event.id} className="rounded-md border border-[#d9ded6] bg-white p-3 text-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="font-semibold text-[#0F3D2E]">{eventLabel(event.event_type)}</p>
+                    <p className="text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-[#617169]">{authorName(event.created_by_user_id)}</p>
+                  {event.comment && <p className="mt-2 text-[#34413a]">{event.comment}</p>}
+                  {(event.old_value || event.new_value) && (
+                    <p className="mt-2 text-xs text-[#617169]">{event.old_value ? `${statusLabel(event.old_value)} -> ` : ""}{event.new_value ? statusLabel(event.new_value) : ""}</p>
+                  )}
+                </div>
+              ))}
+              {sortedEvents.length === 0 && <p className="text-sm text-[#617169]">No activity recorded.</p>}
+              {sortedEvents.length > 10 && (
+                <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowAllAudit((current) => !current)}>
+                  {showAllAudit ? "Show latest 10" : "Show all activity"}
+                </button>
+              )}
+            </div>
+          )}
         </aside>
       </div>
       {previewPhoto && (
@@ -4765,6 +5249,44 @@ function FormPanel({ title, children }: { title: string; children: React.ReactNo
       <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>
       <div className="mt-4 grid gap-3">{children}</div>
     </section>
+  );
+}
+
+function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or take photo" }: { value: string; onChange: (value: string) => void; disabled?: boolean; label?: string }) {
+  function loadFile(file?: File) {
+    if (!file || disabled) return;
+    const reader = new FileReader();
+    reader.onload = () => onChange(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="grid h-full gap-2">
+      <label className={`camera-action ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+        <Camera size={18} aria-hidden />
+        {value ? "Replace photo" : label}
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          disabled={disabled}
+          onChange={(event) => loadFile(event.target.files?.[0])}
+        />
+      </label>
+      <div className="grid min-h-44 place-items-center rounded-xl border border-dashed border-[#d9ded6] bg-white p-2">
+        {value ? (
+          <img src={value} alt="" className="max-h-56 w-full rounded-md object-contain" />
+        ) : (
+          <p className="text-center text-sm text-[#66736B]">No photo added.</p>
+        )}
+      </div>
+      {value && (
+        <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={disabled} onClick={() => onChange("")}>
+          Remove photo
+        </button>
+      )}
+    </div>
   );
 }
 

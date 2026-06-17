@@ -192,6 +192,14 @@ textarea.field {
   box-shadow: inset 0 -3px 0 var(--bw-accent), 0 9px 18px rgba(15, 61, 46, 0.16);
 }
 
+.nav-pill-active:hover,
+.nav-pill-active:active,
+.nav-pill-active:focus-visible {
+  border-color: var(--bw-primary);
+  background: var(--bw-primary);
+  color: #ffffff;
+}
+
 .panel,
 .card-surface {
   border: 1px solid var(--bw-border);
@@ -210,7 +218,7 @@ textarea.field {
   bottom: 0.75rem;
   left: 0.75rem;
   z-index: 40;
-  display: grid;
+  display: none;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.25rem;
   border: 1px solid rgba(226, 222, 211, 0.95);
@@ -237,6 +245,12 @@ textarea.field {
   background: var(--bw-primary);
   color: #ffffff;
   box-shadow: inset 0 -3px 0 var(--bw-accent);
+}
+
+.mobile-nav-item-active:active,
+.mobile-nav-item-active:focus-visible {
+  background: var(--bw-primary);
+  color: #ffffff;
 }
 
 .mobile-nav-item:active {
@@ -575,6 +589,10 @@ tbody tr:hover {
 }
 
 @media (max-width: 767px) {
+  .mobile-bottom-nav {
+    display: grid;
+  }
+
   .app-header {
     position: sticky;
     top: 0;
