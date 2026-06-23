@@ -215,6 +215,16 @@ function statusLabel(status: string) {
   return labels[status] ?? status.replaceAll("_", " ");
 }
 
+function readableError(error: unknown, fallback = "Please try again or contact support.") {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+
+  return fallback;
+}
+
 function entityLabel(entityType: string) {
   const labels: Record<string, string> = {
     area: "Area",
@@ -692,8 +702,12 @@ function Shell({
         </div>
       </header>
       {notice && (
-        <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-[#e2c8a6] bg-[#fff8ec] px-4 py-3 text-sm font-medium text-[#735327] shadow-sm">{notice}</div>
+        <div
+          className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border border-[#e2c8a6] bg-[#fff8ec] px-4 py-3 text-sm font-medium text-[#735327] shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6"
+          role="status"
+          aria-live="polite"
+        >
+          {notice}
         </div>
       )}
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
@@ -952,7 +966,7 @@ function filtersForAttention(id: string): SnagListFilters {
   if (id === "due_soon") return { quickFilter: "due_soon" };
   if (id === "review") return { statusFilter: "resolved_by_contractor" };
   if (id === "contractor_reject") return { statusFilter: "needs_more_info" };
-  if (id === "developer_reject") return { statusFilter: "__rejected__" };
+  if (id === "developer_reject") return { statusFilter: "rejected_back_to_contractor" };
   if (id === "recent") return { quickFilter: "recent" };
   return {};
 }
@@ -985,7 +999,7 @@ function buildDashboardModel({
   const needsTrade = openSnags.filter((snag) => !snag.trade_id);
   const readyForReview = snags.filter((snag) => snag.status === "resolved_by_contractor");
   const rejectedByContractor = snags.filter((snag) => snag.status === "needs_more_info");
-  const rejectedByDeveloper = snags.filter((snag) => snag.status === "rejected_back_to_contractor" || snag.status === "rejected");
+  const rejectedBackToContractor = snags.filter((snag) => snag.status === "rejected_back_to_contractor");
   const recentlyUpdated = snags.filter((snag) => {
     const updated = new Date(snag.updated_at || snag.created_at);
     const sevenDaysAgo = new Date(now);
@@ -1072,7 +1086,7 @@ function buildDashboardModel({
       { id: "due_soon", label: "Due within 7 days", value: dueWithin7.length, tone: "warning", helper: "Upcoming SLA risk." },
       { id: "review", label: "Ready for review", value: readyForReview.length, tone: "good", helper: "Resolved by contractor." },
       { id: "contractor_reject", label: "Needs more info", value: rejectedByContractor.length, tone: "warning", helper: "Returned to developer." },
-      { id: "developer_reject", label: "Rejected/disputed", value: rejectedByDeveloper.length, tone: "danger", helper: "Returned or rejected." },
+      { id: "developer_reject", label: "Rejected back to contractor", value: rejectedBackToContractor.length, tone: "danger", helper: "Returned to contractor." },
       { id: "recent", label: "Recently updated", value: recentlyUpdated.length, tone: "neutral", helper: "Changed in the last 7 days." },
     ],
     buildingHealth,
@@ -3243,6 +3257,10 @@ function SnagWorkflow({
       showFilters
       canReject={canUseDeveloperActions}
       tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
+      listActions={(snag) => {
+        const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+        return canResolve ? <ContractorResolveAction user={user} snag={snag} onNotice={onNotice} reload={reload} /> : null;
+      }}
       actions={(snag) => {
         const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
         const canRespondToInfoRequest = canUseDeveloperActions && snag.status === "needs_more_info";
@@ -3300,7 +3318,7 @@ function DeveloperActions({
   if (!isContractorResolved && !needsMoreInfo) return null;
 
   return (
-    <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
+    <div className="grid gap-2" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       {isContractorResolved && (
         <div className="flex flex-wrap justify-end gap-2">
           <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("closed")} disabled={isSaving}>
@@ -3408,6 +3426,38 @@ async function saveSnagStatusChange({
   if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
 }
 
+function ContractorResolveAction({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function markResolved() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSnagStatusChange({ user, snag, nextStatus: "resolved_by_contractor" });
+      onNotice("Snag marked as resolved");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not mark snag as resolved.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <button
+      className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60"
+      onClick={(event) => {
+        event.stopPropagation();
+        void markResolved();
+      }}
+      disabled={isSaving}
+      type="button"
+    >
+      <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Resolve"}
+    </button>
+  );
+}
+
 function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
   const [showInfoRequest, setShowInfoRequest] = useState(false);
   const [infoRequest, setInfoRequest] = useState("");
@@ -3452,7 +3502,7 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
         <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)}>
           <CircleHelp size={16} aria-hidden /> Request info
         </button>
-        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={markResolved} disabled={Boolean(isSaving)}>
+        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={markResolved} disabled={Boolean(isSaving)} type="button">
           <CheckCircle2 size={16} aria-hidden /> {isSaving === "resolve" ? "Updating..." : "Resolve"}
         </button>
       </div>
@@ -3463,6 +3513,7 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
             value={infoRequest}
             onChange={(event) => setInfoRequest(event.target.value)}
             onKeyDown={(event) => {
+              event.stopPropagation();
               if (event.key === "Enter") void requestInfo();
             }}
             placeholder="What information is needed?"
@@ -3528,7 +3579,6 @@ function LeaseholderDefects({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState("");
-  const [defectAttempted, setDefectAttempted] = useState(false);
   const [isSubmittingDefect, setIsSubmittingDefect] = useState(false);
   const [defectStatusFilter, setDefectStatusFilter] = useState("");
   const [defectPriorityFilter, setDefectPriorityFilter] = useState("");
@@ -3549,8 +3599,7 @@ function LeaseholderDefects({
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
   const activeDefectCount = selectedUnitDefects.filter((snag) => !["closed", "rejected"].includes(snag.status)).length;
   const closedDefectCount = selectedUnitDefects.filter((snag) => snag.status === "closed").length;
-  const canSubmitDefect = Boolean(selectedUnit && areaId && title.trim() && description.trim() && photo);
-  const showDefectValidation = defectAttempted || Boolean(areaId || title || description || photo);
+  const canSubmitDefect = Boolean(selectedUnit && areaId && title.trim() && photo);
 
   useEffect(() => {
     if (hasSingleUnit && userUnits[0]?.id && unitId !== userUnits[0].id) {
@@ -3570,7 +3619,6 @@ function LeaseholderDefects({
 
   async function createDefect() {
     if (isSubmittingDefect) return;
-    setDefectAttempted(true);
     if (!selectedUnit) {
       onNotice("Select a unit before submitting a defect.");
       return;
@@ -3579,7 +3627,7 @@ function LeaseholderDefects({
       onNotice("This unit is not linked to your account. Please contact support.");
       return;
     }
-    if (!areaId || !title.trim() || !description.trim() || !photo) return;
+    if (!areaId || !title.trim() || !photo) return;
 
     const supabase = createSupabaseBrowserClient();
     setIsSubmittingDefect(true);
@@ -3593,10 +3641,10 @@ function LeaseholderDefects({
         created_by: user.id,
         created_by_user_id: user.id,
         title: title.trim(),
-        description: description.trim(),
+        description: description.trim() || null,
         priority: null,
         priority_code: null,
-        status: "submitted",
+        status: "open",
       }).select("id").single();
 
       if (error) throw error;
@@ -3604,18 +3652,19 @@ function LeaseholderDefects({
       const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
       if (photoError) throw photoError;
 
-      const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "submitted", new_value: "submitted", created_by_user_id: user.id });
-      if (eventError) throw eventError;
+      const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
+      if (eventError) {
+        console.warn("Defect activity history could not be recorded", eventError);
+      }
 
       setAreaId("");
       setTitle("");
       setDescription("");
       setPhoto("");
-      setDefectAttempted(false);
-      onNotice("Defect submitted.");
+      onNotice(eventError ? "Defect submitted, but the activity history could not be recorded." : "Defect submitted.");
       await reload();
-    } catch {
-      onNotice("Unable to submit defect. Please try again or contact support.");
+    } catch (error) {
+      onNotice(`Unable to submit defect. ${readableError(error)}`);
     } finally {
       setIsSubmittingDefect(false);
     }
@@ -3743,13 +3792,9 @@ function LeaseholderDefects({
               <option value="">Room / area</option>
               {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
             </select>
-            {showDefectValidation && !areaId && <p className="text-sm text-[#B42318]">Select the room or area for this defect.</p>}
             <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
-            {showDefectValidation && !title.trim() && <p className="text-sm text-[#B42318]">Enter a short title.</p>}
             <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
-            {showDefectValidation && !description.trim() && <p className="text-sm text-[#B42318]">Enter a description so the team knows what to review.</p>}
             <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
-            {showDefectValidation && !photo && <p className="text-sm text-[#B42318]">Add a photo of the defect.</p>}
             <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Submit defect"}</button>
           </FormPanel>
           <FormPanel title="Meter reading">
@@ -3769,7 +3814,7 @@ function LeaseholderDefects({
               <div className="grid gap-2 sm:grid-cols-2">
                 <select className={`field min-w-40 ${defectStatusFilter ? "filter-active" : ""}`} value={defectStatusFilter} onChange={(event) => setDefectStatusFilter(event.target.value)}>
                   <option value="">All statuses</option>
-                  {["submitted", "accepted", "needs_more_info", "resolved_by_contractor", "closed", "rejected"].map((status) => (
+                  {["open", "accepted", "needs_more_info", "resolved_by_contractor", "closed", "rejected"].map((status) => (
                     <option key={status} value={status}>{statusLabel(status)}</option>
                   ))}
                 </select>
@@ -4876,6 +4921,7 @@ function SnagList({
   reload,
   uploadFile,
   actions,
+  listActions,
   canReject = false,
   tradeControl,
   showFilters = false,
@@ -4895,6 +4941,7 @@ function SnagList({
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
   actions?: (snag: ProductionSnag) => React.ReactNode;
+  listActions?: (snag: ProductionSnag) => React.ReactNode;
   canReject?: boolean;
   tradeControl?: (snag: ProductionSnag, trade?: Trade) => React.ReactNode;
   showFilters?: boolean;
@@ -4917,9 +4964,8 @@ function SnagList({
     .filter((area) => area.building_id === selectedBuildingId && area.area_type === "communal_area")
     .sort((a, b) => a.name.localeCompare(b.name));
   const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
-  const statuses = Array.from(new Set(buildingSnags.map((snag) => snag.status)))
-    .filter((status) => status.toLowerCase() !== "pending")
-    .sort();
+  const workflowStatuses = ["open", "needs_more_info", "resolved_by_contractor", "rejected_back_to_contractor", "closed"];
+  const statuses = workflowStatuses.filter((status) => buildingSnags.some((snag) => snag.status === status));
   const now = new Date();
   const in7 = new Date(now);
   in7.setDate(in7.getDate() + 7);
@@ -4935,7 +4981,6 @@ function SnagList({
     })
     .filter((snag) => {
       if (!statusFilter) return true;
-      if (statusFilter === "__rejected__") return ["rejected", "rejected_back_to_contractor"].includes(snag.status);
       return snag.status === statusFilter;
     })
     .filter((snag) => {
@@ -5084,7 +5129,6 @@ function SnagList({
             </select>
             <select className={`field ${statusFilter ? "filter-active" : ""}`} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">All statuses</option>
-              <option value="__rejected__">Rejected / disputed</option>
               {statuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
             </select>
             {quickFilter && (
@@ -5103,21 +5147,12 @@ function SnagList({
             const area = areas.find((item) => item.id === snag.area_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
             const photo = photos.find((item) => item.snag_id === snag.id && item.file_url);
-            const rowActions = actions?.(snag);
+            const rowActions = listActions?.(snag);
 
             return (
               <article
                 key={snag.id}
-                className="mobile-card cursor-pointer transition hover:border-[#D6A23A]"
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedSnagId(snag.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setSelectedSnagId(snag.id);
-                  }
-                }}
+                className="mobile-card transition hover:border-[#D6A23A]"
               >
                 <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-3">
                   <div className="min-w-0">
@@ -5153,6 +5188,13 @@ function SnagList({
                 </div>
                 <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-3">
                   {rowActions}
+                  <button
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                    onClick={() => setSelectedSnagId(snag.id)}
+                    type="button"
+                  >
+                    Details <ChevronRight size={16} aria-hidden />
+                  </button>
                 </div>
               </article>
             );
@@ -5187,20 +5229,12 @@ function SnagList({
                   const trade = trades.find((item) => item.id === snag.trade_id);
                   const snagPhotos = photos.filter((item) => item.snag_id === snag.id && item.file_url);
                   const photo = snagPhotos[0];
-                  const rowActions = actions?.(snag);
+                  const rowActions = listActions?.(snag);
 
                   return (
                     <tr
                       key={snag.id}
-                      className="cursor-pointer align-middle transition hover:bg-[#f8faf7]"
-                      onClick={() => setSelectedSnagId(snag.id)}
-                      tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          setSelectedSnagId(snag.id);
-                        }
-                      }}
+                      className="align-middle transition hover:bg-[#f8faf7]"
                     >
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         <p className="max-w-xs truncate font-medium">{snag.title}</p>
@@ -5223,6 +5257,13 @@ function SnagList({
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         <div className="flex min-w-44 flex-wrap justify-end gap-2">
                           {rowActions}
+                          <button
+                            className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                            onClick={() => setSelectedSnagId(snag.id)}
+                            type="button"
+                          >
+                            Details <ChevronRight size={16} aria-hidden />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -5884,7 +5925,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
                 aria-label="Open photo annotation editor"
               >
                 <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0F3D2E]/92 px-2.5 py-1 text-xs font-semibold text-white shadow-md sm:text-sm">
-                  ✏️ Tap to annotate
+                  Tap to annotate
                 </span>
                 <img
                   src={value}
@@ -5899,7 +5940,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
             <>
               <canvas
                 ref={canvasRef}
-                className="aspect-video w-full touch-none cursor-crosshair rounded-md border border-[#d9ded6] bg-[#eef1ec]"
+                className="h-auto w-full touch-none cursor-crosshair rounded-md border border-[#d9ded6] bg-[#eef1ec]"
                 aria-label="Photo annotation editor"
                 onPointerDown={(event) => {
                   if (disabled) return;
@@ -5964,3 +6005,4 @@ function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, ac
   }
   return snags;
 }
+
