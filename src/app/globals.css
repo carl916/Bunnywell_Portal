@@ -122,6 +122,37 @@ textarea.field {
   color: var(--bw-primary);
 }
 
+.icon-button {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  flex: none;
+}
+
+.danger-icon-button {
+  display: inline-flex;
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #f1b8b2;
+  border-radius: 0.625rem;
+  background: var(--bw-surface);
+  color: #b42318;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.danger-icon-button:hover {
+  border-color: #e8867c;
+  background: #fee4e2;
+}
+
 .primary:not(:disabled):hover {
   background: var(--bw-primary-hover);
   border-color: var(--bw-primary-hover);
@@ -132,6 +163,10 @@ textarea.field {
   border-color: var(--bw-primary);
   background: #f7fbf8;
   transform: translateY(-1px);
+}
+
+.secondary.icon-button:not(:disabled):hover {
+  transform: none;
 }
 
 .app-shell {
@@ -182,7 +217,6 @@ textarea.field {
 .nav-pill:hover {
   border-color: var(--bw-accent);
   background: #fffdf8;
-  transform: translateY(-1px);
 }
 
 .nav-pill-active {
@@ -613,6 +647,11 @@ tbody tr:hover {
   .secondary {
     min-height: 3rem;
     font-size: 0.95rem;
+  }
+
+  .secondary.icon-button,
+  .danger-icon-button {
+    min-height: 2.25rem;
   }
 
   .field-label {

@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "import:template": "node scripts/import-cleanup-template.mjs",
+    "import:template:prod": "node scripts/import-cleanup-template.mjs --prod",
+    "verify:template-import": "node scripts/verify-template-import.mjs",
+    "seed:staging": "node scripts/seed-staging.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -31,6 +35,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "exceljs": "^4.4.0"
   }
 }

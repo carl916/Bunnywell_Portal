@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Download, FileText, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, UserRound, UsersRound, X } from "lucide-react";
+import { BarChart3, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardList, Download, FileText, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, UserRound, UsersRound, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -133,6 +133,25 @@ const brand = {
   border: "#d8ded8",
   muted: "#617169",
 };
+
+async function fetchAllAreas(supabase: ReturnType<typeof createSupabaseBrowserClient>) {
+  const pageSize = 1000;
+  const rows: Area[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("areas")
+      .select("*")
+      .order("sort_order")
+      .order("id")
+      .range(from, from + pageSize - 1);
+
+    if (error) return { data: null, error };
+
+    rows.push(...((data ?? []) as Area[]));
+    if ((data ?? []).length < pageSize) return { data: rows, error: null };
+  }
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
@@ -397,7 +416,7 @@ export function ProductionPortalApp() {
       supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
       supabase.from("units").select("*").order("unit_number"),
-      supabase.from("areas").select("*").order("sort_order"),
+      fetchAllAreas(supabase),
       supabase.from("building_floors").select("*").order("sort_order"),
       supabase.from("unit_types").select("*").order("name"),
       supabase.from("unit_type_areas").select("*").order("sort_order"),
@@ -734,8 +753,8 @@ function Shell({
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Account</p>
                 <p className="mt-1 truncate text-sm text-[#66736B]">{profile?.email ?? "Not signed in"}</p>
               </div>
-              <button className="secondary h-9 min-h-9 w-9 px-0" onClick={() => setMoreOpen(false)} aria-label="Close menu">
-                <X size={16} aria-hidden />
+              <button className="secondary icon-button" onClick={() => setMoreOpen(false)} aria-label="Close menu" title="Close menu">
+                <X size={17} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
             <div className="mt-4 grid gap-2">
@@ -1263,43 +1282,6 @@ function BuildingStructureView({
 
       {building && (
         <div className="mt-5 grid gap-4">
-          <div className="rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">Floors</h3>
-                <p className="text-sm text-[#617169]">Building &gt; floors &gt; units and communal areas.</p>
-              </div>
-              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditingFloorOrder((current) => !current)}>
-                {editingFloorOrder ? "Done ordering" : "Edit floor order"}
-              </button>
-            </div>
-            {editingFloorOrder && (
-              <div className="mt-3 grid gap-2">
-                {floors.map((floor, index) => (
-                  <div key={floor.id} className="flex items-center justify-between gap-3 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
-                    <span className="font-medium">{floor.name}</span>
-                    <div className="flex gap-2">
-                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, -1)} disabled={index === 0} title="Move up">{"<"}</button>
-                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, 1)} disabled={index === floors.length - 1} title="Move down">{">"}</button>
-                    </div>
-                  </div>
-                ))}
-                {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
-              </div>
-            )}
-            <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <input
-                className="field"
-                value={floorName}
-                onChange={(event) => setFloorName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void addFloor();
-                }}
-                placeholder="Add floor, e.g. Ground"
-              />
-              <button className="secondary" onClick={addFloor} disabled={!floorName}>Add floor</button>
-            </div>
-          </div>
           {floors.map((floor) => (
             <FloorBlock
               key={floor.id}
@@ -1357,6 +1339,43 @@ function BuildingStructureView({
               </div>
             </div>
           )}
+          <div className="rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold">Floors</h3>
+                <p className="text-sm text-[#617169]">Building &gt; floors &gt; units and communal areas.</p>
+              </div>
+              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditingFloorOrder((current) => !current)}>
+                {editingFloorOrder ? "Done ordering" : "Edit floor order"}
+              </button>
+            </div>
+            {editingFloorOrder && (
+              <div className="mt-3 grid gap-2">
+                {floors.map((floor, index) => (
+                  <div key={floor.id} className="flex items-center justify-between gap-3 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
+                    <span className="font-medium">{floor.name}</span>
+                    <div className="flex gap-2">
+                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, -1)} disabled={index === 0} title="Move up">{"<"}</button>
+                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, 1)} disabled={index === floors.length - 1} title="Move down">{">"}</button>
+                    </div>
+                  </div>
+                ))}
+                {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
+              </div>
+            )}
+            <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <input
+                className="field"
+                value={floorName}
+                onChange={(event) => setFloorName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void addFloor();
+                }}
+                placeholder="Add floor, e.g. Ground"
+              />
+              <button className="secondary" onClick={addFloor} disabled={!floorName}>Add floor</button>
+            </div>
+          </div>
         </div>
       )}
     </section>
@@ -1474,43 +1493,47 @@ function FloorBlock({
   }
 
   return (
-    <div className={`rounded-md border p-4 ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <button
-          className="inline-flex items-center gap-2 rounded-full px-1 py-1 text-left font-semibold text-[#0F3D2E] transition hover:text-[#0B2E23]"
-          onClick={() => setCollapsed((current) => !current)}
-          aria-expanded={!collapsed}
+    <div className={`rounded-md border ${collapsed ? "px-3 py-2" : "p-4"} ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
+      <div
+        className="flex cursor-pointer flex-wrap items-center justify-between gap-2 rounded-md"
+        onClick={() => setCollapsed((current) => !current)}
+      >
+        <div
+          className="inline-flex items-center gap-2 px-1 py-1 text-left font-semibold text-[#0F3D2E]"
         >
-          {collapsed ? <ChevronRight size={18} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
+          {collapsed ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
           <span>{floorName}</span>
-        </button>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"}</span>
           <span className="text-sm text-[#617169]">{communalAreas.length} communal</span>
           {floor && (
             <button
-              className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#b42318]"
-              onClick={deleteFloor}
+              className="secondary icon-button text-[#b42318]"
+              onClick={(event) => {
+                event.stopPropagation();
+                void deleteFloor();
+              }}
               disabled={!canDeleteFloor}
               aria-label={`Delete floor ${floor.name}`}
               title={canDeleteFloor ? `Delete ${floor.name}` : deleteFloorHelp}
             >
-              <Trash2 size={14} aria-hidden />
+              <Trash2 size={16} strokeWidth={2.25} aria-hidden />
             </button>
           )}
           <button
-            className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#0F3D2E]"
-            onClick={() => setCollapsed((current) => !current)}
+            className="secondary icon-button text-[#0F3D2E]"
+            onClick={(event) => {
+              event.stopPropagation();
+              setCollapsed((current) => !current);
+            }}
             aria-label={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
             title={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
           >
-            {collapsed ? <ChevronRight className="block" size={16} strokeWidth={2.5} aria-hidden /> : <ChevronDown className="block" size={16} strokeWidth={2.5} aria-hidden />}
+            {collapsed ? <ChevronDown size={17} strokeWidth={2.5} aria-hidden /> : <ChevronUp size={17} strokeWidth={2.5} aria-hidden />}
           </button>
         </div>
       </div>
-      {floor && !canDeleteFloor && (
-        <p className="mt-2 text-xs text-[#617169]">{deleteFloorHelp}</p>
-      )}
       {!collapsed && (
         <>
           <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
@@ -1655,8 +1678,8 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
           <p className="text-xs text-[#617169]">{category}</p>
         </div>
         <div className="flex gap-2">
-          <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit ${area.name}`} aria-label={`Edit ${area.name}`}>
-            <Pencil size={14} aria-hidden />
+          <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit ${area.name}`} aria-label={`Edit ${area.name}`}>
+            <Pencil size={16} strokeWidth={2.25} aria-hidden />
           </button>
           <button className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]" onClick={deleteCommunalArea} title={`Delete ${area.name}`} aria-label={`Delete ${area.name}`}>
             <Trash2 size={14} aria-hidden />
@@ -1903,7 +1926,7 @@ function UnitStructureCard({
                   <div className="rounded-md border border-[#d9ded6] bg-white p-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                      {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
                       {pendingRooms.map((name) => (
                         <span key={name} className="inline-flex items-center gap-2 rounded-md bg-[#edf4f1] px-2 py-1 text-xs text-[#0F3D31]">
                           {name}
@@ -1937,7 +1960,7 @@ function UnitStructureCard({
                       <div>
                         <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {visibleAmenities.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                          {visibleAmenities.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
                           {pendingAmenity && (
                             <span className="inline-flex items-center gap-2 rounded-md bg-[#f5eee3] px-2 py-1 text-xs text-[#735327]">
                               Private Amenity
@@ -1974,16 +1997,16 @@ function UnitStructureCard({
                   <div className="flex flex-col items-end gap-2">
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>
                     <div className="flex gap-2">
-                      <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
-                        <Pencil size={14} aria-hidden />
+                      <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
+                        <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                       <button
-                        className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]"
+                        className="danger-icon-button"
                         onClick={deleteUnit}
                         title={`Delete unit ${unit.unit_number}`}
                         aria-label={`Delete unit ${unit.unit_number}`}
                       >
-                        <Trash2 size={14} aria-hidden />
+                        <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                     </div>
                   </div>
@@ -1995,7 +2018,7 @@ function UnitStructureCard({
                   <div className="mt-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)}
+                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)}
                       {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
                     </div>
                   </div>
@@ -2004,7 +2027,7 @@ function UnitStructureCard({
                       <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {amenities.length > 0 ? (
-                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)
+                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)
                         ) : (
                           <span className="text-sm text-[#617169]">None</span>
                         )}
@@ -2020,12 +2043,14 @@ function UnitStructureCard({
 function AreaChip({
   area,
   canRemove = true,
+  showFloor = true,
   onRemove,
   onNotice,
   reload,
 }: {
   area: Area;
   canRemove?: boolean;
+  showFloor?: boolean;
   onRemove?: () => void;
   onNotice?: (notice: string) => void;
   reload?: () => Promise<void>;
@@ -2065,7 +2090,7 @@ function AreaChip({
 
   return (
     <span className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs ${tone}`}>
-      {label}{area.floor ? ` / ${area.floor}` : ""}
+      {label}{showFloor && area.floor ? ` / ${area.floor}` : ""}
       {canRemove && (
         <button
           aria-label={`Remove ${label}`}
@@ -2493,8 +2518,13 @@ function UserDirectory({
                   <span className="font-medium">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</span>
                 </div>
               </div>
-              <button className="secondary mt-3 w-full min-h-10" onClick={() => onEditUser(isEditing ? "" : profile.id)}>
-                {isEditing ? "Close" : "Edit user"}
+              <button
+                className="secondary icon-button mt-3 ml-auto"
+                onClick={() => onEditUser(isEditing ? "" : profile.id)}
+                aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
+                title={isEditing ? "Close user editor" : "Edit user"}
+              >
+                {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
               </button>
               {isEditing && (
                 <div className="mt-3 border-t border-[#E2DED3] pt-3">
@@ -2551,8 +2581,13 @@ function UserDirectory({
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
-                      <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => onEditUser(isEditing ? "" : profile.id)}>
-                        {isEditing ? "Close" : "Edit"}
+                      <button
+                        className="secondary icon-button"
+                        onClick={() => onEditUser(isEditing ? "" : profile.id)}
+                        aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
+                        title={isEditing ? "Close user editor" : "Edit user"}
+                      >
+                        {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
                       </button>
                     </td>
                   </tr>
@@ -3184,14 +3219,21 @@ function OrganisationManagement({
                   <p className="text-xs text-[#617169]">{organisationTypeLabel(organisation.type)}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="secondary px-2 py-1 text-xs" onClick={() => startEdit(organisation)}>Edit</button>
+                  <button
+                    className="secondary icon-button"
+                    onClick={() => startEdit(organisation)}
+                    aria-label={`Edit ${organisation.name}`}
+                    title={`Edit ${organisation.name}`}
+                  >
+                    <Pencil size={16} strokeWidth={2.25} aria-hidden />
+                  </button>
                   <button
                     aria-label={`Delete ${organisation.name}`}
-                    className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]"
+                    className="danger-icon-button"
                     onClick={() => deleteOrganisation(organisation)}
                     title={`Delete ${organisation.name}`}
                   >
-                    <X size={14} />
+                    <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                   </button>
                 </div>
               </div>
@@ -4807,20 +4849,20 @@ function ReportsPanel({
     for (const [index, snag] of sorted.entries()) {
       const description = snag.description?.trim() || "No description";
       const descriptionLines = pdf.splitTextToSize(description, 290).slice(0, 3);
-      const textHeight = 72 + descriptionLines.length * 11;
+      const textHeight = 100 + descriptionLines.length * 10;
       const photo = photos.find((item) => item.snag_id === snag.id && item.file_url);
       let imageData = "";
       let imageSize = { width: 0, height: 0 };
       if (photo) {
         try {
           imageData = await imageUrlToDataUrl(photo.file_url);
-          imageSize = fittedImageSize(imageData, 146, 108);
+          imageSize = fittedImageSize(imageData, 130, 94);
         } catch {
           imageData = "";
         }
       }
-      const imageHeight = imageData ? imageSize.height + 36 : 0;
-      const cardHeight = Math.max(128, textHeight, imageHeight);
+      const imageHeight = imageData ? imageSize.height + 30 : 0;
+      const cardHeight = Math.max(124, textHeight, imageHeight);
       if (y + cardHeight > pageHeight - 60) {
         pdf.addPage();
         addPageHeader();
@@ -4831,12 +4873,12 @@ function ReportsPanel({
 
       pdf.setDrawColor(216, 222, 216);
       pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, pageWidth - margin * 2, cardHeight - 8, 5, 5, "FD");
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, cardHeight - 6, 5, 5, "FD");
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(10);
       pdf.setTextColor(green);
-      pdf.text(`${index + 1}. ${snag.title}`, margin + 12, y + 20, { maxWidth: 310 });
+      pdf.text(`${index + 1}. ${snag.title}`, margin + 12, y + 17, { maxWidth: 310 });
 
       const badgeText = statusLabel(snag.status);
       pdf.setFillColor(239, 246, 241);
@@ -4844,23 +4886,23 @@ function ReportsPanel({
       pdf.setFontSize(8);
       const badgeWidth = Math.min(150, Math.max(92, pdf.getTextWidth(badgeText) + 28));
       const badgeX = margin + 12;
-      pdf.roundedRect(badgeX, y + 34, badgeWidth, 18, 4, 4, "FD");
+      pdf.roundedRect(badgeX, y + 27, badgeWidth, 16, 4, 4, "FD");
       pdf.setTextColor(green);
-      pdf.text(badgeText, badgeX + badgeWidth / 2, y + 46, { align: "center" });
+      pdf.text(badgeText, badgeX + badgeWidth / 2, y + 38, { align: "center" });
 
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8);
       pdf.setTextColor(97, 113, 105);
-      pdf.text(`Area: ${area}`, margin + 12, y + 66);
-      pdf.text(`Trade: ${trade}`, margin + 12, y + 80);
-      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + 94);
+      pdf.text(`Area: ${area}`, margin + 12, y + 56);
+      pdf.text(`Trade: ${trade}`, margin + 12, y + 69);
+      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + 82);
 
       pdf.setTextColor(24, 32, 28);
-      pdf.text(descriptionLines, margin + 12, y + 114);
+      pdf.text(descriptionLines, margin + 12, y + 101);
 
       if (imageData) {
-        const imageX = pageWidth - margin - 18 - imageSize.width;
-        pdf.addImage(imageData, imageFormat(imageData), imageX, y + 18, imageSize.width, imageSize.height);
+        const imageX = pageWidth - margin - 14 - imageSize.width;
+        pdf.addImage(imageData, imageFormat(imageData), imageX, y + 14, imageSize.width, imageSize.height);
       } else if (photo) {
         pdf.setTextColor(97, 113, 105);
         pdf.text("Photo could not be added.", pageWidth - margin - 168, y + 72);
