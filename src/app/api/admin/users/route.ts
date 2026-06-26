@@ -53,6 +53,15 @@ async function getAdminClientForRequest(request: Request) {
   const url = env("NEXT_PUBLIC_SUPABASE_URL");
   const anonKey = env("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   const serviceRoleKey = env("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (serviceRoleKey === anonKey || serviceRoleKey.startsWith("sb_publishable_")) {
+    return {
+      response: NextResponse.json({
+        error: "Server is not configured with a Supabase service role key. Update SUPABASE_SERVICE_ROLE_KEY in the deployment environment.",
+      }, { status: 500 }),
+    };
+  }
+
   const authClient = createClient(url, anonKey);
   const adminClient = createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -80,6 +89,13 @@ async function getAdminClientForRequest(request: Request) {
       .select("email,role");
 
     requesterByEmailError = error;
+    if (!error && (profilesByEmail ?? []).length === 0) {
+      return {
+        response: NextResponse.json({
+          error: "Server could not read any profiles with its Supabase admin key. Check SUPABASE_SERVICE_ROLE_KEY in the staging deployment.",
+        }, { status: 500 }),
+      };
+    }
     requesterByEmail = (profilesByEmail ?? []).find((profile) => normalizeEmail(profile.email) === normalizedUserEmail) ?? null;
   }
 
