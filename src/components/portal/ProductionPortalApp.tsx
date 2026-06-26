@@ -319,6 +319,11 @@ function isStaleRefreshTokenError(error: unknown) {
   return message.includes("refresh token") && (message.includes("not found") || message.includes("invalid"));
 }
 
+function isMissingSessionError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return false;
+  return String(error.message).toLowerCase().includes("auth session missing");
+}
+
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
@@ -411,8 +416,10 @@ export function ProductionPortalApp() {
         if (error) {
           if (isStaleRefreshTokenError(error)) {
             await supabase.auth.signOut({ scope: "local" });
-          } else {
+          } else if (!isMissingSessionError(error)) {
             setNotice(error.message);
+          } else {
+            setNotice("");
           }
           clearPortalState();
           return;
@@ -426,6 +433,9 @@ export function ProductionPortalApp() {
         if (isStaleRefreshTokenError(error)) {
           await supabase.auth.signOut({ scope: "local" });
           clearPortalState();
+        } else if (isMissingSessionError(error)) {
+          clearPortalState();
+          setNotice("");
         } else {
           setNotice(error instanceof Error ? error.message : "Could not restore session.");
         }
@@ -907,7 +917,16 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
         </label>
         <label className="field-label">
           Password
-          <input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" type="password" />
+          <input
+            className="field"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void login();
+            }}
+            placeholder="Password"
+            type="password"
+          />
         </label>
         <button onClick={login} className="primary w-full">Sign in</button>
       </div>
@@ -2550,6 +2569,39 @@ function UserDirectory({
     return organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "";
   }
 
+  async function deleteUser(profile: Profile) {
+    const label = profile.full_name || profile.name || profile.email;
+    if (!window.confirm(`Delete user ${label}? This removes their portal access and login account.`)) return;
+
+    const supabase = createSupabaseBrowserClient();
+    const { data } = await supabase.auth.getSession();
+    const response = await fetch("/api/admin/users", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({ userId: profile.id }),
+    });
+    const payload = (await response.json()) as { error?: string; id?: string; email?: string };
+
+    if (!response.ok) {
+      onNotice(payload.error ?? "Could not delete user.");
+      return;
+    }
+
+    await recordAudit({
+      event_type: "user_deleted",
+      entity_type: "user",
+      entity_id: profile.id,
+      summary: `User deleted: ${profile.email}`,
+      metadata: { email: profile.email, role: profile.role },
+    });
+    onEditUser("");
+    onNotice(`Deleted ${profile.email}.`);
+    await reload();
+  }
+
   function allocationLabel(profile: Profile) {
     if (profile.role === "admin" || profile.role === "developer") return "All buildings";
 
@@ -2611,14 +2663,24 @@ function UserDirectory({
                   <span className="font-medium">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</span>
                 </div>
               </div>
-              <button
-                className="secondary icon-button mt-3 ml-auto"
-                onClick={() => onEditUser(isEditing ? "" : profile.id)}
-                aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
-                title={isEditing ? "Close user editor" : "Edit user"}
-              >
-                {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
-              </button>
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  className="secondary icon-button"
+                  onClick={() => onEditUser(isEditing ? "" : profile.id)}
+                  aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
+                  title={isEditing ? "Close user editor" : "Edit user"}
+                >
+                  {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
+                </button>
+                <button
+                  className="danger-icon-button"
+                  onClick={() => void deleteUser(profile)}
+                  aria-label={`Delete ${profile.email}`}
+                  title={`Delete ${profile.email}`}
+                >
+                  <Trash2 size={16} strokeWidth={2.25} aria-hidden />
+                </button>
+              </div>
               {isEditing && (
                 <div className="mt-3 border-t border-[#E2DED3] pt-3">
                   <UserEditPanel
@@ -2673,15 +2735,25 @@ function UserDirectory({
                       <p className="max-w-md truncate">{allocationLabel(profile)}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
-                      <button
-                        className="secondary icon-button"
-                        onClick={() => onEditUser(isEditing ? "" : profile.id)}
-                        aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
-                        title={isEditing ? "Close user editor" : "Edit user"}
-                      >
-                        {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
-                      </button>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="secondary icon-button"
+                          onClick={() => onEditUser(isEditing ? "" : profile.id)}
+                          aria-label={isEditing ? `Close editor for ${profile.email}` : `Edit ${profile.email}`}
+                          title={isEditing ? "Close user editor" : "Edit user"}
+                        >
+                          {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
+                        </button>
+                        <button
+                          className="danger-icon-button"
+                          onClick={() => void deleteUser(profile)}
+                          aria-label={`Delete ${profile.email}`}
+                          title={`Delete ${profile.email}`}
+                        >
+                          <Trash2 size={16} strokeWidth={2.25} aria-hidden />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {isEditing && (
@@ -3156,9 +3228,6 @@ function UserEnrolment({
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
         {isSubmitting ? "Enrolling user" : sendInviteEmail ? "Send invite and assign access" : "Create user and assign access"}
       </button>
-      <p className="mt-3 text-sm text-[#617169]">
-        Invite emails require SMTP to be configured in Supabase for staging and production.
-      </p>
     </section>
   );
 }
