@@ -308,6 +308,12 @@ function statusTone(status: string) {
   return "status-badge bg-[#f3f0e8] text-[#66736B]";
 }
 
+function isStaleRefreshTokenError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return false;
+  const message = String(error.message).toLowerCase();
+  return message.includes("refresh token") && (message.includes("not found") || message.includes("invalid"));
+}
+
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
@@ -344,6 +350,48 @@ export function ProductionPortalApp() {
   const developerSnags = visibleSnags.filter((snag) => snag.source_type === "developer_snag");
   const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
 
+  function clearPortalState() {
+    setUser(null);
+    setProfile(null);
+    setTab("dashboard");
+    setSnagListFilters({});
+    setBuildings([]);
+    setUnits([]);
+    setAreas([]);
+    setBuildingFloors([]);
+    setUnitTypes([]);
+    setUnitTypeAreas([]);
+    setTrades([]);
+    setOrganisations([]);
+    setProfiles([]);
+    setUserBuildingAccess([]);
+    setUserUnitAccess([]);
+    setSnags([]);
+    setPhotos([]);
+    setEvents([]);
+    setAuditEvents([]);
+    setHandovers([]);
+    setHandoverKeyItems([]);
+    setHandoverPhotos([]);
+    setMeterReadings([]);
+    setAccessibleUnitIds([]);
+    setAccessibleBuildingIds([]);
+  }
+
+  async function signOut() {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      if (isStaleRefreshTokenError(error)) {
+        await supabase.auth.signOut({ scope: "local" });
+      } else {
+        setNotice(error.message);
+      }
+    }
+    clearPortalState();
+    setNotice("");
+  }
+
   useEffect(() => {
     if (!supabaseEnabled) {
       setNotice("Supabase is not configured. Add environment variables to use the production schema UI.");
@@ -353,17 +401,39 @@ export function ProductionPortalApp() {
 
     const supabase = createSupabaseBrowserClient();
 
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
-      if (data.user) await loadAll(data.user.id);
-      setIsLoading(false);
-    });
+    supabase.auth.getUser()
+      .then(async ({ data, error }) => {
+        if (error) {
+          if (isStaleRefreshTokenError(error)) {
+            await supabase.auth.signOut({ scope: "local" });
+          } else {
+            setNotice(error.message);
+          }
+          clearPortalState();
+          return;
+        }
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(data.user);
+        if (data.user) await loadAll(data.user.id, data.user.email);
+        else clearPortalState();
+      })
+      .catch(async (error: unknown) => {
+        if (isStaleRefreshTokenError(error)) {
+          await supabase.auth.signOut({ scope: "local" });
+          clearPortalState();
+        } else {
+          setNotice(error instanceof Error ? error.message : "Could not restore session.");
+        }
+      })
+      .finally(() => setIsLoading(false));
+
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setNotice("");
-        void loadAll(session.user.id);
+        void loadAll(session.user.id, session.user.email);
+      } else if (event === "SIGNED_OUT") {
+        clearPortalState();
       }
     });
 
@@ -385,12 +455,28 @@ export function ProductionPortalApp() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  async function loadAll(userId = user?.id) {
+  async function loadAll(userId = user?.id, userEmail = user?.email) {
     if (!userId) return;
 
     const supabase = createSupabaseBrowserClient();
+    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,created_at";
+    let profileResult = await supabase
+      .from("profiles")
+      .select(profileSelect)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profileResult.data && userEmail) {
+      profileResult = await supabase
+        .from("profiles")
+        .select(profileSelect)
+        .eq("email", userEmail)
+        .maybeSingle();
+    }
+
+    const loadedProfile = profileResult.data as Profile | null;
+    const profileIdForAccess = loadedProfile?.id ?? userId;
     const [
-      profileResult,
       buildingsResult,
       unitsResult,
       areasResult,
@@ -413,7 +499,6 @@ export function ProductionPortalApp() {
       accessResult,
       buildingAccessResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
       supabase.from("units").select("*").order("unit_number"),
       fetchAllAreas(supabase),
@@ -433,8 +518,8 @@ export function ProductionPortalApp() {
       supabase.from("handover_key_items").select("*").order("sort_order"),
       supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_unit_access").select("unit_id").eq("user_id", userId),
-      supabase.from("user_building_access").select("building_id").eq("user_id", userId),
+      supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
+      supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
     ]);
 
     const firstError = [
@@ -450,7 +535,6 @@ export function ProductionPortalApp() {
       setNotice("");
     }
 
-    const loadedProfile = profileResult.data as Profile | null;
     setProfile(loadedProfile);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
@@ -510,14 +594,14 @@ export function ProductionPortalApp() {
 
   if (!user) {
     return (
-      <Shell profile={profile} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
+      <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
         <LoginPanel onNotice={setNotice} />
       </Shell>
     );
   }
 
   return (
-    <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice={notice} onRefresh={() => loadAll()}>
+    <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice={notice} onRefresh={() => loadAll()} onSignOut={signOut}>
       {tab === "dashboard" && (
         <Dashboard
           buildings={buildings}
@@ -626,6 +710,7 @@ function Shell({
   setTab,
   notice,
   onRefresh,
+  onSignOut,
   children,
 }: {
   profile: Profile | null;
@@ -634,6 +719,7 @@ function Shell({
   setTab: (tab: Tab) => void;
   notice?: string;
   onRefresh?: () => void;
+  onSignOut?: () => Promise<void>;
   children?: React.ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
@@ -690,9 +776,9 @@ function Shell({
                   Refresh
                 </button>
               )}
-              {profile && (
+              {onSignOut && (
                 <button
-                  onClick={() => createSupabaseBrowserClient().auth.signOut()}
+                  onClick={() => void onSignOut()}
                   className="secondary min-h-10 px-3 text-sm"
                 >
                   <LogIn size={16} aria-hidden />
@@ -781,8 +867,8 @@ function Shell({
                   <span>Refresh</span>
                 </button>
               )}
-              {profile && (
-                <button className="menu-row" onClick={() => createSupabaseBrowserClient().auth.signOut()}>
+              {onSignOut && (
+                <button className="menu-row" onClick={() => void onSignOut()}>
                   <LogIn size={17} aria-hidden />
                   <span>Sign out</span>
                 </button>
@@ -801,7 +887,7 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
 
   async function login() {
     onNotice("");
-    const { error } = await createSupabaseBrowserClient().auth.signInWithPassword({ email, password });
+    const { error } = await createSupabaseBrowserClient().auth.signInWithPassword({ email: email.trim(), password });
     if (error) onNotice(error.message);
   }
 
@@ -2188,23 +2274,25 @@ function AdminSetup({
           reload={reload}
         />
       </div>
-      <FormPanel title="Building">
-        <input className="field" value={buildingName} onChange={(event) => setBuildingName(event.target.value)} placeholder="Building name" />
-        <input className="field" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} placeholder="Address line 1" />
-        <input className="field" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} placeholder="Address line 2" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input className="field" value={town} onChange={(event) => setTown(event.target.value)} placeholder="Town" />
-          <input className="field" value={postcode} onChange={(event) => setPostcode(event.target.value)} placeholder="Postcode" />
-        </div>
-        <label className="grid gap-1 text-sm font-medium text-[#34413a]">
-          Practical completion date
-          <input className="field" value={pcDate} onChange={(event) => setPcDate(event.target.value)} type="date" />
-        </label>
-        <input className="field" value={photoUrl} onChange={(event) => setPhotoUrl(event.target.value)} placeholder="Building photo URL" />
-        <input className="field" value={documentsUrl} onChange={(event) => setDocumentsUrl(event.target.value)} placeholder="Building documents link" />
-        <input className="field" value={homeUserGuideUrl} onChange={(event) => setHomeUserGuideUrl(event.target.value)} placeholder="Home user guide link" />
-        <button className="primary" onClick={createBuilding} disabled={!buildingName}>Create building</button>
-      </FormPanel>
+      <div className="lg:col-span-3">
+        <FormPanel title="Building">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <input className="field" value={buildingName} onChange={(event) => setBuildingName(event.target.value)} placeholder="Building name" />
+            <input className="field" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} placeholder="Address line 1" />
+            <input className="field" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} placeholder="Address line 2" />
+            <input className="field" value={town} onChange={(event) => setTown(event.target.value)} placeholder="Town" />
+            <input className="field" value={postcode} onChange={(event) => setPostcode(event.target.value)} placeholder="Postcode" />
+            <label className="grid gap-1 text-sm font-medium text-[#34413a]">
+              Practical completion date
+              <input className="field" value={pcDate} onChange={(event) => setPcDate(event.target.value)} type="date" />
+            </label>
+            <input className="field" value={photoUrl} onChange={(event) => setPhotoUrl(event.target.value)} placeholder="Building photo URL" />
+            <input className="field" value={documentsUrl} onChange={(event) => setDocumentsUrl(event.target.value)} placeholder="Building documents link" />
+            <input className="field" value={homeUserGuideUrl} onChange={(event) => setHomeUserGuideUrl(event.target.value)} placeholder="Home user guide link" />
+          </div>
+          <button className="primary" onClick={createBuilding} disabled={!buildingName}>Create building</button>
+        </FormPanel>
+      </div>
       <section className="rounded-md border border-[#d9ded6] bg-white p-4 lg:col-span-3">
         <h2 className="text-lg font-semibold">Current setup</h2>
         <p className="mt-2 text-sm text-[#617169]">{buildings.length} buildings, {buildingFloors.length} floors, {units.length} units, {areas.length} areas.</p>

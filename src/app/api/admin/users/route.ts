@@ -59,11 +59,21 @@ async function getAdminClientForRequest(request: Request) {
     return { response: NextResponse.json({ error: "Invalid session." }, { status: 401 }) };
   }
 
-  const { data: requester } = await adminClient
+  const { data: requesterById } = await adminClient
     .from("profiles")
     .select("role")
     .eq("id", userData.user.id)
-    .single();
+    .maybeSingle();
+
+  const requester = requesterById ?? (
+    userData.user.email
+      ? (await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("email", userData.user.email)
+        .maybeSingle()).data
+      : null
+  );
 
   if (requester?.role !== "admin") {
     return { response: NextResponse.json({ error: "Only admins can manage users." }, { status: 403 }) };
