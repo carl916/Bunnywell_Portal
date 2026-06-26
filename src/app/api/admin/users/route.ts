@@ -59,24 +59,38 @@ async function getAdminClientForRequest(request: Request) {
     return { response: NextResponse.json({ error: "Invalid session." }, { status: 401 }) };
   }
 
-  const { data: requesterById } = await adminClient
+  const { data: requesterById, error: requesterByIdError } = await adminClient
     .from("profiles")
-    .select("role")
+    .select("email,role")
     .eq("id", userData.user.id)
     .maybeSingle();
 
-  const requester = requesterById ?? (
+  const { data: requesterByEmail, error: requesterByEmailError } = requesterById ? { data: null, error: null } : (
     userData.user.email
       ? (await adminClient
         .from("profiles")
-        .select("role")
-        .eq("email", userData.user.email)
-        .maybeSingle()).data
-      : null
+        .select("email,role")
+        .ilike("email", userData.user.email)
+        .maybeSingle())
+      : { data: null, error: null }
   );
+  const requester = requesterById ?? requesterByEmail;
+  const requesterRole = requester?.role?.trim().toLowerCase();
 
-  if (requester?.role !== "admin") {
-    return { response: NextResponse.json({ error: "Only admins can manage users." }, { status: 403 }) };
+  if (requesterByIdError || requesterByEmailError) {
+    return {
+      response: NextResponse.json({
+        error: requesterByIdError?.message ?? requesterByEmailError?.message ?? "Could not verify admin profile.",
+      }, { status: 403 }),
+    };
+  }
+
+  if (requesterRole !== "admin") {
+    return {
+      response: NextResponse.json({
+        error: `Only admins can manage users. Signed in as ${userData.user.email ?? userData.user.id}; portal role is ${requester?.role ?? "not found"}.`,
+      }, { status: 403 }),
+    };
   }
 
   return { adminClient };

@@ -219,7 +219,10 @@ function statusLabel(status: string) {
     exchanged: "Exchanged",
     completed: "Completed",
     handed_over: "Handed Over",
+    admin: "Admin",
+    developer: "Developer",
     developer_representative: "Developer Representative",
+    contractor: "Contractor",
     resident: "Resident",
     leaseholder: "Leaseholder",
     tenant: "Tenant",
@@ -231,7 +234,9 @@ function statusLabel(status: string) {
     Resolved: "Resolved",
   };
 
-  return labels[status] ?? status.replaceAll("_", " ");
+  return labels[status] ?? status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function readableError(error: unknown, fallback = "Please try again or contact support.") {
