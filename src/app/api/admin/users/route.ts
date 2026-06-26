@@ -16,6 +16,8 @@ type CreateUserBody = {
 
 type UpdateUserBody = Omit<CreateUserBody, "email" | "password"> & {
   userId?: string;
+  action?: "update" | "status" | "send_login_reminder" | "send_password_reset";
+  active?: boolean;
 };
 
 type DeleteUserBody = {
@@ -79,18 +81,18 @@ async function getAdminClientForRequest(request: Request) {
 
   const { data: requesterById, error: requesterByIdError } = await adminClient
     .from("profiles")
-    .select("email,role")
+    .select("email,role,active")
     .eq("id", userData.user.id)
     .maybeSingle();
 
   const normalizedUserEmail = normalizeEmail(userData.user.email);
-  let requesterByEmail = null as { email: string | null; role: string | null } | null;
+  let requesterByEmail = null as { email: string | null; role: string | null; active: boolean | null } | null;
   let requesterByEmailError = null as { message: string } | null;
 
   if (!requesterById && normalizedUserEmail) {
     const { data: profilesByEmail, error } = await adminClient
       .from("profiles")
-      .select("email,role");
+      .select("email,role,active");
 
     requesterByEmailError = error;
     if (!error && (profilesByEmail ?? []).length === 0) {
@@ -105,6 +107,7 @@ async function getAdminClientForRequest(request: Request) {
 
   const requester = requesterById ?? requesterByEmail;
   const requesterRole = requester?.role?.trim().toLowerCase();
+  const requesterActive = requester?.active !== false;
 
   if (requesterByIdError || requesterByEmailError) {
     return {
@@ -114,10 +117,10 @@ async function getAdminClientForRequest(request: Request) {
     };
   }
 
-  if (requesterRole !== "admin") {
+  if (requesterRole !== "admin" || !requesterActive) {
     return {
       response: NextResponse.json({
-        error: `Only admins can manage users. Signed in as ${userData.user.email ?? userData.user.id}; portal role is ${requester?.role ?? "not found"}.`,
+        error: `Only active admins can manage users. Signed in as ${userData.user.email ?? userData.user.id}; portal role is ${requester?.role ?? "not found"}.`,
       }, { status: 403 }),
     };
   }
@@ -241,11 +244,96 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { adminClient, response } = await getAdminClientForRequest(request);
+    const { adminClient, response, user } = await getAdminClientForRequest(request);
     if (response || !adminClient) return response;
 
     const body = (await request.json()) as UpdateUserBody;
     const userId = body.userId;
+    const action = body.action ?? "update";
+
+    if (action !== "update") {
+      if (!userId) {
+        return NextResponse.json({ error: "User is required." }, { status: 400 });
+      }
+
+      const { data: profile, error: profileError } = await adminClient
+        .from("profiles")
+        .select("id,email,role,active")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profileError) {
+        return NextResponse.json({ error: profileError.message }, { status: 400 });
+      }
+
+      if (!profile) {
+        return NextResponse.json({ error: "User profile not found." }, { status: 404 });
+      }
+
+      if (action === "status") {
+        if (typeof body.active !== "boolean") {
+          return NextResponse.json({ error: "User status is required." }, { status: 400 });
+        }
+
+        if (user?.id === userId && body.active === false) {
+          return NextResponse.json({ error: "You cannot deactivate your own user account while signed in." }, { status: 400 });
+        }
+
+        const { error: authError } = await adminClient.auth.admin.updateUserById(userId, {
+          ban_duration: body.active ? "none" : "876000h",
+        });
+
+        if (authError) {
+          return NextResponse.json({ error: authError.message }, { status: 400 });
+        }
+
+        const { error: statusError } = await adminClient
+          .from("profiles")
+          .update({ active: body.active })
+          .eq("id", userId);
+
+        if (statusError) {
+          return NextResponse.json({ error: statusError.message }, { status: 400 });
+        }
+
+        return NextResponse.json({ id: userId, email: profile.email, active: body.active });
+      }
+
+      if (!profile.email) {
+        return NextResponse.json({ error: "This user does not have an email address." }, { status: 400 });
+      }
+
+      const redirectTo = request.headers.get("origin") ?? undefined;
+
+      if (action === "send_login_reminder") {
+        const { error } = await adminClient.auth.signInWithOtp({
+          email: profile.email,
+          options: {
+            emailRedirectTo: redirectTo,
+            shouldCreateUser: false,
+          },
+        });
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+
+        return NextResponse.json({ id: userId, email: profile.email, sent: "login_reminder" });
+      }
+
+      if (action === "send_password_reset") {
+        const { error } = await adminClient.auth.resetPasswordForEmail(profile.email, { redirectTo });
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+
+        return NextResponse.json({ id: userId, email: profile.email, sent: "password_reset" });
+      }
+
+      return NextResponse.json({ error: "Unsupported user action." }, { status: 400 });
+    }
+
     const role = body.role ?? "user";
     const residentType = body.residentType ?? null;
     const unitAccess = body.unitAccess ?? [];

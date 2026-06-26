@@ -153,6 +153,33 @@ textarea.field {
   background: #fee4e2;
 }
 
+.danger-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #f1b8b2;
+  border-radius: 0.625rem;
+  background: #fff4f2;
+  color: #b42318;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.danger-button:hover:not(:disabled) {
+  border-color: #e8867c;
+  background: #fee4e2;
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .primary:not(:disabled):hover {
   background: var(--bw-primary-hover);
   border-color: var(--bw-primary-hover);

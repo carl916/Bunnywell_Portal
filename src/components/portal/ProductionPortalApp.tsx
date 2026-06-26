@@ -35,6 +35,7 @@ type Profile = {
   role: AppRole;
   resident_type: ResidentType | null;
   organisation_id: string | null;
+  active?: boolean | null;
   created_at?: string | null;
 };
 
@@ -313,6 +314,8 @@ function eventLabel(eventType: string) {
 }
 
 function statusTone(status: string) {
+  if (status === "active") return "status-badge bg-[#e7f3ea] text-[#147A4D]";
+  if (status === "deactivated") return "status-badge bg-[#ecefeb] text-[#66736B]";
   if (["closed", "resolved", "resolved_by_contractor", "handed_over"].includes(status)) return "status-badge bg-[#e7f3ea] text-[#147A4D]";
   if (["rejected", "rejected_back_to_contractor", "needs_more_info"].includes(status)) return "status-badge bg-[#fff4df] text-[#8a5a12]";
   if (["P1", "open", "submitted"].includes(status)) return "status-badge bg-[#eef5f1] text-[#0F3D2E]";
@@ -535,7 +538,7 @@ export function ProductionPortalApp() {
   useEffect(() => {
     if (!notice || notice === "Loading Bunnywell Portal...") return;
     if (notice.startsWith("Supabase is not configured") || notice.startsWith("Production schema is not ready")) return;
-    const timer = window.setTimeout(() => setNotice(""), 7000);
+    const timer = window.setTimeout(() => setNotice(""), 12000);
     return () => window.clearTimeout(timer);
   }, [notice]);
 
@@ -543,7 +546,7 @@ export function ProductionPortalApp() {
     if (!userId) return;
 
     const supabase = createSupabaseBrowserClient();
-    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,created_at";
+    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at";
     let profileResult = await supabase
       .from("profiles")
       .select(profileSelect)
@@ -559,6 +562,14 @@ export function ProductionPortalApp() {
     }
 
     const loadedProfile = profileResult.data as Profile | null;
+
+    if (loadedProfile?.active === false) {
+      await supabase.auth.signOut({ scope: "local" });
+      clearPortalState();
+      setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
+      return;
+    }
+
     const profileIdForAccess = loadedProfile?.id ?? userId;
     const [
       buildingsResult,
@@ -591,7 +602,7 @@ export function ProductionPortalApp() {
       supabase.from("unit_type_areas").select("*").order("sort_order"),
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
-      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,active,created_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
@@ -616,7 +627,7 @@ export function ProductionPortalApp() {
     if (firstError) {
       setNotice(`Production schema is not ready yet: ${firstError.message}`);
     } else {
-      setNotice("");
+      setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
     }
 
     setProfile(loadedProfile);
@@ -2733,37 +2744,8 @@ function UserDirectory({
     return organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "";
   }
 
-  async function deleteUser(profile: Profile) {
-    const label = profile.full_name || profile.name || profile.email;
-    if (!window.confirm(`Delete user ${label}? This removes their portal access and login account.`)) return;
-
-    const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase.auth.getSession();
-    const response = await fetch("/api/admin/users", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-      },
-      body: JSON.stringify({ userId: profile.id }),
-    });
-    const payload = (await response.json()) as { error?: string; id?: string; email?: string };
-
-    if (!response.ok) {
-      onNotice(payload.error ?? "Could not delete user.");
-      return;
-    }
-
-    await recordAudit({
-      event_type: "user_deleted",
-      entity_type: "user",
-      entity_id: profile.id,
-      summary: `User deleted: ${profile.email}`,
-      metadata: { email: profile.email, role: profile.role },
-    });
-    onEditUser("");
-    onNotice(`Deleted ${profile.email}.`);
-    await reload();
+  function userStatus(profile: Profile) {
+    return profile.active === false ? "deactivated" : "active";
   }
 
   function allocationLabel(profile: Profile) {
@@ -2799,17 +2781,26 @@ function UserDirectory({
       <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
         {profiles.map((profile) => {
           const isEditing = profile.id === editingUserId;
+          const status = userStatus(profile);
+          const isDeactivated = status === "deactivated";
 
           return (
-            <article key={profile.id} className={`mobile-card ${isEditing ? "mobile-card-active" : ""}`}>
+            <article key={profile.id} className={`mobile-card ${isEditing ? "mobile-card-active" : ""} ${isDeactivated ? "opacity-60 grayscale" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-bold text-[#1F2A24]">{profile.full_name || profile.name || "No name"}</p>
                   <p className="mt-0.5 truncate text-sm text-[#66736B]">{profile.email}</p>
                 </div>
-                <span className={statusTone(profile.role)}>{statusLabel(profile.role)}</span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={statusTone(profile.role)}>{statusLabel(profile.role)}</span>
+                  <span className={statusTone(status)}>{statusLabel(status)}</span>
+                </div>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#66736B]">Status</span>
+                  <span className="font-medium">{statusLabel(status)}</span>
+                </div>
                 <div className="flex justify-between gap-3">
                   <span className="text-[#66736B]">Resident type</span>
                   <span className="font-medium">{profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : "None"}</span>
@@ -2835,14 +2826,6 @@ function UserDirectory({
                   title={isEditing ? "Close user editor" : "Edit user"}
                 >
                   {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
-                </button>
-                <button
-                  className="danger-icon-button"
-                  onClick={() => void deleteUser(profile)}
-                  aria-label={`Delete ${profile.email}`}
-                  title={`Delete ${profile.email}`}
-                >
-                  <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                 </button>
               </div>
               {isEditing && (
@@ -2871,6 +2854,7 @@ function UserDirectory({
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Status</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Role</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Resident Type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Organisation</th>
@@ -2882,13 +2866,18 @@ function UserDirectory({
           <tbody>
             {profiles.map((profile) => {
               const isEditing = profile.id === editingUserId;
+              const status = userStatus(profile);
+              const isDeactivated = status === "deactivated";
 
               return (
                 <Fragment key={profile.id}>
-                  <tr className={isEditing ? "bg-[#fff8ec]" : ""}>
+                  <tr className={`${isEditing ? "bg-[#fff8ec]" : ""} ${isDeactivated ? "opacity-60 grayscale" : ""}`}>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <p className="font-medium">{profile.full_name || profile.name || "No name"}</p>
                       <p className="text-xs text-[#617169]">{profile.email}</p>
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      <span className={statusTone(status)}>{statusLabel(status)}</span>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(profile.role)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
@@ -2909,20 +2898,12 @@ function UserDirectory({
                         >
                           {isEditing ? <X size={16} strokeWidth={2.25} aria-hidden /> : <Pencil size={16} strokeWidth={2.25} aria-hidden />}
                         </button>
-                        <button
-                          className="danger-icon-button"
-                          onClick={() => void deleteUser(profile)}
-                          aria-label={`Delete ${profile.email}`}
-                          title={`Delete ${profile.email}`}
-                        >
-                          <Trash2 size={16} strokeWidth={2.25} aria-hidden />
-                        </button>
                       </div>
                     </td>
                   </tr>
                   {isEditing && (
                     <tr>
-                      <td colSpan={7} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                      <td colSpan={8} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
                         <UserEditPanel
                           profile={profile}
                           buildings={buildings}
@@ -2979,7 +2960,13 @@ function UserEditPanel({
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>(userBuildingAccess.map((access) => access.building_id));
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>(userUnitAccess.map((access) => access.unit_id));
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingLoginReminder, setIsSendingLoginReminder] = useState(false);
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isResident = role === "resident";
+  const isActive = profile.active !== false;
+  const hasEmail = Boolean(profile.email?.trim());
   const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
@@ -3056,6 +3043,129 @@ function UserEditPanel({
     }
   }
 
+  async function sendUserAction(action: "send_login_reminder" | "send_password_reset") {
+    if (!hasEmail) {
+      onNotice("This user does not have an email address.");
+      return;
+    }
+
+    if (action === "send_login_reminder") setIsSendingLoginReminder(true);
+    else setIsSendingPasswordReset(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id, action }),
+      });
+      const payload = (await response.json()) as { error?: string; email?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not send email.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: action,
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: action === "send_login_reminder" ? `Login reminder sent: ${profile.email}` : `Password reset sent: ${profile.email}`,
+        metadata: { email: profile.email },
+      });
+      onNotice(action === "send_login_reminder" ? `Login reminder sent to ${profile.email}.` : `Password reset link sent to ${profile.email}.`);
+    } finally {
+      if (action === "send_login_reminder") setIsSendingLoginReminder(false);
+      else setIsSendingPasswordReset(false);
+    }
+  }
+
+  async function changeUserStatus() {
+    const nextActive = !isActive;
+    const label = profile.full_name || profile.name || profile.email;
+    const verb = nextActive ? "reactivate" : "deactivate";
+    if (!window.confirm(`${verb.charAt(0).toUpperCase()}${verb.slice(1)} ${label}?`)) return;
+
+    setIsStatusChanging(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id, action: "status", active: nextActive }),
+      });
+      const payload = (await response.json()) as { error?: string; email?: string; active?: boolean };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? `Could not ${verb} user.`);
+        return;
+      }
+
+      await recordAudit({
+        event_type: nextActive ? "user_reactivated" : "user_deactivated",
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: nextActive ? `User reactivated: ${profile.email}` : `User deactivated: ${profile.email}`,
+        metadata: { email: profile.email, active: nextActive },
+      });
+      onNotice(nextActive ? `${profile.email} reactivated.` : `${profile.email} deactivated.`);
+      await reload();
+    } finally {
+      setIsStatusChanging(false);
+    }
+  }
+
+  async function deleteUser() {
+    const label = profile.full_name || profile.name || profile.email;
+    if (!window.confirm(`Permanently delete user ${label}? This should only be used for mistaken or test accounts.`)) return;
+
+    setIsDeleting(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id }),
+      });
+      const payload = (await response.json()) as { error?: string; id?: string; email?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not delete user.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: "user_deleted",
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: `User deleted: ${profile.email}`,
+        metadata: { email: profile.email, role: profile.role },
+      });
+      onNotice(`Deleted ${profile.email}.`);
+      onClose();
+      await reload();
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="bg-[#fff8ec] p-1">
       <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
@@ -3102,8 +3212,37 @@ function UserEditPanel({
           <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
         )}
         <button className="primary mt-4 w-full" onClick={saveUser} disabled={isSaving || !canSave}>
-          {isSaving ? "Saving user" : "Save user"}
+          {isSaving ? "Saving changes" : "Save changes"}
         </button>
+
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">Account access</h4>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="secondary" onClick={() => void sendUserAction("send_login_reminder")} disabled={!hasEmail || isSendingLoginReminder}>
+              {isSendingLoginReminder ? "Sending reminder" : "Send login reminder"}
+            </button>
+            <button className="secondary" onClick={() => void sendUserAction("send_password_reset")} disabled={!hasEmail || isSendingPasswordReset}>
+              {isSendingPasswordReset ? "Sending reset" : "Send password reset link"}
+            </button>
+          </div>
+        </div>
+
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">User status</h4>
+          <p className="mt-1 text-sm text-[#617169]">Status: <span className="font-semibold text-[#1F2A24]">{isActive ? "Active" : "Deactivated"}</span></p>
+          <button className="secondary mt-3" onClick={() => void changeUserStatus()} disabled={isStatusChanging}>
+            {isStatusChanging ? "Updating status" : isActive ? "Deactivate user" : "Reactivate user"}
+          </button>
+        </div>
+
+        <div className="form-section mt-4 border-[#f1b8b2] bg-[#fffafa]">
+          <h4 className="text-sm font-bold text-[#b42318]">Danger zone</h4>
+          <p className="mt-1 text-sm text-[#7a5b54]">Deleting a user should only be used for mistaken or test accounts. Deactivate users where history should be preserved.</p>
+          <button className="danger-button mt-3" onClick={() => void deleteUser()} disabled={isDeleting}>
+            <Trash2 size={16} aria-hidden />
+            {isDeleting ? "Deleting user" : "Delete user permanently"}
+          </button>
+        </div>
       </div>
     </div>
   );
