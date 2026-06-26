@@ -2968,6 +2968,7 @@ function UserEnrolment({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [sendInviteEmail, setSendInviteEmail] = useState(true);
   const [role, setRole] = useState<AppRole>("resident");
   const [residentType, setResidentType] = useState<ResidentType>("leaseholder");
   const [organisationId, setOrganisationId] = useState("");
@@ -2983,7 +2984,7 @@ function UserEnrolment({
   const canCreateUser = Boolean(
     fullName &&
     email &&
-    password &&
+    (sendInviteEmail || password) &&
     (!isResident || (residentType && selectedUnitIds.length > 0)) &&
     (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
   );
@@ -3001,8 +3002,8 @@ function UserEnrolment({
   }
 
   async function enrolUser() {
-    if (!email || !password || !fullName) {
-      onNotice("Name, email and temporary password are required.");
+    if (!email || !fullName || (!sendInviteEmail && !password)) {
+      onNotice(sendInviteEmail ? "Name and email are required." : "Name, email and temporary password are required.");
       return;
     }
 
@@ -3031,6 +3032,7 @@ function UserEnrolment({
         body: JSON.stringify({
           email,
           password,
+          sendInviteEmail,
           fullName,
           role,
           residentType: isResident ? residentType : null,
@@ -3051,6 +3053,7 @@ function UserEnrolment({
       setFullName("");
       setEmail("");
       setPassword("");
+      setSendInviteEmail(true);
       setRole("resident");
       setResidentType("leaseholder");
       setOrganisationId("");
@@ -3070,7 +3073,7 @@ function UserEnrolment({
           unitIds: selectedUnitIds,
         },
       });
-      onNotice(`Enrolled ${payload.email}.`);
+      onNotice(sendInviteEmail ? `Invite sent to ${payload.email}.` : `Enrolled ${payload.email}.`);
       await reload();
       onCancel();
     } finally {
@@ -3094,7 +3097,13 @@ function UserEnrolment({
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <label className="field-label">Name<input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Full name" /></label>
             <label className="field-label">Email<input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" type="email" /></label>
-            <label className="field-label md:col-span-2">Temporary password<input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Temporary password" type="password" /></label>
+            <label className="option-card md:col-span-2">
+              <input checked={sendInviteEmail} onChange={(event) => setSendInviteEmail(event.target.checked)} type="checkbox" />
+              Send invite email
+            </label>
+            {!sendInviteEmail && (
+              <label className="field-label md:col-span-2">Temporary password<input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Temporary password" type="password" /></label>
+            )}
           </div>
         </div>
         <div className="form-section">
@@ -3145,10 +3154,10 @@ function UserEnrolment({
         <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
       )}
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
-        {isSubmitting ? "Enrolling user" : "Create user and assign access"}
+        {isSubmitting ? "Enrolling user" : sendInviteEmail ? "Send invite and assign access" : "Create user and assign access"}
       </button>
       <p className="mt-3 text-sm text-[#617169]">
-        This currently creates the account with a temporary password. Invite email delivery can be added next using Supabase invite links.
+        Invite emails require SMTP to be configured in Supabase for staging and production.
       </p>
     </section>
   );

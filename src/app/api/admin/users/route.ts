@@ -11,6 +11,7 @@ type CreateUserBody = {
   organisationId?: string;
   buildingIds?: string[];
   unitAccess?: { unitId: string; accessType: ResidentType | "representative" }[];
+  sendInviteEmail?: boolean;
 };
 
 type UpdateUserBody = Omit<CreateUserBody, "email" | "password"> & {
@@ -36,6 +37,10 @@ function isValidRole(role: AppRole) {
 
 function isValidResidentType(value?: ResidentType | null) {
   return Boolean(value && validResidentTypes.includes(value));
+}
+
+function normalizeEmail(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
 }
 
 async function getAdminClientForRequest(request: Request) {
@@ -65,15 +70,19 @@ async function getAdminClientForRequest(request: Request) {
     .eq("id", userData.user.id)
     .maybeSingle();
 
-  const { data: requesterByEmail, error: requesterByEmailError } = requesterById ? { data: null, error: null } : (
-    userData.user.email
-      ? (await adminClient
-        .from("profiles")
-        .select("email,role")
-        .ilike("email", userData.user.email)
-        .maybeSingle())
-      : { data: null, error: null }
-  );
+  const normalizedUserEmail = normalizeEmail(userData.user.email);
+  let requesterByEmail = null as { email: string | null; role: string | null } | null;
+  let requesterByEmailError = null as { message: string } | null;
+
+  if (!requesterById && normalizedUserEmail) {
+    const { data: profilesByEmail, error } = await adminClient
+      .from("profiles")
+      .select("email,role");
+
+    requesterByEmailError = error;
+    requesterByEmail = (profilesByEmail ?? []).find((profile) => normalizeEmail(profile.email) === normalizedUserEmail) ?? null;
+  }
+
   const requester = requesterById ?? requesterByEmail;
   const requesterRole = requester?.role?.trim().toLowerCase();
 
@@ -104,13 +113,18 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CreateUserBody;
     const email = body.email?.trim();
     const password = body.password?.trim();
+    const sendInviteEmail = body.sendInviteEmail ?? false;
     const role = body.role ?? "user";
     const residentType = body.residentType ?? null;
     const unitAccess = body.unitAccess ?? [];
     let buildingIds = body.buildingIds ?? [];
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    }
+
+    if (!sendInviteEmail && !password) {
+      return NextResponse.json({ error: "Temporary password is required unless sending an invite email." }, { status: 400 });
     }
 
     if (!isValidRole(role) || role === "user") {
@@ -146,12 +160,18 @@ export async function POST(request: Request) {
       buildingIds = Array.from(new Set((accessUnits ?? []).map((unit) => unit.building_id)));
     }
 
-    const { data, error } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: body.fullName ?? "" },
-    });
+    const redirectTo = request.headers.get("origin") ?? undefined;
+    const { data, error } = sendInviteEmail
+      ? await adminClient.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: body.fullName ?? "" },
+        redirectTo,
+      })
+      : await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: body.fullName ?? "" },
+      });
 
     if (error || !data.user) {
       return NextResponse.json({ error: error?.message ?? "Could not create user." }, { status: 400 });
@@ -190,7 +210,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ id: data.user.id, email, role });
+    return NextResponse.json({ id: data.user.id, email, role, invited: sendInviteEmail });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unexpected error." },
