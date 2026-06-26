@@ -71,6 +71,12 @@ type SnagListFilters = {
   quickFilter?: "overdue" | "due_soon" | "recent";
 };
 
+type AuthRedirectState = {
+  type: "invite" | "recovery";
+  error?: string;
+  description?: string;
+};
+
 type SnagDraft = {
   buildingId: string;
   floor: string;
@@ -324,6 +330,42 @@ function isMissingSessionError(error: unknown) {
   return String(error.message).toLowerCase().includes("auth session missing");
 }
 
+function readAuthRedirectState(): AuthRedirectState | null {
+  if (typeof window === "undefined" || !window.location.hash) return null;
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const error = params.get("error") ?? params.get("error_code");
+  const description = params.get("error_description") ?? undefined;
+  const type = params.get("type");
+
+  if (error) {
+    return {
+      type: type === "recovery" ? "recovery" : "invite",
+      error,
+      description,
+    };
+  }
+
+  if (type === "invite" || type === "recovery") return { type };
+  return null;
+}
+
+function clearUrlHash() {
+  if (typeof window === "undefined" || !window.location.hash) return;
+  window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+}
+
+function readAuthRedirectTokens() {
+  if (typeof window === "undefined" || !window.location.hash) return null;
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) return null;
+  return { accessToken, refreshToken };
+}
+
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
@@ -353,6 +395,7 @@ export function ProductionPortalApp() {
   const [accessibleBuildingIds, setAccessibleBuildingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -410,8 +453,34 @@ export function ProductionPortalApp() {
     }
 
     const supabase = createSupabaseBrowserClient();
+    const redirectState = readAuthRedirectState();
 
-    supabase.auth.getUser()
+    if (redirectState) {
+      setAuthRedirect(redirectState);
+      clearPortalState();
+
+      if (redirectState.error) {
+        void supabase.auth.signOut({ scope: "local" });
+        clearUrlHash();
+        setNotice(redirectState.description ?? "This invite link is invalid or has expired. Ask an admin to send a new invite.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    const redirectTokens = redirectState && !redirectState.error ? readAuthRedirectTokens() : null;
+    const sessionReady = redirectTokens
+      ? supabase.auth.setSession({
+        access_token: redirectTokens.accessToken,
+        refresh_token: redirectTokens.refreshToken,
+      })
+      : Promise.resolve({ error: null });
+
+    sessionReady
+      .then(async ({ error: sessionError }) => {
+        if (sessionError) throw sessionError;
+        return supabase.auth.getUser();
+      })
       .then(async ({ data, error }) => {
         if (error) {
           if (isStaleRefreshTokenError(error)) {
@@ -605,6 +674,24 @@ export function ProductionPortalApp() {
 
   if (isLoading) {
     return <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice="Loading Bunnywell Portal..." />;
+  }
+
+  if (authRedirect && !authRedirect.error) {
+    return (
+      <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
+        <InvitePasswordPanel
+          email={user?.email ?? ""}
+          mode={authRedirect.type}
+          onComplete={async () => {
+            if (user) await loadAll(user.id, user.email);
+            clearUrlHash();
+            setAuthRedirect(null);
+            setNotice("Password set. Welcome to Bunnywell Portal.");
+          }}
+          onNotice={setNotice}
+        />
+      </Shell>
+    );
   }
 
   if (!user) {
@@ -929,6 +1016,83 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
           />
         </label>
         <button onClick={login} className="primary w-full">Sign in</button>
+      </div>
+    </section>
+  );
+}
+
+function InvitePasswordPanel({
+  email,
+  mode,
+  onComplete,
+  onNotice,
+}: {
+  email: string;
+  mode: AuthRedirectState["type"];
+  onComplete: () => Promise<void>;
+  onNotice: (notice: string) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const canSubmit = Boolean(email) && password.length >= 8 && passwordsMatch && !isSaving;
+
+  async function savePassword() {
+    if (!canSubmit) {
+      onNotice(!email ? "The invite session could not be restored. Ask an admin to send a fresh invite." : "Enter a matching password of at least 8 characters.");
+      return;
+    }
+
+    setIsSaving(true);
+    onNotice("");
+    const { error } = await createSupabaseBrowserClient().auth.updateUser({ password });
+    setIsSaving(false);
+
+    if (error) {
+      onNotice(error.message);
+      return;
+    }
+
+    await onComplete();
+  }
+
+  return (
+    <section className="panel mx-auto max-w-md">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D6A23A]">Secure access</p>
+      <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">{mode === "invite" ? "Set your password" : "Reset your password"}</h2>
+      <p className="mt-3 text-sm text-[#66736B]">
+        {email ? `Create a password for ${email}.` : "Completing your secure invite."}
+      </p>
+      <div className="mt-5 space-y-4">
+        <label className="field-label">
+          New password
+          <input
+            autoComplete="new-password"
+            className="field"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="At least 8 characters"
+            type="password"
+          />
+        </label>
+        <label className="field-label">
+          Confirm password
+          <input
+            autoComplete="new-password"
+            className="field"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void savePassword();
+            }}
+            placeholder="Repeat password"
+            type="password"
+          />
+        </label>
+        <button onClick={savePassword} className="primary w-full" disabled={isSaving}>
+          {isSaving ? "Saving password..." : "Set password"}
+        </button>
       </div>
     </section>
   );
