@@ -261,6 +261,15 @@ textarea.field {
   color: #ffffff;
 }
 
+.secondary.nav-pill-active:hover,
+.secondary.nav-pill-active:active,
+.secondary.nav-pill-active:focus-visible {
+  border-color: var(--bw-primary);
+  background: var(--bw-primary);
+  color: #ffffff;
+  transform: none;
+}
+
 .panel,
 .card-surface {
   border: 1px solid var(--bw-border);
@@ -560,6 +569,7 @@ textarea.field {
 
 .field-label {
   display: grid;
+  align-content: start;
   gap: 0.4rem;
   color: var(--foreground);
   font-size: 0.78rem;

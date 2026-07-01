@@ -118,6 +118,11 @@ function yes(value) {
   return ["yes", "y", "true", "1"].includes(clean(value).toLowerCase());
 }
 
+function yesOrDefault(value, fallback) {
+  const text = clean(value);
+  return text ? yes(text) : fallback;
+}
+
 function validateData(data) {
   const errors = [];
   const buildingCodes = new Set();
@@ -186,6 +191,8 @@ function validateData(data) {
 async function importBuildings(rows) {
   const result = new Map();
   for (const row of rows) {
+    const pcDate = dateOrNull(row.pc_date) || dateOrNull(row.practical_completion_date);
+    const pcConfirmed = yesOrDefault(row.pc_confirmed, false);
     const payload = {
       name: clean(row.building_name),
       address_line_1: clean(row.address_line_1) || null,
@@ -193,8 +200,11 @@ async function importBuildings(rows) {
       town: clean(row.town) || null,
       postcode: clean(row.postcode) || null,
       status: clean(row.status),
-      practical_completion_date: dateOrNull(row.practical_completion_date),
-      defects_liability_end_date: dateOrNull(row.defects_liability_end_date),
+      allow_resident_access_requests: yesOrDefault(row.allow_resident_access_requests, true),
+      pc_date: pcDate,
+      pc_confirmed: pcConfirmed,
+      practical_completion_date: pcDate,
+      defects_liability_end_date: pcConfirmed && pcDate ? addYears(pcDate, 1) : null,
       notes: clean(row.notes) || null,
     };
 
@@ -551,6 +561,12 @@ function splitList(value) {
 function dateOrNull(value) {
   const text = clean(value);
   return text ? text.slice(0, 10) : null;
+}
+
+function addYears(value, years) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  date.setUTCFullYear(date.getUTCFullYear() + years);
+  return date.toISOString().slice(0, 10);
 }
 
 function numberOrNull(value) {

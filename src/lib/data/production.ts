@@ -8,9 +8,16 @@ export type Building = {
   address_line_2: string | null;
   town: string | null;
   postcode: string | null;
+  pc_date: string | null;
+  pc_confirmed: boolean | null;
   practical_completion_date: string | null;
   defects_liability_end_date: string | null;
+  dlp_end_date: string | null;
+  dlp_closing_notice_start_date: string | null;
+  archive_date: string | null;
+  lifecycle_status: string | null;
   status: string;
+  allow_resident_access_requests: boolean | null;
   notes: string | null;
   photo_url: string | null;
   documents_url: string | null;

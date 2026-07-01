@@ -6,6 +6,7 @@ type CreateUserBody = {
   email?: string;
   password?: string;
   fullName?: string;
+  phone?: string;
   role?: AppRole;
   residentType?: ResidentType | null;
   organisationId?: string;
@@ -117,10 +118,10 @@ async function getAdminClientForRequest(request: Request) {
     };
   }
 
-  if (requesterRole !== "admin" || !requesterActive) {
+  if (!["admin", "developer"].includes(requesterRole ?? "") || !requesterActive) {
     return {
       response: NextResponse.json({
-        error: `Only active admins can manage users. Signed in as ${userData.user.email ?? userData.user.id}; portal role is ${requester?.role ?? "not found"}.`,
+        error: `Only active admins or developers can manage users. Signed in as ${userData.user.email ?? userData.user.id}; portal role is ${requester?.role ?? "not found"}.`,
       }, { status: 403 }),
     };
   }
@@ -152,10 +153,6 @@ export async function POST(request: Request) {
 
     if (!isValidRole(role) || role === "user") {
       return NextResponse.json({ error: "Choose a valid user role." }, { status: 400 });
-    }
-
-    if (role === "resident" && unitAccess.length === 0) {
-      return NextResponse.json({ error: "Residents must be assigned to at least one unit." }, { status: 400 });
     }
 
     if (role === "resident" && !isValidResidentType(residentType)) {
@@ -205,6 +202,7 @@ export async function POST(request: Request) {
       email,
       full_name: body.fullName ?? null,
       name: body.fullName ?? null,
+      phone: body.phone?.trim() || null,
       role,
       resident_type: role === "resident" ? residentType : null,
       organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
@@ -379,6 +377,7 @@ export async function PATCH(request: Request) {
     const { error: profileError } = await adminClient.from("profiles").update({
       full_name: body.fullName ?? null,
       name: body.fullName ?? null,
+      phone: body.phone?.trim() || null,
       role,
       resident_type: role === "resident" ? residentType : null,
       organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
@@ -483,9 +482,19 @@ export async function DELETE(request: Request) {
       }, { status: 400 });
     }
 
+    const { data: linkedAccessRequests, error: linkedAccessRequestsError } = await adminClient
+      .from("resident_access_requests")
+      .select("id,full_name,email,phone,resident_type,requested_units,notes,status,admin_notes,reviewed_by_user_id,reviewed_at,created_at")
+      .ilike("email", profile.email);
+
+    if (linkedAccessRequestsError) {
+      return NextResponse.json({ error: linkedAccessRequestsError.message }, { status: 400 });
+    }
+
     await Promise.all([
       adminClient.from("user_building_access").delete().eq("user_id", userId),
       adminClient.from("user_unit_access").delete().eq("user_id", userId),
+      adminClient.from("resident_access_requests").delete().ilike("email", profile.email),
     ]);
 
     const { error: deleteProfileError } = await adminClient.from("profiles").delete().eq("id", userId);
@@ -498,7 +507,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: deleteAuthError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ id: userId, email: profile.email, role: profile.role });
+    return NextResponse.json({
+      id: userId,
+      email: profile.email,
+      role: profile.role,
+      deletedAccessRequests: linkedAccessRequests ?? [],
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unexpected error." },
