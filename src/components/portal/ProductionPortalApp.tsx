@@ -1,10 +1,24 @@
 "use client";
 
-import { BarChart3, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Download, FileText, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, UserRound, UsersRound, X } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
+import { snagResultsSummary } from "@/lib/snag-pagination";
+import {
+  buildingAllowsFlatHandover,
+  buildingAllowsResidentRoutineSnags,
+  closingNoticeStartDate,
+  dateOnly,
+  derivedBuildingLifecycleStatus,
+  expectedPcDate,
+  hasPassedExpectedPcWarning,
+  initialDefectsReportingEndDate,
+  lifecycleEffectSummary,
+  lifecycleLabel,
+  pcConfirmationError,
+} from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   type AppRole,
@@ -32,9 +46,11 @@ type Profile = {
   email: string;
   name: string | null;
   full_name: string | null;
+  phone: string | null;
   role: AppRole;
   resident_type: ResidentType | null;
   organisation_id: string | null;
+  active?: boolean | null;
   created_at?: string | null;
 };
 
@@ -50,6 +66,35 @@ type UserUnitAccess = {
   access_type: ResidentType | "representative";
 };
 
+type FlatAccessDraft = {
+  id: string;
+  buildingId: string;
+  unitId: string;
+};
+
+type AccessRequestUnit = {
+  building_id: string;
+  building_name: string;
+  unit_id: string;
+  unit_number: string;
+  floor: string | null;
+};
+
+type ResidentAccessRequest = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  resident_type: ResidentType;
+  requested_units: AccessRequestUnit[];
+  notes: string | null;
+  status: "pending" | "approved" | "rejected";
+  admin_notes: string | null;
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+};
+
 type AuditEvent = {
   id: string;
   event_type: string;
@@ -61,7 +106,14 @@ type AuditEvent = {
   created_at: string;
 };
 
-type Tab = "dashboard" | "admin" | "users" | "add_snag" | "snags" | "handover" | "leaseholder" | "reports" | "audit";
+type Tab = "dashboard" | "snags" | "units" | "setup_buildings" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
+type PrimaryNavKey = "dashboard" | "snags" | "units" | "setup" | "resident_home" | "resident_snags" | "resident_help";
+
+type PortalScreenDefinition = {
+  label: string;
+  roles: AppRole[];
+  section: "internal" | "setup" | "resident";
+};
 
 type SnagListFilters = {
   buildingId?: string;
@@ -69,6 +121,12 @@ type SnagListFilters = {
   statusFilter?: string;
   tradeFilter?: string;
   quickFilter?: "overdue" | "due_soon" | "recent";
+};
+
+type AuthRedirectState = {
+  type: "invite" | "recovery";
+  error?: string;
+  description?: string;
 };
 
 type SnagDraft = {
@@ -126,6 +184,76 @@ const organisationTypes = [
   { value: "contractor", label: "Contractor" },
 ];
 
+const portalScreens: Record<Tab, PortalScreenDefinition> = {
+  dashboard: {
+    label: "Dashboard",
+    roles: ["admin", "developer", "developer_representative", "contractor"],
+    section: "internal",
+  },
+  snags: {
+    label: "Snags",
+    roles: ["admin", "developer", "developer_representative", "contractor"],
+    section: "internal",
+  },
+  units: {
+    label: "Units",
+    roles: ["admin", "developer", "developer_representative"],
+    section: "internal",
+  },
+  setup_buildings: {
+    label: "Buildings",
+    roles: ["admin", "developer"],
+    section: "setup",
+  },
+  setup_people: {
+    label: "People & access",
+    roles: ["admin", "developer"],
+    section: "setup",
+  },
+  setup_activity: {
+    label: "Activity log",
+    roles: ["admin", "developer"],
+    section: "setup",
+  },
+  resident_home: {
+    label: "My home",
+    roles: ["resident"],
+    section: "resident",
+  },
+  resident_snags: {
+    label: "Snags",
+    roles: ["resident"],
+    section: "resident",
+  },
+  resident_help: {
+    label: "Documents",
+    roles: ["resident"],
+    section: "resident",
+  },
+};
+
+const legacyScreenAliases: Record<string, Tab> = {
+  admin: "setup_buildings",
+  buildings: "setup_buildings",
+  setup: "setup_buildings",
+  users: "setup_people",
+  people: "setup_people",
+  people_access: "setup_people",
+  audit: "setup_activity",
+  activity: "setup_activity",
+  activity_log: "setup_activity",
+  add_snag: "snags",
+  reports: "snags",
+  handover: "units",
+  leaseholder: "resident_home",
+  resident: "resident_home",
+  my_home: "resident_home",
+  my_snags: "resident_snags",
+  snags: "resident_snags",
+  documents: "resident_help",
+  home_documents: "resident_help",
+};
+
 const brand = {
   green: "#0F3D31",
   gold: "#D4A645",
@@ -133,6 +261,25 @@ const brand = {
   border: "#d8ded8",
   muted: "#617169",
 };
+
+async function fetchAllAreas(supabase: ReturnType<typeof createSupabaseBrowserClient>) {
+  const pageSize = 1000;
+  const rows: Area[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("areas")
+      .select("*")
+      .order("sort_order")
+      .order("id")
+      .range(from, from + pageSize - 1);
+
+    if (error) return { data: null, error };
+
+    rows.push(...((data ?? []) as Area[]));
+    if ((data ?? []).length < pageSize) return { data: rows, error: null };
+  }
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
@@ -156,30 +303,57 @@ function formatDateTime(value?: string | null) {
   }).format(new Date(value));
 }
 
-function roleTabs(role: AppRole): Tab[] {
-  if (role === "admin") return ["dashboard", "admin", "users", "add_snag", "snags", "leaseholder", "reports", "audit"];
-  if (role === "developer") return ["dashboard", "add_snag", "snags", "leaseholder", "reports"];
-  if (role === "developer_representative") return ["dashboard", "add_snag", "snags", "reports"];
-  if (role === "resident") return ["leaseholder"];
-  if (role === "contractor") return ["dashboard", "snags", "reports"];
+function normalizeScreen(value?: string | null): Tab | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase().replace(/-/g, "_");
+  if (normalized in portalScreens) return normalized as Tab;
+  return legacyScreenAliases[normalized] ?? null;
+}
 
-  return ["dashboard", "reports"];
+function screenFromUrl() {
+  if (typeof window === "undefined") return null;
+  return normalizeScreen(new URLSearchParams(window.location.search).get("screen"));
+}
+
+function writeScreenToUrl(tab: Tab, replace = false) {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  params.set("screen", tab);
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  if (replace) window.history.replaceState(null, "", nextUrl);
+  else window.history.pushState(null, "", nextUrl);
+}
+
+function clearScreenFromUrl() {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  params.delete("screen");
+  const query = params.toString();
+  const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  window.history.replaceState(null, "", nextUrl);
+}
+
+function canAccessScreen(role: AppRole, tab: Tab) {
+  return portalScreens[tab].roles.includes(role);
+}
+
+function roleTabs(role: AppRole): Tab[] {
+  return (Object.keys(portalScreens) as Tab[]).filter((tab) => canAccessScreen(role, tab));
+}
+
+function defaultTabForRole(role: AppRole): Tab {
+  if (role === "resident") return "resident_home";
+  if (role === "contractor") return "snags";
+  return roleTabs(role)[0] ?? "dashboard";
 }
 
 function tabLabel(tab: Tab) {
-  const labels: Record<Tab, string> = {
-    dashboard: "Dashboard",
-    admin: "Admin",
-    users: "Users",
-    add_snag: "Add snag",
-    snags: "Snags",
-    handover: "Handover",
-    leaseholder: "Resident",
-    reports: "Reports",
-    audit: "Audit",
-  };
+  return portalScreens[tab].label;
+}
 
-  return labels[tab];
+function setupTabsForRole(role: AppRole) {
+  return roleTabs(role).filter((tab) => portalScreens[tab].section === "setup");
 }
 
 function statusLabel(status: string) {
@@ -200,19 +374,100 @@ function statusLabel(status: string) {
     exchanged: "Exchanged",
     completed: "Completed",
     handed_over: "Handed Over",
+    admin: "Admin",
+    developer: "Developer",
     developer_representative: "Developer Representative",
+    contractor: "Contractor",
     resident: "Resident",
     leaseholder: "Leaseholder",
     tenant: "Tenant",
     letting_agent: "Letting Agent",
     managing_agent: "Managing Agent",
+    pre_pc: "Pre-PC",
+    dlp_active: "DLP active",
+    dlp_closing: "Closing soon",
+    post_dlp_readonly: "Post-DLP read-only",
+    archived: "Archived",
     electricity: "Electricity",
     water: "Water",
     Open: "Open",
     Resolved: "Resolved",
   };
 
-  return labels[status] ?? status.replaceAll("_", " ");
+  return labels[status] ?? status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function residentSnagStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    open: "Reported",
+    submitted: "Reported",
+    accepted: "Being reviewed",
+    assigned_to_contractor: "In progress",
+    in_progress: "In progress",
+    needs_more_info: "Waiting for you",
+    resolved_by_contractor: "Resolved",
+    rejected_back_to_contractor: "Follow-up sent",
+    resolved: "Resolved",
+    closed: "Closed",
+    rejected: "Closed",
+  };
+
+  return labels[status] ?? statusLabel(status);
+}
+
+function snagListStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    needs_more_info: "More info",
+    rejected_back_to_contractor: "Rejected back",
+    resolved_by_contractor: "Resolved",
+  };
+
+  return labels[status] ?? statusLabel(status);
+}
+
+function residentSnagIsOpen(snag: ProductionSnag) {
+  return !["closed", "resolved", "rejected"].includes(snag.status);
+}
+
+function residentSnagIsResolved(snag: ProductionSnag) {
+  return ["closed", "resolved", "resolved_by_contractor"].includes(snag.status);
+}
+
+function photoCreatedTime(photo: SnagPhoto) {
+  const time = new Date(photo.created_at).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function primarySnagPhoto(photos: SnagPhoto[]) {
+  const usablePhotos = photos.filter((photo) => photo.file_url);
+  const originalPhotos = usablePhotos.filter((photo) => photo.photo_type === "original" || photo.photo_type === "annotated");
+  const candidates = originalPhotos.length > 0 ? originalPhotos : usablePhotos;
+
+  return [...candidates].sort((a, b) => photoCreatedTime(a) - photoCreatedTime(b))[0];
+}
+
+function supabaseStorageThumbnailUrl(fileUrl: string, width: number, height: number) {
+  try {
+    const url = new URL(fileUrl);
+    const publicPath = "/storage/v1/object/public/";
+    const signedPath = "/storage/v1/object/sign/";
+    if (url.pathname.includes(publicPath)) {
+      url.pathname = url.pathname.replace(publicPath, "/storage/v1/render/image/public/");
+    } else if (url.pathname.includes(signedPath)) {
+      url.pathname = url.pathname.replace(signedPath, "/storage/v1/render/image/sign/");
+    } else {
+      return "";
+    }
+    url.searchParams.set("width", String(width));
+    url.searchParams.set("height", String(height));
+    url.searchParams.set("resize", "cover");
+    url.searchParams.set("quality", "70");
+    return url.toString();
+  } catch {
+    return "";
+  }
 }
 
 function readableError(error: unknown, fallback = "Please try again or contact support.") {
@@ -223,6 +478,15 @@ function readableError(error: unknown, fallback = "Please try again or contact s
   }
 
   return fallback;
+}
+
+function buildingSchemaNotice(message: string) {
+  const lowerMessage = message.toLowerCase();
+  const missingBuildingLifecycleColumn = ["pc_confirmed", "pc_date", "allow_resident_access_requests"].some((column) => lowerMessage.includes(column));
+
+  if (!missingBuildingLifecycleColumn) return message;
+
+  return "The database is missing the latest building lifecycle fields. Run the building lifecycle migration in Supabase, then reload the portal.";
 }
 
 function entityLabel(entityType: string) {
@@ -243,6 +507,41 @@ function entityLabel(entityType: string) {
 
 function formatParkingBays(parkingBays?: number[] | null) {
   return parkingBays && parkingBays.length > 0 ? parkingBays.join(", ") : "None";
+}
+
+function sortUnitsByFloorOrder(units: Unit[], buildingFloors: BuildingFloor[], buildingId?: string) {
+  const floorOrder = new Map(
+    buildingFloors
+      .filter((floor) => !buildingId || floor.building_id === buildingId)
+      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
+  );
+
+  return [...units].sort((a, b) => {
+    const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true });
+  });
+}
+
+function sortAreasByFloorOrder(areas: Area[], buildingFloors: BuildingFloor[], buildingId?: string) {
+  const floorOrder = new Map(
+    buildingFloors
+      .filter((floor) => !buildingId || floor.building_id === buildingId)
+      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
+  );
+
+  return [...areas].sort((a, b) => {
+    const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    if ((a.sort_order ?? 0) !== (b.sort_order ?? 0)) return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    return a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
+}
+
+function filenameSafe(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "report";
 }
 
 function parseParkingBays(value: string) {
@@ -283,17 +582,80 @@ function eventLabel(eventType: string) {
 }
 
 function statusTone(status: string) {
+  if (status === "active") return "status-badge bg-[#e7f3ea] text-[#147A4D]";
+  if (status === "deactivated") return "status-badge bg-[#ecefeb] text-[#66736B]";
+  if (status === "pending") return "status-badge bg-[#fff4df] text-[#8a5a12]";
+  if (status === "approved") return "status-badge bg-[#e7f3ea] text-[#147A4D]";
   if (["closed", "resolved", "resolved_by_contractor", "handed_over"].includes(status)) return "status-badge bg-[#e7f3ea] text-[#147A4D]";
   if (["rejected", "rejected_back_to_contractor", "needs_more_info"].includes(status)) return "status-badge bg-[#fff4df] text-[#8a5a12]";
   if (["P1", "open", "submitted"].includes(status)) return "status-badge bg-[#eef5f1] text-[#0F3D2E]";
   return "status-badge bg-[#f3f0e8] text-[#66736B]";
 }
 
+function isStaleRefreshTokenError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return false;
+  const message = String(error.message).toLowerCase();
+  return message.includes("refresh token") && (message.includes("not found") || message.includes("invalid"));
+}
+
+function isMissingSessionError(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return false;
+  return String(error.message).toLowerCase().includes("auth session missing");
+}
+
+function friendlyAuthMessage(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return "Something went wrong. Please try again.";
+  const message = String(error.message);
+  const normalised = message.toLowerCase();
+
+  if (normalised.includes("user is banned") || normalised.includes("banned")) {
+    return "This portal account has been deactivated. Contact Bunnywell if you need access restored.";
+  }
+
+  return message;
+}
+
+function readAuthRedirectState(): AuthRedirectState | null {
+  if (typeof window === "undefined" || !window.location.hash) return null;
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const error = params.get("error") ?? params.get("error_code");
+  const description = params.get("error_description") ?? undefined;
+  const type = params.get("type");
+
+  if (error) {
+    return {
+      type: type === "recovery" ? "recovery" : "invite",
+      error,
+      description,
+    };
+  }
+
+  if (type === "invite" || type === "recovery") return { type };
+  return null;
+}
+
+function clearUrlHash() {
+  if (typeof window === "undefined" || !window.location.hash) return;
+  window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+}
+
+function readAuthRedirectTokens() {
+  if (typeof window === "undefined" || !window.location.hash) return null;
+
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  const refreshToken = params.get("refresh_token");
+
+  if (!accessToken || !refreshToken) return null;
+  return { accessToken, refreshToken };
+}
+
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setActiveTab] = useState<Tab>(() => screenFromUrl() ?? "dashboard");
   const [snagListFilters, setSnagListFilters] = useState<SnagListFilters>({});
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -306,6 +668,7 @@ export function ProductionPortalApp() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [userBuildingAccess, setUserBuildingAccess] = useState<UserBuildingAccess[]>([]);
   const [userUnitAccess, setUserUnitAccess] = useState<UserUnitAccess[]>([]);
+  const [accessRequests, setAccessRequests] = useState<ResidentAccessRequest[]>([]);
   const [snags, setSnags] = useState<ProductionSnag[]>([]);
   const [photos, setPhotos] = useState<SnagPhoto[]>([]);
   const [events, setEvents] = useState<SnagEvent[]>([]);
@@ -318,12 +681,67 @@ export function ProductionPortalApp() {
   const [accessibleBuildingIds, setAccessibleBuildingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
+  const scopedBuildings = useMemo(() => filterBuildingsForRole(buildings, units, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, buildings, profile, units]);
+  const scopedUnits = useMemo(() => filterUnitsForRole(units, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, units]);
+  const scopedAreas = useMemo(() => filterAreasForRole(areas, profile, scopedBuildings, scopedUnits), [areas, profile, scopedBuildings, scopedUnits]);
+  const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
+  const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, snags]);
-  const developerSnags = visibleSnags.filter((snag) => snag.source_type === "developer_snag");
   const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
+
+  function setTab(nextTab: Tab, options?: { replace?: boolean }) {
+    setNotice("");
+    setActiveTab(nextTab);
+    writeScreenToUrl(nextTab, options?.replace);
+  }
+
+  function clearPortalState() {
+    setUser(null);
+    setProfile(null);
+    setActiveTab("dashboard");
+    clearScreenFromUrl();
+    setSnagListFilters({});
+    setBuildings([]);
+    setUnits([]);
+    setAreas([]);
+    setBuildingFloors([]);
+    setUnitTypes([]);
+    setUnitTypeAreas([]);
+    setTrades([]);
+    setOrganisations([]);
+    setProfiles([]);
+    setUserBuildingAccess([]);
+    setUserUnitAccess([]);
+    setAccessRequests([]);
+    setSnags([]);
+    setPhotos([]);
+    setEvents([]);
+    setAuditEvents([]);
+    setHandovers([]);
+    setHandoverKeyItems([]);
+    setHandoverPhotos([]);
+    setMeterReadings([]);
+    setAccessibleUnitIds([]);
+    setAccessibleBuildingIds([]);
+  }
+
+  async function signOut() {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      if (isStaleRefreshTokenError(error)) {
+        await supabase.auth.signOut({ scope: "local" });
+      } else {
+        setNotice(error.message);
+      }
+    }
+    clearPortalState();
+    setNotice("");
+  }
 
   useEffect(() => {
     if (!supabaseEnabled) {
@@ -333,18 +751,71 @@ export function ProductionPortalApp() {
     }
 
     const supabase = createSupabaseBrowserClient();
+    const redirectState = readAuthRedirectState();
 
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
-      if (data.user) await loadAll(data.user.id);
-      setIsLoading(false);
-    });
+    if (redirectState) {
+      setAuthRedirect(redirectState);
+      clearPortalState();
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (redirectState.error) {
+        void supabase.auth.signOut({ scope: "local" });
+        clearUrlHash();
+        setNotice(redirectState.description ?? "This invite link is invalid or has expired. Ask an admin to send a new invite.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    const redirectTokens = redirectState && !redirectState.error ? readAuthRedirectTokens() : null;
+    const sessionReady = redirectTokens
+      ? supabase.auth.setSession({
+        access_token: redirectTokens.accessToken,
+        refresh_token: redirectTokens.refreshToken,
+      })
+      : Promise.resolve({ error: null });
+
+    sessionReady
+      .then(async ({ error: sessionError }) => {
+        if (sessionError) throw sessionError;
+        return supabase.auth.getUser();
+      })
+      .then(async ({ data, error }) => {
+        if (error) {
+          if (isStaleRefreshTokenError(error)) {
+            await supabase.auth.signOut({ scope: "local" });
+          } else if (!isMissingSessionError(error)) {
+            setNotice(error.message);
+          } else {
+            setNotice("");
+          }
+          clearPortalState();
+          return;
+        }
+
+        setUser(data.user);
+        if (data.user) await loadAll(data.user.id, data.user.email);
+        else clearPortalState();
+      })
+      .catch(async (error: unknown) => {
+        if (isStaleRefreshTokenError(error)) {
+          await supabase.auth.signOut({ scope: "local" });
+          clearPortalState();
+        } else if (isMissingSessionError(error)) {
+          clearPortalState();
+          setNotice("");
+        } else {
+          setNotice(error instanceof Error ? error.message : "Could not restore session.");
+        }
+      })
+      .finally(() => setIsLoading(false));
+
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setNotice("");
-        void loadAll(session.user.id);
+        void loadAll(session.user.id, session.user.email);
+      } else if (event === "SIGNED_OUT") {
+        clearPortalState();
       }
     });
 
@@ -352,26 +823,76 @@ export function ProductionPortalApp() {
   }, [supabaseEnabled]);
 
   useEffect(() => {
-    if (!tabs.includes(tab)) setTab(tabs[0] ?? "dashboard");
-  }, [tab, tabs]);
+    function handleRouteChange() {
+      setActiveTab(screenFromUrl() ?? defaultTabForRole(role));
+      setNotice("");
+    }
+
+    window.addEventListener("popstate", handleRouteChange);
+    return () => window.removeEventListener("popstate", handleRouteChange);
+  }, [role]);
 
   useEffect(() => {
-    setNotice("");
-  }, [tab]);
+    if (!profile) return;
+    let timer: number | undefined;
+    const requestedScreen = screenFromUrl();
+    const defaultTab = defaultTabForRole(role);
+    const nextTab = requestedScreen && canAccessScreen(role, requestedScreen)
+      ? requestedScreen
+      : canAccessScreen(role, tab)
+        ? tab
+        : defaultTab;
+
+    if (requestedScreen !== nextTab || tab !== nextTab) {
+      timer = window.setTimeout(() => {
+        setActiveTab(nextTab);
+        if (requestedScreen !== nextTab) writeScreenToUrl(nextTab, true);
+        setNotice("");
+      }, 0);
+    }
+
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [profile, role, tab]);
 
   useEffect(() => {
     if (!notice || notice === "Loading Bunnywell Portal...") return;
     if (notice.startsWith("Supabase is not configured") || notice.startsWith("Production schema is not ready")) return;
-    const timer = window.setTimeout(() => setNotice(""), 7000);
+    const timer = window.setTimeout(() => setNotice(""), 12000);
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  async function loadAll(userId = user?.id) {
+  async function loadAll(userId = user?.id, userEmail = user?.email) {
     if (!userId) return;
 
     const supabase = createSupabaseBrowserClient();
+    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at";
+    let profileResult = await supabase
+      .from("profiles")
+      .select(profileSelect)
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profileResult.data && userEmail) {
+      profileResult = await supabase
+        .from("profiles")
+        .select(profileSelect)
+        .eq("email", userEmail)
+        .maybeSingle();
+    }
+
+    const loadedProfile = profileResult.data as Profile | null;
+
+    if (loadedProfile?.active === false) {
+      await supabase.auth.signOut({ scope: "local" });
+      clearPortalState();
+      setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
+      return;
+    }
+
+    const profileIdForAccess = loadedProfile?.id ?? userId;
     const [
-      profileResult,
       buildingsResult,
       unitsResult,
       areasResult,
@@ -383,6 +904,7 @@ export function ProductionPortalApp() {
       profilesResult,
       allBuildingAccessResult,
       allUnitAccessResult,
+      accessRequestsResult,
       snagsResult,
       photosResult,
       eventsResult,
@@ -394,18 +916,18 @@ export function ProductionPortalApp() {
       accessResult,
       buildingAccessResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").eq("id", userId).single(),
       supabase.from("buildings").select("*").order("name"),
       supabase.from("units").select("*").order("unit_number"),
-      supabase.from("areas").select("*").order("sort_order"),
+      fetchAllAreas(supabase),
       supabase.from("building_floors").select("*").order("sort_order"),
       supabase.from("unit_types").select("*").order("name"),
       supabase.from("unit_type_areas").select("*").order("sort_order"),
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
-      supabase.from("profiles").select("id,email,name,full_name,role,resident_type,organisation_id,created_at").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
+      supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
@@ -414,24 +936,24 @@ export function ProductionPortalApp() {
       supabase.from("handover_key_items").select("*").order("sort_order"),
       supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_unit_access").select("unit_id").eq("user_id", userId),
-      supabase.from("user_building_access").select("building_id").eq("user_id", userId),
+      supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
+      supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
     ]);
 
     const firstError = [
       buildingsResult.error,
       unitsResult.error,
       areasResult.error,
+      accessRequestsResult.error,
       snagsResult.error,
     ].find(Boolean);
 
     if (firstError) {
       setNotice(`Production schema is not ready yet: ${firstError.message}`);
     } else {
-      setNotice("");
+      setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
     }
 
-    const loadedProfile = profileResult.data as Profile | null;
     setProfile(loadedProfile);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
@@ -444,6 +966,7 @@ export function ProductionPortalApp() {
     setProfiles((profilesResult.data ?? []) as Profile[]);
     setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
     setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
+    setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
     setSnags((snagsResult.data ?? []) as ProductionSnag[]);
     setPhotos((photosResult.data ?? []) as SnagPhoto[]);
     setEvents((eventsResult.data ?? []) as SnagEvent[]);
@@ -455,7 +978,6 @@ export function ProductionPortalApp() {
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
     setAccessibleBuildingIds(Array.from(new Set([
       ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
-      ...(loadedProfile?.role === "contractor" ? (buildingsResult.data ?? []).map((building) => building.id) : []),
     ])));
   }
 
@@ -489,77 +1011,80 @@ export function ProductionPortalApp() {
     return <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice="Loading Bunnywell Portal..." />;
   }
 
+  if (authRedirect && !authRedirect.error) {
+    return (
+      <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
+        <InvitePasswordPanel
+          email={user?.email ?? ""}
+          mode={authRedirect.type}
+          onComplete={async () => {
+            if (user) await loadAll(user.id, user.email);
+            clearUrlHash();
+            setAuthRedirect(null);
+            setNotice("Password set. Welcome to Bunnywell Portal.");
+          }}
+          onNotice={setNotice}
+        />
+      </Shell>
+    );
+  }
+
   if (!user) {
     return (
-      <Shell profile={profile} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
+      <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice}>
         <LoginPanel onNotice={setNotice} />
       </Shell>
     );
   }
 
+  const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
+
   return (
-    <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice={notice} onRefresh={() => loadAll()}>
-      {tab === "dashboard" && (
+    <Shell profile={profile} tab={activeTab} tabs={tabs} setTab={setTab} notice={notice} onRefresh={() => loadAll()} onSignOut={signOut}>
+      {activeTab === "dashboard" && (
         <Dashboard
-          buildings={buildings}
+          buildings={scopedBuildings}
           events={events}
-          handovers={handovers}
+          handovers={scopedHandovers}
           profile={profile}
           snags={visibleSnags}
           trades={trades}
-          units={units}
+          units={scopedUnits}
           setTab={setTab}
           setSnagFilters={setSnagListFilters}
         />
       )}
-      {tab === "admin" && (
-        <AdminSetup
+      {portalScreens[activeTab].section === "setup" && (
+        <SetupSection
+          activeTab={activeTab}
+          setTab={setTab}
+          availableTabs={setupTabsForRole(role)}
           buildings={buildings}
           units={units}
           areas={areas}
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
-          recordAudit={recordAudit}
-          onNotice={setNotice}
-          reload={loadAll}
-        />
-      )}
-      {tab === "users" && (
-        <UserAdmin
-          buildings={buildings}
-          units={units}
           organisations={organisations}
           profiles={profiles}
+          accessRequests={accessRequests}
           userBuildingAccess={userBuildingAccess}
           userUnitAccess={userUnitAccess}
+          auditEvents={auditEvents}
           recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
         />
       )}
-      {tab === "add_snag" && (
-        <DeveloperSnagging
-          user={user}
-          buildings={buildings}
-          buildingFloors={buildingFloors}
-          units={units}
-          areas={areas}
-          trades={trades}
-          onNotice={setNotice}
-          reload={loadAll}
-          uploadFile={uploadFile}
-          requestedFilters={snagListFilters}
-        />
-      )}
-      {tab === "snags" && (
+      {activeTab === "snags" && (
         <SnagWorkflow
           user={user}
           profile={profile}
-          buildings={buildings}
+          buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
           snags={visibleSnags}
-          units={units}
-          areas={areas}
+          units={scopedUnits}
+          areas={scopedAreas}
           trades={trades}
           photos={photos}
           events={events}
@@ -567,19 +1092,44 @@ export function ProductionPortalApp() {
           onNotice={setNotice}
           reload={loadAll}
           uploadFile={uploadFile}
+          recordAudit={recordAudit}
+          requestedFilters={snagListFilters}
         />
       )}
-      {tab === "leaseholder" && (
+      {activeTab === "units" && (
+        <UnitsSection
+          user={user}
+          profile={profile}
+          buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
+          units={scopedUnits}
+          areas={scopedAreas}
+          snags={visibleSnags}
+          handovers={scopedHandovers}
+          handoverKeyItems={handoverKeyItems}
+          meterReadings={scopedMeterReadings}
+          photos={photos}
+          events={events}
+          profiles={profiles}
+          userUnitAccess={userUnitAccess}
+          accessibleUnitIds={accessibleUnitIds}
+          onNotice={setNotice}
+          recordAudit={recordAudit}
+          reload={loadAll}
+          uploadFile={uploadFile}
+        />
+      )}
+      {(activeTab === "resident_home" || activeTab === "resident_snags") && (
         <LeaseholderDefects
           user={user}
           profile={profile}
-          buildings={buildings}
-          units={units}
-          areas={areas}
+          buildings={scopedBuildings}
+          units={scopedUnits}
+          areas={scopedAreas}
           snags={residentDefects}
-          handovers={handovers}
+          handovers={scopedHandovers}
           handoverKeyItems={handoverKeyItems}
-          meterReadings={meterReadings}
+          meterReadings={scopedMeterReadings}
           photos={photos}
           events={events}
           profiles={profiles}
@@ -588,16 +1138,30 @@ export function ProductionPortalApp() {
           recordAudit={recordAudit}
           reload={loadAll}
           uploadFile={uploadFile}
+          onGoToSnags={() => setTab("resident_snags")}
+          residentView={activeTab === "resident_home" ? "home" : "snags"}
         />
       )}
-      {tab === "reports" && (
-        <ReportsPanel buildings={buildings} units={units} areas={areas} trades={trades} snags={developerSnags} photos={photos} recordAudit={recordAudit} />
-      )}
-      {tab === "audit" && (
-        <AuditPanel auditEvents={auditEvents} profiles={profiles} />
+      {activeTab === "resident_help" && (
+        <ResidentHelp buildings={scopedBuildings} units={scopedUnits} />
       )}
     </Shell>
   );
+}
+
+function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label: string; tab: Tab; activeTabs: Tab[]; icon: React.ReactNode }> {
+  const items: Array<{ key: PrimaryNavKey; label: string; tab: Tab; activeTabs: Tab[]; icon: React.ReactNode }> = [];
+  const setupTabs = tabs.filter((item) => portalScreens[item].section === "setup");
+
+  if (tabs.includes("dashboard")) items.push({ key: "dashboard", label: "Dashboard", tab: "dashboard", activeTabs: ["dashboard"], icon: <Home size={17} aria-hidden /> });
+  if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
+  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
+  if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
+  if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
+  if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
+  if (tabs.includes("resident_help")) items.push({ key: "resident_help", label: "Documents", tab: "resident_help", activeTabs: ["resident_help"], icon: <ClipboardList size={17} aria-hidden /> });
+
+  return items;
 }
 
 function Shell({
@@ -607,6 +1171,7 @@ function Shell({
   setTab,
   notice,
   onRefresh,
+  onSignOut,
   children,
 }: {
   profile: Profile | null;
@@ -615,37 +1180,32 @@ function Shell({
   setTab: (tab: Tab) => void;
   notice?: string;
   onRefresh?: () => void;
+  onSignOut?: () => Promise<void>;
   children?: React.ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
-  const coreTabs: Tab[] = ["dashboard", "snags", "add_snag"];
-  const visibleCoreTabs = coreTabs.filter((item) => tabs.includes(item));
-  const moreTabs = tabs.filter((item) => !visibleCoreTabs.includes(item));
-  const mobileNavItems: Array<{ tab?: Tab; label: string; icon: React.ReactNode; isMore?: boolean }> = [
-    ...(tabs.includes("dashboard") ? [{ tab: "dashboard" as Tab, label: "Home", icon: <Home size={19} aria-hidden /> }] : []),
-    ...(tabs.includes("snags") ? [{ tab: "snags" as Tab, label: "Snags", icon: <ClipboardList size={19} aria-hidden /> }] : []),
-    ...(tabs.includes("add_snag") ? [{ tab: "add_snag" as Tab, label: "Add", icon: <Plus size={22} aria-hidden /> }] : []),
-    { label: "More", icon: <Menu size={20} aria-hidden />, isMore: true },
-  ].slice(0, 5);
+  const navItems = primaryNavItemsForTabs(tabs);
+  const mobilePrimaryItems = navItems.slice(0, 4);
+  const mobileMoreItems = navItems.slice(4);
+  const mobileNavItems: Array<{ tab?: Tab; label: string; icon: React.ReactNode; isMore?: boolean; activeTabs?: Tab[] }> = [
+    ...mobilePrimaryItems.map((item) => ({
+      tab: item.tab,
+      label: item.label,
+      icon: item.icon,
+      activeTabs: item.activeTabs,
+    })),
+    ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
+  ];
+  const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
     setMoreOpen(false);
   }
 
-  function tabIcon(item: Tab) {
-    const icons: Partial<Record<Tab, React.ReactNode>> = {
-      dashboard: <Home size={17} aria-hidden />,
-      admin: <Building2 size={17} aria-hidden />,
-      users: <UsersRound size={17} aria-hidden />,
-      add_snag: <Plus size={18} aria-hidden />,
-      snags: <ClipboardList size={17} aria-hidden />,
-      handover: <Building2 size={17} aria-hidden />,
-      leaseholder: <UserRound size={17} aria-hidden />,
-      reports: <FileText size={17} aria-hidden />,
-      audit: <BarChart3 size={17} aria-hidden />,
-    };
-    return icons[item] ?? <ChevronRight size={17} aria-hidden />;
+  async function handleSignOut() {
+    setMoreOpen(false);
+    await onSignOut?.();
   }
 
   return (
@@ -671,9 +1231,9 @@ function Shell({
                   Refresh
                 </button>
               )}
-              {profile && (
+              {onSignOut && (
                 <button
-                  onClick={() => createSupabaseBrowserClient().auth.signOut()}
+                  onClick={() => void onSignOut()}
                   className="secondary min-h-10 px-3 text-sm"
                 >
                   <LogIn size={16} aria-hidden />
@@ -681,20 +1241,22 @@ function Shell({
                 </button>
               )}
             </div>
-            <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
-              <Menu size={18} aria-hidden />
-            </button>
+            {hasMobileMenu && (
+              <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
+                <Menu size={18} aria-hidden />
+              </button>
+            )}
           </div>
           {tabs.length > 0 && (
             <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex">
-              {tabs.map((item) => (
+              {navItems.map((item) => (
                 <button
-                  key={item}
-                  onClick={() => chooseTab(item)}
-                  className={`nav-pill ${tab === item ? "nav-pill-active" : ""}`}
+                  key={item.key}
+                  onClick={() => chooseTab(item.tab)}
+                  className={`nav-pill ${item.activeTabs.includes(tab) ? "nav-pill-active" : ""}`}
                 >
-                  {tabIcon(item)}
-                  {tabLabel(item)}
+                  {item.icon}
+                  {item.label}
                 </button>
               ))}
             </nav>
@@ -716,7 +1278,7 @@ function Shell({
           {mobileNavItems.map((item) => (
             <button
               key={item.isMore ? "more" : item.tab}
-              className={`mobile-nav-item ${(!item.isMore && item.tab === tab) || (item.isMore && moreOpen) ? "mobile-nav-item-active" : ""}`}
+              className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && moreOpen) ? "mobile-nav-item-active" : ""}`}
               onClick={() => item.isMore ? setMoreOpen(true) : item.tab && chooseTab(item.tab)}
               type="button"
             >
@@ -726,7 +1288,7 @@ function Shell({
           ))}
         </nav>
       )}
-      {moreOpen && (
+      {hasMobileMenu && moreOpen && (
         <div className="mobile-menu-backdrop md:hidden" onClick={() => setMoreOpen(false)}>
           <aside className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 border-b border-[#E2DED3] pb-3">
@@ -734,21 +1296,15 @@ function Shell({
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Account</p>
                 <p className="mt-1 truncate text-sm text-[#66736B]">{profile?.email ?? "Not signed in"}</p>
               </div>
-              <button className="secondary h-9 min-h-9 w-9 px-0" onClick={() => setMoreOpen(false)} aria-label="Close menu">
-                <X size={16} aria-hidden />
+              <button className="secondary icon-button" onClick={() => setMoreOpen(false)} aria-label="Close menu" title="Close menu">
+                <X size={17} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
             <div className="mt-4 grid gap-2">
-              {moreTabs.map((item) => (
-                <button key={item} className={`menu-row ${tab === item ? "menu-row-active" : ""}`} onClick={() => chooseTab(item)}>
-                  {tabIcon(item)}
-                  <span>{tabLabel(item)}</span>
-                </button>
-              ))}
-              {visibleCoreTabs.map((item) => (
-                <button key={`core-${item}`} className={`menu-row ${tab === item ? "menu-row-active" : ""}`} onClick={() => chooseTab(item)}>
-                  {tabIcon(item)}
-                  <span>{tabLabel(item)}</span>
+              {[...mobileMoreItems, ...mobilePrimaryItems].map((item) => (
+                <button key={item.key} className={`menu-row ${item.activeTabs.includes(tab) ? "menu-row-active" : ""}`} onClick={() => chooseTab(item.tab)}>
+                  {item.icon}
+                  <span>{item.label}</span>
                 </button>
               ))}
             </div>
@@ -762,8 +1318,8 @@ function Shell({
                   <span>Refresh</span>
                 </button>
               )}
-              {profile && (
-                <button className="menu-row" onClick={() => createSupabaseBrowserClient().auth.signOut()}>
+              {onSignOut && (
+                <button className="menu-row" onClick={() => void handleSignOut()}>
                   <LogIn size={17} aria-hidden />
                   <span>Sign out</span>
                 </button>
@@ -782,26 +1338,229 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
 
   async function login() {
     onNotice("");
-    const { error } = await createSupabaseBrowserClient().auth.signInWithPassword({ email, password });
-    if (error) onNotice(error.message);
+    const { error } = await createSupabaseBrowserClient().auth.signInWithPassword({ email: email.trim(), password });
+    if (error) onNotice(friendlyAuthMessage(error));
   }
 
   return (
     <section className="panel mx-auto max-w-md">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D6A23A]">Secure access</p>
       <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Sign in</h2>
-      <div className="mt-5 space-y-4">
+      <form
+        className="mt-5 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void login();
+        }}
+      >
         <label className="field-label">
           Email
-          <input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" />
+          <input
+            autoComplete="username"
+            className="field"
+            name="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="name@example.com"
+            type="email"
+          />
         </label>
         <label className="field-label">
           Password
-          <input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" type="password" />
+          <input
+            autoComplete="current-password"
+            className="field"
+            name="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password"
+            type="password"
+          />
         </label>
-        <button onClick={login} className="primary w-full">Sign in</button>
-      </div>
+        <button type="submit" className="primary w-full">Sign in</button>
+      </form>
     </section>
+  );
+}
+
+function InvitePasswordPanel({
+  email,
+  mode,
+  onComplete,
+  onNotice,
+}: {
+  email: string;
+  mode: AuthRedirectState["type"];
+  onComplete: () => Promise<void>;
+  onNotice: (notice: string) => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const canSubmit = Boolean(email) && password.length >= 8 && passwordsMatch && !isSaving;
+
+  async function savePassword() {
+    if (!canSubmit) {
+      onNotice(!email ? "The invite session could not be restored. Ask an admin to send a fresh invite." : "Enter a matching password of at least 8 characters.");
+      return;
+    }
+
+    setIsSaving(true);
+    onNotice("");
+    const { error } = await createSupabaseBrowserClient().auth.updateUser({ password });
+    setIsSaving(false);
+
+    if (error) {
+      onNotice(friendlyAuthMessage(error));
+      return;
+    }
+
+    await onComplete();
+  }
+
+  return (
+    <section className="panel mx-auto max-w-md">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D6A23A]">Secure access</p>
+      <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">{mode === "invite" ? "Set your password" : "Reset your password"}</h2>
+      <p className="mt-3 text-sm text-[#66736B]">
+        {email ? `Create a password for ${email}.` : "Completing your secure invite."}
+      </p>
+      <form
+        className="mt-5 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void savePassword();
+        }}
+      >
+        <input
+          autoComplete="username"
+          className="sr-only"
+          name="username"
+          readOnly
+          tabIndex={-1}
+          type="email"
+          value={email}
+        />
+        <label className="field-label">
+          New password
+          <input
+            autoComplete="new-password"
+            className="field"
+            name="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="At least 8 characters"
+            type="password"
+          />
+        </label>
+        <label className="field-label">
+          Confirm password
+          <input
+            autoComplete="new-password"
+            className="field"
+            name="confirm-new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            placeholder="Repeat password"
+            type="password"
+          />
+        </label>
+        <button type="submit" className="primary w-full" disabled={isSaving}>
+          {isSaving ? "Saving password..." : "Set password"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function SetupSection({
+  activeTab,
+  availableTabs,
+  setTab,
+  buildings,
+  units,
+  areas,
+  buildingFloors,
+  unitTypes,
+  unitTypeAreas,
+  organisations,
+  profiles,
+  accessRequests,
+  userBuildingAccess,
+  userUnitAccess,
+  auditEvents,
+  recordAudit,
+  onNotice,
+  reload,
+}: {
+  activeTab: Tab;
+  availableTabs: Tab[];
+  setTab: (tab: Tab) => void;
+  buildings: Building[];
+  units: Unit[];
+  areas: Area[];
+  buildingFloors: BuildingFloor[];
+  unitTypes: UnitType[];
+  unitTypeAreas: UnitTypeArea[];
+  organisations: Organisation[];
+  profiles: Profile[];
+  accessRequests: ResidentAccessRequest[];
+  userBuildingAccess: UserBuildingAccess[];
+  userUnitAccess: UserUnitAccess[];
+  auditEvents: AuditEvent[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  return (
+    <div className="grid gap-5">
+      <section className="panel">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <SectionHeader title="Setup" subtitle="Building setup, people access and portal activity controls." />
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap" role="tablist" aria-label="Setup sections">
+            {availableTabs.map((item) => (
+              <button
+                key={item}
+                className={`secondary min-h-9 w-full min-w-0 px-3 py-1.5 text-center text-sm leading-tight ${activeTab === item ? "nav-pill-active" : ""}`}
+                onClick={() => setTab(item)}
+                type="button"
+              >
+                {tabLabel(item)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+      {activeTab === "setup_buildings" && (
+        <AdminSetup
+          buildings={buildings}
+          units={units}
+          areas={areas}
+          buildingFloors={buildingFloors}
+          unitTypes={unitTypes}
+          unitTypeAreas={unitTypeAreas}
+          recordAudit={recordAudit}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+      {activeTab === "setup_people" && (
+        <UserAdmin
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+          profiles={profiles}
+          accessRequests={accessRequests}
+          userBuildingAccess={userBuildingAccess}
+          userUnitAccess={userUnitAccess}
+          recordAudit={recordAudit}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+      {activeTab === "setup_activity" && <AuditPanel auditEvents={auditEvents} profiles={profiles} />}
+    </div>
   );
 }
 
@@ -831,6 +1590,9 @@ function Dashboard({
   const attentionItems = isContractor
     ? model.attention.filter((item) => ["needs_trade", "overdue", "due_soon", "recent"].includes(item.id))
     : model.attention;
+  const pcConfirmationWarnings = ["admin", "developer"].includes(profile?.role ?? "")
+    ? buildings.filter((building) => hasPassedExpectedPcWarning(building))
+    : [];
   function openSnags(filters: SnagListFilters = {}) {
     setSnagFilters(filters);
     setTab("snags");
@@ -838,6 +1600,27 @@ function Dashboard({
 
   return (
     <div className="grid gap-5">
+      {pcConfirmationWarnings.length > 0 && (
+        <section className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-bold">PC date requires confirmation</p>
+              <div className="mt-2 grid gap-1 text-sm">
+                {pcConfirmationWarnings.map((building) => (
+                  <p key={building.id}>
+                    {building.name} has an expected PC date of {formatDate(expectedPcDate(building))}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
+                  </p>
+                ))}
+              </div>
+            </div>
+            {profile?.role === "admin" && (
+              <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setTab("setup_buildings")}>
+                Review building settings
+              </button>
+            )}
+          </div>
+        </section>
+      )}
       <section className="dashboard-hero">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Action centre</p>
@@ -862,13 +1645,13 @@ function Dashboard({
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <Metric label="Total units" value={model.lifecycle.totalUnits} />
           <Metric label="Completed" value={model.lifecycle.completedUnits} />
-          <Metric label="Awaiting handover" value={model.lifecycle.awaitingHandover} onClick={() => setTab("handover")} />
+          <Metric label="Awaiting handover" value={model.lifecycle.awaitingHandover} onClick={() => setTab("units")} />
           <Metric label="Handed over" value={model.lifecycle.handedOver} />
           <Metric label="This month" value={model.lifecycle.handoversThisMonth} />
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {model.lifecycle.byBuilding.map((building) => (
-            <button key={building.id} className="dashboard-project-card" onClick={() => setTab("handover")}>
+            <button key={building.id} className="dashboard-project-card" onClick={() => setTab("units")}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[#1F2A24]">{building.name}</p>
@@ -1180,6 +1963,7 @@ function Metric({ label, value, onClick }: { label: string; value: number; onCli
 
 function BuildingStructureView({
   buildings,
+  selectedBuildingId,
   buildingFloors,
   units,
   areas,
@@ -1189,6 +1973,7 @@ function BuildingStructureView({
   reload,
 }: {
   buildings: Building[];
+  selectedBuildingId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
@@ -1197,10 +1982,10 @@ function BuildingStructureView({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const [floorName, setFloorName] = useState("");
   const [editingFloorOrder, setEditingFloorOrder] = useState(false);
-  const building = buildings.find((item) => item.id === buildingId) ?? buildings[0];
+  const building = buildings.find((item) => item.id === selectedBuildingId) ?? buildings[0];
+  const buildingId = building?.id ?? "";
   const floors = buildingFloors
     .filter((floor) => floor.building_id === building?.id)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -1211,10 +1996,6 @@ function BuildingStructureView({
   const unassignedCommunalAreas = communalAreas.filter((area) => !area.floor || !floors.some((floor) => floor.name === area.floor));
   const unmatchedUnits = buildingUnits.filter((unit) => unit.floor && !floors.some((floor) => floor.name === unit.floor));
   const noFloorUnits = buildingUnits.filter((unit) => !unit.floor);
-
-  useEffect(() => {
-    if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
-  }, [buildingId, buildings]);
 
   async function moveFloor(floorId: string, direction: -1 | 1) {
     const currentIndex = floors.findIndex((floor) => floor.id === floorId);
@@ -1248,58 +2029,30 @@ function BuildingStructureView({
   }
 
   return (
-    <section className="rounded-md border border-[#d9ded6] bg-white p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Building structure</h2>
-          <p className="text-sm text-[#617169]">Review floors, units, rooms, private amenities and communal areas.</p>
-        </div>
-        <select className="field sm:w-72" value={building?.id ?? ""} onChange={(event) => setBuildingId(event.target.value)}>
-          {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-        </select>
+    <section className="grid gap-4" data-building-name={building?.name ?? ""} data-testid="building-structure-section">
+      <div>
+        <h2 className="text-lg font-semibold">Building structure</h2>
+        <p className="text-sm text-[#617169]">Floors, units, rooms, private amenities and communal areas.</p>
       </div>
 
-      {!building && <p className="mt-4 text-sm text-[#617169]">No buildings have been created yet.</p>}
+      {!building && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
 
       {building && (
-        <div className="mt-5 grid gap-4">
-          <div className="rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">Floors</h3>
-                <p className="text-sm text-[#617169]">Building &gt; floors &gt; units and communal areas.</p>
-              </div>
-              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditingFloorOrder((current) => !current)}>
-                {editingFloorOrder ? "Done ordering" : "Edit floor order"}
-              </button>
-            </div>
-            {editingFloorOrder && (
-              <div className="mt-3 grid gap-2">
-                {floors.map((floor, index) => (
-                  <div key={floor.id} className="flex items-center justify-between gap-3 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
-                    <span className="font-medium">{floor.name}</span>
-                    <div className="flex gap-2">
-                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, -1)} disabled={index === 0} title="Move up">{"<"}</button>
-                      <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, 1)} disabled={index === floors.length - 1} title="Move down">{">"}</button>
-                    </div>
+        <div className="grid gap-3">
+          {editingFloorOrder && (
+            <div className="grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
+              {floors.map((floor, index) => (
+                <div key={floor.id} className="flex items-center justify-between gap-3 rounded-md border border-[#cbd4ce] bg-white px-3 py-2 text-sm">
+                  <span className="font-medium">{floor.name}</span>
+                  <div className="flex gap-2">
+                    <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, -1)} disabled={index === 0} title="Move up">{"<"}</button>
+                    <button className="secondary h-8 min-h-8 w-8 px-0" onClick={() => moveFloor(floor.id, 1)} disabled={index === floors.length - 1} title="Move down">{">"}</button>
                   </div>
-                ))}
-                {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
-              </div>
-            )}
-            <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <input
-                className="field"
-                value={floorName}
-                onChange={(event) => setFloorName(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void addFloor();
-                }}
-                placeholder="Add floor, e.g. Ground"
-              />
-              <button className="secondary" onClick={addFloor} disabled={!floorName}>Add floor</button>
+                </div>
+              ))}
+              {floors.length === 0 && <p className="text-sm text-[#617169]">No floors yet.</p>}
             </div>
-          </div>
+          )}
           {floors.map((floor) => (
             <FloorBlock
               key={floor.id}
@@ -1357,6 +2110,23 @@ function BuildingStructureView({
               </div>
             </div>
           )}
+          <div className="border-t border-[#e5e9e4] pt-4">
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+              <input
+                className="field"
+                value={floorName}
+                onChange={(event) => setFloorName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void addFloor();
+                }}
+                placeholder="Add floor, e.g. Ground"
+              />
+              <button className="secondary" onClick={addFloor} disabled={!floorName}>Add floor</button>
+              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setEditingFloorOrder((current) => !current)}>
+                {editingFloorOrder ? "Done ordering" : "Edit floor order"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>
@@ -1474,43 +2244,46 @@ function FloorBlock({
   }
 
   return (
-    <div className={`rounded-md border p-4 ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <button
-          className="inline-flex items-center gap-2 rounded-full px-1 py-1 text-left font-semibold text-[#0F3D2E] transition hover:text-[#0B2E23]"
-          onClick={() => setCollapsed((current) => !current)}
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? <ChevronRight size={18} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
-          <span>{floorName}</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"}</span>
-          <span className="text-sm text-[#617169]">{communalAreas.length} communal</span>
+    <div className={`rounded-md border ${collapsed ? "px-3 py-2" : "p-4"} ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
+      <div
+        className="grid min-h-[4.25rem] cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md"
+        onClick={() => setCollapsed((current) => !current)}
+      >
+        <div className="min-w-0 px-1 py-1">
+          <div className="inline-flex max-w-full items-center gap-2 text-left font-semibold text-[#0F3D2E]">
+            {collapsed ? <ChevronDown className="shrink-0" size={18} aria-hidden /> : <ChevronUp className="shrink-0" size={18} aria-hidden />}
+            <span className="truncate" title={floorName}>{floorName}</span>
+          </div>
+          <span className="mt-1 block whitespace-nowrap text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"} &middot; {communalAreas.length} communal</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           {floor && (
             <button
-              className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#b42318]"
-              onClick={deleteFloor}
+              className="secondary icon-button text-[#b42318]"
+              onClick={(event) => {
+                event.stopPropagation();
+                void deleteFloor();
+              }}
               disabled={!canDeleteFloor}
               aria-label={`Delete floor ${floor.name}`}
               title={canDeleteFloor ? `Delete ${floor.name}` : deleteFloorHelp}
             >
-              <Trash2 size={14} aria-hidden />
+              <Trash2 size={16} strokeWidth={2.25} aria-hidden />
             </button>
           )}
           <button
-            className="secondary h-8 min-h-8 w-8 px-0 py-0 text-[#0F3D2E]"
-            onClick={() => setCollapsed((current) => !current)}
+            className="secondary icon-button text-[#0F3D2E]"
+            onClick={(event) => {
+              event.stopPropagation();
+              setCollapsed((current) => !current);
+            }}
             aria-label={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
             title={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
           >
-            {collapsed ? <ChevronRight className="block" size={16} strokeWidth={2.5} aria-hidden /> : <ChevronDown className="block" size={16} strokeWidth={2.5} aria-hidden />}
+            {collapsed ? <ChevronDown size={17} strokeWidth={2.5} aria-hidden /> : <ChevronUp size={17} strokeWidth={2.5} aria-hidden />}
           </button>
         </div>
       </div>
-      {floor && !canDeleteFloor && (
-        <p className="mt-2 text-xs text-[#617169]">{deleteFloorHelp}</p>
-      )}
       {!collapsed && (
         <>
           <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
@@ -1655,8 +2428,8 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
           <p className="text-xs text-[#617169]">{category}</p>
         </div>
         <div className="flex gap-2">
-          <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit ${area.name}`} aria-label={`Edit ${area.name}`}>
-            <Pencil size={14} aria-hidden />
+          <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit ${area.name}`} aria-label={`Edit ${area.name}`}>
+            <Pencil size={16} strokeWidth={2.25} aria-hidden />
           </button>
           <button className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]" onClick={deleteCommunalArea} title={`Delete ${area.name}`} aria-label={`Delete ${area.name}`}>
             <Trash2 size={14} aria-hidden />
@@ -1903,7 +2676,7 @@ function UnitStructureCard({
                   <div className="rounded-md border border-[#d9ded6] bg-white p-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                      {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
                       {pendingRooms.map((name) => (
                         <span key={name} className="inline-flex items-center gap-2 rounded-md bg-[#edf4f1] px-2 py-1 text-xs text-[#0F3D31]">
                           {name}
@@ -1937,7 +2710,7 @@ function UnitStructureCard({
                       <div>
                         <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {visibleAmenities.map((area) => <AreaChip key={area.id} area={area} canRemove onRemove={() => removeAreaFromEdit(area.id)} />)}
+                          {visibleAmenities.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
                           {pendingAmenity && (
                             <span className="inline-flex items-center gap-2 rounded-md bg-[#f5eee3] px-2 py-1 text-xs text-[#735327]">
                               Private Amenity
@@ -1974,16 +2747,16 @@ function UnitStructureCard({
                   <div className="flex flex-col items-end gap-2">
                     <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>
                     <div className="flex gap-2">
-                      <button className="secondary h-9 min-h-9 w-9 px-0 py-0" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
-                        <Pencil size={14} aria-hidden />
+                      <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
+                        <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                       <button
-                        className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]"
+                        className="danger-icon-button"
                         onClick={deleteUnit}
                         title={`Delete unit ${unit.unit_number}`}
                         aria-label={`Delete unit ${unit.unit_number}`}
                       >
-                        <Trash2 size={14} aria-hidden />
+                        <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                     </div>
                   </div>
@@ -1995,7 +2768,7 @@ function UnitStructureCard({
                   <div className="mt-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)}
+                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)}
                       {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
                     </div>
                   </div>
@@ -2004,7 +2777,7 @@ function UnitStructureCard({
                       <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {amenities.length > 0 ? (
-                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} onNotice={onNotice} reload={reload} />)
+                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)
                         ) : (
                           <span className="text-sm text-[#617169]">None</span>
                         )}
@@ -2020,12 +2793,14 @@ function UnitStructureCard({
 function AreaChip({
   area,
   canRemove = true,
+  showFloor = true,
   onRemove,
   onNotice,
   reload,
 }: {
   area: Area;
   canRemove?: boolean;
+  showFloor?: boolean;
   onRemove?: () => void;
   onNotice?: (notice: string) => void;
   reload?: () => Promise<void>;
@@ -2065,7 +2840,7 @@ function AreaChip({
 
   return (
     <span className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs ${tone}`}>
-      {label}{area.floor ? ` / ${area.floor}` : ""}
+      {label}{showFloor && area.floor ? ` / ${area.floor}` : ""}
       {canRemove && (
         <button
           aria-label={`Remove ${label}`}
@@ -2110,10 +2885,23 @@ function AdminSetup({
   const [photoUrl, setPhotoUrl] = useState("");
   const [documentsUrl, setDocumentsUrl] = useState("");
   const [homeUserGuideUrl, setHomeUserGuideUrl] = useState("");
+  const [allowResidentAccessRequests, setAllowResidentAccessRequests] = useState(true);
+  const [buildingDrafts, setBuildingDrafts] = useState<Record<string, Partial<Building>>>({});
+  const [editConfirmedPcBuildingIds, setEditConfirmedPcBuildingIds] = useState<Record<string, boolean>>({});
+  const [confirmEditPcBuildingId, setConfirmEditPcBuildingId] = useState<string | null>(null);
+  const [showCreateBuilding, setShowCreateBuilding] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState(buildings[0]?.id ?? "");
+  const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId) ?? buildings[0];
+
+  useEffect(() => {
+    if (buildings.length === 0) return;
+    if (selectedBuildingId && buildings.some((building) => building.id === selectedBuildingId)) return;
+    const timer = window.setTimeout(() => setSelectedBuildingId(buildings[0].id), 0);
+    return () => window.clearTimeout(timer);
+  }, [buildings, selectedBuildingId]);
 
   async function createBuilding() {
     const supabase = createSupabaseBrowserClient();
-    const defectsEnd = pcDate ? new Date(new Date(pcDate).setFullYear(new Date(pcDate).getFullYear() + 1)).toISOString().slice(0, 10) : null;
     const { data, error } = await supabase.from("buildings").insert({
       name: buildingName,
       address_line_1: addressLine1,
@@ -2123,11 +2911,14 @@ function AdminSetup({
       photo_url: photoUrl || null,
       documents_url: documentsUrl || null,
       home_user_guide_url: homeUserGuideUrl || null,
+      pc_date: pcDate || null,
+      pc_confirmed: false,
       practical_completion_date: pcDate || null,
-      defects_liability_end_date: defectsEnd,
+      defects_liability_end_date: null,
       status: "active",
+      allow_resident_access_requests: allowResidentAccessRequests,
     }).select("id").single();
-    if (error) onNotice(error.message);
+    if (error) onNotice(buildingSchemaNotice(error.message));
     else {
       await recordAudit({
         event_type: "building_created",
@@ -2145,46 +2936,284 @@ function AdminSetup({
       setPhotoUrl("");
       setDocumentsUrl("");
       setHomeUserGuideUrl("");
+      setAllowResidentAccessRequests(true);
+      setShowCreateBuilding(false);
+      setSelectedBuildingId(data.id);
       await reload();
     }
   }
 
+  function buildingDraft(building: Building) {
+    return buildingDrafts[building.id] ?? {};
+  }
+
+  function updateBuildingDraft(buildingId: string, updates: Partial<Building>) {
+    setBuildingDrafts((current) => ({ ...current, [buildingId]: { ...(current[buildingId] ?? {}), ...updates } }));
+  }
+
+  function draftPcDate(building: Building) {
+    const draft = buildingDraft(building);
+    return (draft.pc_date ?? building.pc_date ?? building.practical_completion_date ?? "") as string;
+  }
+
+  function draftPcConfirmed(building: Building) {
+    const draft = buildingDraft(building);
+    return draft.pc_confirmed ?? building.pc_confirmed ?? false;
+  }
+
+  function draftAllowResidentRequests(building: Building) {
+    const draft = buildingDraft(building);
+    return draft.allow_resident_access_requests ?? building.allow_resident_access_requests ?? true;
+  }
+
+  function buildingHasUnsavedChanges(building: Building) {
+    const currentPcDate = building.pc_date ?? building.practical_completion_date ?? "";
+    return draftPcDate(building) !== currentPcDate
+      || draftPcConfirmed(building) !== (building.pc_confirmed ?? false)
+      || draftAllowResidentRequests(building) !== (building.allow_resident_access_requests ?? true);
+  }
+
+  function pcConfirmHelperText(pcDateValue: string, pcConfirmedValue: boolean) {
+    if (pcConfirmedValue) return "PC confirmed. The resident portal lifecycle is calculated from this confirmed date.";
+    if (!pcDateValue) return "Enter a Practical Completion date before confirming PC.";
+    if (pcDateValue > dateOnly()) return "PC can only be confirmed using today's date or a past date.";
+    return "Only confirm PC once Practical Completion has actually occurred.";
+  }
+
+  async function saveBuildingSettings(building: Building) {
+    const pcDateValue = draftPcDate(building) || null;
+    const pcConfirmedValue = draftPcConfirmed(building);
+    const allowRequestsValue = draftAllowResidentRequests(building);
+
+    if (pcConfirmedValue) {
+      const errorMessage = pcConfirmationError(pcDateValue);
+      if (errorMessage) {
+        onNotice(errorMessage);
+        return;
+      }
+    }
+
+    const currentPcDate = building.pc_date ?? building.practical_completion_date ?? "";
+    if (building.pc_confirmed && pcDateValue !== currentPcDate && !editConfirmedPcBuildingIds[building.id]) {
+      onNotice("Use Edit confirmed PC date before changing the confirmed PC date.");
+      return;
+    }
+
+    const payload = {
+      pc_date: pcDateValue,
+      pc_confirmed: pcConfirmedValue,
+      practical_completion_date: pcDateValue,
+      defects_liability_end_date: pcConfirmedValue && pcDateValue
+        ? initialDefectsReportingEndDate({ pc_date: pcDateValue, pc_confirmed: true })
+        : null,
+      allow_resident_access_requests: allowRequestsValue,
+    };
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from("buildings").update(payload).eq("id", building.id);
+
+    if (error) {
+      onNotice(buildingSchemaNotice(error.message));
+      return;
+    }
+
+    await recordAudit({
+      event_type: "building_updated",
+      entity_type: "building",
+      entity_id: building.id,
+      summary: `Building settings updated: ${building.name}`,
+      metadata: { building: building.name, ...payload },
+    });
+    setBuildingDrafts((current) => {
+      const next = { ...current };
+      delete next[building.id];
+      return next;
+    });
+    setEditConfirmedPcBuildingIds((current) => ({ ...current, [building.id]: false }));
+    setConfirmEditPcBuildingId(null);
+    onNotice(`Building settings saved for ${building.name}.`);
+    await reload();
+  }
+
+  const pcDateValue = selectedBuilding ? draftPcDate(selectedBuilding) : "";
+  const pcConfirmedValue = selectedBuilding ? draftPcConfirmed(selectedBuilding) : false;
+  const allowRequestsValue = selectedBuilding ? draftAllowResidentRequests(selectedBuilding) : true;
+  const canEditConfirmedPc = selectedBuilding ? editConfirmedPcBuildingIds[selectedBuilding.id] === true : false;
+  const portalMode = selectedBuilding ? derivedBuildingLifecycleStatus({ ...selectedBuilding, pc_date: pcDateValue || null, pc_confirmed: pcConfirmedValue }) : "pre_pc";
+  const reportingEnd = selectedBuilding ? initialDefectsReportingEndDate({ pc_date: pcDateValue || null, pc_confirmed: pcConfirmedValue }) : null;
+  const closingStart = selectedBuilding ? closingNoticeStartDate({ pc_date: pcDateValue || null, pc_confirmed: pcConfirmedValue }) : null;
+  const confirmationIssue = pcConfirmationError(pcDateValue);
+  const confirmDisabled = !pcDateValue || Boolean(confirmationIssue);
+  const hasWarning = selectedBuilding ? hasPassedExpectedPcWarning({ ...selectedBuilding, pc_date: pcDateValue || null, pc_confirmed: pcConfirmedValue }) : false;
+  const hasChanges = selectedBuilding ? buildingHasUnsavedChanges(selectedBuilding) : false;
+
   return (
-    <div className="grid gap-5 lg:grid-cols-3">
-      <div className="lg:col-span-3">
-        <BuildingStructureView
-          buildings={buildings}
-          buildingFloors={buildingFloors}
-          units={units}
-          areas={areas}
-          unitTypes={unitTypes}
-          unitTypeAreas={unitTypeAreas}
-          onNotice={onNotice}
-          reload={reload}
-        />
-      </div>
-      <FormPanel title="Building">
-        <input className="field" value={buildingName} onChange={(event) => setBuildingName(event.target.value)} placeholder="Building name" />
-        <input className="field" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} placeholder="Address line 1" />
-        <input className="field" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} placeholder="Address line 2" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input className="field" value={town} onChange={(event) => setTown(event.target.value)} placeholder="Town" />
-          <input className="field" value={postcode} onChange={(event) => setPostcode(event.target.value)} placeholder="Postcode" />
+    <section className="panel grid gap-6">
+      <section
+        className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-4 shadow-[0_10px_24px_rgba(15,61,46,0.06)]"
+        data-testid="working-building-context"
+      >
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Working building</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "No building selected"}</h2>
+              {selectedBuilding && (
+                <>
+                  <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
+                  <span className={statusTone(portalMode === "post_dlp_readonly" ? "closed" : portalMode === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(portalMode)}</span>
+                  {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
+                </>
+              )}
+            </div>
+            <p className="mt-2 text-sm text-[#617169]">
+              Lifecycle, resident access and building structure settings below apply to this building.
+            </p>
+          </div>
+          <label className="field-label">
+            Selected building
+            <select className="field min-h-12 text-base font-semibold text-[#0F3D2E]" aria-label="Selected building" value={selectedBuilding?.id ?? ""} onChange={(event) => setSelectedBuildingId(event.target.value)}>
+              {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+            </select>
+          </label>
         </div>
-        <label className="grid gap-1 text-sm font-medium text-[#34413a]">
-          Practical completion date
-          <input className="field" value={pcDate} onChange={(event) => setPcDate(event.target.value)} type="date" />
-        </label>
-        <input className="field" value={photoUrl} onChange={(event) => setPhotoUrl(event.target.value)} placeholder="Building photo URL" />
-        <input className="field" value={documentsUrl} onChange={(event) => setDocumentsUrl(event.target.value)} placeholder="Building documents link" />
-        <input className="field" value={homeUserGuideUrl} onChange={(event) => setHomeUserGuideUrl(event.target.value)} placeholder="Home user guide link" />
-        <button className="primary" onClick={createBuilding} disabled={!buildingName}>Create building</button>
-      </FormPanel>
-      <section className="rounded-md border border-[#d9ded6] bg-white p-4 lg:col-span-3">
-        <h2 className="text-lg font-semibold">Current setup</h2>
-        <p className="mt-2 text-sm text-[#617169]">{buildings.length} buildings, {buildingFloors.length} floors, {units.length} units, {areas.length} areas.</p>
       </section>
-    </div>
+
+      {!selectedBuilding && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
+
+      {selectedBuilding && (
+        <>
+          <section className="grid gap-4" data-testid="building-overview-section">
+            <div>
+              <h3 className="text-base font-semibold text-[#0F3D2E]">Building overview</h3>
+              <p className="mt-1 text-sm text-[#617169]">Settings for {selectedBuilding.name}.</p>
+              <p className="mt-1 text-sm text-[#617169]">{lifecycleEffectSummary(portalMode)}</p>
+              {hasWarning && (
+                <div className="mt-3 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                  PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="grid gap-3">
+                <label className="field-label">
+                  {pcConfirmedValue ? "Confirmed PC date" : "Expected PC date"}
+                  <input
+                    className="field min-h-10 py-2"
+                    type="date"
+                    value={pcDateValue}
+                    disabled={pcConfirmedValue && !canEditConfirmedPc}
+                    onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_date: event.target.value || null })}
+                  />
+                </label>
+                <p className="text-xs text-[#617169]">{pcConfirmHelperText(pcDateValue, pcConfirmedValue)}</p>
+                {!pcConfirmedValue && (
+                  <label className={`option-card min-h-10 px-3 py-2 text-sm ${confirmDisabled ? "opacity-60" : ""}`}>
+                    <input
+                      checked={pcConfirmedValue}
+                      disabled={confirmDisabled}
+                      onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_confirmed: event.target.checked })}
+                      type="checkbox"
+                    />
+                    PC confirmed
+                  </label>
+                )}
+                {pcConfirmedValue && !canEditConfirmedPc && (
+                  <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>
+                    Edit confirmed PC date
+                  </button>
+                )}
+                {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
+                  <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                    <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
+                    <button
+                      className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm"
+                      type="button"
+                      onClick={() => {
+                        setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true }));
+                        setConfirmEditPcBuildingId(null);
+                      }}
+                    >
+                      Allow PC date editing
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-3 text-sm">
+                <InfoRow label="Defects reporting closes" value={reportingEnd ? formatDate(reportingEnd) : "Calculated once PC is confirmed"} />
+                <InfoRow label="Closing notice starts" value={closingStart ? formatDate(closingStart) : "Calculated once PC is confirmed"} />
+                <InfoRow label="Current portal mode" value={lifecycleLabel(portalMode)} />
+              </div>
+            </div>
+
+            <div className="grid gap-2 border-t border-[#e5e9e4] pt-4">
+              <label className="option-card min-h-10 px-3 py-2 text-sm">
+                <input checked={allowRequestsValue} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { allow_resident_access_requests: event.target.checked })} type="checkbox" />
+                Allow new resident access requests
+              </label>
+              <p className="text-xs text-[#617169]">Existing approved users can still log in. New residents cannot request access while access requests are disabled.</p>
+              {!allowRequestsValue && <p className="text-xs text-[#7a5a15]">New residents cannot request access for this building. Existing approved users are not affected.</p>}
+              <div className="flex justify-end">
+                <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveBuildingSettings(selectedBuilding)} disabled={!hasChanges}>
+                  Save building changes
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div className="border-t border-[#e5e9e4] pt-5">
+            <BuildingStructureView
+              buildings={buildings}
+              selectedBuildingId={selectedBuilding.id}
+              buildingFloors={buildingFloors}
+              units={units}
+              areas={areas}
+              unitTypes={unitTypes}
+              unitTypeAreas={unitTypeAreas}
+              onNotice={onNotice}
+              reload={reload}
+            />
+          </div>
+        </>
+      )}
+
+      <section className="grid gap-3 border-t border-[#e5e9e4] pt-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Other building actions</h3>
+            <p className="text-sm text-[#617169]">Create another building when a new project needs to be added.</p>
+          </div>
+          <button className="secondary w-fit min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowCreateBuilding((current) => !current)}>
+            <Plus size={16} aria-hidden /> {showCreateBuilding ? "Hide add building" : "Add another building"}
+          </button>
+        </div>
+        {showCreateBuilding && (
+          <div className="grid gap-3 border-t border-[#e5e9e4] pt-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <input className="field" value={buildingName} onChange={(event) => setBuildingName(event.target.value)} placeholder="Building name" />
+              <input className="field" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} placeholder="Address line 1" />
+              <input className="field" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} placeholder="Address line 2" />
+              <input className="field" value={town} onChange={(event) => setTown(event.target.value)} placeholder="Town" />
+              <input className="field" value={postcode} onChange={(event) => setPostcode(event.target.value)} placeholder="Postcode" />
+              <label className="grid gap-1 text-sm font-medium text-[#34413a]">
+                Expected PC date
+                <input className="field" value={pcDate} onChange={(event) => setPcDate(event.target.value)} type="date" />
+                <span className="text-xs font-normal text-[#617169]">Enter the expected Practical Completion date. The portal lifecycle will not start until PC is confirmed.</span>
+              </label>
+              <input className="field" value={photoUrl} onChange={(event) => setPhotoUrl(event.target.value)} placeholder="Building photo URL" />
+              <input className="field" value={documentsUrl} onChange={(event) => setDocumentsUrl(event.target.value)} placeholder="Building documents link" />
+              <input className="field" value={homeUserGuideUrl} onChange={(event) => setHomeUserGuideUrl(event.target.value)} placeholder="Home user guide link" />
+              <label className="option-card min-h-11 px-3 py-2 md:col-span-2 xl:col-span-3">
+                <input checked={allowResidentAccessRequests} onChange={(event) => setAllowResidentAccessRequests(event.target.checked)} type="checkbox" />
+                Allow residents to request access for this building
+              </label>
+            </div>
+            <button className="primary w-fit" onClick={createBuilding} disabled={!buildingName}>Create building</button>
+          </div>
+        )}
+      </section>
+    </section>
   );
 }
 
@@ -2222,6 +3251,7 @@ function DeveloperSnagging({
   const buildingUnits = units
     .filter((unit) => draft.buildingId && unit.building_id === draft.buildingId)
     .filter((unit) => !draft.floor || unit.floor === draft.floor);
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, draft.buildingId);
   const unitAreas = areas.filter((area) => area.unit_id === draft.unitId);
   const communalAreas = areas
     .filter((area) => area.area_type === "communal_area")
@@ -2320,7 +3350,7 @@ function DeveloperSnagging({
         {draft.locationType === "unit" && (
           <select className="field" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={isSaving || !draft.buildingId}>
             <option value="">Select unit</option>
-            {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+            {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
           </select>
         )}
         <select className="field" value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={isSaving || !draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
@@ -2335,6 +3365,7 @@ function DeveloperSnagging({
         <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
         <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
           <option value="">Trade</option>
+          {trades.length === 0 && <option value="" disabled>No trades configured</option>}
           {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
         </select>
         <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
@@ -2349,6 +3380,7 @@ function UserAdmin({
   units,
   organisations,
   profiles,
+  accessRequests,
   userBuildingAccess,
   userUnitAccess,
   recordAudit,
@@ -2359,6 +3391,7 @@ function UserAdmin({
   units: Unit[];
   organisations: Organisation[];
   profiles: Profile[];
+  accessRequests: ResidentAccessRequest[];
   userBuildingAccess: UserBuildingAccess[];
   userUnitAccess: UserUnitAccess[];
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
@@ -2386,6 +3419,7 @@ function UserAdmin({
           units={units}
           organisations={organisations}
           profiles={profiles}
+          accessRequests={accessRequests}
           userBuildingAccess={userBuildingAccess}
           userUnitAccess={userUnitAccess}
           editingUserId={editingUserId}
@@ -2401,11 +3435,38 @@ function UserAdmin({
   );
 }
 
+function requestUnitsLabel(request: ResidentAccessRequest) {
+  if (request.requested_units.length === 0) return "No flats";
+  return request.requested_units
+    .map((unit) => `${unit.building_name} ${unit.unit_number}`)
+    .join(", ");
+}
+
+type AccessListFilter = "all" | "pending_requests" | "active_users" | "deactivated_users" | "rejected_requests";
+
+type AccessListRow = {
+  id: string;
+  key: string;
+  kind: "profile" | "request";
+  name: string;
+  email: string;
+  typeLabel: string;
+  status: "active" | "deactivated" | "pending" | "approved" | "rejected";
+  roleLabel: string;
+  phone: string;
+  allocation: string;
+  createdAt: string | null;
+  sortRank: number;
+  profile?: Profile;
+  request?: ResidentAccessRequest;
+};
+
 function UserDirectory({
   buildings,
   units,
   organisations,
   profiles,
+  accessRequests,
   userBuildingAccess,
   userUnitAccess,
   editingUserId,
@@ -2419,6 +3480,7 @@ function UserDirectory({
   units: Unit[];
   organisations: Organisation[];
   profiles: Profile[];
+  accessRequests: ResidentAccessRequest[];
   userBuildingAccess: UserBuildingAccess[];
   userUnitAccess: UserUnitAccess[];
   editingUserId: string;
@@ -2428,8 +3490,11 @@ function UserDirectory({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  function organisationName(profile: Profile) {
-    return organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "";
+  const [filter, setFilter] = useState<AccessListFilter>("all");
+  const [selectedRequestId, setSelectedRequestId] = useState("");
+
+  function userStatus(profile: Profile) {
+    return profile.active === false ? "deactivated" : "active";
   }
 
   function allocationLabel(profile: Profile) {
@@ -2451,60 +3516,183 @@ function UserDirectory({
     return labels.length > 0 ? labels.join(", ") : "No buildings assigned";
   }
 
+  function matchingProfile(request: ResidentAccessRequest) {
+    return profiles.find((profile) => profile.email?.toLowerCase() === request.email.toLowerCase());
+  }
+
+  const rows: AccessListRow[] = (() => {
+    const profileEmailSet = new Set(profiles.map((profile) => profile.email.toLowerCase()));
+    const profileRows: AccessListRow[] = profiles.map((profile) => {
+      const status = userStatus(profile);
+      return {
+        id: profile.id,
+        key: `profile-${profile.id}`,
+        kind: "profile",
+        name: profile.full_name || profile.name || "No name",
+        email: profile.email,
+        typeLabel: "User",
+        status,
+        roleLabel: profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : statusLabel(profile.role),
+        phone: profile.phone || "",
+        allocation: allocationLabel(profile),
+        createdAt: profile.created_at ?? null,
+        sortRank: status === "active" ? 1 : 2,
+        profile,
+      };
+    });
+
+    const requestRows: AccessListRow[] = accessRequests
+      .filter((request) => request.status !== "approved" || !profileEmailSet.has(request.email.toLowerCase()))
+      .map((request) => ({
+      id: request.id,
+      key: `request-${request.id}`,
+      kind: "request",
+      name: request.full_name,
+      email: request.email,
+      typeLabel: "Access request",
+      status: request.status,
+      roleLabel: statusLabel(request.resident_type),
+      phone: request.phone,
+      allocation: requestUnitsLabel(request),
+      createdAt: request.created_at,
+      sortRank: request.status === "pending" ? 0 : request.status === "approved" ? 3 : 4,
+      request,
+    }));
+
+    return [...profileRows, ...requestRows].sort((a, b) => (
+      a.sortRank - b.sortRank || new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+    ));
+  })();
+
+  const filteredRows = rows.filter((row) => {
+    if (filter === "pending_requests") return row.kind === "request" && row.status === "pending";
+    if (filter === "active_users") return row.kind === "profile" && row.status === "active";
+    if (filter === "deactivated_users") return row.kind === "profile" && row.status === "deactivated";
+    if (filter === "rejected_requests") return row.kind === "request" && row.status === "rejected";
+    return true;
+  });
+
+  const filters: { value: AccessListFilter; label: string; count: number }[] = [
+    { value: "all", label: "All", count: rows.length },
+    { value: "pending_requests", label: "Pending requests", count: rows.filter((row) => row.kind === "request" && row.status === "pending").length },
+    { value: "active_users", label: "Active users", count: profiles.filter((profile) => profile.active !== false).length },
+    { value: "deactivated_users", label: "Deactivated users", count: profiles.filter((profile) => profile.active === false).length },
+    { value: "rejected_requests", label: "Rejected requests", count: rows.filter((row) => row.kind === "request" && row.status === "rejected").length },
+  ];
+
+  function toggleProfile(profileId: string) {
+    setSelectedRequestId("");
+    onEditUser(editingUserId === profileId ? "" : profileId);
+  }
+
+  function toggleRequest(requestId: string) {
+    onEditUser("");
+    setSelectedRequestId(selectedRequestId === requestId ? "" : requestId);
+  }
+
+  function rowAction(row: AccessListRow) {
+    if (row.kind === "profile") return editingUserId === row.id ? "Close" : "Edit";
+    if (row.status === "pending") return selectedRequestId === row.id ? "Close" : "Review";
+    return selectedRequestId === row.id ? "Close" : "View";
+  }
+
+  function rowActionIcon(row: AccessListRow, isOpen: boolean) {
+    if (isOpen) return <X size={16} strokeWidth={2.25} aria-hidden />;
+    if (row.kind === "profile") return <Pencil size={16} strokeWidth={2.25} aria-hidden />;
+    if (row.status === "pending") return <ClipboardCheck size={16} strokeWidth={2.25} aria-hidden />;
+    return <ClipboardList size={16} strokeWidth={2.25} aria-hidden />;
+  }
+
+  function requestPanel(request: ResidentAccessRequest) {
+    return (
+      <AccessRequestReviewPanel
+        request={request}
+        existingProfile={matchingProfile(request)}
+        buildings={buildings}
+        units={units}
+        userBuildingAccess={userBuildingAccess}
+        userUnitAccess={userUnitAccess}
+        profiles={profiles}
+        recordAudit={recordAudit}
+        onClose={() => setSelectedRequestId("")}
+        onNotice={onNotice}
+        reload={reload}
+      />
+    );
+  }
+
   return (
-    <section className="panel p-0">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded6] px-4 py-3">
-        <div>
-          <h2 className="text-lg font-bold text-[#0F3D2E]">Users</h2>
-          <p className="text-sm text-[#617169]">Roles, allocation and account dates.</p>
+    <section className="panel min-w-0 overflow-hidden p-0">
+      <div className="grid gap-3 border-b border-[#d9ded6] px-4 py-3 sm:flex sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-[#0F3D2E]">Access & users</h2>
+          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status.</p>
         </div>
-        <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={onAddUser}>
+        <button className="primary min-h-9 w-full px-3 py-1.5 text-sm sm:w-auto" onClick={onAddUser}>
           <Plus size={16} /> Add user
         </button>
       </div>
-      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
-        {profiles.map((profile) => {
-          const isEditing = profile.id === editingUserId;
+
+      <div className="grid grid-cols-2 gap-2 border-b border-[#e5e9e4] px-4 py-3 sm:flex sm:flex-wrap">
+        {filters.map((item) => (
+          <button
+            key={item.value}
+            className={`chip-button min-w-0 justify-center whitespace-normal text-center text-sm leading-tight ${filter === item.value ? "chip-button-active" : ""}`}
+            onClick={() => {
+              setFilter(item.value);
+              setSelectedRequestId("");
+              onEditUser("");
+            }}
+          >
+            {item.label} ({item.count})
+          </button>
+        ))}
+      </div>
+
+      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
+        {filteredRows.map((row) => {
+          const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
+          const isMuted = row.status === "deactivated" || row.status === "rejected";
 
           return (
-            <article key={profile.id} className={`mobile-card ${isEditing ? "mobile-card-active" : ""}`}>
-              <div className="flex items-start justify-between gap-3">
+            <article key={row.key} className={`mobile-card ${isOpen ? "mobile-card-active" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-bold text-[#1F2A24]">{profile.full_name || profile.name || "No name"}</p>
-                  <p className="mt-0.5 truncate text-sm text-[#66736B]">{profile.email}</p>
+                  <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
+                  <p className="mt-0.5 truncate text-sm text-[#66736B]">{row.email}</p>
                 </div>
-                <span className={statusTone(profile.role)}>{statusLabel(profile.role)}</span>
+                <div className="flex max-w-[8.5rem] flex-col items-end gap-1">
+                  <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
+                  <span className="rounded-md bg-white px-2 py-1 text-right text-xs font-semibold leading-tight text-[#617169]">{row.typeLabel}</span>
+                </div>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
-                <div className="flex justify-between gap-3">
-                  <span className="text-[#66736B]">Resident type</span>
-                  <span className="font-medium">{profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : "None"}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-[#66736B]">Organisation</span>
-                  <span className="max-w-[58%] truncate font-medium">{organisationName(profile) || "None"}</span>
-                </div>
-                <div>
-                  <span className="text-[#66736B]">Allocation</span>
-                  <p className="mt-1 text-[#1F2A24]">{allocationLabel(profile)}</p>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-[#66736B]">Created</span>
-                  <span className="font-medium">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</span>
-                </div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
+                <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created/submitted</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
               </div>
-              <button className="secondary mt-3 w-full min-h-10" onClick={() => onEditUser(isEditing ? "" : profile.id)}>
-                {isEditing ? "Close" : "Edit user"}
-              </button>
-              {isEditing && (
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  className="secondary icon-button"
+                  onClick={() => row.kind === "profile" ? toggleProfile(row.id) : toggleRequest(row.id)}
+                  aria-label={`${rowAction(row)} ${row.email}`}
+                  title={rowAction(row)}
+                >
+                  {rowActionIcon(row, isOpen)}
+                </button>
+              </div>
+              {isOpen && row.profile && (
                 <div className="mt-3 border-t border-[#E2DED3] pt-3">
                   <UserEditPanel
-                    profile={profile}
+                    profile={row.profile}
                     buildings={buildings}
                     units={units}
                     organisations={organisations}
-                    userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === profile.id)}
-                    userUnitAccess={userUnitAccess.filter((access) => access.user_id === profile.id)}
+                    profiles={profiles}
+                    accessRequests={accessRequests}
+                    userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === row.profile?.id)}
+                    userUnitAccess={userUnitAccess.filter((access) => access.user_id === row.profile?.id)}
                     recordAudit={recordAudit}
                     onClose={() => onEditUser("")}
                     onNotice={onNotice}
@@ -2512,60 +3700,74 @@ function UserDirectory({
                   />
                 </div>
               )}
+              {isOpen && row.request && <div className="mt-3 border-t border-[#E2DED3] pt-3">{requestPanel(row.request)}</div>}
             </article>
           );
         })}
-        {profiles.length === 0 && <p className="mobile-empty">No users yet.</p>}
+        {filteredRows.length === 0 && <p className="mobile-empty">No matching access records.</p>}
       </div>
+
       <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[980px] w-full border-separate border-spacing-0 text-sm">
+        <table className="min-w-[1120px] w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
-              <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Role</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Resident Type</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Organisation</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Type</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Status</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Role or resident type</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation / requested flats</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Created / submitted</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {profiles.map((profile) => {
-              const isEditing = profile.id === editingUserId;
+            {filteredRows.map((row) => {
+              const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
+              const isMuted = row.status === "deactivated" || row.status === "rejected";
 
               return (
-                <Fragment key={profile.id}>
-                  <tr className={isEditing ? "bg-[#fff8ec]" : ""}>
+                <Fragment key={row.key}>
+                  <tr className={`${isOpen ? "bg-[#fff8ec]" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      <p className="font-medium">{profile.full_name || profile.name || "No name"}</p>
-                      <p className="text-xs text-[#617169]">{profile.email}</p>
+                      <p className="font-medium">{row.name}</p>
+                      <p className="text-xs text-[#617169]">{row.email}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{statusLabel(profile.role)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.typeLabel}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      {profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : <span className="text-xs text-[#9aa59f]">None</span>}
+                      <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{organisationName(profile) || <span className="text-xs text-[#9aa59f]">None</span>}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.roleLabel}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.phone || <span className="text-xs text-[#9aa59f]">None</span>}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      <p className="max-w-md truncate">{allocationLabel(profile)}</p>
+                      <p className="max-w-md truncate">{row.allocation}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{profile.created_at ? formatDate(profile.created_at) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle text-right">
-                      <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={() => onEditUser(isEditing ? "" : profile.id)}>
-                        {isEditing ? "Close" : "Edit"}
-                      </button>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          className="secondary icon-button"
+                          onClick={() => row.kind === "profile" ? toggleProfile(row.id) : toggleRequest(row.id)}
+                          aria-label={`${rowAction(row)} ${row.email}`}
+                          title={rowAction(row)}
+                        >
+                          {rowActionIcon(row, isOpen)}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                  {isEditing && (
+                  {isOpen && row.profile && (
                     <tr>
-                      <td colSpan={7} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                      <td colSpan={8} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
                         <UserEditPanel
-                          profile={profile}
+                          profile={row.profile}
                           buildings={buildings}
                           units={units}
                           organisations={organisations}
-                          userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === profile.id)}
-                          userUnitAccess={userUnitAccess.filter((access) => access.user_id === profile.id)}
+                          profiles={profiles}
+                          accessRequests={accessRequests}
+                          userBuildingAccess={userBuildingAccess.filter((access) => access.user_id === row.profile?.id)}
+                          userUnitAccess={userUnitAccess.filter((access) => access.user_id === row.profile?.id)}
                           recordAudit={recordAudit}
                           onClose={() => onEditUser("")}
                           onNotice={onNotice}
@@ -2574,14 +3776,260 @@ function UserDirectory({
                       </td>
                     </tr>
                   )}
+                  {isOpen && row.request && (
+                    <tr>
+                      <td colSpan={8} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                        {requestPanel(row.request)}
+                      </td>
+                    </tr>
+                  )}
                 </Fragment>
               );
             })}
           </tbody>
         </table>
-        {profiles.length === 0 && <p className="p-4 text-sm text-[#617169]">No users yet.</p>}
+        {filteredRows.length === 0 && <p className="p-4 text-sm text-[#617169]">No matching access records.</p>}
       </div>
     </section>
+  );
+}
+
+function AccessRequestReviewPanel({
+  request,
+  existingProfile,
+  buildings,
+  units,
+  userBuildingAccess,
+  userUnitAccess,
+  profiles,
+  recordAudit,
+  onClose,
+  onNotice,
+  reload,
+}: {
+  request: ResidentAccessRequest;
+  existingProfile?: Profile;
+  buildings: Building[];
+  units: Unit[];
+  userBuildingAccess: UserBuildingAccess[];
+  userUnitAccess: UserUnitAccess[];
+  profiles: Profile[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onClose: () => void;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  const [adminNotes, setAdminNotes] = useState(request.admin_notes ?? "");
+  const [isSaving, setIsSaving] = useState<"approve" | "reject" | "notes" | null>(null);
+  const reviewer = request.reviewed_by_user_id ? profiles.find((profile) => profile.id === request.reviewed_by_user_id) : undefined;
+  const existingProfileLabel = existingProfile
+    ? `Existing portal user found: ${existingProfile.active === false ? "Deactivated" : "Active"}`
+    : "No existing portal user found";
+  const isPending = request.status === "pending";
+  const existingProfileUnitIds = new Set(
+    existingProfile
+      ? userUnitAccess.filter((access) => access.user_id === existingProfile.id).map((access) => access.unit_id)
+      : [],
+  );
+  const existingProfileBuildingIds = existingProfile
+    ? userBuildingAccess.filter((access) => access.user_id === existingProfile.id).map((access) => access.building_id)
+    : [];
+  const currentFlatLabels = existingProfile
+    ? Array.from(existingProfileUnitIds).map((unitId) => {
+      const unit = units.find((item) => item.id === unitId);
+      const building = buildings.find((item) => item.id === unit?.building_id);
+      return unit ? `${building?.name ?? "Building"} ${unit.unit_number}${unit.floor ? ` / ${unit.floor}` : ""}` : "";
+    }).filter(Boolean)
+    : [];
+  const currentBuildingLabels = existingProfileBuildingIds
+    .map((buildingId) => buildings.find((building) => building.id === buildingId)?.name)
+    .filter(Boolean);
+  const currentAllocation = existingProfile?.role === "admin" || existingProfile?.role === "developer"
+    ? "All buildings"
+    : currentFlatLabels.length > 0
+      ? currentFlatLabels.join(", ")
+      : currentBuildingLabels.length > 0
+        ? currentBuildingLabels.join(", ")
+        : "No access currently assigned";
+  const duplicateRequestedUnits = request.requested_units.filter((unit) => existingProfileUnitIds.has(unit.unit_id));
+  const allRequestedUnitsAreDuplicates = request.requested_units.length > 0 && duplicateRequestedUnits.length === request.requested_units.length;
+  const approveButtonLabel = existingProfile ? "Approve and update user" : "Approve and create user";
+
+  async function saveAdminNotes() {
+    setIsSaving("notes");
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/access-requests", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          requestId: request.id,
+          action: "save_notes",
+          adminNotes,
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not save notes.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: "access_request_notes_updated",
+        entity_type: "resident_access_request",
+        entity_id: request.id,
+        summary: `Access request notes updated: ${request.email}`,
+        metadata: {
+          email: request.email,
+          status: request.status,
+        },
+      });
+      onNotice(`Notes saved for ${request.email}.`);
+      await reload();
+    } finally {
+      setIsSaving(null);
+    }
+  }
+
+  async function reviewRequest(action: "approve" | "reject") {
+    const verb = action === "approve" ? "approve" : "reject";
+    if (!window.confirm(`${verb.charAt(0).toUpperCase()}${verb.slice(1)} access request for ${request.full_name}?`)) return;
+
+    setIsSaving(action);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/access-requests", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          requestId: request.id,
+          action,
+          adminNotes,
+        }),
+      });
+      const payload = (await response.json()) as { error?: string; email?: string; invited?: boolean; userId?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? `Could not ${verb} request.`);
+        return;
+      }
+
+      await recordAudit({
+        event_type: action === "approve" ? "access_request_approved" : "access_request_rejected",
+        entity_type: "resident_access_request",
+        entity_id: request.id,
+        summary: action === "approve" ? `Access request approved: ${request.email}` : `Access request rejected: ${request.email}`,
+        metadata: {
+          email: request.email,
+          residentType: request.resident_type,
+          requestedUnits: request.requested_units,
+          invited: payload.invited ?? false,
+          userId: payload.userId ?? null,
+        },
+      });
+      onNotice(action === "approve"
+        ? `${request.email} approved${payload.invited ? " and invited" : ""}.`
+        : `${request.email} request rejected.`);
+      onClose();
+      await reload();
+    } finally {
+      setIsSaving(null);
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">{isPending ? "Review access request" : "Access request"}</h3>
+          <p className="text-sm text-[#617169]">{request.email}</p>
+        </div>
+        <span className={statusTone(request.status)}>{statusLabel(request.status)}</span>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <InfoRow label="Name" value={request.full_name} />
+        <InfoRow label="Email" value={request.email} />
+        <InfoRow label="Phone" value={request.phone} />
+        <InfoRow label="Resident type" value={statusLabel(request.resident_type)} />
+        <InfoRow label="Submitted" value={formatDate(request.created_at)} />
+        <InfoRow label="Existing profile" value={existingProfileLabel} />
+        {existingProfile && <InfoRow label="Existing role" value={statusLabel(existingProfile.role)} />}
+        {existingProfile && <InfoRow label="Current access" value={currentAllocation} />}
+        {!isPending && <InfoRow label="Reviewed" value={request.reviewed_at ? formatDate(request.reviewed_at) : "Not recorded"} />}
+        {!isPending && <InfoRow label="Reviewer" value={reviewer?.full_name || reviewer?.name || reviewer?.email || "Not recorded"} />}
+      </div>
+
+      <div className="form-section mt-4">
+        <h4 className="text-sm font-bold text-[#0F3D2E]">Requested flats</h4>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {request.requested_units.map((unit) => (
+            <span key={`${unit.building_id}-${unit.unit_id}`} className="rounded-md bg-[#edf4f1] px-2 py-1 text-xs font-medium text-[#0F3D2E]">
+              {unit.building_name} {unit.unit_number}{unit.floor ? ` / ${unit.floor}` : ""}
+              {existingProfileUnitIds.has(unit.unit_id) ? " - already assigned" : ""}
+            </span>
+          ))}
+          {request.requested_units.length === 0 && <p className="text-sm text-[#617169]">No flats requested.</p>}
+        </div>
+        {duplicateRequestedUnits.length > 0 && (
+          <p className="mt-3 rounded-md border border-[#E5C27B] bg-[#FFF8E8] px-3 py-2 text-sm text-[#7A5A1F]">
+            {allRequestedUnitsAreDuplicates
+              ? "This user already has access to every flat on this request."
+              : "Some requested flats are already assigned to this user. Only new flats will be added."}
+          </p>
+        )}
+      </div>
+
+      {request.notes && (
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">Requester notes</h4>
+          <p className="mt-2 text-sm text-[#1F2A24]">{request.notes}</p>
+        </div>
+      )}
+
+      <label className="field-label mt-4">
+        Admin notes
+        <textarea className="field min-h-20 py-3" value={adminNotes} onChange={(event) => setAdminNotes(event.target.value)} />
+      </label>
+      <div className="mt-3 flex justify-end">
+        <button className="secondary" onClick={() => void saveAdminNotes()} disabled={Boolean(isSaving)}>
+          {isSaving === "notes" ? "Saving notes" : "Save notes"}
+        </button>
+      </div>
+
+      {isPending && (
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          <button className="secondary" onClick={() => void reviewRequest("reject")} disabled={Boolean(isSaving)}>
+            {isSaving === "reject" ? "Rejecting" : "Reject request"}
+          </button>
+          <button className="primary" onClick={() => void reviewRequest("approve")} disabled={Boolean(isSaving) || allRequestedUnitsAreDuplicates}>
+            {isSaving === "approve" ? "Approving" : approveButtonLabel}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
+      <p className="mt-1 text-sm font-medium text-[#1F2A24]">{value || "None"}</p>
+    </div>
   );
 }
 
@@ -2590,6 +4038,8 @@ function UserEditPanel({
   buildings,
   units,
   organisations,
+  profiles,
+  accessRequests,
   userBuildingAccess,
   userUnitAccess,
   recordAudit,
@@ -2601,6 +4051,8 @@ function UserEditPanel({
   buildings: Building[];
   units: Unit[];
   organisations: Organisation[];
+  profiles: Profile[];
+  accessRequests: ResidentAccessRequest[];
   userBuildingAccess: UserBuildingAccess[];
   userUnitAccess: UserUnitAccess[];
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
@@ -2609,21 +4061,31 @@ function UserEditPanel({
   reload: () => Promise<void>;
 }) {
   const [fullName, setFullName] = useState(profile.full_name || profile.name || "");
+  const [phone, setPhone] = useState(profile.phone ?? "");
   const [role, setRole] = useState<AppRole>(profile.role);
   const [residentType, setResidentType] = useState<ResidentType>(profile.resident_type ?? "leaseholder");
   const [organisationId, setOrganisationId] = useState(profile.organisation_id ?? "");
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>(userBuildingAccess.map((access) => access.building_id));
-  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>(userUnitAccess.map((access) => access.unit_id));
+  const [flatAccessRows, setFlatAccessRows] = useState<FlatAccessDraft[]>(() => flatAccessRowsFromUnitIds(userUnitAccess.map((access) => access.unit_id), units));
   const [isSaving, setIsSaving] = useState(false);
+  const [isSendingLoginReminder, setIsSendingLoginReminder] = useState(false);
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isResident = role === "resident";
+  const isActive = profile.active !== false;
+  const hasEmail = Boolean(profile.email?.trim());
   const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
+  const selectedUnitIds = selectedUnitIdsFromFlatRows(flatAccessRows);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
   const selectedResidentBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
   const buildingIdsForSave = isResident ? selectedResidentBuildingIds : selectedBuildingIds;
+  const accessSummary = roleAccessSummary(role);
+  const requestHistory = accessRequests.filter((request) => request.email.toLowerCase() === profile.email.toLowerCase());
   const canSave = Boolean(
     fullName &&
-    (!isResident || (residentType && selectedUnitIds.length > 0)) &&
+    (!isResident || residentType) &&
     (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
   );
 
@@ -2633,14 +4095,11 @@ function UserEditPanel({
     ));
   }
 
-  function toggleUnit(unitId: string) {
-    setSelectedUnitIds((current) => (
-      current.includes(unitId) ? current.filter((item) => item !== unitId) : [...current, unitId]
-    ));
-  }
-
   async function saveUser() {
-    if (!canSave) return;
+    if (!canSave) {
+      onNotice("Complete the required fields before saving.");
+      return;
+    }
     setIsSaving(true);
     onNotice("");
 
@@ -2656,6 +4115,7 @@ function UserEditPanel({
         body: JSON.stringify({
           userId: profile.id,
           fullName,
+          phone,
           role,
           residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : undefined,
@@ -2677,6 +4137,7 @@ function UserEditPanel({
         summary: `User updated: ${profile.email}`,
         metadata: {
           email: profile.email,
+          phone,
           role,
           residentType: isResident ? residentType : null,
           organisationId: needsOrganisationAndBuilding ? organisationId : null,
@@ -2687,8 +4148,137 @@ function UserEditPanel({
       onNotice("");
       onClose();
       await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not update user.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function sendUserAction(action: "send_login_reminder" | "send_password_reset") {
+    if (!hasEmail) {
+      onNotice("This user does not have an email address.");
+      return;
+    }
+
+    if (action === "send_login_reminder") setIsSendingLoginReminder(true);
+    else setIsSendingPasswordReset(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id, action }),
+      });
+      const payload = (await response.json()) as { error?: string; email?: string };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not send email.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: action,
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: action === "send_login_reminder" ? `Login reminder sent: ${profile.email}` : `Password reset sent: ${profile.email}`,
+        metadata: { email: profile.email },
+      });
+      onNotice(action === "send_login_reminder" ? `Login reminder sent to ${profile.email}.` : `Password reset link sent to ${profile.email}.`);
+    } finally {
+      if (action === "send_login_reminder") setIsSendingLoginReminder(false);
+      else setIsSendingPasswordReset(false);
+    }
+  }
+
+  async function changeUserStatus() {
+    const nextActive = !isActive;
+    const label = profile.full_name || profile.name || profile.email;
+    const verb = nextActive ? "reactivate" : "deactivate";
+    if (!window.confirm(`${verb.charAt(0).toUpperCase()}${verb.slice(1)} ${label}?`)) return;
+
+    setIsStatusChanging(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id, action: "status", active: nextActive }),
+      });
+      const payload = (await response.json()) as { error?: string; email?: string; active?: boolean };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? `Could not ${verb} user.`);
+        return;
+      }
+
+      await recordAudit({
+        event_type: nextActive ? "user_reactivated" : "user_deactivated",
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: nextActive ? `User reactivated: ${profile.email}` : `User deactivated: ${profile.email}`,
+        metadata: { email: profile.email, active: nextActive },
+      });
+      onNotice(nextActive ? `${profile.email} reactivated.` : `${profile.email} deactivated.`);
+      await reload();
+    } finally {
+      setIsStatusChanging(false);
+    }
+  }
+
+  async function deleteUser() {
+    const label = profile.full_name || profile.name || profile.email;
+    if (!window.confirm(`Permanently delete user ${label}? This should only be used for mistaken or test accounts.`)) return;
+
+    setIsDeleting(true);
+    onNotice("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ userId: profile.id }),
+      });
+      const payload = (await response.json()) as { error?: string; id?: string; email?: string; deletedAccessRequests?: ResidentAccessRequest[] };
+
+      if (!response.ok) {
+        onNotice(payload.error ?? "Could not delete user.");
+        return;
+      }
+
+      await recordAudit({
+        event_type: "user_deleted",
+        entity_type: "user",
+        entity_id: profile.id,
+        summary: `User deleted: ${profile.email}`,
+        metadata: {
+          email: profile.email,
+          role: profile.role,
+          deletedAccessRequests: payload.deletedAccessRequests ?? [],
+        },
+      });
+      onNotice(`Deleted ${profile.email}.`);
+      onClose();
+      await reload();
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -2700,46 +4290,129 @@ function UserEditPanel({
             <h3 className="font-semibold">Edit user</h3>
             <p className="text-sm text-[#617169]">{profile.email}</p>
           </div>
-          <button className="secondary min-h-8 px-2 py-1 text-xs" onClick={onClose}>Cancel</button>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Name" />
-          <select
-            className="field"
-            value={role}
-            onChange={(event) => {
-              setRole(event.target.value as AppRole);
-              if (event.target.value !== "resident") setResidentType("leaseholder");
-              setOrganisationId("");
-              setSelectedBuildingIds([]);
-              setSelectedUnitIds([]);
-            }}
-          >
-            {appRoles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-          {isResident && (
-            <select className="field" value={residentType} onChange={(event) => setResidentType(event.target.value as ResidentType)}>
-              {residentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          <label className="field-label">
+            Name
+            <input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Name" />
+          </label>
+          <label className="field-label">
+            Email
+            <input className="field" value={profile.email} disabled />
+          </label>
+          <label className="field-label">
+            Phone
+            <input className="field" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone number" />
+          </label>
+          <label className="field-label">
+            Role
+            <select
+              className="field"
+              value={role}
+              onChange={(event) => {
+                const nextRole = event.target.value as AppRole;
+                setRole(nextRole);
+                if (nextRole !== "resident") {
+                  setResidentType("leaseholder");
+                  setFlatAccessRows(emptyFlatAccessRows());
+                }
+                if (nextRole === "resident") setFlatAccessRows((current) => current.length > 0 ? current : emptyFlatAccessRows());
+                setOrganisationId("");
+                setSelectedBuildingIds([]);
+              }}
+            >
+              {appRoles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
+          </label>
+          {isResident && (
+            <label className="field-label">
+              Resident type
+              <select className="field" value={residentType} onChange={(event) => setResidentType(event.target.value as ResidentType)}>
+                {residentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+              </select>
+              <span className="text-xs font-normal normal-case tracking-normal text-[#617169]">Resident type is for admin context only. Access is controlled by the flats selected below.</span>
+            </label>
           )}
           {needsOrganisationAndBuilding && (
-            <select className="field" value={organisationId} onChange={(event) => setOrganisationId(event.target.value)}>
-              <option value="">Organisation</option>
-              {organisationsForRole.map((organisation) => (
-                <option key={organisation.id} value={organisation.id}>{organisation.name}</option>
-              ))}
-            </select>
+            <label className="field-label">
+              Organisation
+              <select className="field" value={organisationId} onChange={(event) => setOrganisationId(event.target.value)}>
+                <option value="">Organisation</option>
+                {organisationsForRole.map((organisation) => (
+                  <option key={organisation.id} value={organisation.id}>{organisation.name}</option>
+                ))}
+              </select>
+            </label>
           )}
         </div>
+        {accessSummary && <AccessSummary message={accessSummary} />}
         {needsOrganisationAndBuilding && (
           <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
         )}
         {isResident && (
-          <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
+          <FlatAccessRowsPicker buildings={buildings} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
         )}
         <button className="primary mt-4 w-full" onClick={saveUser} disabled={isSaving || !canSave}>
-          {isSaving ? "Saving user" : "Save user"}
+          {isSaving ? "Saving changes" : "Save changes"}
         </button>
+
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">Account access</h4>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="secondary" onClick={() => void sendUserAction("send_login_reminder")} disabled={!hasEmail || isSendingLoginReminder}>
+              {isSendingLoginReminder ? "Sending reminder" : "Send login reminder"}
+            </button>
+            <button className="secondary" onClick={() => void sendUserAction("send_password_reset")} disabled={!hasEmail || isSendingPasswordReset}>
+              {isSendingPasswordReset ? "Sending reset" : "Send password reset link"}
+            </button>
+          </div>
+        </div>
+
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">User status</h4>
+          <p className="mt-1 text-sm text-[#617169]">Status: <span className="font-semibold text-[#1F2A24]">{isActive ? "Active" : "Deactivated"}</span></p>
+          <button className="secondary mt-3" onClick={() => void changeUserStatus()} disabled={isStatusChanging}>
+            {isStatusChanging ? "Updating status" : isActive ? "Deactivate user" : "Reactivate user"}
+          </button>
+        </div>
+
+        <div className="form-section mt-4">
+          <h4 className="text-sm font-bold text-[#0F3D2E]">Access request history</h4>
+          <div className="mt-3 grid gap-3">
+            {requestHistory.map((request) => {
+              const reviewer = request.reviewed_by_user_id ? profiles.find((item) => item.id === request.reviewed_by_user_id) : undefined;
+              return (
+                <div key={request.id} className="rounded-md border border-[#e5e9e4] bg-[#FBFAF6] p-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <span className={statusTone(request.status)}>{statusLabel(request.status)}</span>
+                      <p className="mt-2 text-sm font-semibold text-[#1F2A24]">{requestUnitsLabel(request)}</p>
+                    </div>
+                    <p className="text-xs text-[#617169]">Submitted {formatDate(request.created_at)}</p>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+                    <p><span className="font-semibold text-[#0F3D2E]">Phone:</span> {request.phone || "None"}</p>
+                    <p><span className="font-semibold text-[#0F3D2E]">Reviewed:</span> {request.reviewed_at ? formatDate(request.reviewed_at) : "Not reviewed"}</p>
+                    <p><span className="font-semibold text-[#0F3D2E]">Reviewer:</span> {reviewer?.full_name || reviewer?.name || reviewer?.email || "Not recorded"}</p>
+                    <p><span className="font-semibold text-[#0F3D2E]">Resident type:</span> {statusLabel(request.resident_type)}</p>
+                  </div>
+                  {request.notes && <p className="mt-3 text-sm text-[#1F2A24]"><span className="font-semibold text-[#0F3D2E]">Requester notes:</span> {request.notes}</p>}
+                  {request.admin_notes && <p className="mt-2 text-sm text-[#1F2A24]"><span className="font-semibold text-[#0F3D2E]">Admin notes:</span> {request.admin_notes}</p>}
+                </div>
+              );
+            })}
+            {requestHistory.length === 0 && <p className="text-sm text-[#617169]">No access requests found for this email address.</p>}
+          </div>
+        </div>
+
+        <div className="form-section mt-4 border-[#f1b8b2] bg-[#fffafa]">
+          <h4 className="text-sm font-bold text-[#b42318]">Danger zone</h4>
+          <p className="mt-1 text-sm text-[#7a5b54]">Deleting a user should only be used for mistaken or test accounts. Deactivate users where history should be preserved.</p>
+          <button className="danger-button mt-3" onClick={() => void deleteUser()} disabled={isDeleting}>
+            <Trash2 size={16} aria-hidden />
+            {isDeleting ? "Deleting user" : "Delete user permanently"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2750,9 +4423,9 @@ function AccessBuildingPicker({ buildings, selectedBuildingIds, onToggle }: { bu
     <div className="form-section mt-4">
       <p className="text-sm font-bold text-[#0F3D2E]">Building access</p>
       <p className="mt-1 text-sm text-[#66736B]">Choose the buildings this user can work with.</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {buildings.map((building) => (
-          <label key={building.id} className={`option-card ${selectedBuildingIds.includes(building.id) ? "option-card-selected" : ""}`}>
+          <label key={building.id} className={`option-card min-h-11 px-3 py-2 ${selectedBuildingIds.includes(building.id) ? "option-card-selected" : ""}`}>
             <input checked={selectedBuildingIds.includes(building.id)} onChange={() => onToggle(building.id)} type="checkbox" />
             {building.name}
           </label>
@@ -2763,53 +4436,134 @@ function AccessBuildingPicker({ buildings, selectedBuildingIds, onToggle }: { bu
   );
 }
 
-function AccessUnitPicker({ buildings, units, selectedUnitIds, onToggle }: { buildings: Building[]; units: Unit[]; selectedUnitIds: string[]; onToggle: (unitId: string) => void }) {
-  function toggleFloor(unitIds: string[]) {
-    const allSelected = unitIds.every((unitId) => selectedUnitIds.includes(unitId));
-    unitIds.forEach((unitId) => {
-      if (allSelected || !selectedUnitIds.includes(unitId)) onToggle(unitId);
-    });
+function roleAccessSummary(role: AppRole) {
+  if (role === "admin") return "Admins have access to all buildings.";
+  if (role === "developer") return "Developers have access to all buildings.";
+  return "";
+}
+
+function emptyFlatAccessRows(): FlatAccessDraft[] {
+  return [{ id: "flat-0", buildingId: "", unitId: "" }];
+}
+
+function createFlatAccessRow(): FlatAccessDraft {
+  return { id: `flat-${Date.now()}-${Math.random().toString(36).slice(2)}`, buildingId: "", unitId: "" };
+}
+
+function flatAccessRowsFromUnitIds(unitIds: string[], units: Unit[]): FlatAccessDraft[] {
+  const rows = unitIds.map((unitId, index) => {
+    const unit = units.find((item) => item.id === unitId);
+    return {
+      id: `${unitId || "flat"}-${index}`,
+      buildingId: unit?.building_id ?? "",
+      unitId,
+    };
+  });
+
+  return rows.length > 0 ? rows : emptyFlatAccessRows();
+}
+
+function selectedUnitIdsFromFlatRows(rows: FlatAccessDraft[]) {
+  return Array.from(new Set(rows.map((row) => row.unitId).filter(Boolean)));
+}
+
+function AccessSummary({ message }: { message: string }) {
+  return (
+    <div className="form-section mt-4">
+      <p className="text-sm font-bold text-[#0F3D2E]">Access</p>
+      <p className="mt-2 rounded-md border border-[#d9ded6] bg-[#FBFAF6] px-3 py-2 text-sm text-[#617169]">{message}</p>
+    </div>
+  );
+}
+
+function FlatAccessRowsPicker({
+  buildings,
+  units,
+  rows,
+  onChange,
+}: {
+  buildings: Building[];
+  units: Unit[];
+  rows: FlatAccessDraft[];
+  onChange: (rows: FlatAccessDraft[]) => void;
+}) {
+  const unitOptionsByBuilding = useMemo(() => {
+    return units.reduce<Record<string, Unit[]>>((groups, unit) => {
+      groups[unit.building_id] = [...(groups[unit.building_id] ?? []), unit];
+      return groups;
+    }, {});
+  }, [units]);
+
+  function updateRow(rowId: string, updates: Partial<FlatAccessDraft>) {
+    onChange(rows.map((row) => (row.id === rowId ? { ...row, ...updates } : row)));
+  }
+
+  function removeRow(rowId: string) {
+    onChange(rows.filter((row) => row.id !== rowId));
   }
 
   return (
     <div className="form-section mt-4">
-      <p className="text-sm font-bold text-[#0F3D2E]">Unit access</p>
-      <p className="mt-1 text-sm text-[#66736B]">Residents can be linked to one or more flats across one or more buildings.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-[#0F3D2E]">Flat access</p>
+          <p className="mt-1 text-sm text-[#66736B]">Add one or more flats across Bunnywell buildings.</p>
+        </div>
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => onChange([...rows, createFlatAccessRow()])}>
+          <Plus size={16} aria-hidden />
+          Add flat
+        </button>
+      </div>
+
       <div className="mt-3 grid gap-3">
-        {buildings.map((building) => {
-          const buildingUnits = units.filter((unit) => unit.building_id === building.id);
-          const unitsByFloor = buildingUnits.reduce<Record<string, Unit[]>>((groups, unit) => {
-            const floor = unit.floor || "No floor";
-            groups[floor] = [...(groups[floor] ?? []), unit];
-            return groups;
-          }, {});
+        {rows.length === 0 && (
+          <p className="rounded-md border border-[#d9ded6] bg-[#FBFAF6] px-3 py-2 text-sm text-[#617169]">
+            No flats selected.
+          </p>
+        )}
+        {rows.map((row) => {
+          const buildingUnits = unitOptionsByBuilding[row.buildingId] ?? [];
+          const selectedOtherUnitIds = new Set(rows.filter((item) => item.id !== row.id).map((item) => item.unitId).filter(Boolean));
+
           return (
-            <div key={building.id} className="card-surface p-3">
-              <p className="text-sm font-bold text-[#1F2A24]">{building.name}</p>
-              <div className="mt-3 grid gap-3">
-                {Object.entries(unitsByFloor).map(([floorName, floorUnits]) => {
-                  const floorUnitIds = floorUnits.map((unit) => unit.id);
-                  const allSelected = floorUnitIds.length > 0 && floorUnitIds.every((unitId) => selectedUnitIds.includes(unitId));
-                  return (
-                    <div key={floorName} className="rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#66736B]">{floorName}</p>
-                        <button className="secondary min-h-8 px-3 py-1 text-xs" type="button" onClick={() => toggleFloor(floorUnitIds)}>
-                          {allSelected ? "Clear floor" : "Select floor"}
-                        </button>
-                      </div>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        {floorUnits.map((unit) => (
-                          <label key={unit.id} className={`option-card ${selectedUnitIds.includes(unit.id) ? "option-card-selected" : ""}`}>
-                            <input checked={selectedUnitIds.includes(unit.id)} onChange={() => onToggle(unit.id)} type="checkbox" />
-                            <span>Unit {unit.unit_number}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-                {buildingUnits.length === 0 && <p className="text-sm text-[#617169]">No units yet.</p>}
+            <div key={row.id} className="card-surface p-3">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <label className="field-label">
+                  Building
+                  <select
+                    className="field min-h-11 py-2"
+                    value={row.buildingId}
+                    onChange={(event) => updateRow(row.id, { buildingId: event.target.value, unitId: "" })}
+                  >
+                    <option value="">Choose building</option>
+                    {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+                  </select>
+                </label>
+                <label className="field-label">
+                  Flat
+                  <select
+                    className="field min-h-11 py-2"
+                    value={row.unitId}
+                    onChange={(event) => updateRow(row.id, { unitId: event.target.value })}
+                    disabled={!row.buildingId}
+                  >
+                    <option value="">Choose flat</option>
+                    {buildingUnits.map((unit) => (
+                      <option key={unit.id} value={unit.id} disabled={selectedOtherUnitIds.has(unit.id)}>
+                        {unit.unit_number}{unit.floor ? ` / ${unit.floor}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="danger-icon-button self-end"
+                  type="button"
+                  onClick={() => removeRow(row.id)}
+                  aria-label="Remove flat"
+                  title="Remove flat"
+                >
+                  <Trash2 size={16} aria-hidden />
+                </button>
               </div>
             </div>
           );
@@ -2839,23 +4593,27 @@ function UserEnrolment({
 }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [sendInviteEmail, setSendInviteEmail] = useState(true);
   const [role, setRole] = useState<AppRole>("resident");
   const [residentType, setResidentType] = useState<ResidentType>("leaseholder");
   const [organisationId, setOrganisationId] = useState("");
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>([]);
-  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
+  const [flatAccessRows, setFlatAccessRows] = useState<FlatAccessDraft[]>(() => emptyFlatAccessRows());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isResident = role === "resident";
   const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
+  const selectedUnitIds = selectedUnitIdsFromFlatRows(flatAccessRows);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
   const selectedResidentBuildingIds = Array.from(new Set(selectedUnits.map((unit) => unit.building_id)));
   const selectedBuildingAccessIds = isResident ? selectedResidentBuildingIds : selectedBuildingIds;
+  const accessSummary = roleAccessSummary(role);
   const canCreateUser = Boolean(
     fullName &&
     email &&
-    password &&
+    (sendInviteEmail || password) &&
     (!isResident || (residentType && selectedUnitIds.length > 0)) &&
     (!needsOrganisationAndBuilding || (organisationId && selectedBuildingIds.length > 0)),
   );
@@ -2866,20 +4624,14 @@ function UserEnrolment({
     ));
   }
 
-  function toggleUnit(unitId: string) {
-    setSelectedUnitIds((current) => (
-      current.includes(unitId) ? current.filter((item) => item !== unitId) : [...current, unitId]
-    ));
-  }
-
   async function enrolUser() {
-    if (!email || !password || !fullName) {
-      onNotice("Name, email and temporary password are required.");
+    if (!email || !fullName || (!sendInviteEmail && !password)) {
+      onNotice(sendInviteEmail ? "Name and email are required." : "Name, email and temporary password are required.");
       return;
     }
 
     if (isResident && selectedUnitIds.length === 0) {
-      onNotice("Assign at least one unit for residents.");
+      onNotice("Assign at least one flat for residents.");
       return;
     }
 
@@ -2902,7 +4654,9 @@ function UserEnrolment({
         },
         body: JSON.stringify({
           email,
+          phone,
           password,
+          sendInviteEmail,
           fullName,
           role,
           residentType: isResident ? residentType : null,
@@ -2922,12 +4676,14 @@ function UserEnrolment({
 
       setFullName("");
       setEmail("");
+      setPhone("");
       setPassword("");
+      setSendInviteEmail(true);
       setRole("resident");
       setResidentType("leaseholder");
       setOrganisationId("");
       setSelectedBuildingIds([]);
-      setSelectedUnitIds([]);
+      setFlatAccessRows(emptyFlatAccessRows());
       await recordAudit({
         event_type: "user_created",
         entity_type: "user",
@@ -2942,7 +4698,7 @@ function UserEnrolment({
           unitIds: selectedUnitIds,
         },
       });
-      onNotice(`Enrolled ${payload.email}.`);
+      onNotice(sendInviteEmail ? `Invite sent to ${payload.email}.` : `Enrolled ${payload.email}.`);
       await reload();
       onCancel();
     } finally {
@@ -2966,7 +4722,14 @@ function UserEnrolment({
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <label className="field-label">Name<input className="field" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Full name" /></label>
             <label className="field-label">Email<input className="field" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" type="email" /></label>
-            <label className="field-label md:col-span-2">Temporary password<input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Temporary password" type="password" /></label>
+            <label className="field-label">Phone<input className="field" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone number" /></label>
+            <label className="option-card md:col-span-2">
+              <input checked={sendInviteEmail} onChange={(event) => setSendInviteEmail(event.target.checked)} type="checkbox" />
+              Send invite email
+            </label>
+            {!sendInviteEmail && (
+              <label className="field-label md:col-span-2">Temporary password<input className="field" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Temporary password" type="password" /></label>
+            )}
           </div>
         </div>
         <div className="form-section">
@@ -2978,11 +4741,15 @@ function UserEnrolment({
                 className="field"
                 value={role}
                 onChange={(event) => {
-                  setRole(event.target.value as AppRole);
-                  if (event.target.value !== "resident") setResidentType("leaseholder");
+                  const nextRole = event.target.value as AppRole;
+                  setRole(nextRole);
+                  if (nextRole !== "resident") {
+                    setResidentType("leaseholder");
+                    setFlatAccessRows(emptyFlatAccessRows());
+                  }
+                  if (nextRole === "resident") setFlatAccessRows((current) => current.length > 0 ? current : emptyFlatAccessRows());
                   setOrganisationId("");
                   setSelectedBuildingIds([]);
-                  setSelectedUnitIds([]);
                 }}
               >
                 {appRoles.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
@@ -2994,6 +4761,7 @@ function UserEnrolment({
                 <select className="field" value={residentType} onChange={(event) => setResidentType(event.target.value as ResidentType)}>
                   {residentTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
+                <span className="text-xs font-normal normal-case tracking-normal text-[#617169]">Resident type is for admin context only. Access is controlled by the flats selected below.</span>
               </label>
             )}
             {needsOrganisationAndBuilding && (
@@ -3010,18 +4778,16 @@ function UserEnrolment({
           </div>
         </div>
       </div>
+      {accessSummary && <AccessSummary message={accessSummary} />}
       {needsOrganisationAndBuilding && (
         <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
       )}
       {isResident && (
-        <AccessUnitPicker buildings={buildings} units={units} selectedUnitIds={selectedUnitIds} onToggle={toggleUnit} />
+        <FlatAccessRowsPicker buildings={buildings} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
       )}
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
-        {isSubmitting ? "Enrolling user" : "Create user and assign access"}
+        {isSubmitting ? "Enrolling user" : sendInviteEmail ? "Send invite and assign access" : "Create user and assign access"}
       </button>
-      <p className="mt-3 text-sm text-[#617169]">
-        This currently creates the account with a temporary password. Invite email delivery can be added next using Supabase invite links.
-      </p>
     </section>
   );
 }
@@ -3184,14 +4950,21 @@ function OrganisationManagement({
                   <p className="text-xs text-[#617169]">{organisationTypeLabel(organisation.type)}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="secondary px-2 py-1 text-xs" onClick={() => startEdit(organisation)}>Edit</button>
+                  <button
+                    className="secondary icon-button"
+                    onClick={() => startEdit(organisation)}
+                    aria-label={`Edit ${organisation.name}`}
+                    title={`Edit ${organisation.name}`}
+                  >
+                    <Pencil size={16} strokeWidth={2.25} aria-hidden />
+                  </button>
                   <button
                     aria-label={`Delete ${organisation.name}`}
-                    className="rounded-md border border-[#f1b8b2] p-2 text-[#b42318] transition hover:bg-[#fee4e2]"
+                    className="danger-icon-button"
                     onClick={() => deleteOrganisation(organisation)}
                     title={`Delete ${organisation.name}`}
                   >
-                    <X size={14} />
+                    <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                   </button>
                 </div>
               </div>
@@ -3208,6 +4981,7 @@ function SnagWorkflow({
   user,
   profile,
   buildings,
+  buildingFloors,
   snags,
   units,
   areas,
@@ -3218,11 +4992,13 @@ function SnagWorkflow({
   onNotice,
   reload,
   uploadFile,
+  recordAudit,
   requestedFilters,
 }: {
   user: User;
   profile: Profile | null;
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
   areas: Area[];
@@ -3233,48 +5009,91 @@ function SnagWorkflow({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   requestedFilters?: SnagListFilters;
 }) {
   const isContractorRole = profile?.role === "contractor";
   const canUseDeveloperActions = !isContractorRole;
+  const canCreateSnag = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative";
+  const canPrintReport = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative" || profile?.role === "contractor";
+  const [showAddSnag, setShowAddSnag] = useState(false);
+  const [showPrintReport, setShowPrintReport] = useState(false);
+  const [isViewingSnagDetails, setIsViewingSnagDetails] = useState(false);
 
   return (
-    <SnagList
-      title="Snags"
-      buildings={buildings}
-      snags={snags}
-      units={units}
-      areas={areas}
-      trades={trades}
-      photos={photos}
-      events={events}
-      profiles={profiles}
-      user={user}
-      onNotice={onNotice}
-      reload={reload}
-      uploadFile={uploadFile}
-      requestedFilters={requestedFilters}
-      showFilters
-      canReject={canUseDeveloperActions}
-      tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
-      listActions={(snag) => {
-        const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
-        return canResolve ? <ContractorResolveAction user={user} snag={snag} onNotice={onNotice} reload={reload} /> : null;
-      }}
-      actions={(snag) => {
-        const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
-        const canRespondToInfoRequest = canUseDeveloperActions && snag.status === "needs_more_info";
-        const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
-        if (!canClose && !canRespondToInfoRequest && !canResolve) return null;
+    <div className="grid gap-5">
+      <section className="panel">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <SectionHeader title="Snags" subtitle="Manage visible defects, trade updates and printable flat snag sheets." />
+          {!isViewingSnagDetails && <div className="flex flex-wrap gap-2">
+            {canCreateSnag && (
+              <button className="primary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowAddSnag((current) => !current)}>
+                <Plus size={16} aria-hidden /> {showAddSnag ? "Hide add snag" : "Add snag"}
+              </button>
+            )}
+            {canPrintReport && (
+              <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowPrintReport((current) => !current)}>
+                <Download size={16} aria-hidden /> {showPrintReport ? "Hide print sheet" : "Print snag sheet"}
+              </button>
+            )}
+          </div>}
+        </div>
+      </section>
+      {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
+        <DeveloperSnagging
+          user={user}
+          buildings={buildings}
+          buildingFloors={buildingFloors}
+          units={units}
+          areas={areas}
+          trades={trades}
+          onNotice={onNotice}
+          reload={reload}
+          uploadFile={uploadFile}
+          requestedFilters={requestedFilters}
+        />
+      )}
+      {!isViewingSnagDetails && showPrintReport && canPrintReport && (
+        <ReportsPanel buildings={buildings} buildingFloors={buildingFloors} units={units} areas={areas} trades={trades} snags={snags} photos={photos} recordAudit={recordAudit} />
+      )}
+      <SnagList
+        title=""
+        buildings={buildings}
+        snags={snags}
+        units={units}
+        areas={areas}
+        trades={trades}
+        photos={photos}
+        events={events}
+        profiles={profiles}
+        user={user}
+        onNotice={onNotice}
+        reload={reload}
+        uploadFile={uploadFile}
+        requestedFilters={requestedFilters}
+        onDetailViewChange={setIsViewingSnagDetails}
+        showFilters
+        canReject={canUseDeveloperActions}
+        tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
+        listActions={(snag) => {
+          const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+          return canResolve ? <ContractorResolveAction user={user} snag={snag} onNotice={onNotice} reload={reload} /> : null;
+        }}
+        actions={(snag) => {
+          const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
+          const canRespondToInfoRequest = canUseDeveloperActions && snag.status === "needs_more_info";
+          const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+          if (!canClose && !canRespondToInfoRequest && !canResolve) return null;
 
-        return (
-          <>
-            {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
-            {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
-          </>
-        );
-      }}
-    />
+          return (
+            <>
+              {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+              {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+            </>
+          );
+        }}
+      />
+    </div>
   );
 }
 
@@ -3318,9 +5137,9 @@ function DeveloperActions({
   if (!isContractorResolved && !needsMoreInfo) return null;
 
   return (
-    <div className="grid gap-2" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+    <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       {isContractorResolved && (
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("closed")} disabled={isSaving}>
             <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
           </button>
@@ -3497,8 +5316,8 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
   if (snag.status === "closed" || snag.status === "resolved_by_contractor" || snag.status === "needs_more_info") return null;
 
   return (
-    <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
-      <div className="flex flex-wrap justify-end gap-2">
+    <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()}>
+      <div className="flex flex-wrap gap-2">
         <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)}>
           <CircleHelp size={16} aria-hidden /> Request info
         </button>
@@ -3528,6 +5347,178 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
   );
 }
 
+function UnitsSection({
+  user,
+  profile,
+  buildings,
+  buildingFloors,
+  units,
+  areas,
+  snags,
+  handovers,
+  handoverKeyItems,
+  meterReadings,
+  photos,
+  events,
+  profiles,
+  userUnitAccess,
+  accessibleUnitIds,
+  onNotice,
+  recordAudit,
+  reload,
+  uploadFile,
+}: {
+  user: User;
+  profile: Profile | null;
+  buildings: Building[];
+  buildingFloors: BuildingFloor[];
+  units: Unit[];
+  areas: Area[];
+  snags: ProductionSnag[];
+  handovers: Handover[];
+  handoverKeyItems: HandoverKeyItem[];
+  meterReadings: MeterReading[];
+  photos: SnagPhoto[];
+  events: SnagEvent[];
+  profiles: Profile[];
+  userUnitAccess: UserUnitAccess[];
+  accessibleUnitIds: string[];
+  onNotice: (notice: string) => void;
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  reload: () => Promise<void>;
+  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+}) {
+  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
+  const handoverUnitIds = new Set(handovers.map((handover) => handover.unit_id));
+  const buildingUnits = sortUnitsByFloorOrder(
+    units.filter((unit) => !buildingId || unit.building_id === buildingId),
+    buildingFloors,
+    buildingId,
+  );
+
+  useEffect(() => {
+    if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
+    if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
+  }, [buildingId, buildings]);
+
+  return (
+    <div className="grid gap-5">
+      <section className="panel">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <SectionHeader title="Units" subtitle="Flat status, handover position, resident access and snag history." />
+          <select className="field min-h-10 sm:w-72" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
+            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+          </select>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-[840px] w-full table-fixed border-separate border-spacing-0 text-sm">
+            <colgroup>
+              <col className="w-[22%]" />
+              <col className="w-[18%]" />
+              <col className="w-[28%]" />
+              <col className="w-[16%]" />
+              <col className="w-[16%]" />
+            </colgroup>
+            <thead>
+              <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
+                <th className="border-b border-[#d9ded6] px-3 py-2">Flat</th>
+                <th className="border-b border-[#d9ded6] px-3 py-2">Sale status</th>
+                <th className="border-b border-[#d9ded6] px-3 py-2">Handover</th>
+                <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Open snags</th>
+                <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Residents</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buildingUnits.map((unit) => {
+                const unitHandovers = handovers.filter((handover) => handover.unit_id === unit.id);
+                const latestHandover = unitHandovers[0];
+                const openSnagCount = snags.filter((snag) => snag.unit_id === unit.id && !["closed", "resolved"].includes(snag.status)).length;
+                const residentUserIds = new Set(userUnitAccess.filter((access) => access.unit_id === unit.id).map((access) => access.user_id));
+                const residentCount = profiles.filter((person) => person.role === "resident" && residentUserIds.has(person.id) && person.active !== false).length;
+                const parkingLabel = unit.parking_bays?.length ? ` / Bay ${formatParkingBays(unit.parking_bays)}` : "";
+                return (
+                  <tr key={unit.id}>
+                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
+                      <p className="font-semibold text-[#1F2A24]">{unit.unit_number}</p>
+                      <p className="text-xs text-[#617169]">{unit.floor ?? "No floor"}{parkingLabel}</p>
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle"><span className={statusTone(unit.sale_status)}>{statusLabel(unit.sale_status)}</span></td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
+                      {handoverUnitIds.has(unit.id) ? (
+                        <span className="text-[#0F3D2E]">{formatDateTime(latestHandover?.handover_datetime ?? latestHandover?.created_at ?? latestHandover?.handover_date)}</span>
+                      ) : (
+                        <span className="text-[#617169]">Not handed over</span>
+                      )}
+                    </td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-2 text-right align-middle tabular-nums">{openSnagCount}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-2 text-right align-middle tabular-nums">{residentCount}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {buildingUnits.length === 0 && <p className="mt-3 rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units are available for this building.</p>}
+        </div>
+      </section>
+      <LeaseholderDefects
+        user={user}
+        profile={profile}
+        buildings={buildings}
+        units={units}
+        areas={areas}
+        snags={snags}
+        handovers={handovers}
+        handoverKeyItems={handoverKeyItems}
+        meterReadings={meterReadings}
+        photos={photos}
+        events={events}
+        profiles={profiles}
+        accessibleUnitIds={accessibleUnitIds}
+        onNotice={onNotice}
+        recordAudit={recordAudit}
+        reload={reload}
+        uploadFile={uploadFile}
+        residentView="internal"
+      />
+    </div>
+  );
+}
+
+function ResidentHelp({ buildings, units }: { buildings: Building[]; units: Unit[] }) {
+  const linkedBuildingIds = Array.from(new Set(units.map((unit) => unit.building_id)));
+  const linkedBuildings = buildings.filter((building) => linkedBuildingIds.includes(building.id));
+
+  return (
+    <div className="grid gap-5">
+      <section className="panel">
+        <SectionHeader title="Documents" subtitle="Home user guides, warranty information and useful building links." />
+        <div className="mt-4 grid gap-3">
+          {linkedBuildings.map((building) => (
+            <div key={building.id} className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+              <h3 className="font-semibold text-[#0F3D2E]">{building.name}</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {building.home_user_guide_url && <a className="secondary min-h-9 px-3 py-1.5 text-sm" href={building.home_user_guide_url} target="_blank" rel="noreferrer">Home user guide</a>}
+                {building.documents_url && <a className="secondary min-h-9 px-3 py-1.5 text-sm" href={building.documents_url} target="_blank" rel="noreferrer">Building documents</a>}
+                {!building.home_user_guide_url && !building.documents_url && <p className="text-sm text-[#617169]">No document links have been added for this building yet.</p>}
+              </div>
+            </div>
+          ))}
+          {linkedBuildings.length === 0 && (
+            <div className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-4 text-sm text-[#617169]">
+              <p className="font-semibold text-[#0F3D2E]">No documents added yet</p>
+              <p className="mt-1">Home documents will appear here when they are available for your building.</p>
+            </div>
+          )}
+        </div>
+      </section>
+      <section className="panel">
+        <SectionHeader title="Support" subtitle="For portal access or home document queries, contact Bunnywell." />
+        <a className="secondary mt-4 w-fit min-h-9 px-3 py-1.5 text-sm" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a>
+      </section>
+    </div>
+  );
+}
+
 function LeaseholderDefects({
   user,
   profile,
@@ -3546,6 +5537,8 @@ function LeaseholderDefects({
   recordAudit,
   reload,
   uploadFile,
+  onGoToSnags,
+  residentView = "internal",
 }: {
   user: User;
   profile: Profile | null;
@@ -3564,6 +5557,8 @@ function LeaseholderDefects({
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  onGoToSnags?: () => void;
+  residentView?: "internal" | "home" | "snags";
 }) {
   const userUnits = (profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units)
     .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
@@ -3587,7 +5582,11 @@ function LeaseholderDefects({
   const [meterPhoto, setMeterPhoto] = useState("");
   const selectedUnit = units.find((unit) => unit.id === unitId);
   const selectedBuilding = buildings.find((building) => building.id === selectedUnit?.building_id);
+  const selectedBuildingLifecycle = derivedBuildingLifecycleStatus(selectedBuilding);
+  const selectedBuildingReportingEnd = initialDefectsReportingEndDate(selectedBuilding);
+  const residentCanReportRoutineSnags = buildingAllowsResidentRoutineSnags(selectedBuilding);
   const existingHandover = handovers.find((handover) => handover.unit_id === unitId);
+  const residentRoutineSnagAllowed = residentCanReportRoutineSnags && (profile?.role !== "resident" || Boolean(existingHandover));
   const selectedHandoverKeys = handoverKeyItems.filter((item) => item.handover_id === existingHandover?.id);
   const selectedUnitAreas = areas.filter((area) => area.unit_id === unitId);
   const selectedUnitDefects = snags.filter((snag) => snag.unit_id === unitId);
@@ -3597,9 +5596,13 @@ function LeaseholderDefects({
   const selectedMeterReadings = meterReadings
     .filter((reading) => reading.unit_id === unitId)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const activeDefectCount = selectedUnitDefects.filter((snag) => !["closed", "rejected"].includes(snag.status)).length;
-  const closedDefectCount = selectedUnitDefects.filter((snag) => snag.status === "closed").length;
-  const canSubmitDefect = Boolean(selectedUnit && areaId && title.trim() && photo);
+  const activeDefectCount = selectedUnitDefects.filter(residentSnagIsOpen).length;
+  const closedDefectCount = selectedUnitDefects.filter(residentSnagIsResolved).length;
+  const waitingForResidentDefects = selectedUnitDefects.filter((snag) => snag.status === "needs_more_info");
+  const canSubmitDefect = Boolean(selectedUnit && areaId && title.trim() && photo && residentRoutineSnagAllowed);
+  const showSnagTools = residentView !== "home";
+  const showMeterTools = residentView === "internal";
+  const isResidentPortalView = profile?.role === "resident" && residentView !== "internal";
 
   useEffect(() => {
     if (hasSingleUnit && userUnits[0]?.id && unitId !== userUnits[0].id) {
@@ -3621,6 +5624,16 @@ function LeaseholderDefects({
     if (isSubmittingDefect) return;
     if (!selectedUnit) {
       onNotice("Select a unit before submitting a defect.");
+      return;
+    }
+    if (!residentCanReportRoutineSnags) {
+      onNotice(selectedBuildingLifecycle === "pre_pc"
+        ? "Residents cannot submit routine snags yet. Internal users can continue managing pre-PC snags where permitted."
+        : "New routine snag reports can no longer be submitted through the portal.");
+      return;
+    }
+    if (profile?.role === "resident" && !existingHandover) {
+      onNotice("Routine snag reporting opens after handover.");
       return;
     }
     if (!accessibleUnitIds.includes(selectedUnit.id) && profile?.role === "resident") {
@@ -3707,6 +5720,255 @@ function LeaseholderDefects({
     }
   }
 
+  if (isResidentPortalView) {
+    if (userUnits.length === 0) {
+      return (
+        <section className="panel">
+          <SectionHeader title="My home" subtitle="No home has been linked to your portal account yet." />
+          <p className="mt-3 text-sm text-[#617169]">Please contact <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> if you think this is incorrect.</p>
+        </section>
+      );
+    }
+
+    const handoverReady = Boolean(selectedUnit && selectedUnit.sale_status === "completed" && !existingHandover && buildingAllowsFlatHandover(selectedBuilding));
+    const handoverStatus = existingHandover ? "Complete" : handoverReady ? "Ready" : "Not ready";
+    const recentSnags = [...selectedUnitDefects].sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()).slice(0, 4);
+    const documentLinks = [
+      selectedBuilding?.home_user_guide_url ? { label: "Home user guide", href: selectedBuilding.home_user_guide_url } : null,
+      selectedBuilding?.documents_url ? { label: "Building documents", href: selectedBuilding.documents_url } : null,
+    ].filter((item): item is { label: string; href: string } => Boolean(item));
+    const action = waitingForResidentDefects.length > 0
+      ? {
+          title: "Reply needed",
+          body: `${waitingForResidentDefects.length} snag${waitingForResidentDefects.length === 1 ? "" : "s"} need${waitingForResidentDefects.length === 1 ? "s" : ""} your response.`,
+          button: "View snags",
+          onClick: onGoToSnags,
+        }
+      : handoverReady
+        ? {
+            title: "Handover ready",
+            body: "Your home is ready for handover. Complete the handover steps when you are ready.",
+            button: null,
+            onClick: undefined,
+          }
+        : !existingHandover
+          ? {
+              title: "No action yet",
+              body: "Handover is not ready yet. Bunnywell will update the portal when there is something for you to do.",
+              button: null,
+              onClick: undefined,
+            }
+          : {
+              title: "No action needed",
+              body: "You are up to date for this home.",
+              button: null,
+              onClick: undefined,
+            };
+    const reportSnagUnavailableMessage = !existingHandover
+      ? "Routine snag reporting opens after handover."
+      : selectedBuildingLifecycle === "pre_pc"
+        ? "Routine snag reporting opens after handover."
+        : "New routine snag reports can no longer be submitted through the portal for this building.";
+
+    return (
+      <div className="grid gap-5">
+        <section className="panel">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected home</p>
+              <h1 className="mt-1 text-2xl font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"} {selectedUnit?.unit_number ?? ""}</h1>
+              <div className="mt-2 flex flex-wrap gap-2 text-sm text-[#617169]">
+                <span>Flat {selectedUnit?.unit_number ?? "-"}</span>
+                <span aria-hidden>/</span>
+                <span>{selectedUnit?.floor || "Floor not set"}</span>
+                <span aria-hidden>/</span>
+                <span>Bay: {formatParkingBays(selectedUnit?.parking_bays)}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className={statusTone(existingHandover ? "handed_over" : selectedUnit?.sale_status ?? "")}>{existingHandover ? "Handover complete" : handoverReady ? "Handover ready" : "Handover not ready"}</span>
+                <span className={statusTone(selectedBuildingLifecycle)}>{statusLabel(selectedBuildingLifecycle)}</span>
+              </div>
+            </div>
+            {!hasSingleUnit && (
+              <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
+                <p className="text-sm font-semibold text-[#0F3D2E]">Change home</p>
+                {hasMultipleBuildings && (
+                  <label className="field-label">
+                    Building
+                    <select className="field h-11 min-h-11" value={buildingFilter} onChange={(event) => {
+                      setBuildingFilter(event.target.value);
+                      setAreaId("");
+                    }}>
+                      {residentBuildingIds.map((buildingId) => {
+                        const building = buildings.find((item) => item.id === buildingId);
+                        return <option key={buildingId} value={buildingId}>{building?.name ?? "Building"}</option>;
+                      })}
+                    </select>
+                  </label>
+                )}
+                <label className="field-label">
+                  Flat
+                  <select className="field h-11 min-h-11" value={unitId} onChange={(event) => {
+                    setUnitId(event.target.value);
+                    setAreaId("");
+                  }}>
+                    {filteredUserUnits.map((unit) => {
+                      const building = buildings.find((item) => item.id === unit.building_id);
+                      const includeBuilding = hasMultipleBuildings && !buildingFilter;
+                      return <option key={unit.id} value={unit.id}>{includeBuilding ? `${building?.name ?? "Building"} ` : ""}{unit.unit_number} / {unit.floor || "No floor"}</option>;
+                    })}
+                  </select>
+                </label>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Action required</p>
+              <h2 className="mt-1 text-xl font-semibold text-[#0F3D2E]">{action.title}</h2>
+              <p className="mt-1 text-sm text-[#617169]">{action.body}</p>
+            </div>
+            {action.button && action.onClick && (
+              <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={action.onClick}>{action.button}</button>
+            )}
+          </div>
+        </section>
+
+        {residentView === "home" ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <SummaryTile label="Handover status" value={handoverStatus} />
+              <SummaryTile label="Open snags" value={activeDefectCount} />
+              <SummaryTile label="Waiting for your reply" value={waitingForResidentDefects.length} />
+              <SummaryTile label="Resolved snags" value={closedDefectCount} />
+            </div>
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <section className="panel">
+                <SectionHeader title="Handover" subtitle="Keys, meter photos and the handover record for this home." />
+                {selectedUnit && (
+                  <div className="mt-4">
+                    <SelectedUnitHandover
+                      building={selectedBuilding}
+                      existingHandover={existingHandover}
+                      existingKeyItems={selectedHandoverKeys}
+                      profile={profile}
+                      recordAudit={recordAudit}
+                      reload={reload}
+                      selectedUnit={selectedUnit}
+                      onNotice={onNotice}
+                      uploadFile={uploadFile}
+                      user={user}
+                    />
+                  </div>
+                )}
+              </section>
+              <div className="grid gap-5 content-start">
+                <section className="panel">
+                  <SectionHeader title="Recent snags" subtitle="Latest snag activity for this home." />
+                  <div className="mt-3 divide-y divide-[#e5e9e4]">
+                    {recentSnags.map((snag) => (
+                      <div key={snag.id} className="flex items-center justify-between gap-3 py-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-[#0F3D2E]">{snag.title}</p>
+                          <p className="text-sm text-[#617169]">{areas.find((area) => area.id === snag.area_id)?.name ?? "No area"}</p>
+                        </div>
+                        <span className={statusTone(snag.status)}>{residentSnagStatusLabel(snag.status)}</span>
+                      </div>
+                    ))}
+                    {recentSnags.length === 0 && <p className="py-3 text-sm text-[#617169]">No snags have been reported for this home.</p>}
+                  </div>
+                  <button className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm" type="button" onClick={onGoToSnags}>View snags</button>
+                </section>
+                <section className="panel">
+                  <SectionHeader title="Home documents" subtitle="Useful links for this home." />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {documentLinks.map((link) => (
+                      <a key={link.href} className="secondary min-h-9 px-3 py-1.5 text-sm" href={link.href} target="_blank" rel="noreferrer">{link.label}</a>
+                    ))}
+                    {documentLinks.length === 0 && <p className="text-sm text-[#617169]">No documents have been added for this building yet.</p>}
+                  </div>
+                </section>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+            <div className="grid gap-5 content-start">
+              {residentRoutineSnagAllowed ? (
+                <FormPanel title="Report a snag">
+                  <select className="field" value={areaId} onChange={(event) => setAreaId(event.target.value)}>
+                    <option value="">Room / area</option>
+                    {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+                  </select>
+                  <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Short title" disabled={isSubmittingDefect || !selectedUnit} />
+                  <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What needs attention?" disabled={isSubmittingDefect || !selectedUnit} />
+                  <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
+                  <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Report a snag"}</button>
+                </FormPanel>
+              ) : (
+                <FormPanel title="Report a snag">
+                  <p className="text-sm text-[#617169]">{reportSnagUnavailableMessage}</p>
+                  <button className="secondary" type="button" disabled>Report a snag</button>
+                </FormPanel>
+              )}
+            </div>
+            <div className="grid gap-5 content-start">
+              <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[#0F3D2E]">Snags</h2>
+                    <p className="text-sm text-[#617169]">Track reported items and anything waiting for your reply.</p>
+                  </div>
+                  <button
+                    className={`secondary min-h-9 px-3 py-1.5 text-sm ${defectStatusFilter === "needs_more_info" ? "filter-active" : ""}`}
+                    type="button"
+                    onClick={() => setDefectStatusFilter((current) => current === "needs_more_info" ? "" : "needs_more_info")}
+                  >
+                    Waiting for me
+                  </button>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <select className={`field min-w-40 ${defectStatusFilter ? "filter-active" : ""}`} value={defectStatusFilter} onChange={(event) => setDefectStatusFilter(event.target.value)} aria-label="Snag status">
+                    <option value="">All statuses</option>
+                    {["open", "accepted", "needs_more_info", "resolved_by_contractor", "closed", "rejected"].map((status) => (
+                      <option key={status} value={status}>{residentSnagStatusLabel(status)}</option>
+                    ))}
+                  </select>
+                  <select className={`field min-w-40 ${defectPriorityFilter ? "filter-active" : ""}`} value={defectPriorityFilter} onChange={(event) => setDefectPriorityFilter(event.target.value)} aria-label="Snag priority">
+                    <option value="">All priorities</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="P3">P3</option>
+                  </select>
+                </div>
+              </section>
+              <SnagList
+                title="Snag history"
+                buildings={buildings}
+                snags={filteredDefects}
+                units={units}
+                areas={areas}
+                trades={[]}
+                photos={photos}
+                events={events}
+                profiles={profiles}
+                user={user}
+                onNotice={onNotice}
+                reload={reload}
+                uploadFile={uploadFile}
+                actions={() => null}
+                residentMode
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-5">
       <section className="rounded-md border border-[#d9ded6] bg-white p-4">
@@ -3784,20 +6046,54 @@ function LeaseholderDefects({
             <a className="secondary min-h-9 px-3 py-1.5 text-sm" href={selectedBuilding.home_user_guide_url} target="_blank" rel="noreferrer">Home user guide</a>
           )}
         </div>
+        {selectedBuildingLifecycle === "dlp_closing" && selectedBuildingReportingEnd && (
+          <div className="mt-4 rounded-md border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
+            <p className="font-semibold text-[#5F4315]">The initial defects reporting period for this building is due to close on {formatDate(selectedBuildingReportingEnd)}.</p>
+            <p className="mt-2">Please make sure any outstanding routine snagging items are submitted through the portal before this date.</p>
+            <p className="mt-2">After this date, the portal will remain available as a record and document library, but new routine snag reports will no longer be accepted through the portal.</p>
+          </div>
+        )}
+        {(selectedBuildingLifecycle === "post_dlp_readonly" || selectedBuildingLifecycle === "archived") && (
+          <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+            <p className="font-semibold text-[#0F3D2E]">The initial defects reporting period for this building has now closed.</p>
+            <p className="mt-2">The Bunnywell portal remains available for handover records, useful homeowner documents and previous snag history.</p>
+            <p className="mt-2">New routine snag reports can no longer be submitted through the portal.</p>
+            <p className="mt-2">For communal or building management matters, please contact the managing agent.</p>
+            <p className="mt-2">For other queries, please refer to your Home User Guide and building documents, or contact <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a>.</p>
+          </div>
+        )}
+        {selectedBuildingLifecycle === "pre_pc" && (
+          <div className="mt-4 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
+            Residents cannot submit routine snags yet. Internal users can continue managing pre-PC snags where permitted.
+          </div>
+        )}
       </section>
       <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         <div className="grid gap-5 content-start">
-          <FormPanel title="Add defect">
-            <select className="field" value={areaId} onChange={(event) => setAreaId(event.target.value)}>
-              <option value="">Room / area</option>
-              {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
-            </select>
-            <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
-            <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
-            <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
-            <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Submit defect"}</button>
-          </FormPanel>
-          <FormPanel title="Meter reading">
+          {showSnagTools && (residentCanReportRoutineSnags ? (
+            <FormPanel title={profile?.role === "resident" ? "Report snag" : "Add defect"}>
+              <select className="field" value={areaId} onChange={(event) => setAreaId(event.target.value)}>
+                <option value="">Room / area</option>
+                {selectedUnitAreas.map((area) => <option key={area.id} value={area.id}>{area.name}</option>)}
+              </select>
+              <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
+              <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
+              <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
+              <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : profile?.role === "resident" ? "Report snag" : "Submit defect"}</button>
+            </FormPanel>
+          ) : (
+            <FormPanel title={selectedBuildingLifecycle === "pre_pc" ? "Routine snag reporting not open" : "Routine snag reporting closed"}>
+              <p className="text-sm text-[#617169]">
+                {selectedBuildingLifecycle === "pre_pc"
+                  ? "Resident routine snag reporting will open once PC has been confirmed."
+                  : "New routine snag reports can no longer be submitted through the portal for this building."}
+              </p>
+              <button className="secondary" type="button" onClick={() => onNotice(selectedBuildingLifecycle === "pre_pc" ? "Residents cannot submit routine snags yet. Internal users can continue managing pre-PC snags where permitted." : "New routine snag reports can no longer be submitted through the portal.")}>
+                {selectedBuildingLifecycle === "pre_pc" ? "Routine snag reporting not open" : "Routine snag reporting closed"}
+              </button>
+            </FormPanel>
+          ))}
+          {showMeterTools && <FormPanel title="Meter reading">
             <select className="field" value={meterType} onChange={(event) => setMeterType(event.target.value as "water" | "electricity")} disabled={!selectedUnit}>
               <option value="water">Water</option>
               <option value="electricity">Electricity</option>
@@ -3805,12 +6101,12 @@ function LeaseholderDefects({
             <input className="field" value={meterReading} onChange={(event) => setMeterReading(event.target.value)} placeholder="Reading" inputMode="decimal" disabled={!selectedUnit} />
             <SimplePhotoInput value={meterPhoto} onChange={setMeterPhoto} disabled={!selectedUnit} />
             <button className="primary" onClick={createMeterReading} disabled={!selectedUnit || !meterReading || !meterPhoto}>Submit reading</button>
-          </FormPanel>
+          </FormPanel>}
         </div>
         <div className="grid gap-5 content-start">
-          <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+          {showSnagTools && <section className="rounded-md border border-[#d9ded6] bg-white p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Defects</h2>
+              <h2 className="text-lg font-semibold">{profile?.role === "resident" ? "My snags" : "Defects"}</h2>
               <div className="grid gap-2 sm:grid-cols-2">
                 <select className={`field min-w-40 ${defectStatusFilter ? "filter-active" : ""}`} value={defectStatusFilter} onChange={(event) => setDefectStatusFilter(event.target.value)}>
                   <option value="">All statuses</option>
@@ -3826,9 +6122,9 @@ function LeaseholderDefects({
                 </select>
               </div>
             </div>
-          </section>
-          <SnagList
-            title="Defect list"
+          </section>}
+          {showSnagTools && <SnagList
+            title={profile?.role === "resident" ? "Snag history" : "Defect list"}
             buildings={buildings}
             snags={filteredDefects}
             units={units}
@@ -3841,9 +6137,9 @@ function LeaseholderDefects({
             onNotice={onNotice}
             reload={reload}
             uploadFile={uploadFile}
-            actions={(snag) => <TriageActions user={user} snag={snag} buildings={buildings} organisations={[]} onNotice={onNotice} reload={reload} />}
-          />
-          <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+            actions={(snag) => profile?.role === "resident" ? null : <TriageActions user={user} snag={snag} buildings={buildings} organisations={[]} onNotice={onNotice} reload={reload} />}
+          />}
+          {showMeterTools && <section className="rounded-md border border-[#d9ded6] bg-white p-4">
             <h2 className="text-lg font-semibold">Meter readings</h2>
             <div className="mt-3 divide-y divide-[#e5e9e4]">
               {selectedMeterReadings.map((reading) => (
@@ -3865,7 +6161,7 @@ function LeaseholderDefects({
               ))}
               {selectedMeterReadings.length === 0 && <p className="py-3 text-sm text-[#617169]">No meter readings yet.</p>}
             </div>
-          </section>
+          </section>}
         </div>
       </div>
     </div>
@@ -3911,10 +6207,15 @@ function SelectedUnitHandover({
   const [signature, setSignature] = useState("");
   const [handoverDateTime, setHandoverDateTime] = useState(() => new Date().toISOString().slice(0, 16));
   const canManageHandover = profile?.role === "admin" || profile?.role === "developer";
+  const canCompleteHandover = canManageHandover || profile?.role === "resident";
+  const isResident = profile?.role === "resident";
+  const handoverPcAllowed = buildingAllowsFlatHandover(building);
+  const buildingLifecycle = derivedBuildingLifecycleStatus(building);
   const totalKeys = keyItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   const formComplete = Boolean(
     selectedUnit.sale_status === "completed"
     && !existingHandover
+    && handoverPcAllowed
     && recipientName.trim()
     && recipientEmail.trim()
     && recipientPhone.trim()
@@ -3953,6 +6254,10 @@ function SelectedUnitHandover({
 
   async function submitHandover() {
     if (!formComplete) return;
+    if (!handoverPcAllowed) {
+      onNotice("Handover is available once PC has been confirmed.");
+      return;
+    }
     setIsSubmitting(true);
     const supabase = createSupabaseBrowserClient();
     try {
@@ -4040,10 +6345,16 @@ function SelectedUnitHandover({
   if (existingHandover) {
     return (
       <div className="rounded-lg border border-[#d9ded6] bg-white p-3 text-sm">
-        <p className="font-semibold text-[#0F3D2E]">Handover completed</p>
-        <p className="mt-1 text-[#34413a]">{formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}</p>
-        <p className="mt-1 text-[#617169]">Keys collected by {existingHandover.recipient_name || "recipient"}.</p>
-        {existingKeyItems.length > 0 && <p className="mt-1 text-xs text-[#617169]">{existingKeyItems.reduce((sum, item) => sum + item.quantity, 0)} key/fob item{existingKeyItems.length === 1 ? "" : "s"} recorded.</p>}
+        <p className="font-semibold text-[#0F3D2E]">Handover complete</p>
+        <p className="mt-1 text-[#34413a]">Completed on {formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}.</p>
+        {isResident ? (
+          <p className="mt-1 text-[#617169]">Completed by an authorised user.</p>
+        ) : (
+          <>
+            <p className="mt-1 text-[#617169]">Keys collected by {existingHandover.recipient_name || "recipient"}.</p>
+            {existingKeyItems.length > 0 && <p className="mt-1 text-xs text-[#617169]">{existingKeyItems.reduce((sum, item) => sum + item.quantity, 0)} key/fob item{existingKeyItems.length === 1 ? "" : "s"} recorded.</p>}
+          </>
+        )}
       </div>
     );
   }
@@ -4051,21 +6362,38 @@ function SelectedUnitHandover({
   if (selectedUnit.sale_status !== "completed") {
     return (
       <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-        {["for_sale", "reserved", "exchanged"].includes(selectedUnit.sale_status)
-          ? "Handover is not available until the sale has completed."
-          : `Handover unavailable. This flat is currently marked as ${statusLabel(selectedUnit.sale_status)}.`}
+        {isResident
+          ? "Handover is not ready yet."
+          : ["for_sale", "reserved", "exchanged"].includes(selectedUnit.sale_status)
+            ? "Set the unit sale status to Completed before handover."
+            : `Handover unavailable. This flat is currently marked as ${statusLabel(selectedUnit.sale_status)}.`}
       </div>
     );
   }
 
-  if (!canManageHandover) {
+  if (!handoverPcAllowed) {
+    return (
+      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+        {isResident ? "Handover is not ready yet." : "Handover is available once PC has been confirmed."}
+      </div>
+    );
+  }
+
+  if (!canCompleteHandover) {
     return <p className="text-sm text-[#617169]">Handover is ready once Bunnywell completes the appointment.</p>;
   }
 
   return (
     <div className="grid gap-3">
+      {buildingLifecycle === "post_dlp_readonly" && (
+        <div className="rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
+          <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
+          <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
+          <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
+        </div>
+      )}
       {!showFlow ? (
-        <button className="secondary min-h-10 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowFlow(true)}>Start handover</button>
+        <button className="secondary min-h-10 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowFlow(true)}>{isResident ? "Complete handover" : "Start handover"}</button>
       ) : (
         <div className="grid gap-4 rounded-xl border border-[#d9ded6] bg-white p-3">
           <div className="grid gap-3 md:grid-cols-2">
@@ -4225,7 +6553,8 @@ function HandoverAndMeters({
   const [meterNotes, setMeterNotes] = useState("");
   const [signature, setSignature] = useState("");
   const [handoverDateTime, setHandoverDateTime] = useState(() => new Date().toISOString().slice(0, 16));
-  const handoverAllowed = selectedUnit?.sale_status === "completed" && !existingHandover;
+  const selectedBuildingLifecycle = derivedBuildingLifecycleStatus(selectedBuilding);
+  const handoverAllowed = selectedUnit?.sale_status === "completed" && !existingHandover && buildingAllowsFlatHandover(selectedBuilding);
   const currentStatus = selectedUnit ? statusLabel(selectedUnit.sale_status) : "Unknown";
   const steps = ["Recipient", "Keys", "Meters", "Signature", "Review"];
   const totalKeys = keyItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
@@ -4270,6 +6599,10 @@ function HandoverAndMeters({
 
   async function submitHandover() {
     if (!selectedUnit || !stepIsValid(4)) return;
+    if (!buildingAllowsFlatHandover(selectedBuilding)) {
+      onNotice("Handover is available once PC has been confirmed.");
+      return;
+    }
     setIsSubmitting(true);
     const supabase = createSupabaseBrowserClient();
     try {
@@ -4376,7 +6709,16 @@ function HandoverAndMeters({
         </div>
         {selectedUnit && !handoverAllowed && !existingHandover && (
           <div className="mt-4 rounded-xl border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
-            Handover unavailable. This flat is currently marked as {currentStatus}. Handover can only take place once the flat is marked Completed.
+            {!buildingAllowsFlatHandover(selectedBuilding)
+              ? "Handover is available once PC has been confirmed."
+              : `Handover unavailable. This flat is currently marked as ${currentStatus}. Handover can only take place once the flat is marked Completed.`}
+          </div>
+        )}
+        {selectedUnit && !existingHandover && handoverAllowed && selectedBuildingLifecycle === "post_dlp_readonly" && (
+          <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+            <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
+            <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
+            <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
           </div>
         )}
         {existingHandover && (
@@ -4594,9 +6936,9 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
   }
 
   return (
-    <section className="rounded-md border border-[#d9ded6] bg-white">
+    <section className="min-w-0 overflow-hidden rounded-md border border-[#d9ded6] bg-white">
       <div className="border-b border-[#d9ded6] px-4 py-3">
-        <h2 className="text-lg font-semibold">Audit trail</h2>
+        <h2 className="text-lg font-semibold">Activity log</h2>
         <p className="text-sm text-[#617169]">Recent admin, setup and report events.</p>
         <div className="mt-3 grid gap-2 md:grid-cols-2">
           <select className={`field ${entityFilter ? "filter-active" : ""}`} value={entityFilter} onChange={(event) => setEntityFilter(event.target.value)}>
@@ -4609,7 +6951,28 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
           </select>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
+        {filtered.map((event) => (
+          <article key={event.id} className="mobile-card">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="min-w-0">
+                <p className="break-words font-bold text-[#1F2A24]">{eventLabel(event.event_type)}</p>
+                <p className="mt-0.5 text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
+              </div>
+              <span className="rounded-full bg-[#EEF6F1] px-2 py-1 text-right text-xs font-semibold leading-tight text-[#0F3D2E]">
+                {entityLabel(event.entity_type)}
+              </span>
+            </div>
+            <p className="mt-3 break-words text-sm text-[#34413a]">{event.summary}</p>
+            <div className="mt-3 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 text-sm">
+              <span className="text-[#66736B]">User</span>
+              <span className="min-w-0 break-words text-right font-medium">{authorName(event.created_by_user_id)}</span>
+            </div>
+          </article>
+        ))}
+        {filtered.length === 0 && <p className="mobile-empty">No audit events to show.</p>}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
@@ -4640,6 +7003,7 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
 
 function ReportsPanel({
   buildings,
+  buildingFloors,
   units,
   areas,
   trades,
@@ -4648,6 +7012,7 @@ function ReportsPanel({
   recordAudit,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
   trades: Trade[];
@@ -4657,26 +7022,59 @@ function ReportsPanel({
 }) {
   const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const reportUnitIds = Array.from(new Set(snags.map((snag) => snag.unit_id).filter(Boolean))) as string[];
+  const reportCommunalAreaIds = Array.from(new Set(snags.filter((snag) => !snag.unit_id).map((snag) => snag.area_id).filter(Boolean))) as string[];
   const reportBuildings = buildings.filter((building) => reportBuildingIds.includes(building.id));
   const [buildingId, setBuildingId] = useState(reportBuildings[0]?.id ?? "");
+  const [locationType, setLocationType] = useState<"unit" | "communal">("unit");
   const buildingUnits = units
     .filter((unit) => reportUnitIds.includes(unit.id))
-    .filter((unit) => !buildingId || unit.building_id === buildingId)
-    .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+    .filter((unit) => !buildingId || unit.building_id === buildingId);
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingId);
+  const buildingCommunalAreas = sortAreasByFloorOrder(
+    areas
+      .filter((area) => reportCommunalAreaIds.includes(area.id))
+      .filter((area) => area.area_type === "communal_area")
+      .filter((area) => !buildingId || area.building_id === buildingId),
+    buildingFloors,
+    buildingId,
+  );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
-  const reportSnags = snags.filter((snag) => snag.unit_id === unitId);
+  const [communalAreaId, setCommunalAreaId] = useState("");
+  const [includePhotos, setIncludePhotos] = useState(true);
+  const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
+  const communalAreaIdsForReport = new Set(buildingCommunalAreas.map((area) => area.id));
+  const reportSnags = snags
+    .filter((snag) => {
+      if (locationType === "unit") return snag.unit_id === unitId;
+      if (communalAreaId) return !snag.unit_id && snag.area_id === communalAreaId;
+      return !snag.unit_id && snag.area_id && communalAreaIdsForReport.has(snag.area_id);
+    })
+    .filter((snag) => includeClosedSnags || snag.status !== "closed");
   const unit = units.find((item) => item.id === unitId);
+  const communalArea = areas.find((item) => item.id === communalAreaId);
   const building = buildings.find((item) => item.id === buildingId);
+  const locationLabel = locationType === "unit"
+    ? `Unit ${unit?.unit_number ?? ""}`.trim()
+    : communalArea
+      ? `${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
+      : "All communal areas";
+  const locationSummaryLabel = locationType === "unit" ? "this flat" : communalArea ? "this communal area" : "all communal areas";
 
   useEffect(() => {
     if (!reportBuildings.some((building) => building.id === buildingId)) {
       setBuildingId(reportBuildings[0]?.id ?? "");
       return;
     }
-    if (!buildingUnits.some((unit) => unit.id === unitId)) {
-      setUnitId(buildingUnits[0]?.id ?? "");
+    if (locationType === "unit") {
+      if (!sortedBuildingUnits.some((unit) => unit.id === unitId)) {
+        if (sortedBuildingUnits[0]) setUnitId(sortedBuildingUnits[0].id);
+        else if (buildingCommunalAreas.length > 0) setLocationType("communal");
+      }
     }
-  }, [buildingId, buildingUnits, reportBuildings, unitId]);
+    if (locationType === "communal" && communalAreaId && !buildingCommunalAreas.some((area) => area.id === communalAreaId)) {
+      setCommunalAreaId("");
+    }
+  }, [buildingCommunalAreas, buildingId, communalAreaId, locationType, reportBuildings, sortedBuildingUnits, unitId]);
 
   async function download() {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
@@ -4724,6 +7122,103 @@ function ReportsPanel({
       return height;
     }
 
+    function reportChipColors(tone: "status" | "area" | "trade" | "missing_trade") {
+      if (tone === "trade") {
+        return {
+          fill: [255, 248, 236],
+          stroke: [214, 162, 58],
+          label: [124, 91, 27],
+          value: [15, 61, 46],
+        };
+      }
+      if (tone === "missing_trade") {
+        return {
+          fill: [247, 247, 245],
+          stroke: [216, 222, 216],
+          label: [97, 113, 105],
+          value: [97, 113, 105],
+        };
+      }
+      if (tone === "area") {
+        return {
+          fill: [246, 250, 248],
+          stroke: [210, 221, 216],
+          label: [97, 113, 105],
+          value: [15, 61, 46],
+        };
+      }
+      return {
+        fill: [239, 246, 241],
+        stroke: [207, 225, 212],
+        label: [97, 113, 105],
+        value: [15, 61, 46],
+      };
+    }
+
+    function measureReportChip(label: string, value: string, tone: "status" | "area" | "trade" | "missing_trade", maxWidth: number) {
+      const labelText = label.toUpperCase();
+      const safeValue = value.trim() || (label === "Trade" ? "No trade" : "Not set");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      const labelWidth = pdf.getTextWidth(labelText);
+      pdf.setFont("helvetica", tone === "trade" ? "bold" : "normal");
+      pdf.setFontSize(8);
+      const valueMaxWidth = Math.max(52, maxWidth - labelWidth - 30);
+      const splitValue = pdf.splitTextToSize(safeValue, valueMaxWidth);
+      const valueLines = (Array.isArray(splitValue) ? splitValue : [String(splitValue)]).slice(0, 2);
+      const valueWidth = Math.max(...valueLines.map((line) => pdf.getTextWidth(line)), 34);
+      return {
+        height: valueLines.length > 1 ? 26 : 18,
+        labelText,
+        labelWidth,
+        tone,
+        valueLines,
+        width: Math.min(maxWidth, Math.max(64, labelWidth + valueWidth + 26)),
+      };
+    }
+
+    function layoutReportChips(
+      chips: { label: string; value: string; tone: "status" | "area" | "trade" | "missing_trade" }[],
+      maxWidth: number,
+    ) {
+      const gap = 6;
+      let offsetX = 0;
+      let offsetY = 0;
+      let rowHeight = 0;
+      const placed = chips.map((chip) => {
+        const measured = measureReportChip(chip.label, chip.value, chip.tone, maxWidth);
+        if (offsetX > 0 && offsetX + measured.width > maxWidth) {
+          offsetX = 0;
+          offsetY += rowHeight + 5;
+          rowHeight = 0;
+        }
+        const current = { ...measured, offsetX, offsetY };
+        offsetX += measured.width + gap;
+        rowHeight = Math.max(rowHeight, measured.height);
+        return current;
+      });
+      return { height: offsetY + rowHeight, placed };
+    }
+
+    function drawReportChip(chip: ReturnType<typeof measureReportChip> & { offsetX: number; offsetY: number }, x: number, chipY: number) {
+      const colors = reportChipColors(chip.tone);
+      pdf.setFillColor(colors.fill[0], colors.fill[1], colors.fill[2]);
+      pdf.setDrawColor(colors.stroke[0], colors.stroke[1], colors.stroke[2]);
+      pdf.setLineWidth(0.7);
+      pdf.roundedRect(x, chipY, chip.width, chip.height, 4, 4, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(colors.label[0], colors.label[1], colors.label[2]);
+      pdf.text(chip.labelText, x + 7, chipY + 11);
+      pdf.setFont("helvetica", chip.tone === "trade" ? "bold" : "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(colors.value[0], colors.value[1], colors.value[2]);
+      const valueX = x + 7 + chip.labelWidth + 6;
+      chip.valueLines.forEach((line, lineIndex) => {
+        pdf.text(line, valueX, chipY + 11 + lineIndex * 8);
+      });
+    }
+
     function addPageHeader() {
       addLogo(margin, 18, 72);
       pdf.setDrawColor(gold);
@@ -4735,7 +7230,7 @@ function ReportsPanel({
       pdf.text("SNAGGING REPORT", pageWidth - margin, 47, { align: "right" });
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
-      pdf.text(`${building?.name ?? ""} / Unit ${unit?.unit_number ?? ""}`, pageWidth - margin, 63, { align: "right" });
+      pdf.text(`${building?.name ?? ""} / ${locationLabel}`, pageWidth - margin, 63, { align: "right" });
       pdf.setTextColor(24, 32, 28);
     }
 
@@ -4766,7 +7261,7 @@ function ReportsPanel({
     pdf.text(`${building?.name ?? ""}`, pageWidth / 2, 411, { align: "center" });
     pdf.setFontSize(12);
     pdf.setTextColor(97, 113, 105);
-    pdf.text(`Unit ${unit?.unit_number ?? ""}`, pageWidth / 2, 435, { align: "center" });
+    pdf.text(locationLabel, pageWidth / 2, 435, { align: "center" });
 
     const summaryTop = 520;
     const summaryWidth = (pageWidth - margin * 2 - 18) / 2;
@@ -4805,62 +7300,64 @@ function ReportsPanel({
     y = 102;
 
     for (const [index, snag] of sorted.entries()) {
+      const trade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
+      const area = areas.find((item) => item.id === snag.area_id)?.name ?? "No area";
       const description = snag.description?.trim() || "No description";
-      const descriptionLines = pdf.splitTextToSize(description, 290).slice(0, 3);
-      const textHeight = 72 + descriptionLines.length * 11;
-      const photo = photos.find((item) => item.snag_id === snag.id && item.file_url);
+      const photo = includePhotos ? primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id)) : undefined;
       let imageData = "";
       let imageSize = { width: 0, height: 0 };
       if (photo) {
         try {
-          imageData = await imageUrlToDataUrl(photo.file_url);
-          imageSize = fittedImageSize(imageData, 146, 108);
+          imageData = await imageUrlToDataUrl(photo.file_url, { normalizeOrientation: true });
+          imageSize = fittedImageSize(imageData, 130, 94);
         } catch {
           imageData = "";
         }
       }
-      const imageHeight = imageData ? imageSize.height + 36 : 0;
-      const cardHeight = Math.max(128, textHeight, imageHeight);
+      const imageHeight = imageData ? imageSize.height + 30 : 0;
+      const textColumnWidth = 304;
+      const chipTopOffset = 28;
+      const chipLayout = layoutReportChips([
+        { label: "Status", value: statusLabel(snag.status), tone: "status" },
+        { label: "Area", value: area, tone: "area" },
+        { label: "Trade", value: trade, tone: trade === "No trade" ? "missing_trade" : "trade" },
+      ], textColumnWidth);
+      const createdOffset = chipTopOffset + chipLayout.height + 12;
+      const descriptionOffset = createdOffset + 17;
+      const descriptionLines = pdf.splitTextToSize(description, textColumnWidth).slice(0, 3);
+      const textHeight = descriptionOffset + descriptionLines.length * 10 + 14;
+      const cardHeight = Math.max(124, textHeight, imageHeight);
       if (y + cardHeight > pageHeight - 60) {
         pdf.addPage();
         addPageHeader();
         y = 102;
       }
-      const trade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
-      const area = areas.find((item) => item.id === snag.area_id)?.name ?? "No area";
 
       pdf.setDrawColor(216, 222, 216);
       pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, pageWidth - margin * 2, cardHeight - 8, 5, 5, "FD");
+      pdf.roundedRect(margin, y, pageWidth - margin * 2, cardHeight - 6, 5, 5, "FD");
 
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(10);
       pdf.setTextColor(green);
-      pdf.text(`${index + 1}. ${snag.title}`, margin + 12, y + 20, { maxWidth: 310 });
+      pdf.text(`${index + 1}. ${snag.title}`, margin + 12, y + 17, { maxWidth: 310 });
 
-      const badgeText = statusLabel(snag.status);
-      pdf.setFillColor(239, 246, 241);
-      pdf.setDrawColor(212, 166, 69);
-      pdf.setFontSize(8);
-      const badgeWidth = Math.min(150, Math.max(92, pdf.getTextWidth(badgeText) + 28));
-      const badgeX = margin + 12;
-      pdf.roundedRect(badgeX, y + 34, badgeWidth, 18, 4, 4, "FD");
-      pdf.setTextColor(green);
-      pdf.text(badgeText, badgeX + badgeWidth / 2, y + 46, { align: "center" });
+      chipLayout.placed.forEach((chip) => {
+        drawReportChip(chip, margin + 12 + chip.offsetX, y + chipTopOffset + chip.offsetY);
+      });
 
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8);
       pdf.setTextColor(97, 113, 105);
-      pdf.text(`Area: ${area}`, margin + 12, y + 66);
-      pdf.text(`Trade: ${trade}`, margin + 12, y + 80);
-      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + 94);
+      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + createdOffset);
 
       pdf.setTextColor(24, 32, 28);
-      pdf.text(descriptionLines, margin + 12, y + 114);
+      pdf.setFontSize(8.5);
+      pdf.text(descriptionLines, margin + 12, y + descriptionOffset);
 
       if (imageData) {
-        const imageX = pageWidth - margin - 18 - imageSize.width;
-        pdf.addImage(imageData, imageFormat(imageData), imageX, y + 18, imageSize.width, imageSize.height);
+        const imageX = pageWidth - margin - 14 - imageSize.width;
+        pdf.addImage(imageData, imageFormat(imageData), imageX, y + 14, imageSize.width, imageSize.height);
       } else if (photo) {
         pdf.setTextColor(97, 113, 105);
         pdf.text("Photo could not be added.", pageWidth - margin - 168, y + 72);
@@ -4873,34 +7370,75 @@ function ReportsPanel({
     }
 
     addFooter();
-    pdf.save(`unit-${unit?.unit_number ?? "snags"}-report.pdf`);
+    pdf.save(`${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`);
     await recordAudit({
       event_type: "report_generated",
-      entity_type: "unit",
-      entity_id: unit?.id ?? null,
-      summary: `Snagging report generated: ${building?.name ?? "Building"} / Unit ${unit?.unit_number ?? ""}`,
+      entity_type: locationType === "unit" ? "unit" : communalArea ? "area" : "building",
+      entity_id: locationType === "unit" ? unit?.id ?? null : communalArea?.id ?? building?.id ?? null,
+      summary: `Snagging report generated: ${building?.name ?? "Building"} / ${locationLabel}`,
       metadata: {
         buildingId,
         buildingName: building?.name,
-        unitId,
-        unitNumber: unit?.unit_number,
+        locationType,
+        unitId: locationType === "unit" ? unitId : null,
+        unitNumber: locationType === "unit" ? unit?.unit_number : null,
+        communalAreaId: locationType === "communal" ? communalAreaId || null : null,
+        communalAreaName: locationType === "communal" ? communalArea?.name ?? null : null,
         snagCount: reportSnags.length,
       },
     });
   }
 
   return (
-    <FormPanel title="PDF snag report">
+    <FormPanel title="Print snag sheet">
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
       <select className="field" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
         {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
       </select>
-      <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
-        {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
-      </select>
-      <p className="text-sm text-[#617169]">{reportSnags.length} developer snag{reportSnags.length === 1 ? "" : "s"} will be included.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          className={locationType === "unit" ? "primary" : "secondary"}
+          type="button"
+          onClick={() => setLocationType("unit")}
+          disabled={sortedBuildingUnits.length === 0}
+        >
+          Flat
+        </button>
+        <button
+          className={locationType === "communal" ? "primary" : "secondary"}
+          type="button"
+          onClick={() => setLocationType("communal")}
+          disabled={buildingCommunalAreas.length === 0}
+        >
+          Communal
+        </button>
+      </div>
+      {locationType === "unit" ? (
+        <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)} disabled={sortedBuildingUnits.length === 0}>
+          {sortedBuildingUnits.length === 0 && <option value="">No flat snags available</option>}
+          {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+        </select>
+      ) : (
+        <select className="field" value={communalAreaId} onChange={(event) => setCommunalAreaId(event.target.value)} disabled={buildingCommunalAreas.length === 0}>
+          <option value="">All communal areas</option>
+          {buildingCommunalAreas.map((area) => (
+            <option key={area.id} value={area.id}>
+              {area.name}{area.floor ? ` / ${area.floor}` : ""}
+            </option>
+          ))}
+        </select>
+      )}
+      <label className="option-card min-h-10 px-3 py-2 text-sm">
+        <input checked={includePhotos} onChange={(event) => setIncludePhotos(event.target.checked)} type="checkbox" />
+        Include photos
+      </label>
+      <label className="option-card min-h-10 px-3 py-2 text-sm">
+        <input checked={includeClosedSnags} onChange={(event) => setIncludeClosedSnags(event.target.checked)} type="checkbox" />
+        Include closed snags
+      </label>
+      <p className="text-sm text-[#617169]">{reportSnags.length} snag{reportSnags.length === 1 ? "" : "s"} will be included for {locationSummaryLabel}.</p>
       <button className="primary" onClick={download} disabled={reportSnags.length === 0}><Download size={16} /> Download PDF</button>
     </FormPanel>
   );
@@ -4926,6 +7464,8 @@ function SnagList({
   tradeControl,
   showFilters = false,
   requestedFilters,
+  onDetailViewChange,
+  residentMode = false,
 }: {
   title: string;
   buildings: Building[];
@@ -4946,6 +7486,8 @@ function SnagList({
   tradeControl?: (snag: ProductionSnag, trade?: Trade) => React.ReactNode;
   showFilters?: boolean;
   requestedFilters?: SnagListFilters;
+  onDetailViewChange?: (isOpen: boolean) => void;
+  residentMode?: boolean;
 }) {
   const [buildingFilter, setBuildingFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
@@ -4956,6 +7498,7 @@ function SnagList({
   const [pageSize, setPageSize] = useState(50);
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
   const [selectedSnagId, setSelectedSnagId] = useState("");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const availableBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
   const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
@@ -4966,6 +7509,10 @@ function SnagList({
   const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
   const workflowStatuses = ["open", "needs_more_info", "resolved_by_contractor", "rejected_back_to_contractor", "closed"];
   const statuses = workflowStatuses.filter((status) => buildingSnags.some((snag) => snag.status === status));
+  const statusFilterStillAvailable = !statusFilter || statuses.includes(statusFilter);
+  const activeStatusFilter = statusFilterStillAvailable ? statusFilter : "";
+  const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
+  const displayTableStatusLabel = residentMode ? residentSnagStatusLabel : snagListStatusLabel;
   const now = new Date();
   const in7 = new Date(now);
   in7.setDate(in7.getDate() + 7);
@@ -4980,8 +7527,8 @@ function SnagList({
       return snag.unit_id === unitFilter;
     })
     .filter((snag) => {
-      if (!statusFilter) return true;
-      return snag.status === statusFilter;
+      if (!activeStatusFilter) return true;
+      return snag.status === activeStatusFilter;
     })
     .filter((snag) => {
       if (!tradeFilter) return true;
@@ -5009,6 +7556,40 @@ function SnagList({
   const currentPage = Math.min(page, totalPages);
   const pageStart = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd = Math.min(currentPage * pageSize, filtered.length);
+  const defaultBuildingId = availableBuildings[0]?.id ?? "";
+  const hasActiveResultFilters = Boolean(
+    (defaultBuildingId && selectedBuildingId !== defaultBuildingId) || unitFilter || activeStatusFilter || tradeFilter || quickFilter,
+  );
+  const showPaginationControls = filtered.length > 0 && totalPages > 1;
+  const activeFilterCount = [
+    defaultBuildingId && selectedBuildingId !== defaultBuildingId,
+    unitFilter,
+    activeStatusFilter,
+    tradeFilter,
+    quickFilter,
+  ].filter(Boolean).length;
+  const selectedBuildingName = buildings.find((building) => building.id === selectedBuildingId)?.name ?? "Building";
+  const selectedLocationName = unitFilter
+    ? unitFilter === "__communal__"
+      ? "Communal"
+      : unitFilter.startsWith("area:")
+        ? buildingCommunalAreas.find((area) => area.id === unitFilter.replace("area:", ""))?.name ?? "Communal area"
+        : `Unit ${buildingUnits.find((unit) => unit.id === unitFilter)?.unit_number ?? ""}`.trim()
+    : "All locations";
+  const selectedTradeName = residentMode
+    ? ""
+    : tradeFilter
+      ? tradeFilter === "__none__" ? "No trade" : trades.find((trade) => trade.id === tradeFilter)?.name ?? "Trade"
+      : "All trades";
+  const selectedStatusName = activeStatusFilter ? displayStatusLabel(activeStatusFilter) : "All statuses";
+  const mobileFilterSummary = [selectedBuildingName, selectedLocationName, selectedTradeName, selectedStatusName].filter(Boolean).join(" / ");
+  const resultsSummary = snagResultsSummary({
+    filtered: filtered.length,
+    filtersActive: hasActiveResultFilters,
+    pageEnd,
+    pageStart,
+    totalPages,
+  });
   const pagedSnags = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const grouped = pagedSnags.reduce<Array<{ unitId: string; unitLabel: string; snags: ProductionSnag[] }>>((groups, snag) => {
     const unit = units.find((item) => item.id === snag.unit_id);
@@ -5016,7 +7597,7 @@ function SnagList({
     const unitLabel = unit ? `Unit ${unit.unit_number}` : "Communal";
     const group = groups.find((item) => item.unitId === unitId);
     if (group) group.snags.push(snag);
-    else groups.push({ unitId, unitLabel, snags: [snag] });
+    else groups.push({ unitId, unitLabel: residentMode && unit ? `Flat ${unit.unit_number}` : unitLabel, snags: [snag] });
     return groups;
   }, []);
 
@@ -5040,28 +7621,51 @@ function SnagList({
 
   useEffect(() => {
     setPage(1);
-  }, [selectedBuildingId, unitFilter, statusFilter, tradeFilter, quickFilter, pageSize]);
+  }, [selectedBuildingId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
-  const PaginationControls = (
-    <div className="flex flex-col gap-3 rounded-md border border-[#d9ded6] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-[#617169]">
-        Showing <span className="font-semibold text-[#18201c]">{pageStart}-{pageEnd}</span> of <span className="font-semibold text-[#18201c]">{filtered.length}</span> snags
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-sm text-[#617169]">
-          Page size
-          <select className="field h-9 min-h-9 w-24" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
-            {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
-          </select>
-        </label>
-        <span className="text-sm text-[#617169]">Page {currentPage} of {totalPages}</span>
-        <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={currentPage <= 1} aria-label="Previous page" title="Previous page">{"<"}</button>
-        <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages} aria-label="Next page" title="Next page">{">"}</button>
-      </div>
+  useEffect(() => {
+    onDetailViewChange?.(Boolean(selectedSnagId));
+    if (!selectedSnagId || typeof window === "undefined") return;
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  }, [onDetailViewChange, selectedSnagId]);
+
+  function openSnagDetail(snagId: string) {
+    onDetailViewChange?.(true);
+    setSelectedSnagId(snagId);
+  }
+
+  function closeSnagDetail() {
+    setSelectedSnagId("");
+    onDetailViewChange?.(false);
+  }
+
+  const ResultsFooter = (
+    <div className="flex flex-col gap-3 border-t border-[#d9ded6] bg-white px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-[#617169]" aria-live="polite">{resultsSummary}</p>
+      {showPaginationControls && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-[#617169]">
+            Snags per page
+            <select
+              className="field h-9 min-h-9 w-24"
+              value={pageSize}
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
+                setPage(1);
+              }}
+            >
+              {[25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+            </select>
+          </label>
+          <span className="text-sm text-[#617169]">Page {currentPage} of {totalPages}</span>
+          <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={currentPage <= 1} aria-label="Previous page" title="Previous page">{"<"}</button>
+          <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages} aria-label="Next page" title="Next page">{">"}</button>
+        </div>
+      )}
     </div>
   );
 
@@ -5077,15 +7681,16 @@ function SnagList({
         areas={areas}
         canReject={canReject}
         events={events.filter((event) => event.snag_id === selectedSnag.id)}
-        onBack={() => setSelectedSnagId("")}
-        onNext={nextSnag ? () => setSelectedSnagId(nextSnag.id) : undefined}
+        onBack={closeSnagDetail}
+        onNext={nextSnag ? () => openSnagDetail(nextSnag.id) : undefined}
         onNotice={onNotice}
         onOpenPhoto={setPreviewPhoto}
-        onPrevious={previousSnag ? () => setSelectedSnagId(previousSnag.id) : undefined}
+        onPrevious={previousSnag ? () => openSnagDetail(previousSnag.id) : undefined}
         photos={photos.filter((photo) => photo.snag_id === selectedSnag.id && photo.file_url)}
         profiles={profiles}
         previewPhoto={previewPhoto}
         reload={reload}
+        residentMode={residentMode}
         setPreviewPhoto={setPreviewPhoto}
         snag={selectedSnag}
         trade={trades.find((trade) => trade.id === selectedSnag.trade_id)}
@@ -5102,11 +7707,25 @@ function SnagList({
       <div className="border-b border-[#d9ded6] px-4 py-3">
         {title && <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>}
         {showFilters && (
-          <div className="mt-3 grid gap-2 md:grid-cols-4">
-            <select className="field" value={selectedBuildingId} onChange={(event) => setBuildingFilter(event.target.value)}>
+          <div className="mt-3 md:hidden">
+            <button
+              className="secondary flex w-full justify-between px-3"
+              type="button"
+              onClick={() => setMobileFiltersOpen((current) => !current)}
+              aria-expanded={mobileFiltersOpen}
+            >
+              <span>Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}</span>
+              <ChevronDown className={`transition ${mobileFiltersOpen ? "rotate-180" : ""}`} size={18} aria-hidden />
+            </button>
+            <p className="mt-2 truncate text-xs text-[#617169]">{mobileFilterSummary}</p>
+          </div>
+        )}
+        {showFilters && (
+          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
+            <select aria-label="Building filter" className="field" value={selectedBuildingId} onChange={(event) => setBuildingFilter(event.target.value)}>
               {availableBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
             </select>
-            <select className={`field ${unitFilter ? "filter-active" : ""}`} value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
+            <select aria-label="Unit filter" className={`field ${unitFilter ? "filter-active" : ""}`} value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
               <option value="">All units</option>
               {buildingUnits.length > 0 && (
                 <optgroup label="Flats">
@@ -5118,18 +7737,20 @@ function SnagList({
                 {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{area.name}</option>)}
               </optgroup>
             </select>
-            <select className={`field ${tradeFilter ? "filter-active" : ""}`} value={tradeFilter} onChange={(event) => setTradeFilter(event.target.value)}>
-              <optgroup label="Filter options">
-                <option value="">All trades</option>
-                <option value="__none__">Trade not set</option>
-              </optgroup>
-              <optgroup label="Trades">
-                {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
-              </optgroup>
-            </select>
-            <select className={`field ${statusFilter ? "filter-active" : ""}`} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            {!residentMode && (
+              <select aria-label="Trade filter" className={`field ${tradeFilter ? "filter-active" : ""}`} value={tradeFilter} onChange={(event) => setTradeFilter(event.target.value)}>
+                <optgroup label="Filter options">
+                  <option value="">All trades</option>
+                  <option value="__none__">Trade not set</option>
+                </optgroup>
+                <optgroup label="Trades">
+                  {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
+                </optgroup>
+              </select>
+            )}
+            <select aria-label="Status filter" className={`field ${activeStatusFilter ? "filter-active" : ""}`} value={activeStatusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">All statuses</option>
-              {statuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
+              {statuses.map((status) => <option key={status} value={status}>{displayStatusLabel(status)}</option>)}
             </select>
             {quickFilter && (
               <button className="secondary md:col-span-4" onClick={() => setQuickFilter("")}>
@@ -5140,57 +7761,50 @@ function SnagList({
         )}
       </div>
       <div className="bg-[#f1f4ef] p-3">
-        {filtered.length > 0 && <div className="mb-3">{PaginationControls}</div>}
-        <div className="grid gap-3 md:hidden">
+        <div className="grid gap-2 md:hidden">
           {pagedSnags.map((snag) => {
             const unit = units.find((item) => item.id === snag.unit_id);
             const area = areas.find((item) => item.id === snag.area_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
-            const photo = photos.find((item) => item.snag_id === snag.id && item.file_url);
+            const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
             const rowActions = listActions?.(snag);
 
             return (
               <article
                 key={snag.id}
-                className="mobile-card transition hover:border-[#D6A23A]"
+                className="rounded-xl border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
               >
-                <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-base font-bold text-[#1F2A24]">{snag.title}</p>
-                    <p className="mt-1 text-sm text-[#66736B]">{unit?.unit_number ? `Unit ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className={statusTone(snag.status)}>{statusLabel(snag.status)}</span>
+                    <p className="truncate text-sm font-bold leading-tight text-[#1F2A24]">{snag.title}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
                     </div>
                   </div>
-                  <div className="h-16 w-16 justify-self-end overflow-hidden rounded-xl border border-[#E2DED3] bg-[#FBFAF6]">
+                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-lg border border-[#E2DED3] bg-[#FBFAF6]">
                     {photo?.file_url ? (
-                      <button className="block h-full w-full cursor-pointer" onClick={(event) => {
-                        event.stopPropagation();
-                        setPreviewPhoto(photo);
-                      }}>
-                        <img src={photo.file_url} alt="" className="h-full w-full object-cover" />
-                      </button>
+                      <SnagThumbnail photo={photo} onOpen={setPreviewPhoto} className="h-full w-full" width={240} height={240} />
                     ) : (
                       <div className="grid h-full place-items-center text-xs text-[#9aa59f]">No photo</div>
                     )}
                   </div>
                 </div>
-                <div className="mt-3 grid gap-2 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#66736B]">Trade</span>
-                    <span className="font-medium">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#66736B]">Date</span>
-                    <span className="font-medium">{formatDate(snag.created_at)}</span>
-                  </div>
+                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs">
+                  {!residentMode && (
+                    <div className="min-w-0 truncate text-[#66736B]">
+                      <span className="mr-1">Trade</span>
+                      <span className="font-medium text-[#1F2A24]">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</span>
+                    </div>
+                  )}
+                  <span className={`font-medium text-[#1F2A24] ${residentMode ? "col-start-2" : ""}`}>{formatDate(snag.created_at)}</span>
                 </div>
-                <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-3">
+                <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-2">
                   {rowActions}
                   <button
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
-                    onClick={() => setSelectedSnagId(snag.id)}
+                    className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                    onClick={() => openSnagDetail(snag.id)}
                     type="button"
                   >
                     Details <ChevronRight size={16} aria-hidden />
@@ -5199,16 +7813,15 @@ function SnagList({
               </article>
             );
           })}
-          {filtered.length === 0 && <p className="mobile-empty">No records to show.</p>}
         </div>
         <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[980px] w-full border-separate border-spacing-0 text-sm">
+        <table className={`${residentMode ? "min-w-[820px]" : "min-w-[980px]"} w-full border-separate border-spacing-0 text-sm`}>
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Title</th>
-              <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Unit</th>
+              <th className="border-b border-[#d9ded6] bg-white px-3 py-2">{residentMode ? "Flat" : "Unit"}</th>
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Area</th>
-              <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Trade</th>
+              {!residentMode && <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Trade</th>}
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Status</th>
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Date</th>
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Photo</th>
@@ -5219,7 +7832,7 @@ function SnagList({
             {grouped.map((group) => (
               <Fragment key={group.unitId}>
                 <tr>
-                  <td colSpan={8} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
+                  <td colSpan={residentMode ? 7 : 8} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
                     {group.unitLabel} <span className="font-normal text-[#617169]">({group.snags.length})</span>
                   </td>
                 </tr>
@@ -5227,8 +7840,7 @@ function SnagList({
                   const unit = units.find((item) => item.id === snag.unit_id);
                   const area = areas.find((item) => item.id === snag.area_id);
                   const trade = trades.find((item) => item.id === snag.trade_id);
-                  const snagPhotos = photos.filter((item) => item.snag_id === snag.id && item.file_url);
-                  const photo = snagPhotos[0];
+                  const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
                   const rowActions = listActions?.(snag);
 
                   return (
@@ -5242,9 +7854,9 @@ function SnagList({
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{unit?.unit_number ?? "Communal"}</td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{area?.name ?? "No area"}</td>
-                      <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>
+                      {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{statusLabel(snag.status)}</span>
+                        <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle whitespace-nowrap">{formatDate(snag.created_at)}</td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
@@ -5255,11 +7867,11 @@ function SnagList({
                         )}
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
-                        <div className="flex min-w-44 flex-wrap justify-end gap-2">
+                        <div className="flex min-w-28 flex-col items-end gap-1.5">
                           {rowActions}
                           <button
                             className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
-                            onClick={() => setSelectedSnagId(snag.id)}
+                            onClick={() => openSnagDetail(snag.id)}
                             type="button"
                           >
                             Details <ChevronRight size={16} aria-hidden />
@@ -5273,9 +7885,8 @@ function SnagList({
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && <p className="rounded-md bg-white p-4 text-sm text-[#617169]">No records to show.</p>}
-        {filtered.length > pageSize && <div className="mt-3">{PaginationControls}</div>}
         </div>
+        {ResultsFooter}
       </div>
       {previewPhoto && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setPreviewPhoto(null)}>
@@ -5292,23 +7903,86 @@ function SnagList({
 }
 
 function PhotoThumb({ photo, onOpen }: { photo: SnagPhoto; onOpen: (photo: SnagPhoto) => void }) {
-  const [failed, setFailed] = useState(false);
+  return <SnagThumbnail photo={photo} onOpen={onOpen} className="h-10 w-14 rounded border border-[#d9ded6]" width={240} height={180} />;
+}
 
-  if (failed || !photo.file_url) {
-    return <span className="text-xs text-[#9aa59f]">None</span>;
+function SnagThumbnail({
+  photo,
+  onOpen,
+  className,
+  width,
+  height,
+}: {
+  photo: SnagPhoto;
+  onOpen: (photo: SnagPhoto) => void;
+  className: string;
+  width: number;
+  height: number;
+}) {
+  const containerRef = useRef<HTMLButtonElement | null>(null);
+  const [visibleUrl, setVisibleUrl] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const thumbnailUrl = supabaseStorageThumbnailUrl(photo.file_url, width, height);
+  const shouldLoad = visibleUrl === thumbnailUrl;
+  const failed = failedUrl === thumbnailUrl;
+
+  useEffect(() => {
+    if (!thumbnailUrl || failed) return;
+    const element = containerRef.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      const frame = window.requestAnimationFrame(() => setVisibleUrl(thumbnailUrl));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setVisibleUrl(thumbnailUrl);
+      observer.disconnect();
+    }, { rootMargin: "360px 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [failed, thumbnailUrl]);
+
+  if (!thumbnailUrl || failed || !photo.file_url) {
+    return (
+      <button
+        className={`grid cursor-pointer place-items-center bg-[#FBFAF6] text-xs text-[#9aa59f] ${className}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen(photo);
+        }}
+        aria-label="Open full photo"
+        title="Open full photo"
+        type="button"
+      >
+        Open
+      </button>
+    );
   }
 
   return (
-    <button className="cursor-pointer" onClick={(event) => {
-      event.stopPropagation();
-      onOpen(photo);
-    }} title="View photo">
-      <img
-        src={photo.file_url}
-        alt=""
-        className="h-10 w-14 cursor-pointer rounded border border-[#d9ded6] object-cover transition hover:opacity-80"
-        onError={() => setFailed(true)}
-      />
+    <button
+      ref={containerRef}
+      className={`relative block cursor-pointer overflow-hidden bg-[#FBFAF6] ${className}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen(photo);
+      }}
+      aria-label="Open photo preview"
+      title="View photo"
+      type="button"
+    >
+      <span className="absolute inset-0 animate-pulse bg-[#eef1ec]" aria-hidden />
+      {shouldLoad && (
+        <img
+          src={thumbnailUrl}
+          alt=""
+          className="relative h-full w-full object-cover transition hover:opacity-80"
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedUrl(thumbnailUrl)}
+        />
+      )}
     </button>
   );
 }
@@ -5329,6 +8003,7 @@ function SnagDetailPage({
   profiles,
   previewPhoto,
   reload,
+  residentMode = false,
   setPreviewPhoto,
   snag,
   trade,
@@ -5350,6 +8025,7 @@ function SnagDetailPage({
   onOpenPhoto: (photo: SnagPhoto) => void;
   previewPhoto: SnagPhoto | null;
   reload: () => Promise<void>;
+  residentMode?: boolean;
   setPreviewPhoto: (photo: SnagPhoto | null) => void;
   snag: ProductionSnag;
   trade?: Trade;
@@ -5367,20 +8043,27 @@ function SnagDetailPage({
   const [activityTab, setActivityTab] = useState<ActivityTab>("timeline");
   const [showAllAudit, setShowAllAudit] = useState(false);
   const [expandedNoteGroups, setExpandedNoteGroups] = useState<string[]>([]);
-  const primaryPhoto = photos[0];
+  const primaryPhoto = primarySnagPhoto(photos);
   const area = areas.find((item) => item.id === snag.area_id);
+  const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
   const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [events]);
   const sortedPhotos = useMemo(() => [...photos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [photos]);
   const noteEvents = sortedEvents.filter((event) => ["note", "access_note"].includes(event.event_type));
   const statusChangeCount = sortedEvents.filter((event) => event.event_type === "status_change" || event.event_type === "triage").length;
   const lastUpdatedTime = Math.max(new Date(snag.updated_at).getTime(), sortedEvents[0] ? new Date(sortedEvents[0].created_at).getTime() : 0);
   const auditEvents = showAllAudit ? sortedEvents : sortedEvents.slice(0, 10);
-  const activityTabs: { key: ActivityTab; label: string }[] = [
-    { key: "timeline", label: "Timeline" },
-    { key: "notes", label: "Notes" },
-    { key: "photos", label: "Photos" },
-    { key: "audit", label: "Audit" },
-  ];
+  const activityTabs: { key: ActivityTab; label: string }[] = residentMode
+    ? [
+        { key: "timeline", label: "Timeline" },
+        { key: "notes", label: "Notes" },
+        { key: "photos", label: "Photos" },
+      ]
+    : [
+        { key: "timeline", label: "Timeline" },
+        { key: "notes", label: "Notes" },
+        { key: "photos", label: "Photos" },
+        { key: "audit", label: "Audit" },
+      ];
 
   function authorName(userId?: string | null, fallback = "Unknown user") {
     if (!userId) return "System";
@@ -5398,7 +8081,7 @@ function SnagDetailPage({
   }
 
   function timelineHeading(event: SnagEvent) {
-    if (event.event_type === "status_change" || event.event_type === "triage") return statusLabel(event.new_value ?? event.event_type);
+    if (event.event_type === "status_change" || event.event_type === "triage") return displayStatusLabel(event.new_value ?? event.event_type);
     if (event.event_type === "trade_changed") return event.new_value ? `Trade set to ${event.new_value}` : "Trade changed";
     if (event.event_type === "priority_changed") return event.new_value ? `Priority set to ${event.new_value}` : "Priority changed";
     return eventLabel(event.event_type);
@@ -5426,6 +8109,7 @@ function SnagDetailPage({
 
   const lifecycleEvents = sortedEvents
     .filter((event) => ["created", "submitted", "assigned", "triage", "status_change", "trade_changed", "priority_changed"].includes(event.event_type))
+    .filter((event) => !residentMode || event.event_type !== "trade_changed")
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   const timelineItems = lifecycleEvents.length > 0
     ? lifecycleEvents
@@ -5519,23 +8203,42 @@ function SnagDetailPage({
     }
   }
 
+  const hasDetailActions = Boolean(actions || (canReject && snag.status === "resolved_by_contractor"));
+
   return (
     <section className="rounded-md border border-[#d9ded6] bg-white">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         <div className="flex w-full items-center gap-3">
-            <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={onBack}>Back</button>
-          <span className={`ml-auto rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{statusLabel(snag.status)}</span>
+          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={onBack}>Back</button>
+          <span className={`ml-auto rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{displayStatusLabel(snag.status)}</span>
           <div className="flex shrink-0 gap-2">
-              <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onPrevious} disabled={!onPrevious} aria-label="Previous snag" title="Previous snag">
-                {"<"}
-              </button>
-              <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onNext} disabled={!onNext} aria-label="Next snag" title="Next snag">
-                {">"}
-              </button>
-            </div>
+            <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onPrevious} disabled={!onPrevious} aria-label="Previous snag" title="Previous snag">
+              {"<"}
+            </button>
+            <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onNext} disabled={!onNext} aria-label="Next snag" title="Next snag">
+              {">"}
+            </button>
+          </div>
         </div>
         <h2 className="mt-3 text-xl font-semibold">{snag.title}</h2>
-        <p className="text-sm text-[#617169]">{unit?.unit_number ?? "Communal"} / {area?.name ?? "No area"}</p>
+        <p className="text-sm text-[#617169]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+        {hasDetailActions && (
+          <div className="mt-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
+            <div className="flex flex-wrap items-start gap-2">
+              {actions}
+              {canReject && snag.status === "resolved_by_contractor" && (
+                <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowReject((current) => !current)}>Reject back to contractor</button>
+              )}
+            </div>
+            {canReject && showReject && (
+              <div className="mt-3 grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
+                <input className="field" value={rejectNote} onChange={(event) => setRejectNote(event.target.value)} placeholder="Reason for rejection" />
+                <PhotoInput value={rejectPhoto} onChange={setRejectPhoto} />
+                <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack} disabled={!rejectNote.trim()}>Reject</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(460px,1.1fr)]">
         <div className="grid gap-4">
@@ -5549,35 +8252,18 @@ function SnagDetailPage({
             )}
           </div>
           <div className="grid gap-3 rounded-md border border-[#d9ded6] p-3 text-sm sm:grid-cols-2">
-            <DetailField label="Unit" value={unit?.unit_number ?? "Communal"} />
+            <DetailField label={residentMode ? "Flat" : "Unit"} value={unit?.unit_number ?? "Communal"} />
             <DetailField label="Area" value={area?.name ?? "No area"} />
-            <div>
+            {!residentMode && <div>
               <p className="text-xs font-semibold uppercase text-[#617169]">Trade</p>
               <div className="mt-1">{tradeControl ?? trade?.name ?? <span className="text-xs text-[#9aa59f]">No trade</span>}</div>
-            </div>
+            </div>}
             <DetailField label="Created" value={formatDateTime(snag.created_at)} />
             <div className="sm:col-span-2">
               <p className="text-xs font-semibold uppercase text-[#617169]">Description</p>
               <p className="mt-1 text-[#34413a]">{snag.description || "No description"}</p>
             </div>
           </div>
-          {(actions || (canReject && snag.status === "resolved_by_contractor")) && (
-            <div className="rounded-md border border-[#d9ded6] p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {actions}
-                {canReject && snag.status === "resolved_by_contractor" && (
-                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowReject((current) => !current)}>Reject back to contractor</button>
-                )}
-              </div>
-              {canReject && showReject && (
-                <div className="mt-3 grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
-                  <input className="field" value={rejectNote} onChange={(event) => setRejectNote(event.target.value)} placeholder="Reason for rejection" />
-                  <PhotoInput value={rejectPhoto} onChange={setRejectPhoto} />
-                  <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack} disabled={!rejectNote.trim()}>Reject</button>
-                </div>
-              )}
-            </div>
-          )}
           <div className="rounded-md border border-[#d9ded6] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold">Photos</p>
@@ -5979,9 +8665,12 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
   );
 }
 
-async function imageUrlToDataUrl(url: string) {
+async function imageUrlToDataUrl(url: string, options: { normalizeOrientation?: boolean; maxDimension?: number } = {}) {
   const response = await fetch(url);
   const blob = await response.blob();
+  if (options.normalizeOrientation && blob.type.startsWith("image/")) {
+    return imageBlobToCanvasDataUrl(blob, options.maxDimension ?? 1800);
+  }
 
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -5991,16 +8680,103 @@ async function imageUrlToDataUrl(url: string) {
   });
 }
 
+async function imageBlobToCanvasDataUrl(blob: Blob, maxDimension: number) {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      try {
+        return drawImageSourceToDataUrl(bitmap, bitmap.width, bitmap.height, blob.type, maxDimension);
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      // Fall back to HTMLImageElement below; some browsers/storage formats do not support createImageBitmap.
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Image could not be loaded for the PDF report."));
+      element.src = objectUrl;
+    });
+
+    return drawImageSourceToDataUrl(image, image.naturalWidth, image.naturalHeight, blob.type, maxDimension);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function drawImageSourceToDataUrl(source: CanvasImageSource, sourceWidth: number, sourceHeight: number, mimeType: string, maxDimension: number) {
+  const largestSide = Math.max(sourceWidth, sourceHeight);
+  const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Image could not be prepared for the PDF report.");
+
+  const outputType = mimeType === "image/png" ? "image/png" : "image/jpeg";
+  if (outputType === "image/jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+  }
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(source, 0, 0, width, height);
+
+  return outputType === "image/png" ? canvas.toDataURL(outputType) : canvas.toDataURL(outputType, 0.88);
+}
+
+function filterBuildingsForRole(buildings: Building[], units: Unit[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
+  if (!profile) return [];
+  if (profile.role === "admin" || profile.role === "developer") return buildings;
+  if (profile.role === "resident") {
+    const buildingIds = new Set(units.filter((unit) => accessibleUnitIds.includes(unit.id)).map((unit) => unit.building_id));
+    return buildings.filter((building) => buildingIds.has(building.id));
+  }
+  if (profile.role === "developer_representative" || profile.role === "contractor") {
+    return buildings.filter((building) => accessibleBuildingIds.includes(building.id));
+  }
+  return [];
+}
+
+function filterUnitsForRole(units: Unit[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
+  if (!profile) return [];
+  if (profile.role === "admin" || profile.role === "developer") return units;
+  if (profile.role === "resident") return units.filter((unit) => accessibleUnitIds.includes(unit.id));
+  if (profile.role === "developer_representative" || profile.role === "contractor") return units.filter((unit) => accessibleBuildingIds.includes(unit.building_id));
+  return [];
+}
+
+function filterAreasForRole(areas: Area[], profile: Profile | null, buildings: Building[], units: Unit[]) {
+  if (!profile) return [];
+  const buildingIds = new Set(buildings.map((building) => building.id));
+  const unitIds = new Set(units.map((unit) => unit.id));
+  return areas.filter((area) => (area.unit_id ? unitIds.has(area.unit_id) : buildingIds.has(area.building_id)));
+}
+
+function filterUnitLinkedRows<T>(rows: T[], units: Unit[], getUnitId: (row: T) => string | null | undefined) {
+  const unitIds = new Set(units.map((unit) => unit.id));
+  return rows.filter((row) => {
+    const unitId = getUnitId(row);
+    return Boolean(unitId && unitIds.has(unitId));
+  });
+}
+
 function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
   if (!profile) return [];
   if (profile.role === "resident") {
     return snags.filter((snag) => snag.source_type === "leaseholder_defect" && snag.unit_id && accessibleUnitIds.includes(snag.unit_id));
   }
-  if (profile.role === "contractor") {
-    if (accessibleBuildingIds.length === 0 && !profile.organisation_id) return snags;
+  if (profile.role === "contractor" || profile.role === "developer_representative") {
     return snags.filter((snag) => (
       Boolean(snag.building_id && accessibleBuildingIds.includes(snag.building_id))
-      || Boolean(profile.organisation_id && snag.assigned_to_organisation_id === profile.organisation_id)
+      || Boolean(profile.role === "contractor" && profile.organisation_id && snag.assigned_to_organisation_id === profile.organisation_id)
     ));
   }
   return snags;
