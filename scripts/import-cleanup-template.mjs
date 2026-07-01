@@ -17,6 +17,14 @@ const supabase = createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredE
 const validSaleStatuses = new Set(["for_sale", "reserved", "exchanged", "completed", "handed_over"]);
 const validRoles = new Set(["admin", "developer", "developer_representative", "contractor", "resident", "user"]);
 const generatedPasswords = [];
+const defaultTrades = [
+  { name: "Decorating", sort_order: 10 },
+  { name: "Electrical", sort_order: 20 },
+  { name: "Plumbing", sort_order: 30 },
+  { name: "Carpentry", sort_order: 40 },
+  { name: "Flooring", sort_order: 50 },
+  { name: "Cleaning", sort_order: 60 },
+];
 
 async function main() {
   console.log(`Importing ${workbookPath}`);
@@ -35,6 +43,7 @@ async function main() {
   const communalSummary = await importCommunalAreas(data.communalAreas, buildingByCode);
   const organisationByName = await importOrganisations(data.organisations);
   await importBuildingOrganisations(data.buildingOrganisations, buildingByCode, organisationByName);
+  await importDefaultTrades();
 
   if (!prodMode) {
     await importUsers(data.usersAccess, buildingByCode, unitByRef, organisationByName);
@@ -431,6 +440,15 @@ async function importBuildingOrganisations(rows, buildingByCode, organisationByN
       organisation_id: organisation.id,
       role_on_project: clean(row.role_on_project),
     }, { onConflict: "building_id,organisation_id,role_on_project" });
+    if (error) throw error;
+  }
+}
+
+async function importDefaultTrades() {
+  for (const trade of defaultTrades) {
+    const { error } = await supabase
+      .from("trades")
+      .upsert({ ...trade, active: true }, { onConflict: "name" });
     if (error) throw error;
   }
 }

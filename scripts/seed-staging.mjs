@@ -240,7 +240,7 @@ async function upsertAreas(buildingId, units) {
 }
 
 async function upsertTrades() {
-  const tradeNames = ["Decorating", "Electrical", "Plumbing"];
+  const tradeNames = ["Decorating", "Electrical", "Plumbing", "Carpentry", "Flooring", "Cleaning"];
   const result = {};
 
   for (const [index, name] of tradeNames.entries()) {

@@ -417,12 +417,57 @@ function residentSnagStatusLabel(status: string) {
   return labels[status] ?? statusLabel(status);
 }
 
+function snagListStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    needs_more_info: "More info",
+    rejected_back_to_contractor: "Rejected back",
+    resolved_by_contractor: "Resolved",
+  };
+
+  return labels[status] ?? statusLabel(status);
+}
+
 function residentSnagIsOpen(snag: ProductionSnag) {
   return !["closed", "resolved", "rejected"].includes(snag.status);
 }
 
 function residentSnagIsResolved(snag: ProductionSnag) {
   return ["closed", "resolved", "resolved_by_contractor"].includes(snag.status);
+}
+
+function photoCreatedTime(photo: SnagPhoto) {
+  const time = new Date(photo.created_at).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function primarySnagPhoto(photos: SnagPhoto[]) {
+  const usablePhotos = photos.filter((photo) => photo.file_url);
+  const originalPhotos = usablePhotos.filter((photo) => photo.photo_type === "original" || photo.photo_type === "annotated");
+  const candidates = originalPhotos.length > 0 ? originalPhotos : usablePhotos;
+
+  return [...candidates].sort((a, b) => photoCreatedTime(a) - photoCreatedTime(b))[0];
+}
+
+function supabaseStorageThumbnailUrl(fileUrl: string, width: number, height: number) {
+  try {
+    const url = new URL(fileUrl);
+    const publicPath = "/storage/v1/object/public/";
+    const signedPath = "/storage/v1/object/sign/";
+    if (url.pathname.includes(publicPath)) {
+      url.pathname = url.pathname.replace(publicPath, "/storage/v1/render/image/public/");
+    } else if (url.pathname.includes(signedPath)) {
+      url.pathname = url.pathname.replace(signedPath, "/storage/v1/render/image/sign/");
+    } else {
+      return "";
+    }
+    url.searchParams.set("width", String(width));
+    url.searchParams.set("height", String(height));
+    url.searchParams.set("resize", "cover");
+    url.searchParams.set("quality", "70");
+    return url.toString();
+  } catch {
+    return "";
+  }
 }
 
 function readableError(error: unknown, fallback = "Please try again or contact support.") {
@@ -433,6 +478,15 @@ function readableError(error: unknown, fallback = "Please try again or contact s
   }
 
   return fallback;
+}
+
+function buildingSchemaNotice(message: string) {
+  const lowerMessage = message.toLowerCase();
+  const missingBuildingLifecycleColumn = ["pc_confirmed", "pc_date", "allow_resident_access_requests"].some((column) => lowerMessage.includes(column));
+
+  if (!missingBuildingLifecycleColumn) return message;
+
+  return "The database is missing the latest building lifecycle fields. Run the building lifecycle migration in Supabase, then reload the portal.";
 }
 
 function entityLabel(entityType: string) {
@@ -453,6 +507,41 @@ function entityLabel(entityType: string) {
 
 function formatParkingBays(parkingBays?: number[] | null) {
   return parkingBays && parkingBays.length > 0 ? parkingBays.join(", ") : "None";
+}
+
+function sortUnitsByFloorOrder(units: Unit[], buildingFloors: BuildingFloor[], buildingId?: string) {
+  const floorOrder = new Map(
+    buildingFloors
+      .filter((floor) => !buildingId || floor.building_id === buildingId)
+      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
+  );
+
+  return [...units].sort((a, b) => {
+    const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true });
+  });
+}
+
+function sortAreasByFloorOrder(areas: Area[], buildingFloors: BuildingFloor[], buildingId?: string) {
+  const floorOrder = new Map(
+    buildingFloors
+      .filter((floor) => !buildingId || floor.building_id === buildingId)
+      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
+  );
+
+  return [...areas].sort((a, b) => {
+    const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    if ((a.sort_order ?? 0) !== (b.sort_order ?? 0)) return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    return a.name.localeCompare(b.name, undefined, { numeric: true });
+  });
+}
+
+function filenameSafe(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "report";
 }
 
 function parseParkingBays(value: string) {
@@ -1107,10 +1196,16 @@ function Shell({
     })),
     ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
   ];
+  const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
     setMoreOpen(false);
+  }
+
+  async function handleSignOut() {
+    setMoreOpen(false);
+    await onSignOut?.();
   }
 
   return (
@@ -1146,9 +1241,11 @@ function Shell({
                 </button>
               )}
             </div>
-            <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
-              <Menu size={18} aria-hidden />
-            </button>
+            {hasMobileMenu && (
+              <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
+                <Menu size={18} aria-hidden />
+              </button>
+            )}
           </div>
           {tabs.length > 0 && (
             <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex">
@@ -1191,7 +1288,7 @@ function Shell({
           ))}
         </nav>
       )}
-      {moreOpen && (
+      {hasMobileMenu && moreOpen && (
         <div className="mobile-menu-backdrop md:hidden" onClick={() => setMoreOpen(false)}>
           <aside className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 border-b border-[#E2DED3] pb-3">
@@ -1222,7 +1319,7 @@ function Shell({
                 </button>
               )}
               {onSignOut && (
-                <button className="menu-row" onClick={() => void onSignOut()}>
+                <button className="menu-row" onClick={() => void handleSignOut()}>
                   <LogIn size={17} aria-hidden />
                   <span>Sign out</span>
                 </button>
@@ -1421,11 +1518,11 @@ function SetupSection({
       <section className="panel">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader title="Setup" subtitle="Building setup, people access and portal activity controls." />
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Setup sections">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap" role="tablist" aria-label="Setup sections">
             {availableTabs.map((item) => (
               <button
                 key={item}
-                className={`secondary min-h-9 px-3 py-1.5 text-sm ${activeTab === item ? "nav-pill-active" : ""}`}
+                className={`secondary min-h-9 w-full min-w-0 px-3 py-1.5 text-center text-sm leading-tight ${activeTab === item ? "nav-pill-active" : ""}`}
                 onClick={() => setTab(item)}
                 type="button"
               >
@@ -2149,17 +2246,17 @@ function FloorBlock({
   return (
     <div className={`rounded-md border ${collapsed ? "px-3 py-2" : "p-4"} ${warning ? "border-[#e2c8a6] bg-[#fff8ec]" : "border-[#c4ccc6] bg-[#f8faf7]"}`}>
       <div
-        className="flex cursor-pointer flex-wrap items-center justify-between gap-2 rounded-md"
+        className="grid min-h-[4.25rem] cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md"
         onClick={() => setCollapsed((current) => !current)}
       >
-        <div
-          className="inline-flex items-center gap-2 px-1 py-1 text-left font-semibold text-[#0F3D2E]"
-        >
-          {collapsed ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
-          <span>{floorName}</span>
+        <div className="min-w-0 px-1 py-1">
+          <div className="inline-flex max-w-full items-center gap-2 text-left font-semibold text-[#0F3D2E]">
+            {collapsed ? <ChevronDown className="shrink-0" size={18} aria-hidden /> : <ChevronUp className="shrink-0" size={18} aria-hidden />}
+            <span className="truncate" title={floorName}>{floorName}</span>
+          </div>
+          <span className="mt-1 block whitespace-nowrap text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"} &middot; {communalAreas.length} communal</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"} &middot; {communalAreas.length} communal</span>
+        <div className="flex shrink-0 items-center gap-2">
           {floor && (
             <button
               className="secondary icon-button text-[#b42318]"
@@ -2821,7 +2918,7 @@ function AdminSetup({
       status: "active",
       allow_resident_access_requests: allowResidentAccessRequests,
     }).select("id").single();
-    if (error) onNotice(error.message);
+    if (error) onNotice(buildingSchemaNotice(error.message));
     else {
       await recordAudit({
         event_type: "building_created",
@@ -2915,7 +3012,7 @@ function AdminSetup({
     const { error } = await supabase.from("buildings").update(payload).eq("id", building.id);
 
     if (error) {
-      onNotice(error.message);
+      onNotice(buildingSchemaNotice(error.message));
       return;
     }
 
@@ -3154,6 +3251,7 @@ function DeveloperSnagging({
   const buildingUnits = units
     .filter((unit) => draft.buildingId && unit.building_id === draft.buildingId)
     .filter((unit) => !draft.floor || unit.floor === draft.floor);
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, draft.buildingId);
   const unitAreas = areas.filter((area) => area.unit_id === draft.unitId);
   const communalAreas = areas
     .filter((area) => area.area_type === "communal_area")
@@ -3252,7 +3350,7 @@ function DeveloperSnagging({
         {draft.locationType === "unit" && (
           <select className="field" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={isSaving || !draft.buildingId}>
             <option value="">Select unit</option>
-            {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+            {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
           </select>
         )}
         <select className="field" value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={isSaving || !draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
@@ -3267,6 +3365,7 @@ function DeveloperSnagging({
         <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
         <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
           <option value="">Trade</option>
+          {trades.length === 0 && <option value="" disabled>No trades configured</option>}
           {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
         </select>
         <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
@@ -3523,22 +3622,22 @@ function UserDirectory({
   }
 
   return (
-    <section className="panel p-0">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#d9ded6] px-4 py-3">
-        <div>
+    <section className="panel min-w-0 overflow-hidden p-0">
+      <div className="grid gap-3 border-b border-[#d9ded6] px-4 py-3 sm:flex sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-[#0F3D2E]">Access & users</h2>
-          <p className="text-sm text-[#617169]">Manage access requests, portal users and account status.</p>
+          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status.</p>
         </div>
-        <button className="primary min-h-9 px-3 py-1.5 text-sm" onClick={onAddUser}>
+        <button className="primary min-h-9 w-full px-3 py-1.5 text-sm sm:w-auto" onClick={onAddUser}>
           <Plus size={16} /> Add user
         </button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto border-b border-[#e5e9e4] px-4 py-3">
+      <div className="grid grid-cols-2 gap-2 border-b border-[#e5e9e4] px-4 py-3 sm:flex sm:flex-wrap">
         {filters.map((item) => (
           <button
             key={item.value}
-            className={`chip-button whitespace-nowrap ${filter === item.value ? "chip-button-active" : ""}`}
+            className={`chip-button min-w-0 justify-center whitespace-normal text-center text-sm leading-tight ${filter === item.value ? "chip-button-active" : ""}`}
             onClick={() => {
               setFilter(item.value);
               setSelectedRequestId("");
@@ -3550,28 +3649,28 @@ function UserDirectory({
         ))}
       </div>
 
-      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
+      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
         {filteredRows.map((row) => {
           const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
           const isMuted = row.status === "deactivated" || row.status === "rejected";
 
           return (
             <article key={row.key} className={`mobile-card ${isOpen ? "mobile-card-active" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
-              <div className="flex items-start justify-between gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
                   <p className="mt-0.5 truncate text-sm text-[#66736B]">{row.email}</p>
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex max-w-[8.5rem] flex-col items-end gap-1">
                   <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
-                  <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-[#617169]">{row.typeLabel}</span>
+                  <span className="rounded-md bg-white px-2 py-1 text-right text-xs font-semibold leading-tight text-[#617169]">{row.typeLabel}</span>
                 </div>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
-                <div className="flex justify-between gap-3"><span className="text-[#66736B]">Role/type</span><span className="font-medium">{row.roleLabel}</span></div>
-                <div className="flex justify-between gap-3"><span className="text-[#66736B]">Phone</span><span className="font-medium">{row.phone || "None"}</span></div>
-                <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 text-[#1F2A24]">{row.allocation}</p></div>
-                <div className="flex justify-between gap-3"><span className="text-[#66736B]">Created/submitted</span><span className="font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
+                <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created/submitted</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -4919,13 +5018,14 @@ function SnagWorkflow({
   const canPrintReport = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative" || profile?.role === "contractor";
   const [showAddSnag, setShowAddSnag] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
+  const [isViewingSnagDetails, setIsViewingSnagDetails] = useState(false);
 
   return (
     <div className="grid gap-5">
       <section className="panel">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader title="Snags" subtitle="Manage visible defects, trade updates and printable flat snag sheets." />
-          <div className="flex flex-wrap gap-2">
+          {!isViewingSnagDetails && <div className="flex flex-wrap gap-2">
             {canCreateSnag && (
               <button className="primary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowAddSnag((current) => !current)}>
                 <Plus size={16} aria-hidden /> {showAddSnag ? "Hide add snag" : "Add snag"}
@@ -4936,10 +5036,10 @@ function SnagWorkflow({
                 <Download size={16} aria-hidden /> {showPrintReport ? "Hide print sheet" : "Print snag sheet"}
               </button>
             )}
-          </div>
+          </div>}
         </div>
       </section>
-      {showAddSnag && canCreateSnag && (
+      {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
         <DeveloperSnagging
           user={user}
           buildings={buildings}
@@ -4953,8 +5053,8 @@ function SnagWorkflow({
           requestedFilters={requestedFilters}
         />
       )}
-      {showPrintReport && canPrintReport && (
-        <ReportsPanel buildings={buildings} units={units} areas={areas} trades={trades} snags={snags} photos={photos} recordAudit={recordAudit} />
+      {!isViewingSnagDetails && showPrintReport && canPrintReport && (
+        <ReportsPanel buildings={buildings} buildingFloors={buildingFloors} units={units} areas={areas} trades={trades} snags={snags} photos={photos} recordAudit={recordAudit} />
       )}
       <SnagList
         title=""
@@ -4971,6 +5071,7 @@ function SnagWorkflow({
         reload={reload}
         uploadFile={uploadFile}
         requestedFilters={requestedFilters}
+        onDetailViewChange={setIsViewingSnagDetails}
         showFilters
         canReject={canUseDeveloperActions}
         tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
@@ -5036,9 +5137,9 @@ function DeveloperActions({
   if (!isContractorResolved && !needsMoreInfo) return null;
 
   return (
-    <div className="grid gap-2" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+    <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
       {isContractorResolved && (
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("closed")} disabled={isSaving}>
             <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
           </button>
@@ -5215,8 +5316,8 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
   if (snag.status === "closed" || snag.status === "resolved_by_contractor" || snag.status === "needs_more_info") return null;
 
   return (
-    <div className="grid gap-2" onClick={(event) => event.stopPropagation()}>
-      <div className="flex flex-wrap justify-end gap-2">
+    <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()}>
+      <div className="flex flex-wrap gap-2">
         <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)}>
           <CircleHelp size={16} aria-hidden /> Request info
         </button>
@@ -5289,19 +5390,11 @@ function UnitsSection({
 }) {
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const handoverUnitIds = new Set(handovers.map((handover) => handover.unit_id));
-  const floorOrder = new Map(
-    buildingFloors
-      .filter((floor) => !buildingId || floor.building_id === buildingId)
-      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
+  const buildingUnits = sortUnitsByFloorOrder(
+    units.filter((unit) => !buildingId || unit.building_id === buildingId),
+    buildingFloors,
+    buildingId,
   );
-  const buildingUnits = units
-    .filter((unit) => !buildingId || unit.building_id === buildingId)
-    .sort((a, b) => {
-      const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
-      const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
-      if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
-      return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true });
-    });
 
   useEffect(() => {
     if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
@@ -6843,7 +6936,7 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
   }
 
   return (
-    <section className="rounded-md border border-[#d9ded6] bg-white">
+    <section className="min-w-0 overflow-hidden rounded-md border border-[#d9ded6] bg-white">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         <h2 className="text-lg font-semibold">Activity log</h2>
         <p className="text-sm text-[#617169]">Recent admin, setup and report events.</p>
@@ -6858,7 +6951,28 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
           </select>
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
+        {filtered.map((event) => (
+          <article key={event.id} className="mobile-card">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+              <div className="min-w-0">
+                <p className="break-words font-bold text-[#1F2A24]">{eventLabel(event.event_type)}</p>
+                <p className="mt-0.5 text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
+              </div>
+              <span className="rounded-full bg-[#EEF6F1] px-2 py-1 text-right text-xs font-semibold leading-tight text-[#0F3D2E]">
+                {entityLabel(event.entity_type)}
+              </span>
+            </div>
+            <p className="mt-3 break-words text-sm text-[#34413a]">{event.summary}</p>
+            <div className="mt-3 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 text-sm">
+              <span className="text-[#66736B]">User</span>
+              <span className="min-w-0 break-words text-right font-medium">{authorName(event.created_by_user_id)}</span>
+            </div>
+          </article>
+        ))}
+        {filtered.length === 0 && <p className="mobile-empty">No audit events to show.</p>}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
@@ -6889,6 +7003,7 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
 
 function ReportsPanel({
   buildings,
+  buildingFloors,
   units,
   areas,
   trades,
@@ -6897,6 +7012,7 @@ function ReportsPanel({
   recordAudit,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
   trades: Trade[];
@@ -6906,30 +7022,59 @@ function ReportsPanel({
 }) {
   const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const reportUnitIds = Array.from(new Set(snags.map((snag) => snag.unit_id).filter(Boolean))) as string[];
+  const reportCommunalAreaIds = Array.from(new Set(snags.filter((snag) => !snag.unit_id).map((snag) => snag.area_id).filter(Boolean))) as string[];
   const reportBuildings = buildings.filter((building) => reportBuildingIds.includes(building.id));
   const [buildingId, setBuildingId] = useState(reportBuildings[0]?.id ?? "");
+  const [locationType, setLocationType] = useState<"unit" | "communal">("unit");
   const buildingUnits = units
     .filter((unit) => reportUnitIds.includes(unit.id))
-    .filter((unit) => !buildingId || unit.building_id === buildingId)
-    .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+    .filter((unit) => !buildingId || unit.building_id === buildingId);
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingId);
+  const buildingCommunalAreas = sortAreasByFloorOrder(
+    areas
+      .filter((area) => reportCommunalAreaIds.includes(area.id))
+      .filter((area) => area.area_type === "communal_area")
+      .filter((area) => !buildingId || area.building_id === buildingId),
+    buildingFloors,
+    buildingId,
+  );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
+  const [communalAreaId, setCommunalAreaId] = useState("");
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
+  const communalAreaIdsForReport = new Set(buildingCommunalAreas.map((area) => area.id));
   const reportSnags = snags
-    .filter((snag) => snag.unit_id === unitId)
+    .filter((snag) => {
+      if (locationType === "unit") return snag.unit_id === unitId;
+      if (communalAreaId) return !snag.unit_id && snag.area_id === communalAreaId;
+      return !snag.unit_id && snag.area_id && communalAreaIdsForReport.has(snag.area_id);
+    })
     .filter((snag) => includeClosedSnags || snag.status !== "closed");
   const unit = units.find((item) => item.id === unitId);
+  const communalArea = areas.find((item) => item.id === communalAreaId);
   const building = buildings.find((item) => item.id === buildingId);
+  const locationLabel = locationType === "unit"
+    ? `Unit ${unit?.unit_number ?? ""}`.trim()
+    : communalArea
+      ? `${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
+      : "All communal areas";
+  const locationSummaryLabel = locationType === "unit" ? "this flat" : communalArea ? "this communal area" : "all communal areas";
 
   useEffect(() => {
     if (!reportBuildings.some((building) => building.id === buildingId)) {
       setBuildingId(reportBuildings[0]?.id ?? "");
       return;
     }
-    if (!buildingUnits.some((unit) => unit.id === unitId)) {
-      setUnitId(buildingUnits[0]?.id ?? "");
+    if (locationType === "unit") {
+      if (!sortedBuildingUnits.some((unit) => unit.id === unitId)) {
+        if (sortedBuildingUnits[0]) setUnitId(sortedBuildingUnits[0].id);
+        else if (buildingCommunalAreas.length > 0) setLocationType("communal");
+      }
     }
-  }, [buildingId, buildingUnits, reportBuildings, unitId]);
+    if (locationType === "communal" && communalAreaId && !buildingCommunalAreas.some((area) => area.id === communalAreaId)) {
+      setCommunalAreaId("");
+    }
+  }, [buildingCommunalAreas, buildingId, communalAreaId, locationType, reportBuildings, sortedBuildingUnits, unitId]);
 
   async function download() {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
@@ -6977,6 +7122,103 @@ function ReportsPanel({
       return height;
     }
 
+    function reportChipColors(tone: "status" | "area" | "trade" | "missing_trade") {
+      if (tone === "trade") {
+        return {
+          fill: [255, 248, 236],
+          stroke: [214, 162, 58],
+          label: [124, 91, 27],
+          value: [15, 61, 46],
+        };
+      }
+      if (tone === "missing_trade") {
+        return {
+          fill: [247, 247, 245],
+          stroke: [216, 222, 216],
+          label: [97, 113, 105],
+          value: [97, 113, 105],
+        };
+      }
+      if (tone === "area") {
+        return {
+          fill: [246, 250, 248],
+          stroke: [210, 221, 216],
+          label: [97, 113, 105],
+          value: [15, 61, 46],
+        };
+      }
+      return {
+        fill: [239, 246, 241],
+        stroke: [207, 225, 212],
+        label: [97, 113, 105],
+        value: [15, 61, 46],
+      };
+    }
+
+    function measureReportChip(label: string, value: string, tone: "status" | "area" | "trade" | "missing_trade", maxWidth: number) {
+      const labelText = label.toUpperCase();
+      const safeValue = value.trim() || (label === "Trade" ? "No trade" : "Not set");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      const labelWidth = pdf.getTextWidth(labelText);
+      pdf.setFont("helvetica", tone === "trade" ? "bold" : "normal");
+      pdf.setFontSize(8);
+      const valueMaxWidth = Math.max(52, maxWidth - labelWidth - 30);
+      const splitValue = pdf.splitTextToSize(safeValue, valueMaxWidth);
+      const valueLines = (Array.isArray(splitValue) ? splitValue : [String(splitValue)]).slice(0, 2);
+      const valueWidth = Math.max(...valueLines.map((line) => pdf.getTextWidth(line)), 34);
+      return {
+        height: valueLines.length > 1 ? 26 : 18,
+        labelText,
+        labelWidth,
+        tone,
+        valueLines,
+        width: Math.min(maxWidth, Math.max(64, labelWidth + valueWidth + 26)),
+      };
+    }
+
+    function layoutReportChips(
+      chips: { label: string; value: string; tone: "status" | "area" | "trade" | "missing_trade" }[],
+      maxWidth: number,
+    ) {
+      const gap = 6;
+      let offsetX = 0;
+      let offsetY = 0;
+      let rowHeight = 0;
+      const placed = chips.map((chip) => {
+        const measured = measureReportChip(chip.label, chip.value, chip.tone, maxWidth);
+        if (offsetX > 0 && offsetX + measured.width > maxWidth) {
+          offsetX = 0;
+          offsetY += rowHeight + 5;
+          rowHeight = 0;
+        }
+        const current = { ...measured, offsetX, offsetY };
+        offsetX += measured.width + gap;
+        rowHeight = Math.max(rowHeight, measured.height);
+        return current;
+      });
+      return { height: offsetY + rowHeight, placed };
+    }
+
+    function drawReportChip(chip: ReturnType<typeof measureReportChip> & { offsetX: number; offsetY: number }, x: number, chipY: number) {
+      const colors = reportChipColors(chip.tone);
+      pdf.setFillColor(colors.fill[0], colors.fill[1], colors.fill[2]);
+      pdf.setDrawColor(colors.stroke[0], colors.stroke[1], colors.stroke[2]);
+      pdf.setLineWidth(0.7);
+      pdf.roundedRect(x, chipY, chip.width, chip.height, 4, 4, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(colors.label[0], colors.label[1], colors.label[2]);
+      pdf.text(chip.labelText, x + 7, chipY + 11);
+      pdf.setFont("helvetica", chip.tone === "trade" ? "bold" : "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(colors.value[0], colors.value[1], colors.value[2]);
+      const valueX = x + 7 + chip.labelWidth + 6;
+      chip.valueLines.forEach((line, lineIndex) => {
+        pdf.text(line, valueX, chipY + 11 + lineIndex * 8);
+      });
+    }
+
     function addPageHeader() {
       addLogo(margin, 18, 72);
       pdf.setDrawColor(gold);
@@ -6988,7 +7230,7 @@ function ReportsPanel({
       pdf.text("SNAGGING REPORT", pageWidth - margin, 47, { align: "right" });
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
-      pdf.text(`${building?.name ?? ""} / Unit ${unit?.unit_number ?? ""}`, pageWidth - margin, 63, { align: "right" });
+      pdf.text(`${building?.name ?? ""} / ${locationLabel}`, pageWidth - margin, 63, { align: "right" });
       pdf.setTextColor(24, 32, 28);
     }
 
@@ -7019,7 +7261,7 @@ function ReportsPanel({
     pdf.text(`${building?.name ?? ""}`, pageWidth / 2, 411, { align: "center" });
     pdf.setFontSize(12);
     pdf.setTextColor(97, 113, 105);
-    pdf.text(`Unit ${unit?.unit_number ?? ""}`, pageWidth / 2, 435, { align: "center" });
+    pdf.text(locationLabel, pageWidth / 2, 435, { align: "center" });
 
     const summaryTop = 520;
     const summaryWidth = (pageWidth - margin * 2 - 18) / 2;
@@ -7058,29 +7300,38 @@ function ReportsPanel({
     y = 102;
 
     for (const [index, snag] of sorted.entries()) {
+      const trade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
+      const area = areas.find((item) => item.id === snag.area_id)?.name ?? "No area";
       const description = snag.description?.trim() || "No description";
-      const descriptionLines = pdf.splitTextToSize(description, 290).slice(0, 3);
-      const textHeight = 100 + descriptionLines.length * 10;
-      const photo = includePhotos ? photos.find((item) => item.snag_id === snag.id && item.file_url) : undefined;
+      const photo = includePhotos ? primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id)) : undefined;
       let imageData = "";
       let imageSize = { width: 0, height: 0 };
       if (photo) {
         try {
-          imageData = await imageUrlToDataUrl(photo.file_url);
+          imageData = await imageUrlToDataUrl(photo.file_url, { normalizeOrientation: true });
           imageSize = fittedImageSize(imageData, 130, 94);
         } catch {
           imageData = "";
         }
       }
       const imageHeight = imageData ? imageSize.height + 30 : 0;
+      const textColumnWidth = 304;
+      const chipTopOffset = 28;
+      const chipLayout = layoutReportChips([
+        { label: "Status", value: statusLabel(snag.status), tone: "status" },
+        { label: "Area", value: area, tone: "area" },
+        { label: "Trade", value: trade, tone: trade === "No trade" ? "missing_trade" : "trade" },
+      ], textColumnWidth);
+      const createdOffset = chipTopOffset + chipLayout.height + 12;
+      const descriptionOffset = createdOffset + 17;
+      const descriptionLines = pdf.splitTextToSize(description, textColumnWidth).slice(0, 3);
+      const textHeight = descriptionOffset + descriptionLines.length * 10 + 14;
       const cardHeight = Math.max(124, textHeight, imageHeight);
       if (y + cardHeight > pageHeight - 60) {
         pdf.addPage();
         addPageHeader();
         y = 102;
       }
-      const trade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
-      const area = areas.find((item) => item.id === snag.area_id)?.name ?? "No area";
 
       pdf.setDrawColor(216, 222, 216);
       pdf.setFillColor(255, 255, 255);
@@ -7091,25 +7342,18 @@ function ReportsPanel({
       pdf.setTextColor(green);
       pdf.text(`${index + 1}. ${snag.title}`, margin + 12, y + 17, { maxWidth: 310 });
 
-      const badgeText = statusLabel(snag.status);
-      pdf.setFillColor(239, 246, 241);
-      pdf.setDrawColor(212, 166, 69);
-      pdf.setFontSize(8);
-      const badgeWidth = Math.min(150, Math.max(92, pdf.getTextWidth(badgeText) + 28));
-      const badgeX = margin + 12;
-      pdf.roundedRect(badgeX, y + 27, badgeWidth, 16, 4, 4, "FD");
-      pdf.setTextColor(green);
-      pdf.text(badgeText, badgeX + badgeWidth / 2, y + 38, { align: "center" });
+      chipLayout.placed.forEach((chip) => {
+        drawReportChip(chip, margin + 12 + chip.offsetX, y + chipTopOffset + chip.offsetY);
+      });
 
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8);
       pdf.setTextColor(97, 113, 105);
-      pdf.text(`Area: ${area}`, margin + 12, y + 56);
-      pdf.text(`Trade: ${trade}`, margin + 12, y + 69);
-      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + 82);
+      pdf.text(`Created: ${formatDate(snag.created_at)}`, margin + 12, y + createdOffset);
 
       pdf.setTextColor(24, 32, 28);
-      pdf.text(descriptionLines, margin + 12, y + 101);
+      pdf.setFontSize(8.5);
+      pdf.text(descriptionLines, margin + 12, y + descriptionOffset);
 
       if (imageData) {
         const imageX = pageWidth - margin - 14 - imageSize.width;
@@ -7126,17 +7370,20 @@ function ReportsPanel({
     }
 
     addFooter();
-    pdf.save(`unit-${unit?.unit_number ?? "snags"}-report.pdf`);
+    pdf.save(`${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`);
     await recordAudit({
       event_type: "report_generated",
-      entity_type: "unit",
-      entity_id: unit?.id ?? null,
-      summary: `Snagging report generated: ${building?.name ?? "Building"} / Unit ${unit?.unit_number ?? ""}`,
+      entity_type: locationType === "unit" ? "unit" : communalArea ? "area" : "building",
+      entity_id: locationType === "unit" ? unit?.id ?? null : communalArea?.id ?? building?.id ?? null,
+      summary: `Snagging report generated: ${building?.name ?? "Building"} / ${locationLabel}`,
       metadata: {
         buildingId,
         buildingName: building?.name,
-        unitId,
-        unitNumber: unit?.unit_number,
+        locationType,
+        unitId: locationType === "unit" ? unitId : null,
+        unitNumber: locationType === "unit" ? unit?.unit_number : null,
+        communalAreaId: locationType === "communal" ? communalAreaId || null : null,
+        communalAreaName: locationType === "communal" ? communalArea?.name ?? null : null,
         snagCount: reportSnags.length,
       },
     });
@@ -7150,9 +7397,39 @@ function ReportsPanel({
       <select className="field" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
         {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
       </select>
-      <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
-        {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
-      </select>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          className={locationType === "unit" ? "primary" : "secondary"}
+          type="button"
+          onClick={() => setLocationType("unit")}
+          disabled={sortedBuildingUnits.length === 0}
+        >
+          Flat
+        </button>
+        <button
+          className={locationType === "communal" ? "primary" : "secondary"}
+          type="button"
+          onClick={() => setLocationType("communal")}
+          disabled={buildingCommunalAreas.length === 0}
+        >
+          Communal
+        </button>
+      </div>
+      {locationType === "unit" ? (
+        <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)} disabled={sortedBuildingUnits.length === 0}>
+          {sortedBuildingUnits.length === 0 && <option value="">No flat snags available</option>}
+          {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+        </select>
+      ) : (
+        <select className="field" value={communalAreaId} onChange={(event) => setCommunalAreaId(event.target.value)} disabled={buildingCommunalAreas.length === 0}>
+          <option value="">All communal areas</option>
+          {buildingCommunalAreas.map((area) => (
+            <option key={area.id} value={area.id}>
+              {area.name}{area.floor ? ` / ${area.floor}` : ""}
+            </option>
+          ))}
+        </select>
+      )}
       <label className="option-card min-h-10 px-3 py-2 text-sm">
         <input checked={includePhotos} onChange={(event) => setIncludePhotos(event.target.checked)} type="checkbox" />
         Include photos
@@ -7161,7 +7438,7 @@ function ReportsPanel({
         <input checked={includeClosedSnags} onChange={(event) => setIncludeClosedSnags(event.target.checked)} type="checkbox" />
         Include closed snags
       </label>
-      <p className="text-sm text-[#617169]">{reportSnags.length} snag{reportSnags.length === 1 ? "" : "s"} will be included for this flat.</p>
+      <p className="text-sm text-[#617169]">{reportSnags.length} snag{reportSnags.length === 1 ? "" : "s"} will be included for {locationSummaryLabel}.</p>
       <button className="primary" onClick={download} disabled={reportSnags.length === 0}><Download size={16} /> Download PDF</button>
     </FormPanel>
   );
@@ -7187,6 +7464,7 @@ function SnagList({
   tradeControl,
   showFilters = false,
   requestedFilters,
+  onDetailViewChange,
   residentMode = false,
 }: {
   title: string;
@@ -7208,6 +7486,7 @@ function SnagList({
   tradeControl?: (snag: ProductionSnag, trade?: Trade) => React.ReactNode;
   showFilters?: boolean;
   requestedFilters?: SnagListFilters;
+  onDetailViewChange?: (isOpen: boolean) => void;
   residentMode?: boolean;
 }) {
   const [buildingFilter, setBuildingFilter] = useState("");
@@ -7219,6 +7498,7 @@ function SnagList({
   const [pageSize, setPageSize] = useState(50);
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
   const [selectedSnagId, setSelectedSnagId] = useState("");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const availableBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
   const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
@@ -7229,7 +7509,10 @@ function SnagList({
   const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
   const workflowStatuses = ["open", "needs_more_info", "resolved_by_contractor", "rejected_back_to_contractor", "closed"];
   const statuses = workflowStatuses.filter((status) => buildingSnags.some((snag) => snag.status === status));
+  const statusFilterStillAvailable = !statusFilter || statuses.includes(statusFilter);
+  const activeStatusFilter = statusFilterStillAvailable ? statusFilter : "";
   const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
+  const displayTableStatusLabel = residentMode ? residentSnagStatusLabel : snagListStatusLabel;
   const now = new Date();
   const in7 = new Date(now);
   in7.setDate(in7.getDate() + 7);
@@ -7244,8 +7527,8 @@ function SnagList({
       return snag.unit_id === unitFilter;
     })
     .filter((snag) => {
-      if (!statusFilter) return true;
-      return snag.status === statusFilter;
+      if (!activeStatusFilter) return true;
+      return snag.status === activeStatusFilter;
     })
     .filter((snag) => {
       if (!tradeFilter) return true;
@@ -7275,9 +7558,31 @@ function SnagList({
   const pageEnd = Math.min(currentPage * pageSize, filtered.length);
   const defaultBuildingId = availableBuildings[0]?.id ?? "";
   const hasActiveResultFilters = Boolean(
-    (defaultBuildingId && selectedBuildingId !== defaultBuildingId) || unitFilter || statusFilter || tradeFilter || quickFilter,
+    (defaultBuildingId && selectedBuildingId !== defaultBuildingId) || unitFilter || activeStatusFilter || tradeFilter || quickFilter,
   );
   const showPaginationControls = filtered.length > 0 && totalPages > 1;
+  const activeFilterCount = [
+    defaultBuildingId && selectedBuildingId !== defaultBuildingId,
+    unitFilter,
+    activeStatusFilter,
+    tradeFilter,
+    quickFilter,
+  ].filter(Boolean).length;
+  const selectedBuildingName = buildings.find((building) => building.id === selectedBuildingId)?.name ?? "Building";
+  const selectedLocationName = unitFilter
+    ? unitFilter === "__communal__"
+      ? "Communal"
+      : unitFilter.startsWith("area:")
+        ? buildingCommunalAreas.find((area) => area.id === unitFilter.replace("area:", ""))?.name ?? "Communal area"
+        : `Unit ${buildingUnits.find((unit) => unit.id === unitFilter)?.unit_number ?? ""}`.trim()
+    : "All locations";
+  const selectedTradeName = residentMode
+    ? ""
+    : tradeFilter
+      ? tradeFilter === "__none__" ? "No trade" : trades.find((trade) => trade.id === tradeFilter)?.name ?? "Trade"
+      : "All trades";
+  const selectedStatusName = activeStatusFilter ? displayStatusLabel(activeStatusFilter) : "All statuses";
+  const mobileFilterSummary = [selectedBuildingName, selectedLocationName, selectedTradeName, selectedStatusName].filter(Boolean).join(" / ");
   const resultsSummary = snagResultsSummary({
     filtered: filtered.length,
     filtersActive: hasActiveResultFilters,
@@ -7316,11 +7621,27 @@ function SnagList({
 
   useEffect(() => {
     setPage(1);
-  }, [selectedBuildingId, unitFilter, statusFilter, tradeFilter, quickFilter, pageSize]);
+  }, [selectedBuildingId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
+  useEffect(() => {
+    onDetailViewChange?.(Boolean(selectedSnagId));
+    if (!selectedSnagId || typeof window === "undefined") return;
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+  }, [onDetailViewChange, selectedSnagId]);
+
+  function openSnagDetail(snagId: string) {
+    onDetailViewChange?.(true);
+    setSelectedSnagId(snagId);
+  }
+
+  function closeSnagDetail() {
+    setSelectedSnagId("");
+    onDetailViewChange?.(false);
+  }
 
   const ResultsFooter = (
     <div className="flex flex-col gap-3 border-t border-[#d9ded6] bg-white px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
@@ -7360,11 +7681,11 @@ function SnagList({
         areas={areas}
         canReject={canReject}
         events={events.filter((event) => event.snag_id === selectedSnag.id)}
-        onBack={() => setSelectedSnagId("")}
-        onNext={nextSnag ? () => setSelectedSnagId(nextSnag.id) : undefined}
+        onBack={closeSnagDetail}
+        onNext={nextSnag ? () => openSnagDetail(nextSnag.id) : undefined}
         onNotice={onNotice}
         onOpenPhoto={setPreviewPhoto}
-        onPrevious={previousSnag ? () => setSelectedSnagId(previousSnag.id) : undefined}
+        onPrevious={previousSnag ? () => openSnagDetail(previousSnag.id) : undefined}
         photos={photos.filter((photo) => photo.snag_id === selectedSnag.id && photo.file_url)}
         profiles={profiles}
         previewPhoto={previewPhoto}
@@ -7386,7 +7707,21 @@ function SnagList({
       <div className="border-b border-[#d9ded6] px-4 py-3">
         {title && <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>}
         {showFilters && (
-          <div className={`mt-3 grid gap-2 ${residentMode ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
+          <div className="mt-3 md:hidden">
+            <button
+              className="secondary flex w-full justify-between px-3"
+              type="button"
+              onClick={() => setMobileFiltersOpen((current) => !current)}
+              aria-expanded={mobileFiltersOpen}
+            >
+              <span>Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}</span>
+              <ChevronDown className={`transition ${mobileFiltersOpen ? "rotate-180" : ""}`} size={18} aria-hidden />
+            </button>
+            <p className="mt-2 truncate text-xs text-[#617169]">{mobileFilterSummary}</p>
+          </div>
+        )}
+        {showFilters && (
+          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
             <select aria-label="Building filter" className="field" value={selectedBuildingId} onChange={(event) => setBuildingFilter(event.target.value)}>
               {availableBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
             </select>
@@ -7413,7 +7748,7 @@ function SnagList({
                 </optgroup>
               </select>
             )}
-            <select aria-label="Status filter" className={`field ${statusFilter ? "filter-active" : ""}`} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <select aria-label="Status filter" className={`field ${activeStatusFilter ? "filter-active" : ""}`} value={activeStatusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">All statuses</option>
               {statuses.map((status) => <option key={status} value={status}>{displayStatusLabel(status)}</option>)}
             </select>
@@ -7426,58 +7761,50 @@ function SnagList({
         )}
       </div>
       <div className="bg-[#f1f4ef] p-3">
-        <div className="grid gap-3 md:hidden">
+        <div className="grid gap-2 md:hidden">
           {pagedSnags.map((snag) => {
             const unit = units.find((item) => item.id === snag.unit_id);
             const area = areas.find((item) => item.id === snag.area_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
-            const photo = photos.find((item) => item.snag_id === snag.id && item.file_url);
+            const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
             const rowActions = listActions?.(snag);
 
             return (
               <article
                 key={snag.id}
-                className="mobile-card transition hover:border-[#D6A23A]"
+                className="rounded-xl border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
               >
-                <div className="grid grid-cols-[minmax(0,1fr)_72px] gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-base font-bold text-[#1F2A24]">{snag.title}</p>
-                    <p className="mt-1 text-sm text-[#66736B]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <span className={statusTone(snag.status)}>{displayStatusLabel(snag.status)}</span>
+                    <p className="truncate text-sm font-bold leading-tight text-[#1F2A24]">{snag.title}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
                     </div>
                   </div>
-                  <div className="h-16 w-16 justify-self-end overflow-hidden rounded-xl border border-[#E2DED3] bg-[#FBFAF6]">
+                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-lg border border-[#E2DED3] bg-[#FBFAF6]">
                     {photo?.file_url ? (
-                      <button className="block h-full w-full cursor-pointer" onClick={(event) => {
-                        event.stopPropagation();
-                        setPreviewPhoto(photo);
-                      }}>
-                        <img src={photo.file_url} alt="" className="h-full w-full object-cover" />
-                      </button>
+                      <SnagThumbnail photo={photo} onOpen={setPreviewPhoto} className="h-full w-full" width={240} height={240} />
                     ) : (
                       <div className="grid h-full place-items-center text-xs text-[#9aa59f]">No photo</div>
                     )}
                   </div>
                 </div>
-                <div className="mt-3 grid gap-2 text-sm">
+                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs">
                   {!residentMode && (
-                    <div className="flex justify-between gap-3">
-                      <span className="text-[#66736B]">Trade</span>
-                      <span className="font-medium">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</span>
+                    <div className="min-w-0 truncate text-[#66736B]">
+                      <span className="mr-1">Trade</span>
+                      <span className="font-medium text-[#1F2A24]">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</span>
                     </div>
                   )}
-                  <div className="flex justify-between gap-3">
-                    <span className="text-[#66736B]">Date</span>
-                    <span className="font-medium">{formatDate(snag.created_at)}</span>
-                  </div>
+                  <span className={`font-medium text-[#1F2A24] ${residentMode ? "col-start-2" : ""}`}>{formatDate(snag.created_at)}</span>
                 </div>
-                <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-3">
+                <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-2">
                   {rowActions}
                   <button
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
-                    onClick={() => setSelectedSnagId(snag.id)}
+                    className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                    onClick={() => openSnagDetail(snag.id)}
                     type="button"
                   >
                     Details <ChevronRight size={16} aria-hidden />
@@ -7513,8 +7840,7 @@ function SnagList({
                   const unit = units.find((item) => item.id === snag.unit_id);
                   const area = areas.find((item) => item.id === snag.area_id);
                   const trade = trades.find((item) => item.id === snag.trade_id);
-                  const snagPhotos = photos.filter((item) => item.snag_id === snag.id && item.file_url);
-                  const photo = snagPhotos[0];
+                  const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
                   const rowActions = listActions?.(snag);
 
                   return (
@@ -7530,7 +7856,7 @@ function SnagList({
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{area?.name ?? "No area"}</td>
                       {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{displayStatusLabel(snag.status)}</span>
+                        <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle whitespace-nowrap">{formatDate(snag.created_at)}</td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
@@ -7541,11 +7867,11 @@ function SnagList({
                         )}
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
-                        <div className="flex min-w-44 flex-wrap justify-end gap-2">
+                        <div className="flex min-w-28 flex-col items-end gap-1.5">
                           {rowActions}
                           <button
                             className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
-                            onClick={() => setSelectedSnagId(snag.id)}
+                            onClick={() => openSnagDetail(snag.id)}
                             type="button"
                           >
                             Details <ChevronRight size={16} aria-hidden />
@@ -7577,23 +7903,86 @@ function SnagList({
 }
 
 function PhotoThumb({ photo, onOpen }: { photo: SnagPhoto; onOpen: (photo: SnagPhoto) => void }) {
-  const [failed, setFailed] = useState(false);
+  return <SnagThumbnail photo={photo} onOpen={onOpen} className="h-10 w-14 rounded border border-[#d9ded6]" width={240} height={180} />;
+}
 
-  if (failed || !photo.file_url) {
-    return <span className="text-xs text-[#9aa59f]">None</span>;
+function SnagThumbnail({
+  photo,
+  onOpen,
+  className,
+  width,
+  height,
+}: {
+  photo: SnagPhoto;
+  onOpen: (photo: SnagPhoto) => void;
+  className: string;
+  width: number;
+  height: number;
+}) {
+  const containerRef = useRef<HTMLButtonElement | null>(null);
+  const [visibleUrl, setVisibleUrl] = useState<string | null>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const thumbnailUrl = supabaseStorageThumbnailUrl(photo.file_url, width, height);
+  const shouldLoad = visibleUrl === thumbnailUrl;
+  const failed = failedUrl === thumbnailUrl;
+
+  useEffect(() => {
+    if (!thumbnailUrl || failed) return;
+    const element = containerRef.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      const frame = window.requestAnimationFrame(() => setVisibleUrl(thumbnailUrl));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setVisibleUrl(thumbnailUrl);
+      observer.disconnect();
+    }, { rootMargin: "360px 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [failed, thumbnailUrl]);
+
+  if (!thumbnailUrl || failed || !photo.file_url) {
+    return (
+      <button
+        className={`grid cursor-pointer place-items-center bg-[#FBFAF6] text-xs text-[#9aa59f] ${className}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen(photo);
+        }}
+        aria-label="Open full photo"
+        title="Open full photo"
+        type="button"
+      >
+        Open
+      </button>
+    );
   }
 
   return (
-    <button className="cursor-pointer" onClick={(event) => {
-      event.stopPropagation();
-      onOpen(photo);
-    }} title="View photo">
-      <img
-        src={photo.file_url}
-        alt=""
-        className="h-10 w-14 cursor-pointer rounded border border-[#d9ded6] object-cover transition hover:opacity-80"
-        onError={() => setFailed(true)}
-      />
+    <button
+      ref={containerRef}
+      className={`relative block cursor-pointer overflow-hidden bg-[#FBFAF6] ${className}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen(photo);
+      }}
+      aria-label="Open photo preview"
+      title="View photo"
+      type="button"
+    >
+      <span className="absolute inset-0 animate-pulse bg-[#eef1ec]" aria-hidden />
+      {shouldLoad && (
+        <img
+          src={thumbnailUrl}
+          alt=""
+          className="relative h-full w-full object-cover transition hover:opacity-80"
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailedUrl(thumbnailUrl)}
+        />
+      )}
     </button>
   );
 }
@@ -7654,7 +8043,7 @@ function SnagDetailPage({
   const [activityTab, setActivityTab] = useState<ActivityTab>("timeline");
   const [showAllAudit, setShowAllAudit] = useState(false);
   const [expandedNoteGroups, setExpandedNoteGroups] = useState<string[]>([]);
-  const primaryPhoto = photos[0];
+  const primaryPhoto = primarySnagPhoto(photos);
   const area = areas.find((item) => item.id === snag.area_id);
   const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
   const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [events]);
@@ -7814,23 +8203,42 @@ function SnagDetailPage({
     }
   }
 
+  const hasDetailActions = Boolean(actions || (canReject && snag.status === "resolved_by_contractor"));
+
   return (
     <section className="rounded-md border border-[#d9ded6] bg-white">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         <div className="flex w-full items-center gap-3">
-            <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={onBack}>Back</button>
+          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={onBack}>Back</button>
           <span className={`ml-auto rounded-md px-2 py-1 text-xs font-semibold ${statusTone(snag.status)}`}>{displayStatusLabel(snag.status)}</span>
           <div className="flex shrink-0 gap-2">
-              <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onPrevious} disabled={!onPrevious} aria-label="Previous snag" title="Previous snag">
-                {"<"}
-              </button>
-              <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onNext} disabled={!onNext} aria-label="Next snag" title="Next snag">
-                {">"}
-              </button>
-            </div>
+            <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onPrevious} disabled={!onPrevious} aria-label="Previous snag" title="Previous snag">
+              {"<"}
+            </button>
+            <button className="secondary h-9 min-h-9 w-9 px-0 py-0 text-base font-semibold leading-none" onClick={onNext} disabled={!onNext} aria-label="Next snag" title="Next snag">
+              {">"}
+            </button>
+          </div>
         </div>
         <h2 className="mt-3 text-xl font-semibold">{snag.title}</h2>
         <p className="text-sm text-[#617169]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+        {hasDetailActions && (
+          <div className="mt-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
+            <div className="flex flex-wrap items-start gap-2">
+              {actions}
+              {canReject && snag.status === "resolved_by_contractor" && (
+                <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowReject((current) => !current)}>Reject back to contractor</button>
+              )}
+            </div>
+            {canReject && showReject && (
+              <div className="mt-3 grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
+                <input className="field" value={rejectNote} onChange={(event) => setRejectNote(event.target.value)} placeholder="Reason for rejection" />
+                <PhotoInput value={rejectPhoto} onChange={setRejectPhoto} />
+                <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack} disabled={!rejectNote.trim()}>Reject</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(460px,1.1fr)]">
         <div className="grid gap-4">
@@ -7856,23 +8264,6 @@ function SnagDetailPage({
               <p className="mt-1 text-[#34413a]">{snag.description || "No description"}</p>
             </div>
           </div>
-          {(actions || (canReject && snag.status === "resolved_by_contractor")) && (
-            <div className="rounded-md border border-[#d9ded6] p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {actions}
-                {canReject && snag.status === "resolved_by_contractor" && (
-                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowReject((current) => !current)}>Reject back to contractor</button>
-                )}
-              </div>
-              {canReject && showReject && (
-                <div className="mt-3 grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
-                  <input className="field" value={rejectNote} onChange={(event) => setRejectNote(event.target.value)} placeholder="Reason for rejection" />
-                  <PhotoInput value={rejectPhoto} onChange={setRejectPhoto} />
-                  <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={rejectBack} disabled={!rejectNote.trim()}>Reject</button>
-                </div>
-              )}
-            </div>
-          )}
           <div className="rounded-md border border-[#d9ded6] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold">Photos</p>
@@ -8274,9 +8665,12 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
   );
 }
 
-async function imageUrlToDataUrl(url: string) {
+async function imageUrlToDataUrl(url: string, options: { normalizeOrientation?: boolean; maxDimension?: number } = {}) {
   const response = await fetch(url);
   const blob = await response.blob();
+  if (options.normalizeOrientation && blob.type.startsWith("image/")) {
+    return imageBlobToCanvasDataUrl(blob, options.maxDimension ?? 1800);
+  }
 
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -8284,6 +8678,58 @@ async function imageUrlToDataUrl(url: string) {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
+}
+
+async function imageBlobToCanvasDataUrl(blob: Blob, maxDimension: number) {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      try {
+        return drawImageSourceToDataUrl(bitmap, bitmap.width, bitmap.height, blob.type, maxDimension);
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      // Fall back to HTMLImageElement below; some browsers/storage formats do not support createImageBitmap.
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Image could not be loaded for the PDF report."));
+      element.src = objectUrl;
+    });
+
+    return drawImageSourceToDataUrl(image, image.naturalWidth, image.naturalHeight, blob.type, maxDimension);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function drawImageSourceToDataUrl(source: CanvasImageSource, sourceWidth: number, sourceHeight: number, mimeType: string, maxDimension: number) {
+  const largestSide = Math.max(sourceWidth, sourceHeight);
+  const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Image could not be prepared for the PDF report.");
+
+  const outputType = mimeType === "image/png" ? "image/png" : "image/jpeg";
+  if (outputType === "image/jpeg") {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+  }
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(source, 0, 0, width, height);
+
+  return outputType === "image/png" ? canvas.toDataURL(outputType) : canvas.toDataURL(outputType, 0.88);
 }
 
 function filterBuildingsForRole(buildings: Building[], units: Unit[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
