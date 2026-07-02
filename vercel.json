@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/snag-digest",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/snag-digest",
+      "schedule": "30 7 * * *"
+    }
+  ]
+}

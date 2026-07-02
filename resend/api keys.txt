@@ -1,0 +1,5 @@
+resend api keys
+dev: re_iAPKMyVW_LenL79zhxjaJvZ8iGdhBCC8r
+staging: re_LtVrPJdq_EW5Lp5ameuKqM7gRhVreucnH
+production: re_NHp6qv1g_ENfh4HgFFQkzqqm49Ydp9MeN
+cro secret: bunnywell-cron-7a8f4c2e9d1b4a6f93c0e2d8b5a1f0c7
