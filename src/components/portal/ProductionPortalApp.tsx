@@ -1059,8 +1059,6 @@ export function ProductionPortalApp() {
           events={events}
           profile={profile}
           snags={visibleSnags}
-          trades={trades}
-          units={scopedUnits}
           setTab={setTab}
           setSnagFilters={setSnagListFilters}
         />
@@ -1276,11 +1274,14 @@ function Shell({
       </header>
       {notice && (
         <div
-          className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border border-[#e2c8a6] bg-[#fff8ec] px-4 py-3 text-sm font-medium text-[#735327] shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6"
+          className={`fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-sm font-medium shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6 ${positiveNotice(notice) ? "border-[#bcdcc7] bg-[#f0f8f3] text-[#0F3D2E]" : "border-[#e2c8a6] bg-[#fff8ec] text-[#735327]"}`}
           role="status"
           aria-live="polite"
         >
-          {notice}
+          <span className="flex items-center gap-2">
+            {positiveNotice(notice) && <CheckCircle2 size={16} aria-hidden />}
+            {notice}
+          </span>
         </div>
       )}
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
@@ -1341,6 +1342,12 @@ function Shell({
       )}
     </main>
   );
+}
+
+function positiveNotice(notice: string) {
+  const lower = notice.toLowerCase();
+  if (/(cannot|could not|error|failed|invalid|missing|unable)/.test(lower)) return false;
+  return /(added|closed|completed|created|deleted|reactivated|reset|resolved|saved|sent|updated|welcome)/.test(lower);
 }
 
 function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
@@ -1580,8 +1587,6 @@ function Dashboard({
   events,
   profile,
   snags,
-  trades,
-  units,
   setTab,
   setSnagFilters,
 }: {
@@ -1589,12 +1594,10 @@ function Dashboard({
   events: SnagEvent[];
   profile: Profile | null;
   snags: ProductionSnag[];
-  trades: Trade[];
-  units: Unit[];
   setTab: (tab: Tab) => void;
   setSnagFilters: (filters: SnagListFilters) => void;
 }) {
-  const model = buildDashboardModel({ buildings, events, snags, trades, units });
+  const model = buildDashboardModel({ buildings, events, snags });
   const actionItems = model.currentActions.filter((item) => item.value > 0);
   const movementItems = model.todayMovement.filter((item) => item.value > 0);
   const pcConfirmationWarnings = ["admin", "developer"].includes(profile?.role ?? "")
@@ -1695,39 +1698,6 @@ function Dashboard({
           {model.buildingWorkload.length === 0 && <p className="mobile-empty md:col-span-2">No developer snag workload to show.</p>}
         </div>
       </section>
-
-      {model.openByTrade.length > 0 && (
-        <section className="panel">
-          <SectionHeader title="Open by trade" subtitle="Current active developer snags grouped by trade." />
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {model.openByTrade.map((item) => (
-              <button key={item.label} className="dashboard-row-card" onClick={() => openSnags(item.tradeId ? { tradeFilter: item.tradeId } : { tradeFilter: "__none__" })}>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="panel">
-        <SectionHeader title="Recent developer snag activity" subtitle="Latest status changes, photos, comments and trade updates." />
-        <div className="mt-4 grid gap-3">
-          {model.recentActivity.map((activity) => (
-            <button key={activity.id} className="dashboard-activity-card" onClick={() => openSnags({ quickFilter: "recent" })}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-bold text-[#1F2A24]">{activity.title}</p>
-                  <p className="mt-1 text-sm text-[#66736B]">{activity.meta}</p>
-                </div>
-                <span className="text-xs font-semibold text-[#66736B]">{formatDate(activity.createdAt)}</span>
-              </div>
-              {activity.comment && <p className="mt-2 text-sm text-[#34413a]">{activity.comment}</p>}
-            </button>
-          ))}
-          {model.recentActivity.length === 0 && <p className="mobile-empty">No recent developer snag activity yet.</p>}
-        </div>
-      </section>
     </div>
   );
 }
@@ -1771,14 +1741,10 @@ function buildDashboardModel({
   buildings,
   events,
   snags,
-  trades,
-  units,
 }: {
   buildings: Building[];
   events: SnagEvent[];
   snags: ProductionSnag[];
-  trades: Trade[];
-  units: Unit[];
 }) {
   const now = new Date();
   const todayStart = new Date(now);
@@ -1831,32 +1797,6 @@ function buildDashboardModel({
     };
   }).filter((building) => building.total > 0);
 
-  const tradeCounts = new Map<string, { label: string; tradeId: string | null; value: number }>();
-  activeDeveloperSnags.forEach((snag) => {
-    const trade = trades.find((item) => item.id === snag.trade_id);
-    const key = trade?.id ?? "__none__";
-    const current = tradeCounts.get(key) ?? { label: trade?.name ?? "No trade", tradeId: trade?.id ?? null, value: 0 };
-    tradeCounts.set(key, { ...current, value: current.value + 1 });
-  });
-  const openByTrade = Array.from(tradeCounts.values()).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
-
-  const recentActivity = developerEvents.slice(0, 8).map((event) => {
-    const snag = developerSnags.find((item) => item.id === event.snag_id);
-    const unit = units.find((item) => item.id === snag?.unit_id);
-    const building = buildings.find((item) => item.id === snag?.building_id);
-    return {
-      id: event.id,
-      title: `${eventLabel(event.event_type)}${snag ? `: ${snag.title}` : ""}`,
-      meta: [
-        building?.name,
-        unit ? `Flat ${unit.unit_number}` : "Communal",
-        event.new_value ? statusLabel(event.new_value) : "Activity",
-      ].filter(Boolean).join(" / "),
-      comment: event.comment,
-      createdAt: event.created_at,
-    };
-  });
-
   return {
     totalDeveloperSnags: developerSnags.length,
     activeDeveloperSnags: activeDeveloperSnags.length,
@@ -1878,8 +1818,6 @@ function buildDashboardModel({
       { id: "info_supplied_today", label: "Info supplied today", value: infoSuppliedTodayIds.size, tone: "warning", helper: "More information was added today." },
     ],
     buildingWorkload,
-    openByTrade,
-    recentActivity,
   };
 }
 
@@ -3187,7 +3125,8 @@ function DeveloperSnagging({
   onNotice,
   reload,
   uploadFile,
-  requestedFilters,
+  onClose,
+  onDirtyChange,
 }: {
   user: User;
   buildings: Building[];
@@ -3198,10 +3137,14 @@ function DeveloperSnagging({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
-  requestedFilters?: SnagListFilters;
+  onClose: () => void;
+  onDirtyChange: (hasUnsavedChanges: boolean) => void;
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
   const [isSaving, setIsSaving] = useState(false);
+  const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
+  const formRef = useRef<HTMLDivElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
   const selectedArea = areas.find((area) => area.id === draft.areaId);
   const selectedBuilding = buildings.find((building) => building.id === (draft.buildingId || selectedUnit?.building_id || selectedArea?.building_id));
@@ -3220,8 +3163,49 @@ function DeveloperSnagging({
   const areaOptions = draft.locationType === "unit" ? unitAreas : communalAreas;
   const snagBuildingId = draft.locationType === "unit" ? selectedUnit?.building_id : selectedArea?.building_id ?? draft.buildingId;
   const snagUnitId = draft.locationType === "unit" ? draft.unitId : null;
+  const hasUnsavedChanges = Boolean(
+    draft.title.trim()
+    || draft.description.trim()
+    || draft.tradeId
+    || draft.photoDataUrl
+    || contextSignature(draft) !== cleanContextSignature,
+  );
 
-  async function createDeveloperSnag() {
+  useEffect(() => {
+    onDirtyChange(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
+
+  function contextSignature(source: SnagDraft) {
+    return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId].join("|");
+  }
+
+  function focusTitleWithoutJump(formTopBefore: number | null) {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (formRef.current && formTopBefore !== null) {
+          const formTopAfter = formRef.current.getBoundingClientRect().top;
+          window.scrollBy(0, formTopAfter - formTopBefore);
+        }
+        titleInputRef.current?.focus({ preventScroll: true });
+      });
+    });
+  }
+
+  function resetAndClose() {
+    setCleanContextSignature(contextSignature(emptySnagDraft));
+    setDraft(emptySnagDraft);
+    onDirtyChange(false);
+    onClose();
+  }
+
+  function cancelDraft() {
+    if (hasUnsavedChanges && !window.confirm("Discard this unsaved snag?")) return;
+    resetAndClose();
+  }
+
+  async function createDeveloperSnag(closeAfterSave: boolean) {
     if (isSaving) return;
     if (!draft.title || !draft.photoDataUrl || !draft.areaId || !snagBuildingId) {
       onNotice("Developer snags need a location, title and photo.");
@@ -3234,19 +3218,21 @@ function DeveloperSnagging({
     }
 
     setIsSaving(true);
+    const savedDraft = draft;
+    const formTopBefore = formRef.current?.getBoundingClientRect().top ?? null;
     const supabase = createSupabaseBrowserClient();
     try {
-      const photoUrl = await uploadFile(draft.photoDataUrl, "snags");
+      const photoUrl = await uploadFile(savedDraft.photoDataUrl, "snags");
       const { data, error } = await supabase.from("snags").insert({
         building_id: snagBuildingId,
         unit_id: snagUnitId,
-        area_id: draft.areaId || null,
+        area_id: savedDraft.areaId || null,
         source_type: "developer_snag",
         created_by: user.id,
         created_by_user_id: user.id,
-        title: draft.title,
-        description: draft.description,
-        trade_id: draft.tradeId || null,
+        title: savedDraft.title.trim(),
+        description: savedDraft.description.trim(),
+        trade_id: savedDraft.tradeId || null,
         priority: null,
         priority_code: null,
         status: "open",
@@ -3261,16 +3247,32 @@ function DeveloperSnagging({
       const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
       if (eventError) throw eventError;
 
-      setDraft({
+      const nextDraft = {
         ...emptySnagDraft,
-        buildingId: draft.buildingId,
-        floor: draft.floor,
-        locationType: draft.locationType,
-        unitId: draft.unitId,
-        areaId: draft.areaId,
-      });
-      onNotice("Snag added.");
+        buildingId: savedDraft.buildingId,
+        floor: savedDraft.floor,
+        locationType: savedDraft.locationType,
+        unitId: savedDraft.unitId,
+        areaId: savedDraft.areaId,
+      };
+
+      if (closeAfterSave) {
+        setCleanContextSignature(contextSignature(emptySnagDraft));
+        setDraft(emptySnagDraft);
+        onDirtyChange(false);
+        onNotice("Snag added.");
+      } else {
+        setCleanContextSignature(contextSignature(nextDraft));
+        setDraft(nextDraft);
+        onNotice("Snag added. Ready for the next one.");
+      }
+
       await reload();
+      if (closeAfterSave) {
+        onClose();
+      } else {
+        focusTitleWithoutJump(formTopBefore);
+      }
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Unable to add snag. Please try again.");
     } finally {
@@ -3279,7 +3281,7 @@ function DeveloperSnagging({
   }
 
   return (
-    <div className="max-w-xl">
+    <div ref={formRef} className="max-w-xl">
       <FormPanel title="Add developer snag">
         <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "" })} disabled={isSaving}>
           <option value="">Select building</option>
@@ -3321,7 +3323,7 @@ function DeveloperSnagging({
             </option>
           ))}
         </select>
-        <input className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={isSaving || !draft.buildingId} />
+        <input ref={titleInputRef} className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={isSaving || !draft.buildingId} />
         <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
         <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
           <option value="">Trade</option>
@@ -3329,7 +3331,17 @@ function DeveloperSnagging({
           {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
         </select>
         <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
-        <button className="primary" onClick={createDeveloperSnag} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title || !draft.photoDataUrl}><Plus size={16} /> {isSaving ? "Saving..." : "Save and add another"}</button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <button className="primary" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
+            <Plus size={16} aria-hidden /> {isSaving ? "Saving..." : "Save and add another"}
+          </button>
+          <button className="secondary" onClick={() => createDeveloperSnag(true)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
+            Save and close
+          </button>
+          <button className="snag-action-link justify-center px-2" onClick={cancelDraft} disabled={isSaving} type="button">
+            Cancel
+          </button>
+        </div>
       </FormPanel>
     </div>
   );
@@ -4977,8 +4989,24 @@ function SnagWorkflow({
   const canCreateSnag = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative";
   const canPrintReport = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative" || profile?.role === "contractor";
   const [showAddSnag, setShowAddSnag] = useState(false);
+  const [addSnagHasUnsavedChanges, setAddSnagHasUnsavedChanges] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
   const [isViewingSnagDetails, setIsViewingSnagDetails] = useState(false);
+
+  function closeAddSnagForm() {
+    if (addSnagHasUnsavedChanges && !window.confirm("Discard this unsaved snag?")) return;
+    setAddSnagHasUnsavedChanges(false);
+    setShowAddSnag(false);
+  }
+
+  function toggleAddSnagForm() {
+    if (showAddSnag) {
+      closeAddSnagForm();
+      return;
+    }
+    setAddSnagHasUnsavedChanges(false);
+    setShowAddSnag(true);
+  }
 
   return (
     <div className="grid gap-5">
@@ -4987,8 +5015,8 @@ function SnagWorkflow({
           <SectionHeader title="Snags" subtitle="Manage visible defects, trade updates and printable flat snag sheets." />
           {!isViewingSnagDetails && <div className="flex flex-wrap gap-2">
             {canCreateSnag && (
-              <button className="primary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowAddSnag((current) => !current)}>
-                <Plus size={16} aria-hidden /> {showAddSnag ? "Hide add snag" : "Add snag"}
+              <button className="primary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={toggleAddSnagForm}>
+                {!showAddSnag && <Plus size={16} aria-hidden />} {showAddSnag ? "Close form" : "Add snag"}
               </button>
             )}
             {canPrintReport && (
@@ -5010,7 +5038,11 @@ function SnagWorkflow({
           onNotice={onNotice}
           reload={reload}
           uploadFile={uploadFile}
-          requestedFilters={requestedFilters}
+          onClose={() => {
+            setAddSnagHasUnsavedChanges(false);
+            setShowAddSnag(false);
+          }}
+          onDirtyChange={setAddSnagHasUnsavedChanges}
         />
       )}
       {!isViewingSnagDetails && showPrintReport && canPrintReport && (
@@ -5037,7 +5069,14 @@ function SnagWorkflow({
         tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
         listActions={(snag) => {
           const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
-          return canResolve ? <ContractorResolveAction user={user} snag={snag} onNotice={onNotice} reload={reload} /> : null;
+          const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
+
+          return (
+            <>
+              {canClose && <DeveloperCloseAction user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+              {canResolve && <ContractorResolveAction user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+            </>
+          );
         }}
         actions={(snag) => {
           const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
@@ -5096,15 +5135,16 @@ function DeveloperActions({
 
   if (!isContractorResolved && !needsMoreInfo) return null;
 
+  if (isContractorResolved) {
+    return (
+      <button className="snag-action-link snag-action-success" onClick={() => updateStatus("closed")} disabled={isSaving} type="button">
+        <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
+      </button>
+    );
+  }
+
   return (
     <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-      {isContractorResolved && (
-        <div className="flex flex-wrap gap-2">
-          <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => updateStatus("closed")} disabled={isSaving}>
-            <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
-          </button>
-        </div>
-      )}
       {needsMoreInfo && (
         <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
           <input className="field" value={responseNote} onChange={(event) => setResponseNote(event.target.value)} placeholder="Information for contractor" disabled={isSaving} />
@@ -5205,6 +5245,43 @@ async function saveSnagStatusChange({
   if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
 }
 
+function DeveloperCloseAction({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function closeSnag() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSnagStatusChange({
+        user,
+        snag,
+        nextStatus: "closed",
+        closedAt: new Date().toISOString(),
+      });
+      onNotice("Snag closed");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not close snag.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <button
+      className="snag-action-link snag-action-success"
+      onClick={(event) => {
+        event.stopPropagation();
+        void closeSnag();
+      }}
+      disabled={isSaving}
+      type="button"
+    >
+      <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
+    </button>
+  );
+}
+
 function ContractorResolveAction({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -5224,7 +5301,7 @@ function ContractorResolveAction({ user, snag, onNotice, reload }: { user: User;
 
   return (
     <button
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60"
+      className="snag-action-link snag-action-success"
       onClick={(event) => {
         event.stopPropagation();
         void markResolved();
@@ -5278,10 +5355,10 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
   return (
     <div className="grid w-full gap-2 sm:w-auto sm:min-w-80" onClick={(event) => event.stopPropagation()}>
       <div className="flex flex-wrap gap-2">
-        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#8a5a12] transition hover:bg-[#fff4df] disabled:cursor-not-allowed disabled:opacity-60" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)}>
+        <button className="snag-action-link snag-action-warning" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)} type="button">
           <CircleHelp size={16} aria-hidden /> Request info
         </button>
-        <button className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#147A4D] transition hover:bg-[#e7f3ea] disabled:cursor-not-allowed disabled:opacity-60" onClick={markResolved} disabled={Boolean(isSaving)} type="button">
+        <button className="snag-action-link snag-action-success" onClick={markResolved} disabled={Boolean(isSaving)} type="button">
           <CheckCircle2 size={16} aria-hidden /> {isSaving === "resolve" ? "Updating..." : "Resolve"}
         </button>
       </div>
@@ -7792,7 +7869,7 @@ function SnagList({
                 <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-2">
                   {rowActions}
                   <button
-                    className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                    className="snag-action-link"
                     onClick={() => openSnagDetail(snag.id)}
                     type="button"
                   >
@@ -7856,10 +7933,10 @@ function SnagList({
                         )}
                       </td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
-                        <div className="flex min-w-28 flex-col items-end gap-1.5">
+                        <div className="flex min-w-40 items-center justify-end gap-3 whitespace-nowrap">
                           {rowActions}
                           <button
-                            className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-[#0F3D2E] transition hover:bg-[#edf4f1]"
+                            className="snag-action-link"
                             onClick={() => openSnagDetail(snag.id)}
                             type="button"
                           >
@@ -8213,10 +8290,12 @@ function SnagDetailPage({
         <p className="text-sm text-[#617169]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
         {hasDetailActions && (
           <div className="mt-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
-            <div className="flex flex-wrap items-start gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               {actions}
               {canReject && snag.status === "resolved_by_contractor" && (
-                <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowReject((current) => !current)}>Reject back to contractor</button>
+                <button className="snag-action-link snag-action-warning" onClick={() => setShowReject((current) => !current)} type="button">
+                  <CircleHelp size={16} aria-hidden /> Reject back to contractor
+                </button>
               )}
             </div>
             {canReject && showReject && (
