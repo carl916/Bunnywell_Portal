@@ -115,12 +115,24 @@ type PortalScreenDefinition = {
   section: "internal" | "setup" | "resident";
 };
 
+type SnagQuickFilter =
+  | "overdue"
+  | "due_soon"
+  | "recent"
+  | "created_today"
+  | "resolved_today"
+  | "closed_today"
+  | "rejected_today"
+  | "more_info_today"
+  | "info_supplied"
+  | "info_supplied_today";
+
 type SnagListFilters = {
   buildingId?: string;
   unitFilter?: string;
   statusFilter?: string;
   tradeFilter?: string;
-  quickFilter?: "overdue" | "due_soon" | "recent";
+  quickFilter?: SnagQuickFilter;
 };
 
 type AuthRedirectState = {
@@ -1045,7 +1057,6 @@ export function ProductionPortalApp() {
         <Dashboard
           buildings={scopedBuildings}
           events={events}
-          handovers={scopedHandovers}
           profile={profile}
           snags={visibleSnags}
           trades={trades}
@@ -1567,7 +1578,6 @@ function SetupSection({
 function Dashboard({
   buildings,
   events,
-  handovers,
   profile,
   snags,
   trades,
@@ -1577,7 +1587,6 @@ function Dashboard({
 }: {
   buildings: Building[];
   events: SnagEvent[];
-  handovers: Handover[];
   profile: Profile | null;
   snags: ProductionSnag[];
   trades: Trade[];
@@ -1585,11 +1594,9 @@ function Dashboard({
   setTab: (tab: Tab) => void;
   setSnagFilters: (filters: SnagListFilters) => void;
 }) {
-  const model = buildDashboardModel({ buildings, events, handovers, snags, trades, units });
-  const isContractor = profile?.role === "contractor";
-  const attentionItems = isContractor
-    ? model.attention.filter((item) => ["needs_trade", "overdue", "due_soon", "recent"].includes(item.id))
-    : model.attention;
+  const model = buildDashboardModel({ buildings, events, snags, trades, units });
+  const actionItems = model.currentActions.filter((item) => item.value > 0);
+  const movementItems = model.todayMovement.filter((item) => item.value > 0);
   const pcConfirmationWarnings = ["admin", "developer"].includes(profile?.role ?? "")
     ? buildings.filter((building) => hasPassedExpectedPcWarning(building))
     : [];
@@ -1624,105 +1631,87 @@ function Dashboard({
       <section className="dashboard-hero">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Action centre</p>
-          <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">What needs attention</h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#66736B]">A live overview of visible snags, SLA risk, trade allocation, project health and recent activity.</p>
+          <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Developer snags</h2>
+          <p className="mt-2 max-w-2xl text-sm text-[#66736B]">Current developer snag actions and today&apos;s movement across the buildings you can access.</p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
-          <HeroCount label="Total" value={model.total} />
-          <HeroCount label="Open" value={model.open} />
-          <HeroCount label="Closed" value={model.closed} />
+          <HeroCount label="Total" value={model.totalDeveloperSnags} />
+          <HeroCount label="Active" value={model.activeDeveloperSnags} />
+          <HeroCount label="Changed today" value={model.changedToday} />
         </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {attentionItems.map((item) => (
-          <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
-        ))}
       </section>
 
       <section className="panel">
-        <SectionHeader title="Construction progress" subtitle="Unit completion and handover position, kept separate from defect resolution." />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <Metric label="Total units" value={model.lifecycle.totalUnits} />
-          <Metric label="Completed" value={model.lifecycle.completedUnits} />
-          <Metric label="Awaiting handover" value={model.lifecycle.awaitingHandover} onClick={() => setTab("units")} />
-          <Metric label="Handed over" value={model.lifecycle.handedOver} />
-          <Metric label="This month" value={model.lifecycle.handoversThisMonth} />
-        </div>
+        <SectionHeader title="Needs attention" subtitle="Current developer snag actions with a non-zero count." />
+        {actionItems.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {actionItems.map((item) => (
+              <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
+            ))}
+          </div>
+        ) : (
+          <p className="mobile-empty mt-4">No developer snag actions need attention.</p>
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader title="Today&apos;s movement" subtitle="Developer snag changes recorded today." />
+        {movementItems.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {movementItems.map((item) => (
+              <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
+            ))}
+          </div>
+        ) : (
+          <p className="mobile-empty mt-4">No developer snag movement today yet.</p>
+        )}
+      </section>
+
+      <section className="panel">
+        <SectionHeader title="Building workload" subtitle="Open developer snag workload by building." />
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {model.lifecycle.byBuilding.map((building) => (
-            <button key={building.id} className="dashboard-project-card" onClick={() => setTab("units")}>
+          {model.buildingWorkload.map((building) => (
+            <button key={building.id} className="dashboard-project-card" onClick={() => openSnags({ buildingId: building.id })}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[#1F2A24]">{building.name}</p>
-                  <p className="mt-1 text-sm text-[#66736B]">{building.awaitingHandover} awaiting handover</p>
+                  <p className="mt-1 text-sm text-[#66736B]">{building.active} active developer snag{building.active === 1 ? "" : "s"}</p>
                 </div>
-                <span className={statusTone(building.handoverPercent >= 80 ? "closed" : "open")}>{building.handoverPercent}% handed over</span>
+                <span className={statusTone(building.readyForReview > 0 ? "resolved_by_contractor" : building.rejectedBack > 0 ? "rejected_back_to_contractor" : "open")}>
+                  {building.closedPercent}% closed
+                </span>
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
-                <div className="h-full rounded-full bg-[#D6A23A]" style={{ width: `${building.handoverPercent}%` }} />
+                <div className="h-full rounded-full bg-[#0F3D2E]" style={{ width: `${building.closedPercent}%` }} />
               </div>
               <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
-                <MiniStat label="Units" value={building.totalUnits} />
-                <MiniStat label="Complete" value={building.completedUnits} />
-                <MiniStat label="Handed" value={building.handedOver} />
-                <MiniStat label="In progress" value={building.inProgress} />
+                <MiniStat label="Active" value={building.active} />
+                <MiniStat label="Review" value={building.readyForReview} />
+                <MiniStat label="Info" value={building.needsMoreInfo} />
+                <MiniStat label="Rejected" value={building.rejectedBack} />
               </div>
             </button>
           ))}
-          {model.lifecycle.byBuilding.length === 0 && <p className="mobile-empty md:col-span-2">No unit lifecycle data to show.</p>}
+          {model.buildingWorkload.length === 0 && <p className="mobile-empty md:col-span-2">No developer snag workload to show.</p>}
         </div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.8fr)]">
+      {model.openByTrade.length > 0 && (
         <section className="panel">
-          <SectionHeader title="Project health" subtitle="Building-level progress and risk." />
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {model.buildingHealth.map((building) => (
-              <button key={building.id} className="dashboard-project-card" onClick={() => setTab("snags")}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-[#1F2A24]">{building.name}</p>
-                    <p className="mt-1 text-sm text-[#66736B]">{building.total} snag{building.total === 1 ? "" : "s"} logged</p>
-                  </div>
-                  <span className={statusTone(building.overdue > 0 ? "needs_more_info" : "closed")}>{building.closedPercent}% closed</span>
-                </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
-                  <div className="h-full rounded-full bg-[#0F3D2E]" style={{ width: `${building.closedPercent}%` }} />
-                </div>
-                <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
-                  <MiniStat label="Open" value={building.open} />
-                  <MiniStat label="Closed" value={building.closed} />
-                  <MiniStat label="Overdue" value={building.overdue} />
-                  <MiniStat label="High" value={building.highPriority} />
-                </div>
-              </button>
-            ))}
-            {model.buildingHealth.length === 0 && <p className="mobile-empty md:col-span-2">No building data to show.</p>}
-          </div>
-        </section>
-
-        <section className="panel">
-          <SectionHeader title="SLA overview" subtitle="Risk based on existing due dates." />
-          <div className="mt-4 grid gap-3">
-            {model.sla.map((item) => (
-              <button key={item.label} className="dashboard-row-card" onClick={() => setTab("snags")}>
+          <SectionHeader title="Open by trade" subtitle="Current active developer snags grouped by trade." />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {model.openByTrade.map((item) => (
+              <button key={item.label} className="dashboard-row-card" onClick={() => openSnags(item.tradeId ? { tradeFilter: item.tradeId } : { tradeFilter: "__none__" })}>
                 <span>{item.label}</span>
                 <strong>{item.value}</strong>
               </button>
             ))}
           </div>
         </section>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-3">
-        <BreakdownPanel title="Priority breakdown" items={model.priorityBreakdown} onClick={() => openSnags()} />
-        <BreakdownPanel title="Status breakdown" items={model.statusBreakdown} onClick={() => openSnags()} />
-        <BreakdownPanel title="Trade breakdown" items={model.tradeBreakdown} onClick={() => openSnags()} />
-      </div>
+      )}
 
       <section className="panel">
-        <SectionHeader title="Recent activity" subtitle="Latest comments, status changes, photos and allocation updates." />
+        <SectionHeader title="Recent developer snag activity" subtitle="Latest status changes, photos, comments and trade updates." />
         <div className="mt-4 grid gap-3">
           {model.recentActivity.map((activity) => (
             <button key={activity.id} className="dashboard-activity-card" onClick={() => openSnags({ quickFilter: "recent" })}>
@@ -1736,7 +1725,7 @@ function Dashboard({
               {activity.comment && <p className="mt-2 text-sm text-[#34413a]">{activity.comment}</p>}
             </button>
           ))}
-          {model.recentActivity.length === 0 && <p className="mobile-empty">No recent activity yet.</p>}
+          {model.recentActivity.length === 0 && <p className="mobile-empty">No recent developer snag activity yet.</p>}
         </div>
       </section>
     </div>
@@ -1750,140 +1739,146 @@ function filtersForAttention(id: string): SnagListFilters {
   if (id === "review") return { statusFilter: "resolved_by_contractor" };
   if (id === "contractor_reject") return { statusFilter: "needs_more_info" };
   if (id === "developer_reject") return { statusFilter: "rejected_back_to_contractor" };
+  if (id === "info_supplied") return { quickFilter: "info_supplied" };
+  if (id === "created_today") return { quickFilter: "created_today" };
+  if (id === "resolved_today") return { quickFilter: "resolved_today" };
+  if (id === "closed_today") return { quickFilter: "closed_today" };
+  if (id === "rejected_today") return { quickFilter: "rejected_today" };
+  if (id === "more_info_today") return { quickFilter: "more_info_today" };
+  if (id === "info_supplied_today") return { quickFilter: "info_supplied_today" };
   if (id === "recent") return { quickFilter: "recent" };
   return {};
+}
+
+function quickFilterLabel(filter: SnagQuickFilter) {
+  const labels: Record<SnagQuickFilter, string> = {
+    overdue: "overdue SLA",
+    due_soon: "due soon",
+    recent: "recently updated",
+    created_today: "created today",
+    resolved_today: "resolved today",
+    closed_today: "closed today",
+    rejected_today: "rejected back today",
+    more_info_today: "more information requested today",
+    info_supplied: "information supplied",
+    info_supplied_today: "information supplied today",
+  };
+
+  return labels[filter];
 }
 
 function buildDashboardModel({
   buildings,
   events,
-  handovers,
   snags,
   trades,
   units,
 }: {
   buildings: Building[];
   events: SnagEvent[];
-  handovers: Handover[];
   snags: ProductionSnag[];
   trades: Trade[];
   units: Unit[];
 }) {
   const now = new Date();
-  const in7 = new Date(now);
-  in7.setDate(in7.getDate() + 7);
-  const in14 = new Date(now);
-  in14.setDate(in14.getDate() + 14);
-  const isClosed = (snag: ProductionSnag) => ["closed", "resolved"].includes(snag.status);
-  const openSnags = snags.filter((snag) => !isClosed(snag));
-  const overdue = openSnags.filter((snag) => snag.sla_due_date && new Date(snag.sla_due_date) < now);
-  const dueWithin7 = openSnags.filter((snag) => snag.sla_due_date && new Date(snag.sla_due_date) >= now && new Date(snag.sla_due_date) <= in7);
-  const dueWithin14 = openSnags.filter((snag) => snag.sla_due_date && new Date(snag.sla_due_date) > in7 && new Date(snag.sla_due_date) <= in14);
-  const needsTrade = openSnags.filter((snag) => !snag.trade_id);
-  const readyForReview = snags.filter((snag) => snag.status === "resolved_by_contractor");
-  const rejectedByContractor = snags.filter((snag) => snag.status === "needs_more_info");
-  const rejectedBackToContractor = snags.filter((snag) => snag.status === "rejected_back_to_contractor");
-  const recentlyUpdated = snags.filter((snag) => {
-    const updated = new Date(snag.updated_at || snag.created_at);
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return updated >= sevenDaysAgo;
-  });
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay() + 1);
-  startOfWeek.setHours(0, 0, 0, 0);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const handoverUnitIds = new Set(handovers.map((handover) => handover.unit_id));
-  const isHandedOver = (unit: Unit) => unit.sale_status === "handed_over" || handoverUnitIds.has(unit.id);
-  const completedUnits = units.filter((unit) => unit.sale_status === "completed");
-  const handedOverUnits = units.filter(isHandedOver);
-  const awaitingHandoverUnits = units.filter((unit) => unit.sale_status === "completed" && !handoverUnitIds.has(unit.id));
-  const handoverDate = (handover: Handover) => new Date(handover.handover_datetime ?? handover.created_at ?? handover.handover_date);
-  const lifecycleByBuilding = buildings.map((building) => {
-    const buildingUnits = units.filter((unit) => unit.building_id === building.id);
-    const handedOver = buildingUnits.filter(isHandedOver).length;
-    const completed = buildingUnits.filter((unit) => unit.sale_status === "completed" || isHandedOver(unit)).length;
-    const total = buildingUnits.length;
-    return {
-      id: building.id,
-      name: building.name,
-      totalUnits: total,
-      completedUnits: completed,
-      handedOver,
-      awaitingHandover: buildingUnits.filter((unit) => unit.sale_status === "completed" && !handoverUnitIds.has(unit.id)).length,
-      inProgress: buildingUnits.filter((unit) => !["completed", "handed_over"].includes(unit.sale_status)).length,
-      handoverPercent: total === 0 ? 0 : Math.round((handedOver / total) * 100),
-    };
-  }).filter((building) => building.totalUnits > 0);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const isToday = (value?: string | null) => Boolean(value && new Date(value) >= todayStart);
+  const isFinal = (snag: ProductionSnag) => ["closed", "resolved"].includes(snag.status);
+  const isStatusEvent = (event: SnagEvent) => ["status_change", "triage"].includes(event.event_type);
+  const isInfoSuppliedEvent = (event: SnagEvent) => isStatusEvent(event) && event.old_value === "needs_more_info" && event.new_value === "open";
 
-  const countBy = <T,>(items: T[], keyFn: (item: T) => string) => {
-    const counts = new Map<string, number>();
-    items.forEach((item) => counts.set(keyFn(item), (counts.get(keyFn(item)) ?? 0) + 1));
-    return Array.from(counts.entries()).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
-  };
+  const developerSnags = snags.filter((snag) => snag.source_type === "developer_snag");
+  const developerSnagIds = new Set(developerSnags.map((snag) => snag.id));
+  const developerEvents = events.filter((event) => developerSnagIds.has(event.snag_id));
+  const statusEventIds = (status: string, onlyToday = false) => new Set(developerEvents
+    .filter((event) => isStatusEvent(event))
+    .filter((event) => event.new_value === status)
+    .filter((event) => !onlyToday || isToday(event.created_at))
+    .map((event) => event.snag_id));
+  const activeDeveloperSnags = developerSnags.filter((snag) => !isFinal(snag));
+  const closedDeveloperSnags = developerSnags.filter(isFinal);
+  const needsTrade = activeDeveloperSnags.filter((snag) => !snag.trade_id);
+  const readyForReview = developerSnags.filter((snag) => snag.status === "resolved_by_contractor");
+  const needsMoreInfo = developerSnags.filter((snag) => snag.status === "needs_more_info");
+  const rejectedBackToContractor = developerSnags.filter((snag) => snag.status === "rejected_back_to_contractor");
+  const infoSuppliedSnagIds = new Set(developerEvents.filter(isInfoSuppliedEvent).map((event) => event.snag_id));
+  const infoSuppliedAwaitingReview = developerSnags.filter((snag) => snag.status === "open" && infoSuppliedSnagIds.has(snag.id));
+  const todayEvents = developerEvents.filter((event) => isToday(event.created_at));
+  const changedToday = new Set([
+    ...developerSnags.filter((snag) => isToday(snag.created_at) || isToday(snag.updated_at)).map((snag) => snag.id),
+    ...todayEvents.map((event) => event.snag_id),
+  ]).size;
+  const resolvedTodayIds = statusEventIds("resolved_by_contractor", true);
+  const closedTodayIds = statusEventIds("closed", true);
+  const rejectedTodayIds = statusEventIds("rejected_back_to_contractor", true);
+  const moreInfoTodayIds = statusEventIds("needs_more_info", true);
+  const infoSuppliedTodayIds = new Set(developerEvents.filter(isInfoSuppliedEvent).filter((event) => isToday(event.created_at)).map((event) => event.snag_id));
 
-  const buildingHealth = buildings.map((building) => {
-    const buildingSnags = snags.filter((snag) => snag.building_id === building.id);
-    const closed = buildingSnags.filter(isClosed).length;
+  const buildingWorkload = buildings.map((building) => {
+    const buildingSnags = developerSnags.filter((snag) => snag.building_id === building.id);
+    const closed = buildingSnags.filter(isFinal).length;
     const total = buildingSnags.length;
     return {
       id: building.id,
       name: building.name,
       total,
-      open: buildingSnags.filter((snag) => !isClosed(snag)).length,
-      closed,
-      overdue: overdue.filter((snag) => snag.building_id === building.id).length,
-      highPriority: buildingSnags.filter((snag) => snag.priority_code === "P1").length,
+      active: buildingSnags.filter((snag) => !isFinal(snag)).length,
+      readyForReview: buildingSnags.filter((snag) => snag.status === "resolved_by_contractor").length,
+      needsMoreInfo: buildingSnags.filter((snag) => snag.status === "needs_more_info").length,
+      rejectedBack: buildingSnags.filter((snag) => snag.status === "rejected_back_to_contractor").length,
       closedPercent: total === 0 ? 0 : Math.round((closed / total) * 100),
     };
-  }).filter((building) => building.total > 0 || buildings.length <= 4);
+  }).filter((building) => building.total > 0);
 
-  const recentActivity = events.slice(0, 8).map((event) => {
-    const snag = snags.find((item) => item.id === event.snag_id);
+  const tradeCounts = new Map<string, { label: string; tradeId: string | null; value: number }>();
+  activeDeveloperSnags.forEach((snag) => {
+    const trade = trades.find((item) => item.id === snag.trade_id);
+    const key = trade?.id ?? "__none__";
+    const current = tradeCounts.get(key) ?? { label: trade?.name ?? "No trade", tradeId: trade?.id ?? null, value: 0 };
+    tradeCounts.set(key, { ...current, value: current.value + 1 });
+  });
+  const openByTrade = Array.from(tradeCounts.values()).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+
+  const recentActivity = developerEvents.slice(0, 8).map((event) => {
+    const snag = developerSnags.find((item) => item.id === event.snag_id);
     const unit = units.find((item) => item.id === snag?.unit_id);
+    const building = buildings.find((item) => item.id === snag?.building_id);
     return {
       id: event.id,
       title: `${eventLabel(event.event_type)}${snag ? `: ${snag.title}` : ""}`,
-      meta: `${unit ? `Unit ${unit.unit_number}` : "Communal or unknown"} / ${event.new_value ? statusLabel(event.new_value) : "Activity"}`,
+      meta: [
+        building?.name,
+        unit ? `Flat ${unit.unit_number}` : "Communal",
+        event.new_value ? statusLabel(event.new_value) : "Activity",
+      ].filter(Boolean).join(" / "),
       comment: event.comment,
       createdAt: event.created_at,
     };
   });
 
   return {
-    total: snags.length,
-    open: openSnags.length,
-    closed: snags.filter(isClosed).length,
-    lifecycle: {
-      totalUnits: units.length,
-      completedUnits: completedUnits.length,
-      awaitingHandover: awaitingHandoverUnits.length,
-      handedOver: handedOverUnits.length,
-      handoversThisWeek: handovers.filter((handover) => handoverDate(handover) >= startOfWeek).length,
-      handoversThisMonth: handovers.filter((handover) => handoverDate(handover) >= startOfMonth).length,
-      byBuilding: lifecycleByBuilding,
-    },
-    attention: [
-      { id: "needs_trade", label: "Needs trade allocation", value: needsTrade.length, tone: "warning", helper: "Open snags without a trade." },
-      { id: "overdue", label: "Overdue SLA", value: overdue.length, tone: overdue.length ? "danger" : "good", helper: "Past due and not closed." },
-      { id: "due_soon", label: "Due within 7 days", value: dueWithin7.length, tone: "warning", helper: "Upcoming SLA risk." },
-      { id: "review", label: "Ready for review", value: readyForReview.length, tone: "good", helper: "Resolved by contractor." },
-      { id: "contractor_reject", label: "Needs more info", value: rejectedByContractor.length, tone: "warning", helper: "Returned to developer." },
-      { id: "developer_reject", label: "Rejected back to contractor", value: rejectedBackToContractor.length, tone: "danger", helper: "Returned to contractor." },
-      { id: "recent", label: "Recently updated", value: recentlyUpdated.length, tone: "neutral", helper: "Changed in the last 7 days." },
+    totalDeveloperSnags: developerSnags.length,
+    activeDeveloperSnags: activeDeveloperSnags.length,
+    closedDeveloperSnags: closedDeveloperSnags.length,
+    changedToday,
+    currentActions: [
+      { id: "review", label: "Ready for review", value: readyForReview.length, tone: "good", helper: "Resolved by contractor and waiting for developer review." },
+      { id: "contractor_reject", label: "Needs more info", value: needsMoreInfo.length, tone: "warning", helper: "Returned to developer for more information." },
+      { id: "info_supplied", label: "Information supplied", value: infoSuppliedAwaitingReview.length, tone: "warning", helper: "Reopened after more information was added." },
+      { id: "developer_reject", label: "Rejected back to contractor", value: rejectedBackToContractor.length, tone: "danger", helper: "Returned to contractor for further work." },
+      { id: "needs_trade", label: "Needs trade allocation", value: needsTrade.length, tone: "warning", helper: "Active developer snags without a trade." },
     ],
-    buildingHealth,
-    sla: [
-      { label: "Already overdue", value: overdue.length },
-      { label: "Due within 7 days", value: dueWithin7.length },
-      { label: "Due within 14 days", value: dueWithin14.length },
+    todayMovement: [
+      { id: "created_today", label: "Created today", value: developerSnags.filter((snag) => isToday(snag.created_at)).length, tone: "neutral", helper: "New developer snags logged today." },
+      { id: "resolved_today", label: "Resolved today", value: resolvedTodayIds.size, tone: "good", helper: "Moved to resolved by contractor today." },
+      { id: "closed_today", label: "Closed today", value: closedTodayIds.size + developerSnags.filter((snag) => snag.status === "closed" && isToday(snag.closed_at)).filter((snag) => !closedTodayIds.has(snag.id)).length, tone: "good", helper: "Closed by the developer today." },
+      { id: "rejected_today", label: "Rejected back today", value: rejectedTodayIds.size, tone: "danger", helper: "Returned to contractor today." },
+      { id: "more_info_today", label: "Info requested today", value: moreInfoTodayIds.size, tone: "warning", helper: "More information requested from the developer today." },
+      { id: "info_supplied_today", label: "Info supplied today", value: infoSuppliedTodayIds.size, tone: "warning", helper: "More information was added today." },
     ],
-    priorityBreakdown: ["P1", "P2", "P3", "No priority"].map((label) => ({
-      label,
-      value: label === "No priority" ? snags.filter((snag) => !snag.priority_code).length : snags.filter((snag) => snag.priority_code === label).length,
-    })),
-    statusBreakdown: countBy(snags, (snag) => statusLabel(snag.status)),
-    tradeBreakdown: countBy(openSnags, (snag) => trades.find((trade) => trade.id === snag.trade_id)?.name ?? "No trade"),
+    buildingWorkload,
+    openByTrade,
     recentActivity,
   };
 }
@@ -1923,41 +1918,6 @@ function MiniStat({ label, value }: { label: string; value: number }) {
       <p className="font-bold text-[#0F3D2E]">{value}</p>
       <p className="text-[#66736B]">{label}</p>
     </div>
-  );
-}
-
-function BreakdownPanel({ title, items, onClick }: { title: string; items: Array<{ label: string; value: number }>; onClick: () => void }) {
-  const max = Math.max(1, ...items.map((item) => item.value));
-  return (
-    <section className="panel">
-      <SectionHeader title={title} subtitle="Current visible snags." />
-      <div className="mt-4 grid gap-3">
-        {items.map((item) => (
-          <button key={item.label} className="dashboard-breakdown-row" onClick={onClick}>
-            <div className="flex items-center justify-between gap-3">
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
-              <div className="h-full rounded-full bg-[#D6A23A]" style={{ width: `${Math.round((item.value / max) * 100)}%` }} />
-            </div>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function Metric({ label, value, onClick }: { label: string; value: number; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="card-surface p-4 text-left transition enabled:cursor-pointer enabled:hover:-translate-y-0.5 enabled:hover:border-[#D6A23A] enabled:hover:shadow-[0_14px_28px_rgba(15,61,46,0.10)] disabled:cursor-default"
-      disabled={!onClick}
-    >
-      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-[#0F3D2E]">{value}</p>
-    </button>
   );
 }
 
@@ -7514,10 +7474,31 @@ function SnagList({
   const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
   const displayTableStatusLabel = residentMode ? residentSnagStatusLabel : snagListStatusLabel;
   const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
   const in7 = new Date(now);
   in7.setDate(in7.getDate() + 7);
   const recentThreshold = new Date(now);
   recentThreshold.setDate(recentThreshold.getDate() - 7);
+  const isToday = (value?: string | null) => Boolean(value && new Date(value) >= todayStart);
+  const statusEventSnagIds = (status: string) => new Set(events
+    .filter((event) => ["status_change", "triage"].includes(event.event_type))
+    .filter((event) => event.new_value === status)
+    .filter((event) => isToday(event.created_at))
+    .map((event) => event.snag_id));
+  const infoSuppliedSnagIds = new Set(events
+    .filter((event) => ["status_change", "triage"].includes(event.event_type))
+    .filter((event) => event.old_value === "needs_more_info" && event.new_value === "open")
+    .map((event) => event.snag_id));
+  const infoSuppliedTodaySnagIds = new Set(events
+    .filter((event) => ["status_change", "triage"].includes(event.event_type))
+    .filter((event) => event.old_value === "needs_more_info" && event.new_value === "open")
+    .filter((event) => isToday(event.created_at))
+    .map((event) => event.snag_id));
+  const resolvedTodaySnagIds = statusEventSnagIds("resolved_by_contractor");
+  const closedTodaySnagIds = statusEventSnagIds("closed");
+  const rejectedTodaySnagIds = statusEventSnagIds("rejected_back_to_contractor");
+  const moreInfoTodaySnagIds = statusEventSnagIds("needs_more_info");
   const filtered = snags
     .filter((snag) => snag.building_id === selectedBuildingId)
     .filter((snag) => {
@@ -7539,6 +7520,13 @@ function SnagList({
       if (quickFilter === "overdue") return Boolean(snag.sla_due_date && new Date(snag.sla_due_date) < now && !["closed", "resolved"].includes(snag.status));
       if (quickFilter === "due_soon") return Boolean(snag.sla_due_date && new Date(snag.sla_due_date) >= now && new Date(snag.sla_due_date) <= in7 && !["closed", "resolved"].includes(snag.status));
       if (quickFilter === "recent") return new Date(snag.updated_at || snag.created_at) >= recentThreshold;
+      if (quickFilter === "created_today") return isToday(snag.created_at);
+      if (quickFilter === "resolved_today") return resolvedTodaySnagIds.has(snag.id);
+      if (quickFilter === "closed_today") return closedTodaySnagIds.has(snag.id) || Boolean(snag.status === "closed" && isToday(snag.closed_at));
+      if (quickFilter === "rejected_today") return rejectedTodaySnagIds.has(snag.id);
+      if (quickFilter === "more_info_today") return moreInfoTodaySnagIds.has(snag.id);
+      if (quickFilter === "info_supplied") return infoSuppliedSnagIds.has(snag.id) && snag.status === "open";
+      if (quickFilter === "info_supplied_today") return infoSuppliedTodaySnagIds.has(snag.id);
       return true;
     })
     .sort((a, b) => {
@@ -7582,7 +7570,8 @@ function SnagList({
       ? tradeFilter === "__none__" ? "No trade" : trades.find((trade) => trade.id === tradeFilter)?.name ?? "Trade"
       : "All trades";
   const selectedStatusName = activeStatusFilter ? displayStatusLabel(activeStatusFilter) : "All statuses";
-  const mobileFilterSummary = [selectedBuildingName, selectedLocationName, selectedTradeName, selectedStatusName].filter(Boolean).join(" / ");
+  const selectedQuickFilterName = quickFilter ? quickFilterLabel(quickFilter) : "";
+  const mobileFilterSummary = [selectedBuildingName, selectedLocationName, selectedTradeName, selectedStatusName, selectedQuickFilterName].filter(Boolean).join(" / ");
   const resultsSummary = snagResultsSummary({
     filtered: filtered.length,
     filtersActive: hasActiveResultFilters,
@@ -7754,7 +7743,7 @@ function SnagList({
             </select>
             {quickFilter && (
               <button className="secondary md:col-span-4" onClick={() => setQuickFilter("")}>
-                Clear {quickFilter === "overdue" ? "overdue SLA" : quickFilter === "due_soon" ? "due soon" : "recently updated"} filter
+                Clear {quickFilterLabel(quickFilter)} filter
               </button>
             )}
           </div>
