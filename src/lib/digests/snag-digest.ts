@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AppRole, Area, Building, ProductionSnag, SnagEvent, Trade, Unit } from "@/lib/data/production";
+import type { AppRole, Area, Building, BuildingOrganisation, ProductionSnag, SnagEvent, Trade, Unit } from "@/lib/data/production";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type DigestProfile = {
@@ -8,6 +8,7 @@ type DigestProfile = {
   name: string | null;
   full_name: string | null;
   role: AppRole | string | null;
+  organisation_id: string | null;
   active: boolean | null;
 };
 
@@ -19,6 +20,7 @@ type UserBuildingAccess = {
 type DigestData = {
   areas: Area[];
   buildings: Building[];
+  buildingOrganisations: BuildingOrganisation[];
   events: SnagEvent[];
   profiles: DigestProfile[];
   snags: ProductionSnag[];
@@ -32,6 +34,7 @@ type DigestRecipient = {
   email: string;
   name: string;
   role: AppRole;
+  organisationId: string | null;
   buildingIds: Set<string>;
   allBuildings: boolean;
 };
@@ -235,12 +238,21 @@ function snagsFromEvents(events: SnagEvent[], snagsById: Map<string, ProductionS
 function buildRecipients(data: DigestData) {
   const allBuildingIds = new Set(data.buildings.map((building) => building.id));
   const buildingAccessByUser = new Map<string, Set<string>>();
+  const buildingAccessByOrganisation = new Map<string, Set<string>>();
 
   data.userBuildingAccess.forEach((access) => {
     const current = buildingAccessByUser.get(access.user_id) ?? new Set<string>();
     current.add(access.building_id);
     buildingAccessByUser.set(access.user_id, current);
   });
+
+  data.buildingOrganisations
+    .filter((link) => link.active !== false)
+    .forEach((link) => {
+      const current = buildingAccessByOrganisation.get(link.organisation_id) ?? new Set<string>();
+      current.add(link.building_id);
+      buildingAccessByOrganisation.set(link.organisation_id, current);
+    });
 
   const recipientsByEmail = new Map<string, DigestRecipient>();
 
@@ -250,7 +262,10 @@ function buildRecipients(data: DigestData) {
     if (!digestRoles.has(role) || profile.active === false || !isValidEmail(email)) return;
 
     const allBuildings = role === "admin" || role === "developer";
-    const buildingIds = allBuildings ? new Set(allBuildingIds) : new Set(buildingAccessByUser.get(profile.id) ?? []);
+    const buildingIds = allBuildings ? new Set(allBuildingIds) : new Set([
+      ...Array.from(buildingAccessByUser.get(profile.id) ?? []),
+      ...Array.from(profile.organisation_id ? buildingAccessByOrganisation.get(profile.organisation_id) ?? [] : []),
+    ]);
     if (!allBuildings && buildingIds.size === 0) return;
 
     const current = recipientsByEmail.get(email);
@@ -265,6 +280,7 @@ function buildRecipients(data: DigestData) {
       email,
       name: profile.name || profile.full_name || email,
       role,
+      organisationId: profile.organisation_id,
       allBuildings,
       buildingIds,
     });
@@ -280,7 +296,8 @@ function buildRecipientDigest(data: DigestData, recipient: DigestRecipient, dail
   const scopedSnags = data.snags.filter((snag) => (
     snag.source_type === "developer_snag" &&
     snag.building_id &&
-    recipient.buildingIds.has(snag.building_id)
+    recipient.buildingIds.has(snag.building_id) &&
+    (recipient.role !== "contractor" || contractorCanReceiveSnag(snag, recipient, data.buildingOrganisations))
   ));
   const scopedSnagIds = new Set(scopedSnags.map((snag) => snag.id));
   const scopedEvents = data.events.filter((event) => scopedSnagIds.has(event.snag_id));
@@ -316,6 +333,22 @@ function buildRecipientDigest(data: DigestData, recipient: DigestRecipient, dail
     dailyCount: dailySections.reduce((total, section) => total + section.count, 0),
     weeklyCount: weeklySections.reduce((total, section) => total + section.count, 0),
   };
+}
+
+function mainContractorOrganisationIdForBuilding(buildingOrganisations: BuildingOrganisation[], buildingId: string | null | undefined) {
+  if (!buildingId) return null;
+  return buildingOrganisations.find((link) => (
+    link.building_id === buildingId
+    && link.role_on_project === "main_contractor"
+    && link.active !== false
+  ))?.organisation_id ?? null;
+}
+
+function contractorCanReceiveSnag(snag: ProductionSnag, recipient: DigestRecipient, buildingOrganisations: BuildingOrganisation[]) {
+  if (!recipient.organisationId) return false;
+  const mainContractorId = mainContractorOrganisationIdForBuilding(buildingOrganisations, snag.building_id);
+  if (mainContractorId !== recipient.organisationId) return false;
+  return !snag.assigned_to_organisation_id || snag.assigned_to_organisation_id === recipient.organisationId;
 }
 
 function escapeHtml(value: string) {
@@ -468,6 +501,7 @@ async function loadDigestData(adminClient: SupabaseClient): Promise<DigestData> 
     buildingsResult,
     profilesResult,
     buildingAccessResult,
+    buildingOrganisationsResult,
     unitsResult,
     areasResult,
     tradesResult,
@@ -475,8 +509,9 @@ async function loadDigestData(adminClient: SupabaseClient): Promise<DigestData> 
     eventsResult,
   ] = await Promise.all([
     adminClient.from("buildings").select("*"),
-    adminClient.from("profiles").select("id,email,name,full_name,role,active"),
+    adminClient.from("profiles").select("id,email,name,full_name,role,organisation_id,active"),
     adminClient.from("user_building_access").select("user_id,building_id"),
+    adminClient.from("building_organisations").select("*"),
     adminClient.from("units").select("*"),
     adminClient.from("areas").select("*"),
     adminClient.from("trades").select("*"),
@@ -488,6 +523,7 @@ async function loadDigestData(adminClient: SupabaseClient): Promise<DigestData> 
     buildingsResult.error,
     profilesResult.error,
     buildingAccessResult.error,
+    buildingOrganisationsResult.error,
     unitsResult.error,
     areasResult.error,
     tradesResult.error,
@@ -502,6 +538,7 @@ async function loadDigestData(adminClient: SupabaseClient): Promise<DigestData> 
   return {
     areas: (areasResult.data ?? []) as Area[],
     buildings: (buildingsResult.data ?? []) as Building[],
+    buildingOrganisations: (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[],
     events: (eventsResult.data ?? []) as SnagEvent[],
     profiles: (profilesResult.data ?? []) as DigestProfile[],
     snags: (snagsResult.data ?? []) as ProductionSnag[],
@@ -589,13 +626,13 @@ async function sendResendEmail(email: SendableDigest) {
 export async function runSnagDigest(options: RunDigestOptions = {}): Promise<SnagDigestResult> {
   const now = options.now ?? new Date();
   const parts = localParts(now);
-  const isScheduledLocalTime = parts.hour === 7 && parts.minute === 30;
+  const isScheduledLocalTime = parts.hour === 7;
   const weeklyIncluded = parts.dayName === "Mon";
   const dryRunTo = normalizeEmail(process.env.DIGEST_DRY_RUN_EMAIL) || null;
   const digestKey = `snag-digest:${parts.dateKey}:0730`;
 
   if (!options.force && !isScheduledLocalTime) {
-    return { status: "skipped", reason: `Not 07:30 in ${digestTimeZone}.`, digestKey, localDate: parts.dateKey, weeklyIncluded };
+    return { status: "skipped", reason: `Not in the 07:00 digest window for ${digestTimeZone}.`, digestKey, localDate: parts.dateKey, weeklyIncluded };
   }
 
   if (!envBoolean("DIGEST_EMAILS_ENABLED")) {

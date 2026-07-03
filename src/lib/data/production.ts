@@ -33,6 +33,20 @@ export type Organisation = {
   phone: string | null;
 };
 
+export type BuildingOrganisationRole = "main_contractor" | "developer_representative" | "supporting_trade";
+
+export type BuildingOrganisation = {
+  id: string;
+  building_id: string;
+  organisation_id: string;
+  role_on_project: BuildingOrganisationRole | string | null;
+  trade_type?: string | null;
+  active?: boolean | null;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 export type BuildingFloor = {
   id: string;
   building_id: string;

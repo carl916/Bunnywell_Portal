@@ -25,6 +25,7 @@ import {
   type Area,
   type Building,
   type BuildingFloor,
+  type BuildingOrganisation,
   type Handover,
   type HandoverKeyItem,
   type HandoverPhoto,
@@ -150,6 +151,7 @@ type SnagDraft = {
   title: string;
   description: string;
   tradeId: string;
+  responsibleOrganisationId: string;
   priority: "P1" | "P2" | "P3";
   photoDataUrl: string;
 };
@@ -163,6 +165,7 @@ const emptySnagDraft: SnagDraft = {
   title: "",
   description: "",
   tradeId: "",
+  responsibleOrganisationId: "",
   priority: "P2",
   photoDataUrl: "",
 };
@@ -192,8 +195,9 @@ const residentTypes: Array<{ value: ResidentType; label: string }> = [
 ];
 
 const organisationTypes = [
-  { value: "developer_representative", label: "Developer Representative" },
-  { value: "contractor", label: "Contractor" },
+  { value: "contractor", label: "Main contractor" },
+  { value: "developer_representative", label: "Developer representative" },
+  { value: "supporting_trade", label: "Supporting trade" },
 ];
 
 const portalScreens: Record<Tab, PortalScreenDefinition> = {
@@ -390,6 +394,8 @@ function statusLabel(status: string) {
     developer: "Developer",
     developer_representative: "Developer Representative",
     contractor: "Contractor",
+    main_contractor: "Main contractor",
+    supporting_trade: "Supporting trade",
     resident: "Resident",
     leaseholder: "Leaseholder",
     tenant: "Tenant",
@@ -677,6 +683,7 @@ export function ProductionPortalApp() {
   const [unitTypeAreas, setUnitTypeAreas] = useState<UnitTypeArea[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [buildingOrganisations, setBuildingOrganisations] = useState<BuildingOrganisation[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [userBuildingAccess, setUserBuildingAccess] = useState<UserBuildingAccess[]>([]);
   const [userUnitAccess, setUserUnitAccess] = useState<UserUnitAccess[]>([]);
@@ -702,7 +709,7 @@ export function ProductionPortalApp() {
   const scopedAreas = useMemo(() => filterAreasForRole(areas, profile, scopedBuildings, scopedUnits), [areas, profile, scopedBuildings, scopedUnits]);
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
-  const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, snags]);
+  const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds, buildingOrganisations), [accessibleBuildingIds, accessibleUnitIds, buildingOrganisations, profile, snags]);
   const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
 
   function setTab(nextTab: Tab, options?: { replace?: boolean }) {
@@ -725,6 +732,7 @@ export function ProductionPortalApp() {
     setUnitTypeAreas([]);
     setTrades([]);
     setOrganisations([]);
+    setBuildingOrganisations([]);
     setProfiles([]);
     setUserBuildingAccess([]);
     setUserUnitAccess([]);
@@ -913,6 +921,7 @@ export function ProductionPortalApp() {
       unitTypeAreasResult,
       tradesResult,
       orgsResult,
+      buildingOrganisationsResult,
       profilesResult,
       allBuildingAccessResult,
       allUnitAccessResult,
@@ -936,6 +945,7 @@ export function ProductionPortalApp() {
       supabase.from("unit_type_areas").select("*").order("sort_order"),
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
+      supabase.from("building_organisations").select("*"),
       supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
@@ -956,6 +966,7 @@ export function ProductionPortalApp() {
       buildingsResult.error,
       unitsResult.error,
       areasResult.error,
+      buildingOrganisationsResult.error,
       accessRequestsResult.error,
       snagsResult.error,
     ].find(Boolean);
@@ -975,6 +986,8 @@ export function ProductionPortalApp() {
     setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
     setTrades((tradesResult.data ?? []) as Trade[]);
     setOrganisations((orgsResult.data ?? []) as Organisation[]);
+    const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
+    setBuildingOrganisations(loadedBuildingOrganisations);
     setProfiles((profilesResult.data ?? []) as Profile[]);
     setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
     setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
@@ -988,8 +1001,14 @@ export function ProductionPortalApp() {
     setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
     setMeterReadings((metersResult.data ?? []) as MeterReading[]);
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
+    const organisationBuildingIds = loadedProfile?.organisation_id
+      ? loadedBuildingOrganisations
+        .filter((link) => link.organisation_id === loadedProfile.organisation_id && link.active !== false)
+        .map((link) => link.building_id)
+      : [];
     setAccessibleBuildingIds(Array.from(new Set([
       ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
+      ...organisationBuildingIds,
     ])));
   }
 
@@ -1075,6 +1094,7 @@ export function ProductionPortalApp() {
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
           organisations={organisations}
+          buildingOrganisations={buildingOrganisations}
           profiles={profiles}
           accessRequests={accessRequests}
           userBuildingAccess={userBuildingAccess}
@@ -1095,6 +1115,8 @@ export function ProductionPortalApp() {
           units={scopedUnits}
           areas={scopedAreas}
           trades={trades}
+          organisations={organisations}
+          buildingOrganisations={buildingOrganisations}
           photos={photos}
           events={events}
           profiles={profiles}
@@ -1503,6 +1525,7 @@ function SetupSection({
   unitTypes,
   unitTypeAreas,
   organisations,
+  buildingOrganisations,
   profiles,
   accessRequests,
   userBuildingAccess,
@@ -1522,6 +1545,7 @@ function SetupSection({
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
   organisations: Organisation[];
+  buildingOrganisations: BuildingOrganisation[];
   profiles: Profile[];
   accessRequests: ResidentAccessRequest[];
   userBuildingAccess: UserBuildingAccess[];
@@ -1558,6 +1582,8 @@ function SetupSection({
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
+          organisations={organisations}
+          buildingOrganisations={buildingOrganisations}
           recordAudit={recordAudit}
           onNotice={onNotice}
           reload={reload}
@@ -2760,6 +2786,8 @@ function AdminSetup({
   buildingFloors,
   unitTypes,
   unitTypeAreas,
+  organisations,
+  buildingOrganisations,
   recordAudit,
   onNotice,
   reload,
@@ -2770,6 +2798,8 @@ function AdminSetup({
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
+  organisations: Organisation[];
+  buildingOrganisations: BuildingOrganisation[];
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
@@ -3060,6 +3090,16 @@ function AdminSetup({
             </div>
           </section>
 
+          <BuildingDeliveryTeam
+            key={selectedBuilding.id}
+            building={selectedBuilding}
+            organisations={organisations}
+            buildingOrganisations={buildingOrganisations}
+            recordAudit={recordAudit}
+            onNotice={onNotice}
+            reload={reload}
+          />
+
           <div className="border-t border-[#e5e9e4] pt-5">
             <BuildingStructureView
               buildings={buildings}
@@ -3115,6 +3155,208 @@ function AdminSetup({
   );
 }
 
+function BuildingDeliveryTeam({
+  building,
+  organisations,
+  buildingOrganisations,
+  recordAudit,
+  onNotice,
+  reload,
+}: {
+  building: Building;
+  organisations: Organisation[];
+  buildingOrganisations: BuildingOrganisation[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  const activeLinks = buildingOrganisations.filter((link) => link.building_id === building.id && link.active !== false);
+  const mainContractorLink = activeLinks.find((link) => link.role_on_project === "main_contractor");
+  const developerRepLink = activeLinks.find((link) => link.role_on_project === "developer_representative");
+  const supportingTradeLinks = activeLinks.filter((link) => link.role_on_project === "supporting_trade");
+  const mainContractorOptions = organisations.filter((organisation) => organisation.type === "contractor");
+  const developerRepOptions = organisations.filter((organisation) => organisation.type === "developer_representative");
+  const supportingTradeOptions = organisations.filter((organisation) => organisation.type === "supporting_trade");
+  const [mainContractorId, setMainContractorId] = useState(mainContractorLink?.organisation_id ?? "");
+  const [developerRepId, setDeveloperRepId] = useState(developerRepLink?.organisation_id ?? "");
+  const [supportingTradeId, setSupportingTradeId] = useState("");
+  const [supportingTradeType, setSupportingTradeType] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function replaceRole(role: "main_contractor" | "developer_representative", organisationId: string) {
+    const supabase = createSupabaseBrowserClient();
+    const { error: deleteError } = await supabase
+      .from("building_organisations")
+      .delete()
+      .eq("building_id", building.id)
+      .eq("role_on_project", role);
+    if (deleteError) throw deleteError;
+
+    if (!organisationId) return;
+    const { error: insertError } = await supabase.from("building_organisations").insert({
+      building_id: building.id,
+      organisation_id: organisationId,
+      role_on_project: role,
+      active: true,
+    });
+    if (insertError) throw insertError;
+  }
+
+  async function saveCoreTeam() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await replaceRole("main_contractor", mainContractorId);
+      await replaceRole("developer_representative", developerRepId);
+      await recordAudit({
+        event_type: "building_delivery_team_updated",
+        entity_type: "building",
+        entity_id: building.id,
+        summary: `Delivery team updated: ${building.name}`,
+        metadata: {
+          building: building.name,
+          mainContractorId: mainContractorId || null,
+          developerRepresentativeId: developerRepId || null,
+        },
+      });
+      onNotice(`Delivery team saved for ${building.name}.`);
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not save delivery team.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function addSupportingTrade() {
+    if (!supportingTradeId || isSaving) return;
+    if (supportingTradeLinks.some((link) => link.organisation_id === supportingTradeId)) {
+      onNotice("This supporting trade is already linked to the building.");
+      return;
+    }
+    setIsSaving(true);
+    const organisation = organisations.find((item) => item.id === supportingTradeId);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.from("building_organisations").insert({
+        building_id: building.id,
+        organisation_id: supportingTradeId,
+        role_on_project: "supporting_trade",
+        trade_type: supportingTradeType.trim() || null,
+        active: true,
+      });
+      if (error) throw error;
+      await recordAudit({
+        event_type: "building_supporting_trade_added",
+        entity_type: "building",
+        entity_id: building.id,
+        summary: `Supporting trade added to ${building.name}: ${organisation?.name ?? supportingTradeId}`,
+        metadata: { building: building.name, organisationId: supportingTradeId, tradeType: supportingTradeType.trim() || null },
+      });
+      setSupportingTradeId("");
+      setSupportingTradeType("");
+      onNotice("Supporting trade added.");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not add supporting trade.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function removeSupportingTrade(link: BuildingOrganisation) {
+    const organisation = organisations.find((item) => item.id === link.organisation_id);
+    if (!window.confirm(`Remove ${organisation?.name ?? "this organisation"} from ${building.name}?`)) return;
+    setIsSaving(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.from("building_organisations").delete().eq("id", link.id);
+      if (error) throw error;
+      await recordAudit({
+        event_type: "building_supporting_trade_removed",
+        entity_type: "building",
+        entity_id: building.id,
+        summary: `Supporting trade removed from ${building.name}: ${organisation?.name ?? link.organisation_id}`,
+        metadata: { building: building.name, organisationId: link.organisation_id },
+      });
+      onNotice("Supporting trade removed.");
+      await reload();
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Could not remove supporting trade.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
+      <div>
+        <h3 className="text-base font-semibold text-[#0F3D2E]">Delivery team</h3>
+        <p className="mt-1 text-sm text-[#617169]">Developer snags default to the main contractor. Supporting trades can be selected for exception snags.</p>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <label className="field-label">
+          Main contractor
+          <select className="field min-h-10 py-2" value={mainContractorId} onChange={(event) => setMainContractorId(event.target.value)} disabled={isSaving}>
+            <option value="">No main contractor selected</option>
+            {mainContractorOptions.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name}</option>)}
+          </select>
+        </label>
+        <label className="field-label">
+          Developer representative
+          <select className="field min-h-10 py-2" value={developerRepId} onChange={(event) => setDeveloperRepId(event.target.value)} disabled={isSaving}>
+            <option value="">No developer representative selected</option>
+            {developerRepOptions.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="flex justify-end">
+        <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveCoreTeam()} disabled={isSaving}>
+          Save delivery team
+        </button>
+      </div>
+      <div className="grid gap-3 border-t border-[#e5e9e4] pt-4">
+        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] lg:items-end">
+          <label className="field-label">
+            Supporting trade
+            <select className="field min-h-10 py-2" value={supportingTradeId} onChange={(event) => setSupportingTradeId(event.target.value)} disabled={isSaving}>
+              <option value="">Select organisation</option>
+              {supportingTradeOptions.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name}</option>)}
+            </select>
+          </label>
+          <label className="field-label">
+            Trade note
+            <input className="field min-h-10 py-2" value={supportingTradeType} onChange={(event) => setSupportingTradeType(event.target.value)} placeholder="e.g. plumber, locksmith" disabled={isSaving} />
+          </label>
+          <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void addSupportingTrade()} disabled={!supportingTradeId || isSaving}>
+            Add trade
+          </button>
+        </div>
+        {supportingTradeLinks.length > 0 ? (
+          <div className="grid gap-2">
+            {supportingTradeLinks.map((link) => {
+              const organisation = organisations.find((item) => item.id === link.organisation_id);
+              return (
+                <div key={link.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#d9ded6] bg-white px-3 py-2 text-sm">
+                  <div>
+                    <p className="font-semibold text-[#0F3D2E]">{organisation?.name ?? "Unknown organisation"}</p>
+                    <p className="text-xs text-[#617169]">{link.trade_type || "Supporting trade"}</p>
+                  </div>
+                  <button className="secondary icon-button" type="button" onClick={() => void removeSupportingTrade(link)} disabled={isSaving} aria-label={`Remove ${organisation?.name ?? "supporting trade"}`} title={`Remove ${organisation?.name ?? "supporting trade"}`}>
+                    <Trash2 size={16} aria-hidden />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-[#617169]">No supporting trades are linked to this building yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function DeveloperSnagging({
   user,
   buildings,
@@ -3122,6 +3364,8 @@ function DeveloperSnagging({
   units,
   areas,
   trades,
+  organisations,
+  buildingOrganisations,
   onNotice,
   reload,
   uploadFile,
@@ -3134,6 +3378,8 @@ function DeveloperSnagging({
   units: Unit[];
   areas: Area[];
   trades: Trade[];
+  organisations: Organisation[];
+  buildingOrganisations: BuildingOrganisation[];
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
@@ -3148,6 +3394,20 @@ function DeveloperSnagging({
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
   const selectedArea = areas.find((area) => area.id === draft.areaId);
   const selectedBuilding = buildings.find((building) => building.id === (draft.buildingId || selectedUnit?.building_id || selectedArea?.building_id));
+  const responsibleOrganisationLinks = buildingOrganisations.filter((link) => (
+    link.building_id === selectedBuilding?.id
+    && link.active !== false
+    && (link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade")
+  ));
+  const responsibleOrganisationOptions = responsibleOrganisationLinks
+    .map((link) => ({ link, organisation: organisations.find((organisation) => organisation.id === link.organisation_id) }))
+    .filter((item): item is { link: BuildingOrganisation; organisation: Organisation } => Boolean(item.organisation));
+  const mainContractorId = selectedBuilding ? buildingMainContractorOrganisationId(buildingOrganisations, selectedBuilding.id) ?? "" : "";
+  const responsibleOptionIds = responsibleOrganisationOptions.map((item) => item.organisation.id).join("|");
+  const validResponsibleOrganisationIds = new Set(responsibleOptionIds.split("|").filter(Boolean));
+  const resolvedResponsibleOrganisationId = draft.responsibleOrganisationId && validResponsibleOrganisationIds.has(draft.responsibleOrganisationId)
+    ? draft.responsibleOrganisationId
+    : mainContractorId;
   const availableFloors = buildingFloors
     .filter((floor) => floor.building_id === selectedBuilding?.id)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -3167,6 +3427,7 @@ function DeveloperSnagging({
     draft.title.trim()
     || draft.description.trim()
     || draft.tradeId
+    || draft.responsibleOrganisationId
     || draft.photoDataUrl
     || contextSignature(draft) !== cleanContextSignature,
   );
@@ -3178,7 +3439,7 @@ function DeveloperSnagging({
   useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
 
   function contextSignature(source: SnagDraft) {
-    return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId].join("|");
+    return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId, source.responsibleOrganisationId].join("|");
   }
 
   function focusTitleWithoutJump(formTopBefore: number | null) {
@@ -3218,7 +3479,7 @@ function DeveloperSnagging({
     }
 
     setIsSaving(true);
-    const savedDraft = draft;
+    const savedDraft = { ...draft, responsibleOrganisationId: resolvedResponsibleOrganisationId };
     const formTopBefore = formRef.current?.getBoundingClientRect().top ?? null;
     const supabase = createSupabaseBrowserClient();
     try {
@@ -3233,6 +3494,7 @@ function DeveloperSnagging({
         title: savedDraft.title.trim(),
         description: savedDraft.description.trim(),
         trade_id: savedDraft.tradeId || null,
+        assigned_to_organisation_id: savedDraft.responsibleOrganisationId || null,
         priority: null,
         priority_code: null,
         status: "open",
@@ -3254,6 +3516,7 @@ function DeveloperSnagging({
         locationType: savedDraft.locationType,
         unitId: savedDraft.unitId,
         areaId: savedDraft.areaId,
+        responsibleOrganisationId: savedDraft.responsibleOrganisationId,
       };
 
       if (closeAfterSave) {
@@ -3283,7 +3546,7 @@ function DeveloperSnagging({
   return (
     <div ref={formRef} className="max-w-xl">
       <FormPanel title="Add developer snag">
-        <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "" })} disabled={isSaving}>
+        <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" })} disabled={isSaving}>
           <option value="">Select building</option>
           {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
         </select>
@@ -3330,6 +3593,19 @@ function DeveloperSnagging({
           {trades.length === 0 && <option value="" disabled>No trades configured</option>}
           {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
         </select>
+        <label className="grid gap-1">
+          <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#50645b]">Responsible organisation</span>
+          <select className="field" value={resolvedResponsibleOrganisationId} onChange={(event) => setDraft({ ...draft, responsibleOrganisationId: event.target.value })} disabled={isSaving || !draft.buildingId}>
+            <option value="">No responsible organisation selected</option>
+            {responsibleOrganisationOptions.map(({ link, organisation }) => (
+              <option key={`${link.role_on_project}-${organisation.id}`} value={organisation.id}>
+                {organisation.name} {link.role_on_project === "main_contractor" ? "(main contractor)" : "(supporting trade)"}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-[#617169]">Defaults to the main contractor. Choose a supporting trade for exception snags.</span>
+          {draft.buildingId && !mainContractorId && <span className="text-xs text-[#8a5a12]">No main contractor is set for this building yet.</span>}
+        </label>
         <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button className="primary" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
@@ -4958,6 +5234,8 @@ function SnagWorkflow({
   units,
   areas,
   trades,
+  organisations,
+  buildingOrganisations,
   photos,
   events,
   profiles,
@@ -4975,6 +5253,8 @@ function SnagWorkflow({
   units: Unit[];
   areas: Area[];
   trades: Trade[];
+  organisations: Organisation[];
+  buildingOrganisations: BuildingOrganisation[];
   photos: SnagPhoto[];
   events: SnagEvent[];
   profiles: Profile[];
@@ -5035,6 +5315,8 @@ function SnagWorkflow({
           units={units}
           areas={areas}
           trades={trades}
+          organisations={organisations}
+          buildingOrganisations={buildingOrganisations}
           onNotice={onNotice}
           reload={reload}
           uploadFile={uploadFile}
@@ -5068,8 +5350,9 @@ function SnagWorkflow({
         canReject={canUseDeveloperActions}
         tradeControl={(snag, trade) => <ContractorTradeControl user={user} snag={snag} trade={trade} trades={trades} onNotice={onNotice} reload={reload} />}
         listActions={(snag) => {
-          const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
-          const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
+          const usesExternalWorkflow = isExternalResponsibleOrganisationSnag(snag, buildingOrganisations);
+          const canResolve = isContractorRole && !usesExternalWorkflow && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+          const canClose = canUseDeveloperActions && (snag.status === "resolved_by_contractor" || (usesExternalWorkflow && snag.status === "open"));
 
           return (
             <>
@@ -5079,14 +5362,15 @@ function SnagWorkflow({
           );
         }}
         actions={(snag) => {
-          const canClose = canUseDeveloperActions && snag.status === "resolved_by_contractor";
+          const usesExternalWorkflow = isExternalResponsibleOrganisationSnag(snag, buildingOrganisations);
+          const canClose = canUseDeveloperActions && (snag.status === "resolved_by_contractor" || (usesExternalWorkflow && snag.status === "open"));
           const canRespondToInfoRequest = canUseDeveloperActions && snag.status === "needs_more_info";
-          const canResolve = isContractorRole && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
+          const canResolve = isContractorRole && !usesExternalWorkflow && !["closed", "resolved_by_contractor", "needs_more_info"].includes(snag.status);
           if (!canClose && !canRespondToInfoRequest && !canResolve) return null;
 
           return (
             <>
-              {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+              {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} allowDirectClose={usesExternalWorkflow} />}
               {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
             </>
           );
@@ -5101,13 +5385,16 @@ function DeveloperActions({
   snag,
   onNotice,
   reload,
+  allowDirectClose = false,
 }: {
   user: User;
   snag: ProductionSnag;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
+  allowDirectClose?: boolean;
 }) {
   const isContractorResolved = snag.status === "resolved_by_contractor";
+  const canDirectClose = allowDirectClose && snag.status === "open";
   const needsMoreInfo = snag.status === "needs_more_info";
   const [responseNote, setResponseNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -5133,9 +5420,9 @@ function DeveloperActions({
     }
   }
 
-  if (!isContractorResolved && !needsMoreInfo) return null;
+  if (!isContractorResolved && !canDirectClose && !needsMoreInfo) return null;
 
-  if (isContractorResolved) {
+  if (isContractorResolved || canDirectClose) {
     return (
       <button className="snag-action-link snag-action-success" onClick={() => updateStatus("closed")} disabled={isSaving} type="button">
         <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Updating..." : "Close"}
@@ -8836,17 +9123,39 @@ function filterUnitLinkedRows<T>(rows: T[], units: Unit[], getUnitId: (row: T) =
   });
 }
 
-function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[]) {
+function buildingMainContractorOrganisationId(buildingOrganisations: BuildingOrganisation[], buildingId: string | null | undefined) {
+  if (!buildingId) return null;
+  return buildingOrganisations.find((link) => (
+    link.building_id === buildingId
+    && link.role_on_project === "main_contractor"
+    && link.active !== false
+  ))?.organisation_id ?? null;
+}
+
+function isExternalResponsibleOrganisationSnag(snag: ProductionSnag, buildingOrganisations: BuildingOrganisation[]) {
+  if (!snag.assigned_to_organisation_id || !snag.building_id) return false;
+  const mainContractorId = buildingMainContractorOrganisationId(buildingOrganisations, snag.building_id);
+  return Boolean(mainContractorId && snag.assigned_to_organisation_id !== mainContractorId);
+}
+
+function contractorCanAccessResponsibleSnag(snag: ProductionSnag, profile: Profile, buildingOrganisations: BuildingOrganisation[]) {
+  if (!profile.organisation_id) return false;
+  const mainContractorId = buildingMainContractorOrganisationId(buildingOrganisations, snag.building_id);
+  if (mainContractorId !== profile.organisation_id) return false;
+  return !snag.assigned_to_organisation_id || snag.assigned_to_organisation_id === profile.organisation_id;
+}
+
+function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, accessibleUnitIds: string[], accessibleBuildingIds: string[], buildingOrganisations: BuildingOrganisation[]) {
   if (!profile) return [];
   if (profile.role === "resident") {
     return snags.filter((snag) => snag.source_type === "leaseholder_defect" && snag.unit_id && accessibleUnitIds.includes(snag.unit_id));
   }
-  if (profile.role === "contractor" || profile.role === "developer_representative") {
+  if (profile.role === "developer_representative") {
     return snags.filter((snag) => (
       Boolean(snag.building_id && accessibleBuildingIds.includes(snag.building_id))
-      || Boolean(profile.role === "contractor" && profile.organisation_id && snag.assigned_to_organisation_id === profile.organisation_id)
     ));
   }
+  if (profile.role === "contractor") return snags.filter((snag) => contractorCanAccessResponsibleSnag(snag, profile, buildingOrganisations));
   return snags;
 }
 

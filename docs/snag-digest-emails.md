@@ -4,7 +4,7 @@ The portal sends a scheduled developer-snag digest from `/api/cron/snag-digest`.
 
 ## Schedule
 
-Vercel cron runs in UTC, so `vercel.json` calls the same endpoint at both `06:30` and `07:30` UTC. The endpoint only sends when the local London time is `07:30`.
+Vercel cron runs in UTC, so `vercel.json` calls the same endpoint at both `06:30` and `07:30` UTC. The endpoint sends only during the local London 07:00 hour, which allows for delayed cron delivery while still using a single `07:30` digest key to prevent duplicate emails.
 
 - Daily digest: every day at 07:30 UK time.
 - Weekly reminder: included in the Monday 07:30 UK time digest.
@@ -71,4 +71,4 @@ Use `DIGEST_EMAILS_ENABLED=false` to disable an environment. Use `DIGEST_DRY_RUN
 
 Run `supabase/migrations/20260702_digest_runs.sql` before enabling the cron in an environment.
 
-`digest_runs` records each run so Vercel retries or duplicate UTC schedules do not send duplicate digest emails for the same local 07:30 run.
+`digest_runs` records each run so Vercel retries, delayed delivery, or duplicate UTC schedules do not send duplicate digest emails for the same local 07:30 run.
