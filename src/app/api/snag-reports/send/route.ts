@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 type LocationType = "unit" | "communal";
 
 type SendSnagReportBody = {
-  action?: "preview" | "send";
+  action?: "preview" | "prepare_upload" | "send";
   buildingId?: string;
   locationType?: LocationType;
   unitId?: string | null;
@@ -16,7 +16,7 @@ type SendSnagReportBody = {
   includePhotos?: boolean;
   includeClosedSnags?: boolean;
   snagIds?: string[];
-  pdfBase64?: string;
+  filePath?: string;
   filename?: string;
 };
 
@@ -296,7 +296,7 @@ export async function POST(request: Request) {
     const filename = `${safeFilename(body.filename)}.pdf`;
 
     if (!buildingId) return NextResponse.json({ error: "Choose a building." }, { status: 400 });
-    if (action !== "preview" && action !== "send") return NextResponse.json({ error: "Unsupported report action." }, { status: 400 });
+    if (action !== "preview" && action !== "prepare_upload" && action !== "send") return NextResponse.json({ error: "Unsupported report action." }, { status: 400 });
 
     const canSend = await requesterCanSendForBuilding(adminClient, requester, buildingId);
     if (!canSend) {
@@ -318,10 +318,27 @@ export async function POST(request: Request) {
       });
     }
 
+    if (action === "prepare_upload") {
+      const filePath = `reports/${buildingId}/${crypto.randomUUID()}-${filename}`;
+      const { data: uploadData, error: uploadError } = await adminClient.storage.from("snag-reports").createSignedUploadUrl(filePath);
+
+      if (uploadError || !uploadData?.token) {
+        return NextResponse.json({
+          error: `Could not prepare report upload. Run the snag reports migration if this is the first report being sent. ${uploadError?.message ?? ""}`.trim(),
+        }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        filePath,
+        token: uploadData.token,
+      });
+    }
+
     if (locationType !== "unit" && locationType !== "communal") return NextResponse.json({ error: "Choose a flat or communal report." }, { status: 400 });
     if (locationType === "unit" && !body.unitId) return NextResponse.json({ error: "Choose a flat." }, { status: 400 });
     if (snagIds.length === 0) return NextResponse.json({ error: "There are no snags to send." }, { status: 400 });
-    if (!body.pdfBase64) return NextResponse.json({ error: "Report PDF is missing." }, { status: 400 });
+    const filePath = body.filePath?.trim();
+    if (!filePath || !filePath.startsWith(`reports/${buildingId}/`)) return NextResponse.json({ error: "Stored report PDF is missing." }, { status: 400 });
 
     const [{ data: building, error: buildingError }, { data: communalAreas, error: communalAreasError }] = await Promise.all([
       adminClient.from("buildings").select("id,name").eq("id", buildingId).maybeSingle(),
@@ -360,19 +377,6 @@ export async function POST(request: Request) {
 
     if (validSnagIds.size !== snagIds.length) {
       return NextResponse.json({ error: "The selected snags no longer match the report filters. Reload and try again." }, { status: 400 });
-    }
-
-    const pdfBuffer = Buffer.from(body.pdfBase64, "base64");
-    const filePath = `reports/${buildingId}/${crypto.randomUUID()}-${filename}`;
-    const { error: uploadError } = await adminClient.storage.from("snag-reports").upload(filePath, pdfBuffer, {
-      contentType: "application/pdf",
-      upsert: false,
-    });
-
-    if (uploadError) {
-      return NextResponse.json({
-        error: `Could not store report PDF. Run the snag reports migration if this is the first report being sent. ${uploadError.message}`,
-      }, { status: 400 });
     }
 
     const { data: signedUrlData, error: signedUrlError } = await adminClient.storage.from("snag-reports").createSignedUrl(filePath, 60 * 60 * 24 * 14);
