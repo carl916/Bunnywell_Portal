@@ -1429,6 +1429,12 @@ function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
         </label>
         <button type="submit" className="primary w-full">Sign in</button>
       </form>
+      <div className="mt-5 border-t border-[#e3ded2] pt-4 text-center">
+        <p className="text-sm text-[#617169]">Do not have portal access yet?</p>
+        <a className="secondary mt-3 w-full justify-center" href="/request-access">
+          Request access
+        </a>
+      </div>
     </section>
   );
 }

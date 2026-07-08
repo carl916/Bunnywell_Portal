@@ -189,6 +189,9 @@ export function RequestAccessPage() {
                 <div>
                   <h3 className="text-sm font-bold text-[#0F3D2E]">Flat access</h3>
                   <p className="mt-1 text-sm text-[#617169]">Add the flat you need access to. Most residents only need to add one flat.</p>
+                  <p className="mt-1 text-sm text-[#617169]">
+                    If your building is not listed, please email <a className="font-semibold text-[#0F3D2E] underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for help.
+                  </p>
                 </div>
                 <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={addRequestedUnit}>
                   <Plus size={16} aria-hidden />
