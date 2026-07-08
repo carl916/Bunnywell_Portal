@@ -29,6 +29,21 @@ Open:
 http://localhost:3000
 ```
 
+## System Guide
+
+The current system guide lives at:
+
+```text
+docs/bunnywell-portal-system-guide.md
+docs/bunnywell-portal-system-guide.pdf
+```
+
+When portal behaviour changes, update the Markdown guide in the same change and regenerate the PDF:
+
+```bash
+npm run docs:pdf
+```
+
 ## Supabase Setup
 
 Create a Supabase project, then run:
