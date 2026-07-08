@@ -4,6 +4,7 @@ import { Building2, CheckCircle2, Home, Plus, Send, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { ResidentType } from "@/lib/data/production";
+import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 
 type BuildingOption = {
   id: string;
@@ -278,6 +279,7 @@ function RequestAccessShell({ children, notice }: { children: ReactNode; notice:
   return (
     <main className="app-shell min-h-screen pb-12">
       <header className="app-header">
+        <EnvironmentBanner />
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <img src="/bunnywell-logo-icon.jpg" alt="Bunnywell Homes" className="h-11 w-auto shrink-0 object-contain sm:h-12" />
