@@ -571,18 +571,6 @@ function filenameSafe(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "report";
 }
 
-function arrayBufferToBase64(buffer: ArrayBuffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = "";
-
-  for (let index = 0; index < bytes.length; index += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
-  }
-
-  return window.btoa(binary);
-}
-
 function parseParkingBays(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return [];
@@ -7835,6 +7823,40 @@ function ReportsPanel({
       }
 
       const filename = `${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report`;
+      const prepareResponse = await fetch("/api/snag-reports/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "prepare_upload",
+          buildingId,
+          filename,
+        }),
+      });
+      const preparePayload = await prepareResponse.json().catch(() => ({})) as {
+        error?: string;
+        filePath?: string;
+        token?: string;
+      };
+
+      if (!prepareResponse.ok || !preparePayload.filePath || !preparePayload.token) {
+        throw new Error(preparePayload.error ?? "Could not prepare report upload.");
+      }
+
+      const pdfBlob = new Blob([pdf.output("arraybuffer")], { type: "application/pdf" });
+      const { error: uploadError } = await supabase.storage
+        .from("snag-reports")
+        .uploadToSignedUrl(preparePayload.filePath, preparePayload.token, pdfBlob, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(`Could not upload report PDF. ${uploadError.message}`);
+      }
+
       const response = await fetch("/api/snag-reports/send", {
         method: "POST",
         headers: {
@@ -7851,7 +7873,7 @@ function ReportsPanel({
           includePhotos,
           includeClosedSnags,
           snagIds: reportSnags.map((snag) => snag.id),
-          pdfBase64: arrayBufferToBase64(pdf.output("arraybuffer")),
+          filePath: preparePayload.filePath,
           filename,
         }),
       });
