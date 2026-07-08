@@ -6,6 +6,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
+import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import {
   buildingAllowsFlatHandover,
   buildingAllowsResidentRoutineSnags,
@@ -1271,6 +1272,7 @@ function Shell({
   return (
     <main className="app-shell pb-24 md:pb-0">
       <header className="app-header">
+        <EnvironmentBanner />
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
