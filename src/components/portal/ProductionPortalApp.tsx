@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Home, LogIn, Menu, Pencil, Plus, RefreshCw, Shield, Trash2, X } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -507,6 +507,15 @@ function buildingSchemaNotice(message: string) {
   return "The database is missing the latest building lifecycle fields. Run the building lifecycle migration in Supabase, then reload the portal.";
 }
 
+function deliveryTeamSchemaNotice(message: string) {
+  const lowerMessage = message.toLowerCase();
+  const missingDeliveryTeamSchema = ["active", "trade_type", "role_on_project", "building_organisations"].some((token) => lowerMessage.includes(token));
+
+  if (!missingDeliveryTeamSchema) return message;
+
+  return "The database is missing the latest building delivery-team fields. Run the 20260703 building responsible organisations migration in Supabase, then reload the portal.";
+}
+
 function entityLabel(entityType: string) {
   const labels: Record<string, string> = {
     area: "Area",
@@ -560,6 +569,18 @@ function sortAreasByFloorOrder(areas: Area[], buildingFloors: BuildingFloor[], b
 
 function filenameSafe(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "report";
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+
+  return window.btoa(binary);
 }
 
 function parseParkingBays(value: string) {
@@ -1117,6 +1138,7 @@ export function ProductionPortalApp() {
           trades={trades}
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
+          userBuildingAccess={userBuildingAccess}
           photos={photos}
           events={events}
           profiles={profiles}
@@ -3222,7 +3244,7 @@ function BuildingDeliveryTeam({
       onNotice(`Delivery team saved for ${building.name}.`);
       await reload();
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Could not save delivery team.");
+      onNotice(deliveryTeamSchemaNotice(readableError(error, "Could not save delivery team.")));
     } finally {
       setIsSaving(false);
     }
@@ -3258,7 +3280,7 @@ function BuildingDeliveryTeam({
       onNotice("Supporting trade added.");
       await reload();
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Could not add supporting trade.");
+      onNotice(deliveryTeamSchemaNotice(readableError(error, "Could not add supporting trade.")));
     } finally {
       setIsSaving(false);
     }
@@ -3282,7 +3304,7 @@ function BuildingDeliveryTeam({
       onNotice("Supporting trade removed.");
       await reload();
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Could not remove supporting trade.");
+      onNotice(deliveryTeamSchemaNotice(readableError(error, "Could not remove supporting trade.")));
     } finally {
       setIsSaving(false);
     }
@@ -5236,6 +5258,7 @@ function SnagWorkflow({
   trades,
   organisations,
   buildingOrganisations,
+  userBuildingAccess,
   photos,
   events,
   profiles,
@@ -5255,6 +5278,7 @@ function SnagWorkflow({
   trades: Trade[];
   organisations: Organisation[];
   buildingOrganisations: BuildingOrganisation[];
+  userBuildingAccess: UserBuildingAccess[];
   photos: SnagPhoto[];
   events: SnagEvent[];
   profiles: Profile[];
@@ -5268,6 +5292,7 @@ function SnagWorkflow({
   const canUseDeveloperActions = !isContractorRole;
   const canCreateSnag = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative";
   const canPrintReport = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative" || profile?.role === "contractor";
+  const canSendReport = profile?.role === "admin" || profile?.role === "developer" || profile?.role === "developer_representative";
   const [showAddSnag, setShowAddSnag] = useState(false);
   const [addSnagHasUnsavedChanges, setAddSnagHasUnsavedChanges] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
@@ -5301,7 +5326,7 @@ function SnagWorkflow({
             )}
             {canPrintReport && (
               <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setShowPrintReport((current) => !current)}>
-                <Download size={16} aria-hidden /> {showPrintReport ? "Hide print sheet" : "Print snag sheet"}
+                <Download size={16} aria-hidden /> {showPrintReport ? "Hide snag report" : "Snag report"}
               </button>
             )}
           </div>}
@@ -5328,7 +5353,19 @@ function SnagWorkflow({
         />
       )}
       {!isViewingSnagDetails && showPrintReport && canPrintReport && (
-        <ReportsPanel buildings={buildings} buildingFloors={buildingFloors} units={units} areas={areas} trades={trades} snags={snags} photos={photos} recordAudit={recordAudit} />
+        <ReportsPanel
+          user={user}
+          canSendReport={canSendReport}
+          buildings={buildings}
+          buildingFloors={buildingFloors}
+          units={units}
+          areas={areas}
+          trades={trades}
+          snags={snags}
+          photos={photos}
+          onNotice={onNotice}
+          recordAudit={recordAudit}
+        />
       )}
       <SnagList
         title=""
@@ -7326,6 +7363,8 @@ function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; prof
 }
 
 function ReportsPanel({
+  user,
+  canSendReport,
   buildings,
   buildingFloors,
   units,
@@ -7333,8 +7372,11 @@ function ReportsPanel({
   trades,
   snags,
   photos,
+  onNotice,
   recordAudit,
 }: {
+  user: User;
+  canSendReport: boolean;
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
@@ -7342,6 +7384,7 @@ function ReportsPanel({
   trades: Trade[];
   snags: ProductionSnag[];
   photos: SnagPhoto[];
+  onNotice: (notice: string) => void;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
 }) {
   const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
@@ -7366,6 +7409,10 @@ function ReportsPanel({
   const [communalAreaId, setCommunalAreaId] = useState("");
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
+  const [sendState, setSendState] = useState<"idle" | "loading_recipients" | "preview" | "sending" | "sent" | "failed">("idle");
+  const [sendError, setSendError] = useState("");
+  const [sentMessage, setSentMessage] = useState("");
+  const [previewRecipients, setPreviewRecipients] = useState<{ id: string; email: string; name: string | null }[]>([]);
   const communalAreaIdsForReport = new Set(buildingCommunalAreas.map((area) => area.id));
   const reportSnags = snags
     .filter((snag) => {
@@ -7383,7 +7430,6 @@ function ReportsPanel({
       ? `${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
       : "All communal areas";
   const locationSummaryLabel = locationType === "unit" ? "this flat" : communalArea ? "this communal area" : "all communal areas";
-
   useEffect(() => {
     if (!reportBuildings.some((building) => building.id === buildingId)) {
       setBuildingId(reportBuildings[0]?.id ?? "");
@@ -7400,7 +7446,14 @@ function ReportsPanel({
     }
   }, [buildingCommunalAreas, buildingId, communalAreaId, locationType, reportBuildings, sortedBuildingUnits, unitId]);
 
-  async function download() {
+  function resetSendState() {
+    setSendState("idle");
+    setSendError("");
+    setSentMessage("");
+    setPreviewRecipients([]);
+  }
+
+  async function buildReportPdf() {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -7694,7 +7747,13 @@ function ReportsPanel({
     }
 
     addFooter();
-    pdf.save(`${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`);
+    return pdf;
+  }
+
+  async function download() {
+    const pdf = await buildReportPdf();
+    const filename = `${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`;
+    pdf.save(filename);
     await recordAudit({
       event_type: "report_generated",
       entity_type: locationType === "unit" ? "unit" : communalArea ? "area" : "building",
@@ -7713,19 +7772,134 @@ function ReportsPanel({
     });
   }
 
+  async function previewContractorRecipients() {
+    try {
+      setSendState("loading_recipients");
+      setSendError("");
+      setSentMessage("");
+      setPreviewRecipients([]);
+
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+
+      if (!token) {
+        throw new Error("Sign in again before sending the report.");
+      }
+
+      const response = await fetch("/api/snag-reports/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "preview",
+          buildingId,
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+        recipients?: { id: string; email: string; name: string | null }[];
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not load contractor recipients.");
+      }
+
+      if (!payload.recipients || payload.recipients.length === 0) {
+        throw new Error("No contractor users are linked to this building.");
+      }
+
+      setPreviewRecipients(payload.recipients);
+      setSendState("preview");
+    } catch (error) {
+      setSendState("failed");
+      setSendError(readableError(error, "Could not load contractor recipients."));
+    }
+  }
+
+  async function sendReport() {
+    try {
+      setSendState("sending");
+      setSendError("");
+      setSentMessage("");
+
+      const pdf = await buildReportPdf();
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+
+      if (!token) {
+        throw new Error("Sign in again before sending the report.");
+      }
+
+      const filename = `${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report`;
+      const response = await fetch("/api/snag-reports/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "send",
+          buildingId,
+          locationType,
+          unitId: locationType === "unit" ? unitId : null,
+          communalAreaId: locationType === "communal" ? communalAreaId || null : null,
+          locationLabel,
+          includePhotos,
+          includeClosedSnags,
+          snagIds: reportSnags.map((snag) => snag.id),
+          pdfBase64: arrayBufferToBase64(pdf.output("arraybuffer")),
+          filename,
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+        sentCount?: number;
+        failedRecipients?: { email: string; error: string }[];
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not send snag report.");
+      }
+
+      if (payload.failedRecipients && payload.failedRecipients.length > 0) {
+        setSendState("failed");
+        setSendError(`Report sent to ${payload.sentCount ?? 0} recipient${payload.sentCount === 1 ? "" : "s"}, but ${payload.failedRecipients.length} failed.`);
+        return;
+      }
+
+      const sentCount = payload.sentCount ?? previewRecipients.length;
+      setSendState("sent");
+      setSentMessage(`Snag report sent to ${sentCount} contractor recipient${sentCount === 1 ? "" : "s"}.`);
+      onNotice("Snag report sent to contractor.");
+    } catch (error) {
+      setSendState("failed");
+      setSendError(readableError(error, "Could not send snag report."));
+    }
+  }
+
   return (
-    <FormPanel title="Print snag sheet">
+    <FormPanel title="Snag report">
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
-      <select className="field" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
+      <select className="field" value={buildingId} onChange={(event) => {
+        setBuildingId(event.target.value);
+        resetSendState();
+      }}>
         {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
       </select>
       <div className="grid grid-cols-2 gap-2">
         <button
           className={locationType === "unit" ? "primary" : "secondary"}
           type="button"
-          onClick={() => setLocationType("unit")}
+          onClick={() => {
+            setLocationType("unit");
+            resetSendState();
+          }}
           disabled={sortedBuildingUnits.length === 0}
         >
           Flat
@@ -7733,19 +7907,28 @@ function ReportsPanel({
         <button
           className={locationType === "communal" ? "primary" : "secondary"}
           type="button"
-          onClick={() => setLocationType("communal")}
+          onClick={() => {
+            setLocationType("communal");
+            resetSendState();
+          }}
           disabled={buildingCommunalAreas.length === 0}
         >
           Communal
         </button>
       </div>
       {locationType === "unit" ? (
-        <select className="field" value={unitId} onChange={(event) => setUnitId(event.target.value)} disabled={sortedBuildingUnits.length === 0}>
+        <select className="field" value={unitId} onChange={(event) => {
+          setUnitId(event.target.value);
+          resetSendState();
+        }} disabled={sortedBuildingUnits.length === 0}>
           {sortedBuildingUnits.length === 0 && <option value="">No flat snags available</option>}
           {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
         </select>
       ) : (
-        <select className="field" value={communalAreaId} onChange={(event) => setCommunalAreaId(event.target.value)} disabled={buildingCommunalAreas.length === 0}>
+        <select className="field" value={communalAreaId} onChange={(event) => {
+          setCommunalAreaId(event.target.value);
+          resetSendState();
+        }} disabled={buildingCommunalAreas.length === 0}>
           <option value="">All communal areas</option>
           {buildingCommunalAreas.map((area) => (
             <option key={area.id} value={area.id}>
@@ -7755,15 +7938,67 @@ function ReportsPanel({
         </select>
       )}
       <label className="option-card min-h-10 px-3 py-2 text-sm">
-        <input checked={includePhotos} onChange={(event) => setIncludePhotos(event.target.checked)} type="checkbox" />
+        <input checked={includePhotos} onChange={(event) => {
+          setIncludePhotos(event.target.checked);
+          resetSendState();
+        }} type="checkbox" />
         Include photos
       </label>
       <label className="option-card min-h-10 px-3 py-2 text-sm">
-        <input checked={includeClosedSnags} onChange={(event) => setIncludeClosedSnags(event.target.checked)} type="checkbox" />
+        <input checked={includeClosedSnags} onChange={(event) => {
+          setIncludeClosedSnags(event.target.checked);
+          resetSendState();
+        }} type="checkbox" />
         Include closed snags
       </label>
       <p className="text-sm text-[#617169]">{reportSnags.length} snag{reportSnags.length === 1 ? "" : "s"} will be included for {locationSummaryLabel}.</p>
-      <button className="primary" onClick={download} disabled={reportSnags.length === 0}><Download size={16} /> Download PDF</button>
+      <div className="flex flex-wrap gap-2">
+        <button className="primary" onClick={download} disabled={reportSnags.length === 0 || sendState === "sending"}><Download size={16} /> Download PDF</button>
+        {canSendReport && (
+          <button className="secondary" type="button" onClick={previewContractorRecipients} disabled={reportSnags.length === 0 || sendState === "loading_recipients" || sendState === "sending"}>
+            <Mail size={16} /> Send to contractor
+          </button>
+        )}
+      </div>
+      {canSendReport && sendState === "loading_recipients" && (
+        <p className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">Loading contractor recipients...</p>
+      )}
+      {canSendReport && sendState === "preview" && (
+        <div className="rounded-xl border border-[#d8ded8] bg-[#fbfaf6] p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="text-base font-semibold text-[#0f3d31]">Confirm contractor recipients</h3>
+              <p className="mt-1 text-sm text-[#617169]">This report will be sent to contractor users linked to {building?.name ?? "this building"}.</p>
+            </div>
+            <span className="rounded-full bg-[#eef6f1] px-3 py-1 text-xs font-semibold text-[#0f3d31]">
+              {previewRecipients.length} recipient{previewRecipients.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <ul className="mt-3 grid gap-2">
+            {previewRecipients.map((recipient) => (
+              <li key={recipient.id} className="rounded-md border border-[#e5e9e4] bg-white px-3 py-2 text-sm">
+                <span className="font-semibold text-[#0f3d31]">{recipient.name || recipient.email}</span>
+                <span className="ml-2 text-[#617169]">{recipient.email}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <button className="secondary" type="button" onClick={() => setSendState("idle")}>Cancel</button>
+            <button className="primary" type="button" onClick={sendReport}>
+              <Send size={16} /> Send report
+            </button>
+          </div>
+        </div>
+      )}
+      {canSendReport && sendState === "sending" && (
+        <p className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">Generating and sending the report...</p>
+      )}
+      {canSendReport && sendState === "sent" && sentMessage && (
+        <p className="rounded-md border border-[#cfe1d4] bg-[#eef6f1] p-3 text-sm font-semibold text-[#0f3d31]">{sentMessage}</p>
+      )}
+      {canSendReport && sendState === "failed" && sendError && (
+        <p className="rounded-md border border-[#f0c58c] bg-[#fff8ec] p-3 text-sm font-semibold text-[#7c5b1b]">{sendError}</p>
+      )}
     </FormPanel>
   );
 }

@@ -90,7 +90,6 @@ type RunDigestOptions = {
 };
 
 const digestTimeZone = "Europe/London";
-const logoUrl = "https://defects.bunnywell.co.uk/bunnywell-logo-icon.jpg";
 const portalFromEmail = "Bunnywell Portal <no-reply@bunnywell.co.uk>";
 const maxSnagsPerSection = 6;
 const finalStatuses = new Set(["closed", "resolved"]);
@@ -165,6 +164,10 @@ function appUrl(origin?: string) {
 
 function snagsUrl(origin?: string) {
   return `${appUrl(origin)}?screen=snags`;
+}
+
+function logoUrl(origin?: string) {
+  return `${appUrl(origin)}/bunnywell-logo-icon.png`;
 }
 
 function isStatusEvent(event: SnagEvent) {
@@ -396,6 +399,7 @@ function renderSection(section: DigestSection) {
 
 function renderDigestHtml(digest: RecipientDigest, origin?: string) {
   const link = snagsUrl(origin);
+  const logo = logoUrl(origin);
   const hasDaily = digest.dailySections.length > 0;
   const hasWeekly = digest.weeklySections.length > 0;
 
@@ -411,7 +415,7 @@ function renderDigestHtml(digest: RecipientDigest, origin?: string) {
                   <td style="padding:0 0 18px;">
                     <table role="presentation" style="border-collapse:collapse;">
                       <tr>
-                        <td style="padding-right:14px;"><img src="${logoUrl}" alt="Bunnywell" width="56" height="56" style="display:block;border:0;border-radius:4px;"></td>
+                        <td style="padding-right:14px;"><img src="${logo}" alt="Bunnywell" width="56" height="56" style="display:block;border:0;object-fit:contain;"></td>
                         <td>
                           <p style="margin:0;color:#d49a2d;font-size:14px;letter-spacing:6px;font-weight:700;">BUNNYWELL</p>
                           <p style="margin:2px 0 0;color:#0f3d2e;font-size:30px;font-weight:800;">Portal</p>
