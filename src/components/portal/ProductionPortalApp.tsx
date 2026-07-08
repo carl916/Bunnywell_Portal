@@ -319,6 +319,15 @@ function formatDateTime(value?: string | null) {
   }).format(new Date(value));
 }
 
+function formatRefreshTime(value?: string | null) {
+  if (!value) return "Not updated yet";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 function normalizeScreen(value?: string | null): Tab | null {
   if (!value) return null;
   const normalized = value.trim().toLowerCase().replace(/-/g, "_");
@@ -710,6 +719,7 @@ export function ProductionPortalApp() {
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
+  const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -756,6 +766,7 @@ export function ProductionPortalApp() {
     setMeterReadings([]);
     setAccessibleUnitIds([]);
     setAccessibleBuildingIds([]);
+    setLastDataRefreshAt(null);
   }
 
   async function signOut() {
@@ -1019,6 +1030,7 @@ export function ProductionPortalApp() {
       ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
       ...organisationBuildingIds,
     ])));
+    setLastDataRefreshAt(new Date().toISOString());
   }
 
   async function uploadFile(dataUrl: string, folder: string) {
@@ -1080,7 +1092,7 @@ export function ProductionPortalApp() {
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
 
   return (
-    <Shell profile={profile} tab={activeTab} tabs={tabs} setTab={setTab} notice={notice} onRefresh={() => loadAll()} onSignOut={signOut}>
+    <Shell profile={profile} tab={activeTab} tabs={tabs} setTab={setTab} notice={notice} lastUpdatedAt={lastDataRefreshAt} onRefresh={() => loadAll()} onSignOut={signOut}>
       {activeTab === "dashboard" && (
         <Dashboard
           buildings={scopedBuildings}
@@ -1211,6 +1223,7 @@ function Shell({
   tabs,
   setTab,
   notice,
+  lastUpdatedAt,
   onRefresh,
   onSignOut,
   children,
@@ -1220,7 +1233,8 @@ function Shell({
   tabs: Tab[];
   setTab: (tab: Tab) => void;
   notice?: string;
-  onRefresh?: () => void;
+  lastUpdatedAt?: string | null;
+  onRefresh?: () => void | Promise<void>;
   onSignOut?: () => Promise<void>;
   children?: React.ReactNode;
 }) {
@@ -1249,6 +1263,11 @@ function Shell({
     await onSignOut?.();
   }
 
+  async function handleRefresh() {
+    await onRefresh?.();
+    setMoreOpen(false);
+  }
+
   return (
     <main className="app-shell pb-24 md:pb-0">
       <header className="app-header">
@@ -1267,10 +1286,18 @@ function Shell({
                 <span className="truncate">{profile?.email ?? "Not signed in"}</span>
               </span>
               {onRefresh && (
-                <button onClick={onRefresh} className="secondary min-h-10 px-3 text-sm">
-                  <RefreshCw size={16} aria-hidden />
-                  Refresh
-                </button>
+                <div className="flex items-center gap-1.5 rounded-full border border-[#e3ded2] bg-[#fbfaf6] px-3 py-2 text-xs text-[#66736B]">
+                  <span>Updated {formatRefreshTime(lastUpdatedAt)}</span>
+                  <span aria-hidden>·</span>
+                  <button
+                    type="button"
+                    onClick={() => void handleRefresh()}
+                    className="inline-flex items-center gap-1 font-semibold text-[#0F3D2E] underline-offset-4 hover:underline"
+                  >
+                    <RefreshCw size={13} aria-hidden />
+                    Refresh
+                  </button>
+                </div>
               )}
               {onSignOut && (
                 <button
@@ -1339,6 +1366,19 @@ function Shell({
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Account</p>
                 <p className="mt-1 truncate text-sm text-[#66736B]">{profile?.email ?? "Not signed in"}</p>
+                {onRefresh && (
+                  <p className="mt-2 text-xs text-[#66736B]">
+                    Updated {formatRefreshTime(lastUpdatedAt)}
+                    <button
+                      type="button"
+                      className="ml-2 inline-flex items-center gap-1 font-semibold text-[#0F3D2E] underline-offset-4 hover:underline"
+                      onClick={() => void handleRefresh()}
+                    >
+                      <RefreshCw size={13} aria-hidden />
+                      Refresh
+                    </button>
+                  </p>
+                )}
               </div>
               <button className="secondary icon-button" onClick={() => setMoreOpen(false)} aria-label="Close menu" title="Close menu">
                 <X size={17} strokeWidth={2.5} aria-hidden />
@@ -1353,15 +1393,6 @@ function Shell({
               ))}
             </div>
             <div className="mt-4 grid gap-2 border-t border-[#E2DED3] pt-4">
-              {onRefresh && (
-                <button className="menu-row" onClick={() => {
-                  onRefresh();
-                  setMoreOpen(false);
-                }}>
-                  <RefreshCw size={17} aria-hidden />
-                  <span>Refresh</span>
-                </button>
-              )}
               {onSignOut && (
                 <button className="menu-row" onClick={() => void handleSignOut()}>
                   <LogIn size={17} aria-hidden />
