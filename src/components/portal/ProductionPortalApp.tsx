@@ -3586,7 +3586,7 @@ function DeveloperSnagging({
         focusTitleWithoutJump(formTopBefore);
       }
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Unable to add snag. Please try again.");
+      onNotice(`Unable to add snag. ${readableError(error)}`);
     } finally {
       setIsSaving(false);
     }
