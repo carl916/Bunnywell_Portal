@@ -146,6 +146,8 @@ Compatibility fields such as `practical_completion_date` and `defects_liability_
 
 Environment variables are configured separately per environment. Important names include `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and the Playwright test account variables. Never commit live secret values.
 
+GitHub Actions Playwright tests run a local build of the portal against the Supabase project configured in repository secrets. The current test baseline uses the staging database and these role accounts: `carl.gilbert@gmail.com` as Admin, `devrep@bunnywell.co.uk` as Developer Representative for Airey Miller on Forum House, `contractor@bunnywell.co.uk` as Benchmark Construction contractor on Forum House, and `resident@bunnywell.co.uk` as a resident for Forum House flats 101 and 201. Resident e2e coverage should remain limited to sign-in and navigation visibility until the resident journey is complete.
+
 ## 11. Supabase / Database Overview
 
 Main tables:
