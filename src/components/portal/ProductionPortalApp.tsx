@@ -3586,7 +3586,7 @@ function DeveloperSnagging({
         focusTitleWithoutJump(formTopBefore);
       }
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Unable to add snag. Please try again.");
+      onNotice(`Unable to add snag. ${readableError(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -8695,12 +8695,13 @@ function SnagDetailPage({
   const primaryPhoto = primarySnagPhoto(photos);
   const area = areas.find((item) => item.id === snag.area_id);
   const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
-  const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [events]);
-  const sortedPhotos = useMemo(() => [...photos].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()), [photos]);
+  const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), [events]);
+  const sortedPhotos = useMemo(() => [...photos].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), [photos]);
   const noteEvents = sortedEvents.filter((event) => ["note", "access_note"].includes(event.event_type));
   const statusChangeCount = sortedEvents.filter((event) => event.event_type === "status_change" || event.event_type === "triage").length;
-  const lastUpdatedTime = Math.max(new Date(snag.updated_at).getTime(), sortedEvents[0] ? new Date(sortedEvents[0].created_at).getTime() : 0);
-  const auditEvents = showAllAudit ? sortedEvents : sortedEvents.slice(0, 10);
+  const latestEvent = sortedEvents[sortedEvents.length - 1];
+  const lastUpdatedTime = Math.max(new Date(snag.updated_at).getTime(), latestEvent ? new Date(latestEvent.created_at).getTime() : 0);
+  const auditEvents = showAllAudit ? sortedEvents : sortedEvents.slice(-10);
   const activityTabs: { key: ActivityTab; label: string }[] = residentMode
     ? [
         { key: "timeline", label: "Timeline" },
@@ -8758,8 +8759,7 @@ function SnagDetailPage({
 
   const lifecycleEvents = sortedEvents
     .filter((event) => ["created", "submitted", "assigned", "triage", "status_change", "trade_changed", "priority_changed"].includes(event.event_type))
-    .filter((event) => !residentMode || event.event_type !== "trade_changed")
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    .filter((event) => !residentMode || event.event_type !== "trade_changed");
   const timelineItems = lifecycleEvents.length > 0
     ? lifecycleEvents
     : [{
