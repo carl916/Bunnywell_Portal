@@ -82,6 +82,20 @@ function optionMatches(optionLabel: string, preferredLabel: string) {
   return option === preferred || option.startsWith(`${preferred} /`) || option.includes(preferred);
 }
 
+function findActualOption(options: Awaited<ReturnType<typeof optionsFor>>, actualLabel: string) {
+  const actual = normaliseOption(actualLabel);
+  const cleanActual = normaliseOption(cleanAreaFilterLabel(actualLabel));
+  return (
+    options.find((option) => normaliseOption(option.label) === actual) ??
+    options.find((option) => normaliseOption(option.label) === cleanActual) ??
+    options.find((option) => normaliseOption(option.label).startsWith(`${cleanActual} /`))
+  );
+}
+
+async function selectedOptionLabel(select: Locator) {
+  return select.locator("option:checked").evaluate((item) => item.textContent?.trim().replace(/\s+/g, " ") ?? "");
+}
+
 async function selectPreferredOption(select: Locator, preferredLabels: string[], context: string) {
   const options = (await optionsFor(select)).filter((option) => option.value && !option.disabled);
   const preferred = preferredLabels.filter(Boolean);
@@ -92,7 +106,8 @@ async function selectPreferredOption(select: Locator, preferredLabels: string[],
   }
 
   await select.selectOption(match.value);
-  return match.label;
+  await expect(select).toHaveValue(match.value);
+  return selectedOptionLabel(select);
 }
 
 async function maybeSelectPreferredOption(select: Locator, preferredLabels: string[]) {
@@ -102,7 +117,22 @@ async function maybeSelectPreferredOption(select: Locator, preferredLabels: stri
 
   if (!match) return "";
   await select.selectOption(match.value);
-  return match.label;
+  await expect(select).toHaveValue(match.value);
+  return selectedOptionLabel(select);
+}
+
+async function selectCreatedOption(select: Locator, actualLabel: string, context: string) {
+  const options = (await optionsFor(select)).filter((option) => option.value && !option.disabled);
+  const match = findActualOption(options, actualLabel);
+
+  if (!match) {
+    const available = options.map((option) => option.label).join(", ") || "none";
+    throw new Error(`Could not select ${context} "${actualLabel}". Available options: ${available}`);
+  }
+
+  await select.selectOption(match.value);
+  await expect(select).toHaveValue(match.value);
+  return selectedOptionLabel(select);
 }
 
 function cleanAreaFilterLabel(label: string) {
@@ -164,10 +194,18 @@ async function applySnagFilters(page: Page, snag: CreatedSnag, status: SnagStatu
 
   const unitFilter = page.getByLabel("Unit filter");
   if (snag.location.type === "unit") {
-    await selectPreferredOption(unitFilter, [snag.unitLabel ?? "", ...(snag.location.preferredUnits ?? [])], "snag unit filter");
+    if (snag.unitLabel) {
+      await selectCreatedOption(unitFilter, snag.unitLabel, "created unit filter");
+    } else {
+      await selectPreferredOption(unitFilter, snag.location.preferredUnits ?? [], "snag unit filter");
+    }
   } else {
-    const selected = await maybeSelectPreferredOption(unitFilter, [cleanAreaFilterLabel(snag.areaLabel), ...snag.location.preferredAreas]);
-    if (!selected) await selectPreferredOption(unitFilter, ["All communal spaces"], "snag communal filter");
+    if (snag.areaLabel) {
+      await selectCreatedOption(unitFilter, cleanAreaFilterLabel(snag.areaLabel), "created communal area filter");
+    } else {
+      const selected = await maybeSelectPreferredOption(unitFilter, snag.location.preferredAreas);
+      if (!selected) await selectPreferredOption(unitFilter, ["All communal spaces"], "snag communal filter");
+    }
   }
 
   await setPageSizeToLargestIfAvailable(page);
@@ -312,6 +350,9 @@ test.describe.serial("developer snagging workflow", () => {
     };
 
     await expectSnagInList(page, created.listClose, "open");
+    await expectSnagInList(page, created.infoLoop, "open");
+    await expectSnagInList(page, created.detailReject, "open");
+    await expectSnagInList(page, created.finalClose, "open");
     await openSnagDetail(page, created.infoLoop, "open");
     await expect(snagDetail(page, created.infoLoop.title)).toContainText(created.infoLoop.areaLabel);
     await backToSnagList(page);
