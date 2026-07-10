@@ -386,9 +386,11 @@ test.describe.serial("developer snagging workflow", () => {
     await expect(snagDetail(page, created.detailReject.title)).toContainText(detailStatusLabel("rejected_back_to_contractor"));
     await backToSnagList(page);
     await openSnagDetail(page, created.infoLoop, "needs_more_info");
-    await page.getByPlaceholder("Information for contractor").fill("Wider context photo supplied by the developer representative.");
+    const developerInfoResponse = "Wider context photo supplied by the developer representative.";
+    await page.getByPlaceholder("Information for contractor").fill(developerInfoResponse);
     await page.getByRole("button", { name: "Send info", exact: true }).click();
     await expect(snagDetail(page, created.infoLoop.title)).toContainText(detailStatusLabel("open"));
+    await expect(snagDetail(page, created.infoLoop.title)).toContainText(developerInfoResponse);
     await backToSnagList(page);
 
     await signIn(
