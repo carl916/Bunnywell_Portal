@@ -35,7 +35,7 @@ test("admin can sign in and see admin navigation", async ({ page }) => {
   const navigation = desktopNavigation(page);
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Snags", exact: true })).toBeVisible();
-  await expect(navigation.getByRole("button", { name: "Units", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Sales", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Setup", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Admin", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Users", exact: true })).toHaveCount(0);
@@ -77,7 +77,7 @@ test("contractor can sign in and see contractor navigation", async ({ page }) =>
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Snags", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Setup", exact: true })).toHaveCount(0);
-  await expect(navigation.getByRole("button", { name: "Units", exact: true })).toHaveCount(0);
+  await expect(navigation.getByRole("button", { name: "Sales", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Reports", exact: true })).toHaveCount(0);
 });
 
@@ -94,7 +94,7 @@ test("resident can sign in and see resident area", async ({ page }) => {
   await expect(navigation.getByRole("button", { name: "Documents", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Setup", exact: true })).toHaveCount(0);
-  await expect(navigation.getByRole("button", { name: "Units", exact: true })).toHaveCount(0);
+  await expect(navigation.getByRole("button", { name: "Sales", exact: true })).toHaveCount(0);
   await expect(page.getByText("Not authorised", { exact: true })).toHaveCount(0);
 });
 

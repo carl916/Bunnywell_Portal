@@ -1,4 +1,4 @@
-export type AppRole = "admin" | "developer" | "developer_representative" | "contractor" | "resident" | "user";
+export type AppRole = "admin" | "developer" | "developer_representative" | "sales_agent" | "conveyancer" | "contractor" | "resident" | "user";
 export type ResidentType = "leaseholder" | "tenant" | "letting_agent" | "managing_agent";
 
 export type Building = {
@@ -67,6 +67,95 @@ export type Unit = {
   handover_date: string | null;
   parking_bays: number[] | null;
   notes: string | null;
+};
+
+export type UnitSaleRecord = {
+  id: string;
+  building_id: string;
+  unit_id: string;
+  buyer_name: string | null;
+  buyer_email: string | null;
+  buyer_phone: string | null;
+  reservation_date: string | null;
+  target_exchange_date: string | null;
+  actual_exchange_date: string | null;
+  target_completion_date: string | null;
+  actual_completion_date: string | null;
+  contract_price: number | null;
+  estimated_list_price: number | null;
+  list_price: number | null;
+  reservation_fee: number | null;
+  reservation_fee_holder: string | null;
+  deposit_amount: number | null;
+  incentives_value: number | null;
+  parking_value: number | null;
+  other_concessions_value: number | null;
+  comparable_units_count: number | null;
+  spreadsheet_source: string | null;
+  source_row_number: number | null;
+  expected_exchange_label: string | null;
+  parking_spaces_count: number | null;
+  parking_allocation: string | null;
+  agent_fee_percent: number | null;
+  agent_fee_amount: number | null;
+  solicitor_fee_amount: number | null;
+  agent_gross_invoice_amount: number | null;
+  agent_invoice_reference: string | null;
+  agent_invoice_date: string | null;
+  agent_invoice_status: string | null;
+  amount_permitted_to_release: number | null;
+  amount_paid_from_first_payment: number | null;
+  first_payment_made_at: string | null;
+  invoice_shortfall_amount: number | null;
+  invoice_shortfall_paid_at: string | null;
+  developer_contribution_value: number | null;
+  agent_contribution_value: number | null;
+  completion_funds_adjustment: number | null;
+  agent_invoice_deduction_value: number | null;
+  incentive_summary: string | null;
+  imported_at: string | null;
+  reservation_form_status: string | null;
+  reservation_form_url: string | null;
+  reservation_form_uploaded_at: string | null;
+  incentives_approval_status: string | null;
+  incentives_approved_at: string | null;
+  exchange_approval_status: string | null;
+  exchange_approval_requested_at: string | null;
+  exchange_approval_approved_at: string | null;
+  agent_invoice_url: string | null;
+  agent_invoice_uploaded_at: string | null;
+  agent_invoice_approved_at: string | null;
+  completion_statement_status: string | null;
+  completion_statement_url: string | null;
+  completion_statement_uploaded_at: string | null;
+  completion_statement_approved_at: string | null;
+  statement_of_account_status: string | null;
+  statement_of_account_url: string | null;
+  statement_of_account_uploaded_at: string | null;
+  statement_of_account_approved_at: string | null;
+  sales_agent: string | null;
+  buyer_solicitor: string | null;
+  developer_solicitor: string | null;
+  key_risks: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UnitSaleNote = {
+  id: string;
+  sale_record_id: string;
+  building_id: string;
+  unit_id: string;
+  category: "general" | "blocker" | "buyer_update" | "solicitor_update" | "strategy" | "financial" | string;
+  body: string;
+  visibility: "admin_developer" | string;
+  source_label: string | null;
+  source_row_number: number | null;
+  source_import_key: string | null;
+  created_by: string | null;
+  created_at: string;
 };
 
 export type Area = {

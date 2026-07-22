@@ -35,7 +35,7 @@ function env(name: string) {
   return value;
 }
 
-const validRoles: AppRole[] = ["admin", "developer", "developer_representative", "contractor", "resident", "user"];
+const validRoles: AppRole[] = ["admin", "developer", "developer_representative", "sales_agent", "conveyancer", "contractor", "resident", "user"];
 const validResidentTypes: ResidentType[] = ["leaseholder", "tenant", "letting_agent", "managing_agent"];
 
 function isValidRole(role: AppRole) {

@@ -65,6 +65,11 @@ textarea.field {
   padding-bottom: 0.75rem;
 }
 
+.numeric-value {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 .field::placeholder {
   color: #8b968f;
 }

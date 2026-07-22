@@ -1,8 +1,8 @@
 "use client";
 
-import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Building2, Calculator, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Clock, Download, FileText, Home, Lock, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Search, Send, Shield, Trash2, Upload, X } from "lucide-react";
 import { jsPDF } from "jspdf";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
@@ -21,6 +21,7 @@ import {
   pcConfirmationError,
 } from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { POC_SALES_SOLICITOR_FEE, calculateSchemeSales, canEditIncentiveModel, type SalesUnitInput } from "@/lib/sales/calculations";
 import {
   type AppRole,
   type Area,
@@ -38,6 +39,8 @@ import {
   type SnagPhoto,
   type Trade,
   type Unit,
+  type UnitSaleNote,
+  type UnitSaleRecord,
   type UnitType,
   type UnitTypeArea,
   slaForPriority,
@@ -184,6 +187,8 @@ const appRoles: Array<{ value: AppRole; label: string }> = [
   { value: "admin", label: "Admin" },
   { value: "developer", label: "Developer" },
   { value: "developer_representative", label: "Developer Representative" },
+  { value: "sales_agent", label: "Sales Agent" },
+  { value: "conveyancer", label: "Conveyancer" },
   { value: "contractor", label: "Contractor" },
   { value: "resident", label: "Resident" },
 ];
@@ -213,8 +218,8 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
     section: "internal",
   },
   units: {
-    label: "Units",
-    roles: ["admin", "developer", "developer_representative"],
+    label: "Sales",
+    roles: ["admin", "developer", "developer_representative", "sales_agent", "conveyancer"],
     section: "internal",
   },
   setup_buildings: {
@@ -308,6 +313,59 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
+function formatCurrency(value?: number | string | null) {
+  if (value === null || value === undefined || value === "") return "-";
+  const numericValue = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numericValue)) return "-";
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(numericValue);
+}
+
+function formatPercent(value?: number | string | null) {
+  if (value === null || value === undefined || value === "") return "-";
+  const numericValue = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numericValue)) return "-";
+  return `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(numericValue)}%`;
+}
+
+function moneyNumber(value?: number | string | null) {
+  if (value === null || value === undefined || value === "") return null;
+  const numericValue = typeof value === "number" ? value : Number(value.replace(/,/g, ""));
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function formatMoneyInput(value?: number | string | null) {
+  const numericValue = moneyNumber(value);
+  if (numericValue === null) return "";
+  return new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(numericValue);
+}
+
+function formatMoneyInputChange(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, "");
+  if (!cleaned) return "";
+  const [wholePart, decimalPart] = cleaned.split(".");
+  const wholeNumber = Number(wholePart || "0");
+  const formattedWhole = Number.isFinite(wholeNumber) ? new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(wholeNumber) : wholePart;
+  if (value.endsWith(".") && decimalPart === undefined) return `${formattedWhole}.`;
+  return decimalPart !== undefined ? `${formattedWhole}.${decimalPart.slice(0, 2)}` : formattedWhole;
+}
+
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function todayInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isFutureDate(value?: string | null) {
+  return Boolean(value && value > todayInputValue());
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) return "-";
 
@@ -392,17 +450,21 @@ function statusLabel(status: string) {
     needs_more_info: "Needs more info",
     rejected: "Rejected",
     accepted: "Accepted",
+    available: "Available",
     assigned_to_contractor: "Assigned to contractor",
+    completed: "Completed",
     in_progress: "In progress",
     resolved: "Resolved",
     for_sale: "For Sale",
     reserved: "Reserved",
     exchanged: "Exchanged",
-    completed: "Completed",
     handed_over: "Handed Over",
+    not_ready: "Not ready",
     admin: "Admin",
     developer: "Developer",
     developer_representative: "Developer Representative",
+    sales_agent: "Sales Agent",
+    conveyancer: "Conveyancer",
     contractor: "Contractor",
     main_contractor: "Main contractor",
     supporting_trade: "Supporting trade",
@@ -696,6 +758,8 @@ export function ProductionPortalApp() {
   const [snagListFilters, setSnagListFilters] = useState<SnagListFilters>({});
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [unitSaleRecords, setUnitSaleRecords] = useState<UnitSaleRecord[]>([]);
+  const [unitSaleNotes, setUnitSaleNotes] = useState<UnitSaleNote[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [buildingFloors, setBuildingFloors] = useState<BuildingFloor[]>([]);
   const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
@@ -726,6 +790,8 @@ export function ProductionPortalApp() {
   const tabs = roleTabs(role);
   const scopedBuildings = useMemo(() => filterBuildingsForRole(buildings, units, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, buildings, profile, units]);
   const scopedUnits = useMemo(() => filterUnitsForRole(units, profile, accessibleUnitIds, accessibleBuildingIds), [accessibleBuildingIds, accessibleUnitIds, profile, units]);
+  const scopedUnitSaleRecords = useMemo(() => filterUnitLinkedRows(unitSaleRecords, scopedUnits, (record) => record.unit_id), [scopedUnits, unitSaleRecords]);
+  const scopedUnitSaleNotes = useMemo(() => filterUnitLinkedRows(unitSaleNotes, scopedUnits, (note) => note.unit_id), [scopedUnits, unitSaleNotes]);
   const scopedAreas = useMemo(() => filterAreasForRole(areas, profile, scopedBuildings, scopedUnits), [areas, profile, scopedBuildings, scopedUnits]);
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
@@ -746,6 +812,8 @@ export function ProductionPortalApp() {
     setSnagListFilters({});
     setBuildings([]);
     setUnits([]);
+    setUnitSaleRecords([]);
+    setUnitSaleNotes([]);
     setAreas([]);
     setBuildingFloors([]);
     setUnitTypes([]);
@@ -924,6 +992,7 @@ export function ProductionPortalApp() {
     }
 
     const loadedProfile = profileResult.data as Profile | null;
+    const canLoadConveyancing = loadedProfile?.role === "admin" || loadedProfile?.role === "developer";
 
     if (loadedProfile?.active === false) {
       await supabase.auth.signOut({ scope: "local" });
@@ -983,6 +1052,13 @@ export function ProductionPortalApp() {
       supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
     ]);
 
+    const unitSaleRecordsResult = canLoadConveyancing
+      ? await supabase.from("unit_sale_records").select("*").order("updated_at", { ascending: false })
+      : { data: [], error: null };
+    const unitSaleNotesResult = canLoadConveyancing
+      ? await supabase.from("unit_sale_notes").select("*").order("created_at", { ascending: false })
+      : { data: [], error: null };
+
     const firstError = [
       buildingsResult.error,
       unitsResult.error,
@@ -990,6 +1066,8 @@ export function ProductionPortalApp() {
       buildingOrganisationsResult.error,
       accessRequestsResult.error,
       snagsResult.error,
+      canLoadConveyancing ? unitSaleRecordsResult.error : null,
+      canLoadConveyancing ? unitSaleNotesResult.error : null,
     ].find(Boolean);
 
     if (firstError) {
@@ -1001,6 +1079,8 @@ export function ProductionPortalApp() {
     setProfile(loadedProfile);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
+    setUnitSaleRecords((unitSaleRecordsResult.data ?? []) as UnitSaleRecord[]);
+    setUnitSaleNotes((unitSaleNotesResult.data ?? []) as UnitSaleNote[]);
     setAreas((areasResult.data ?? []) as Area[]);
     setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
     setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
@@ -1111,12 +1191,14 @@ export function ProductionPortalApp() {
           availableTabs={setupTabsForRole(role)}
           buildings={buildings}
           units={units}
+          unitSaleRecords={unitSaleRecords}
           areas={areas}
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
+          profile={profile}
           profiles={profiles}
           accessRequests={accessRequests}
           userBuildingAccess={userBuildingAccess}
@@ -1152,25 +1234,19 @@ export function ProductionPortalApp() {
       )}
       {activeTab === "units" && (
         <UnitsSection
-          user={user}
           profile={profile}
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
-          areas={scopedAreas}
+          unitSaleRecords={scopedUnitSaleRecords}
+          unitSaleNotes={scopedUnitSaleNotes}
           snags={visibleSnags}
           handovers={scopedHandovers}
-          handoverKeyItems={handoverKeyItems}
-          meterReadings={scopedMeterReadings}
-          photos={photos}
-          events={events}
           profiles={profiles}
           userUnitAccess={userUnitAccess}
-          accessibleUnitIds={accessibleUnitIds}
+          user={user}
           onNotice={setNotice}
-          recordAudit={recordAudit}
           reload={loadAll}
-          uploadFile={uploadFile}
         />
       )}
       {(activeTab === "resident_home" || activeTab === "resident_snags") && (
@@ -1209,7 +1285,7 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
 
   if (tabs.includes("dashboard")) items.push({ key: "dashboard", label: "Dashboard", tab: "dashboard", activeTabs: ["dashboard"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
-  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
+  if (tabs.includes("units")) items.push({ key: "units", label: "Sales", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1569,12 +1645,14 @@ function SetupSection({
   setTab,
   buildings,
   units,
+  unitSaleRecords,
   areas,
   buildingFloors,
   unitTypes,
   unitTypeAreas,
   organisations,
   buildingOrganisations,
+  profile,
   profiles,
   accessRequests,
   userBuildingAccess,
@@ -1589,12 +1667,14 @@ function SetupSection({
   setTab: (tab: Tab) => void;
   buildings: Building[];
   units: Unit[];
+  unitSaleRecords: UnitSaleRecord[];
   areas: Area[];
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
   organisations: Organisation[];
   buildingOrganisations: BuildingOrganisation[];
+  profile: Profile | null;
   profiles: Profile[];
   accessRequests: ResidentAccessRequest[];
   userBuildingAccess: UserBuildingAccess[];
@@ -1627,12 +1707,14 @@ function SetupSection({
         <AdminSetup
           buildings={buildings}
           units={units}
+          unitSaleRecords={unitSaleRecords}
           areas={areas}
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
+          profile={profile}
           recordAudit={recordAudit}
           onNotice={onNotice}
           reload={reload}
@@ -1939,9 +2021,11 @@ function BuildingStructureView({
   selectedBuildingId,
   buildingFloors,
   units,
+  unitSaleRecords,
   areas,
   unitTypes,
   unitTypeAreas,
+  profile,
   onNotice,
   reload,
 }: {
@@ -1949,9 +2033,11 @@ function BuildingStructureView({
   selectedBuildingId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
+  unitSaleRecords: UnitSaleRecord[];
   areas: Area[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
+  profile: Profile | null;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
@@ -2037,7 +2123,9 @@ function BuildingStructureView({
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
+              unitSaleRecords={unitSaleRecords}
               buildingId={building.id}
+              profile={profile}
               onNotice={onNotice}
               reload={reload}
             />
@@ -2051,7 +2139,9 @@ function BuildingStructureView({
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
+              unitSaleRecords={unitSaleRecords}
               buildingId={building.id}
+              profile={profile}
               onNotice={onNotice}
               reload={reload}
               warning
@@ -2066,7 +2156,9 @@ function BuildingStructureView({
               buildingFloors={buildingFloors}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
+              unitSaleRecords={unitSaleRecords}
               buildingId={building.id}
+              profile={profile}
               onNotice={onNotice}
               reload={reload}
               warning
@@ -2116,6 +2208,8 @@ function FloorBlock({
   buildingFloors,
   unitTypes,
   unitTypeAreas,
+  unitSaleRecords,
+  profile,
   onNotice,
   reload,
   warning = false,
@@ -2129,12 +2223,15 @@ function FloorBlock({
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
+  unitSaleRecords: UnitSaleRecord[];
+  profile: Profile | null;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   warning?: boolean;
 }) {
   const [unitNumber, setUnitNumber] = useState("");
   const [unitSizeSqm, setUnitSizeSqm] = useState("");
+  const [unitListPrice, setUnitListPrice] = useState("");
   const [unitParkingBays, setUnitParkingBays] = useState("");
   const [unitTypeId, setUnitTypeId] = useState("");
   const [communalName, setCommunalName] = useState("");
@@ -2153,6 +2250,11 @@ function FloorBlock({
       return;
     }
     const supabase = createSupabaseBrowserClient();
+    const parsedListPrice = moneyNumber(unitListPrice);
+    if (unitListPrice.trim() && (parsedListPrice === null || parsedListPrice < 0)) {
+      onNotice("List price must be a positive number.");
+      return;
+    }
     const { data, error } = await supabase.from("units").insert({
       building_id: buildingId,
       unit_number: unitNumber.trim(),
@@ -2167,6 +2269,20 @@ function FloorBlock({
       onNotice(error.code === "23505" ? `Unit ${unitNumber.trim()} already exists in this building.` : error.message);
       return;
     }
+    if (parsedListPrice !== null) {
+      const { error: saleRecordError } = await supabase.from("unit_sale_records").upsert({
+        building_id: data.building_id,
+        unit_id: data.id,
+        estimated_list_price: parsedListPrice,
+        list_price: parsedListPrice,
+        created_by: profile?.id ?? null,
+        updated_by: profile?.id ?? null,
+      }, { onConflict: "unit_id" });
+      if (saleRecordError) {
+        onNotice(saleRecordError.message);
+        return;
+      }
+    }
     const templateAreas = unitTypeAreas.filter((area) => area.unit_type_id === unitTypeId && !area.optional);
     if (templateAreas.length > 0) {
       const { error: areaError } = await supabase.from("areas").insert(templateAreas.map((area) => ({
@@ -2180,6 +2296,7 @@ function FloorBlock({
     }
     setUnitNumber("");
     setUnitSizeSqm("");
+    setUnitListPrice("");
     setUnitParkingBays("");
     setUnitTypeId("");
     await reload();
@@ -2273,6 +2390,8 @@ function FloorBlock({
                     buildingFloors={buildingFloors}
                     unitTypes={unitTypes}
                     unitType={unitType}
+                    saleRecord={unitSaleRecords.find((record) => record.unit_id === unit.id)}
+                    profile={profile}
                     onNotice={onNotice}
                     reload={reload}
                   />
@@ -2281,9 +2400,10 @@ function FloorBlock({
               {units.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
             </div>
             {!warning && (
-              <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+              <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
                 <input className="field" value={unitNumber} onChange={(event) => setUnitNumber(event.target.value)} placeholder={`Add unit to ${floorName}`} />
                 <input className="field" value={unitSizeSqm} onChange={(event) => setUnitSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
+                <input className="field" inputMode="decimal" value={unitListPrice} onChange={(event) => setUnitListPrice(formatMoneyInputChange(event.target.value))} placeholder="List price" />
                 <input className="field" value={unitParkingBays} onChange={(event) => setUnitParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
                 <select className="field" value={unitTypeId} onChange={(event) => setUnitTypeId(event.target.value)}>
                   <option value="">Unit type</option>
@@ -2431,6 +2551,8 @@ function UnitStructureCard({
   buildingFloors,
   unitTypes,
   unitType,
+  saleRecord,
+  profile,
   onNotice,
   reload,
 }: {
@@ -2439,6 +2561,8 @@ function UnitStructureCard({
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitType: string;
+  saleRecord?: UnitSaleRecord;
+  profile: Profile | null;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
@@ -2447,6 +2571,7 @@ function UnitStructureCard({
   const [editNumber, setEditNumber] = useState(unit.unit_number);
   const [editFloor, setEditFloor] = useState(unit.floor ?? "");
   const [editSizeSqm, setEditSizeSqm] = useState(unit.size_sqm?.toString() ?? "");
+  const [editListPrice, setEditListPrice] = useState(formatMoneyInput(saleRecord?.list_price ?? saleRecord?.estimated_list_price));
   const [editParkingBays, setEditParkingBays] = useState(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
   const [editUnitTypeId, setEditUnitTypeId] = useState(unit.unit_type_id ?? "");
   const [editSaleStatus, setEditSaleStatus] = useState<Unit["sale_status"]>(unit.sale_status);
@@ -2469,6 +2594,7 @@ function UnitStructureCard({
     setEditNumber(unit.unit_number);
     setEditFloor(unit.floor ?? "");
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
+    setEditListPrice(formatMoneyInput(saleRecord?.list_price ?? saleRecord?.estimated_list_price));
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
@@ -2476,7 +2602,7 @@ function UnitStructureCard({
     setPendingRooms([]);
     setPendingAmenity(false);
     setDeleteWarning("");
-  }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id]);
+  }, [saleRecord?.estimated_list_price, saleRecord?.list_price, unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id]);
 
   function stageRoom() {
     const trimmed = roomName.trim();
@@ -2502,6 +2628,11 @@ function UnitStructureCard({
     }
     if (editSaleStatus === "handed_over" && unit.sale_status !== "handed_over") {
       onNotice("Handed Over can only be set by completing the handover workflow.");
+      return;
+    }
+    const parsedListPrice = moneyNumber(editListPrice);
+    if (editListPrice.trim() && (parsedListPrice === null || parsedListPrice < 0)) {
+      onNotice("List price must be a positive number.");
       return;
     }
     const supabase = createSupabaseBrowserClient();
@@ -2536,6 +2667,19 @@ function UnitStructureCard({
     }).eq("id", unit.id);
     if (error) onNotice(error.message);
     else {
+      const { error: saleRecordError } = await supabase.from("unit_sale_records").upsert({
+        ...(saleRecord ? { id: saleRecord.id } : {}),
+        building_id: unit.building_id,
+        unit_id: unit.id,
+        estimated_list_price: parsedListPrice,
+        list_price: parsedListPrice,
+        created_by: saleRecord?.created_by ?? profile?.id ?? null,
+        updated_by: profile?.id ?? null,
+      }, { onConflict: "unit_id" });
+      if (saleRecordError) {
+        onNotice(saleRecordError.message);
+        return;
+      }
       if (areasToRemove.length > 0) {
         const { error: removeError } = await supabase.from("areas").delete().in("id", areasToRemove);
         if (removeError) {
@@ -2578,6 +2722,7 @@ function UnitStructureCard({
     setEditNumber(unit.unit_number);
     setEditFloor(unit.floor ?? "");
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
+    setEditListPrice(formatMoneyInput(saleRecord?.list_price ?? saleRecord?.estimated_list_price));
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
@@ -2627,8 +2772,9 @@ function UnitStructureCard({
                       {floors.map((floor) => <option key={floor.id} value={floor.name}>{floor.name}</option>)}
                     </select>
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2 sm:grid-cols-3">
                     <input className="field" value={editSizeSqm} onChange={(event) => setEditSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
+                    <input className="field" inputMode="decimal" value={editListPrice} onChange={(event) => setEditListPrice(formatMoneyInputChange(event.target.value))} placeholder="List price" />
                     <input className="field" value={editParkingBays} onChange={(event) => setEditParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -2715,6 +2861,7 @@ function UnitStructureCard({
                   <div>
                     <h4 className="font-semibold">Unit {unit.unit_number}</h4>
                     <p className="text-sm text-[#617169]">{unitType}{unit.size_sqm ? ` / ${unit.size_sqm} sqm` : ""}</p>
+                    <p className="text-xs text-[#617169]">List price: {formatCurrency(saleRecord?.list_price ?? saleRecord?.estimated_list_price)}</p>
                     <p className="text-xs text-[#617169]">Parking: {formatParkingBays(unit.parking_bays)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -2831,24 +2978,28 @@ function AreaChip({
 function AdminSetup({
   buildings,
   units,
+  unitSaleRecords,
   areas,
   buildingFloors,
   unitTypes,
   unitTypeAreas,
   organisations,
   buildingOrganisations,
+  profile,
   recordAudit,
   onNotice,
   reload,
 }: {
   buildings: Building[];
   units: Unit[];
+  unitSaleRecords: UnitSaleRecord[];
   areas: Area[];
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitTypeAreas: UnitTypeArea[];
   organisations: Organisation[];
   buildingOrganisations: BuildingOrganisation[];
+  profile: Profile | null;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
@@ -3139,6 +3290,13 @@ function AdminSetup({
             </div>
           </section>
 
+          {(profile?.role === "admin" || profile?.role === "developer") && (
+            <BuildingSalesSettingsPanel
+              building={selectedBuilding}
+              onNotice={onNotice}
+            />
+          )}
+
           <BuildingDeliveryTeam
             key={selectedBuilding.id}
             building={selectedBuilding}
@@ -3155,9 +3313,11 @@ function AdminSetup({
               selectedBuildingId={selectedBuilding.id}
               buildingFloors={buildingFloors}
               units={units}
+              unitSaleRecords={unitSaleRecords}
               areas={areas}
               unitTypes={unitTypes}
               unitTypeAreas={unitTypeAreas}
+              profile={profile}
               onNotice={onNotice}
               reload={reload}
             />
@@ -3200,6 +3360,95 @@ function AdminSetup({
           </div>
         )}
       </section>
+    </section>
+  );
+}
+
+function BuildingSalesSettingsPanel({ building, onNotice }: { building: Building; onNotice: (notice: string) => void }) {
+  const [totalDevelopmentCost, setTotalDevelopmentCost] = useState("");
+  const [totalDebt, setTotalDebt] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const loadSettings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in again to load sales settings.");
+      const response = await fetch(`/api/sales/scheme?${new URLSearchParams({ buildingId: building.id }).toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Could not load sales settings.");
+      const settings = (payload as SalesWorkspaceData).settings;
+      setTotalDevelopmentCost(formatMoneyInput(settings?.totalDevelopmentCost));
+      setTotalDebt(formatMoneyInput(settings?.totalDebt));
+    } catch (error) {
+      onNotice(readableError(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [building.id, onNotice]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadSettings();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadSettings]);
+
+  async function saveSettings() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in again to save sales settings.");
+      const response = await fetch("/api/sales/scheme", {
+        body: JSON.stringify({
+          action: "settings",
+          buildingId: building.id,
+          totalDebt: moneyNumber(totalDebt),
+          totalDevelopmentCost: moneyNumber(totalDevelopmentCost),
+        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Could not save sales settings.");
+      onNotice(`Sales assumptions saved for ${building.name}.`);
+      await loadSettings();
+    } catch (error) {
+      onNotice(readableError(error));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
+      <div>
+        <h3 className="text-base font-semibold text-[#0F3D2E]">Sales assumptions</h3>
+        <p className="mt-1 text-sm text-[#617169]">Scheme-level cost and debt assumptions used in the Sales workspace.</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="field-label">
+          Total development cost
+          <input className="field" inputMode="decimal" value={totalDevelopmentCost} onChange={(event) => setTotalDevelopmentCost(formatMoneyInputChange(event.target.value))} placeholder="0" />
+        </label>
+        <label className="field-label">
+          Total debt
+          <input className="field" inputMode="decimal" value={totalDebt} onChange={(event) => setTotalDebt(formatMoneyInputChange(event.target.value))} placeholder="0" />
+        </label>
+      </div>
+      <div className="flex justify-end">
+        <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={saveSettings} disabled={isLoading || isSaving}>
+          {isSaving ? "Saving..." : isLoading ? "Loading..." : "Save sales assumptions"}
+        </button>
+      </div>
     </section>
   );
 }
@@ -5735,141 +5984,602 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
   );
 }
 
-function UnitsSection({
+type SalesWorkspaceUnit = {
+  id: string;
+  agentContribution: number | null;
+  agentFee: number | null;
+  buyerName: string | null;
+  contractPrice: number | null;
+  currentExpectedSalePrice: number | null;
+  developerContribution: number | null;
+  floor: string | null;
+  listPrice: number | null;
+  netProceeds: number | null;
+  nextAction: string;
+  saleRecordId: string | null;
+  saleStatus: Unit["sale_status"];
+  solicitorFee: number | null;
+  timeInStage: string | null;
+  unitNumber: string;
+};
+
+type SalesWorkspaceData = {
+  buildings: Array<{ id: string; name: string }>;
+  permissions: {
+    canEditSettings: boolean;
+    canModelIncentives: boolean;
+    canViewSchemeFinancials: boolean;
+    canViewUnitCommercials: boolean;
+  };
+  scheme: {
+    baselineGdv: number;
+    currentForecastRevenue: number;
+    forecastProfit?: number | null;
+    forecastProfitMargin?: number | null;
+    missingListPriceCount: number;
+    netSalesProceeds?: number;
+    profitAsPercentageOfDebt?: number | null;
+    returnOnCost?: number | null;
+    totalDebt?: number | null;
+    totalDevelopmentCost?: number | null;
+    unitCount: number;
+  };
+  selectedBuilding: { id: string; name: string; updated_at?: string | null } | null;
+  settings: { totalDebt: number | null; totalDevelopmentCost: number | null } | null;
+  units: SalesWorkspaceUnit[];
+};
+
+type SalesExplorerFilter = "needs_attention" | Unit["sale_status"] | "all";
+
+function UnitsSection(props: {
+  user: User;
+  profile: Profile | null;
+  buildings: Building[];
+  buildingFloors: BuildingFloor[];
+  units: Unit[];
+  unitSaleRecords: UnitSaleRecord[];
+  unitSaleNotes: UnitSaleNote[];
+  snags: ProductionSnag[];
+  handovers: Handover[];
+  profiles: Profile[];
+  userUnitAccess: UserUnitAccess[];
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  return <SalesWorkspaceSection {...props} />;
+}
+
+function SalesWorkspaceSection({
   user,
   profile,
   buildings,
   buildingFloors,
   units,
-  areas,
-  snags,
-  handovers,
-  handoverKeyItems,
-  meterReadings,
-  photos,
-  events,
-  profiles,
-  userUnitAccess,
-  accessibleUnitIds,
+  unitSaleRecords,
+  unitSaleNotes,
   onNotice,
-  recordAudit,
   reload,
-  uploadFile,
 }: {
   user: User;
   profile: Profile | null;
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
-  areas: Area[];
+  unitSaleRecords: UnitSaleRecord[];
+  unitSaleNotes: UnitSaleNote[];
   snags: ProductionSnag[];
   handovers: Handover[];
-  handoverKeyItems: HandoverKeyItem[];
-  meterReadings: MeterReading[];
-  photos: SnagPhoto[];
-  events: SnagEvent[];
   profiles: Profile[];
   userUnitAccess: UserUnitAccess[];
-  accessibleUnitIds: string[];
   onNotice: (notice: string) => void;
-  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   reload: () => Promise<void>;
-  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
-  const handoverUnitIds = new Set(handovers.map((handover) => handover.unit_id));
-  const buildingUnits = sortUnitsByFloorOrder(
-    units.filter((unit) => !buildingId || unit.building_id === buildingId),
-    buildingFloors,
-    buildingId,
+  const SALES_PAGE_SIZE = 12;
+  const urlBuildingId = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("building") ?? "";
+  const urlUnitId = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("unit") ?? "";
+  const [buildingId, setBuildingId] = useState(urlBuildingId || buildings[0]?.id || "");
+  const [selectedUnitId, setSelectedUnitId] = useState(urlUnitId);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<SalesExplorerFilter>("all");
+  const [actionFilter, setActionFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [workspace, setWorkspace] = useState<SalesWorkspaceData | null>(null);
+  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
+  const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [scenarioContractPrice, setScenarioContractPrice] = useState("");
+  const [scenarioParkingValue, setScenarioParkingValue] = useState("");
+  const [scenarioDeveloperContribution, setScenarioDeveloperContribution] = useState("");
+  const [scenarioAgentContribution, setScenarioAgentContribution] = useState("");
+  const [isSavingScenario, setIsSavingScenario] = useState(false);
+
+  const effectiveBuildingId = workspace?.selectedBuilding?.id ?? buildingId;
+  const selectedWorkspaceUnit = workspace?.units.find((unit) => unit.id === selectedUnitId) ?? null;
+  const selectedUnit = selectedWorkspaceUnit ? units.find((unit) => unit.id === selectedWorkspaceUnit.id) : undefined;
+  const selectedSaleRecord = selectedUnit ? unitSaleRecords.find((record) => record.unit_id === selectedUnit.id) : undefined;
+  const selectedSaleNotes = selectedSaleRecord ? unitSaleNotes.filter((note) => note.sale_record_id === selectedSaleRecord.id) : [];
+  const selectedBuilding = selectedUnit ? buildings.find((building) => building.id === selectedUnit.building_id) : buildings.find((building) => building.id === effectiveBuildingId);
+  const canUseConveyancing = profile?.role === "admin" || profile?.role === "developer";
+  const needsAttentionUnits = workspace?.units.filter((unit) => unit.nextAction !== "Completion recorded") ?? [];
+  const activeFilter = filter === "needs_attention" && needsAttentionUnits.length === 0 ? "all" : filter;
+  const activeActionFilter = activeFilter === "needs_attention" ? actionFilter : "";
+  const floorOrder = new Map(
+    buildingFloors
+      .filter((floor) => !effectiveBuildingId || floor.building_id === effectiveBuildingId)
+      .map((floor, index) => [floor.name.trim().toLowerCase(), floor.sort_order ?? index]),
   );
+  const sortSalesWorkspaceUnitsByFloor = (a: SalesWorkspaceUnit, b: SalesWorkspaceUnit) => {
+    const aFloorOrder = floorOrder.get((a.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get((b.floor ?? "").trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    return a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true });
+  };
+  const filteredUnits = (workspace?.units ?? [])
+    .filter((unit) => activeFilter === "all" || (activeFilter === "needs_attention" ? needsAttentionUnits.some((item) => item.id === unit.id) : unit.saleStatus === activeFilter))
+    .filter((unit) => !activeActionFilter || unit.nextAction === activeActionFilter)
+    .filter((unit) => !search.trim() || unit.unitNumber.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort(sortSalesWorkspaceUnitsByFloor);
+  const totalPages = Math.max(1, Math.ceil(filteredUnits.length / SALES_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedUnits = filteredUnits.slice((currentPage - 1) * SALES_PAGE_SIZE, currentPage * SALES_PAGE_SIZE);
+  const pageStart = filteredUnits.length === 0 ? 0 : ((currentPage - 1) * SALES_PAGE_SIZE) + 1;
+  const pageEnd = Math.min(filteredUnits.length, currentPage * SALES_PAGE_SIZE);
+  const searchedUnits = (workspace?.units ?? []).filter((unit) => !search.trim() || unit.unitNumber.toLowerCase().includes(search.trim().toLowerCase()));
+  const sortedSearchedUnits = [...searchedUnits].sort(sortSalesWorkspaceUnitsByFloor);
+  const unitSelectorUnits = selectedWorkspaceUnit && !sortedSearchedUnits.some((unit) => unit.id === selectedWorkspaceUnit.id)
+    ? [selectedWorkspaceUnit, ...sortedSearchedUnits]
+    : sortedSearchedUnits;
+  const attentionGroups = Array.from(needsAttentionUnits.reduce((groups, unit) => {
+    const group = groups.get(unit.nextAction) ?? { action: unit.nextAction, forecastValue: 0, units: [] as SalesWorkspaceUnit[] };
+    group.units.push(unit);
+    group.forecastValue += unit.currentExpectedSalePrice ?? unit.listPrice ?? 0;
+    groups.set(unit.nextAction, group);
+    return groups;
+  }, new Map<string, { action: string; forecastValue: number; units: SalesWorkspaceUnit[] }>()).values())
+    .sort((a, b) => b.units.length - a.units.length || a.action.localeCompare(b.action));
+  const pipeline = unitSaleStatuses.filter((status) => status.value !== "handed_over").map((status) => {
+    const statusUnits = workspace?.units.filter((unit) => unit.saleStatus === status.value) ?? [];
+    return {
+      ...status,
+      count: statusUnits.length,
+      forecastValue: statusUnits.reduce((sum, unit) => sum + (unit.currentExpectedSalePrice ?? unit.listPrice ?? 0), 0),
+    };
+  });
+  const selectedUnitCanModel = Boolean(workspace?.permissions.canModelIncentives && canEditIncentiveModel(selectedWorkspaceUnit?.saleStatus));
+  const selectedCalculations = saleRecordCalculations(selectedSaleRecord);
+  const selectedListPrice = moneyNumber(selectedWorkspaceUnit?.listPrice) ?? moneyNumber(selectedSaleRecord?.estimated_list_price) ?? moneyNumber(selectedSaleRecord?.list_price);
+  const selectedContractPrice = moneyNumber(selectedSaleRecord?.contract_price) ?? moneyNumber(selectedWorkspaceUnit?.currentExpectedSalePrice) ?? selectedListPrice;
+  const selectedSolicitorFee = POC_SALES_SOLICITOR_FEE;
+  const selectedAgentFee = selectedCalculations.agentFee ?? moneyNumber(selectedWorkspaceUnit?.agentFee) ?? 0;
+  const selectedDeveloperNet = selectedContractPrice !== null
+    ? roundCurrency(selectedContractPrice + selectedCalculations.parkingImpact - selectedCalculations.developerConcessions - selectedSolicitorFee - selectedAgentFee)
+    : null;
+  const scenarioNumericContract = moneyNumber(scenarioContractPrice) ?? selectedContractPrice ?? 0;
+  const scenarioNumericParking = moneyNumber(scenarioParkingValue) ?? 0;
+  const scenarioNumericDeveloperContribution = moneyNumber(scenarioDeveloperContribution) ?? 0;
+  const scenarioNumericAgentContribution = moneyNumber(scenarioAgentContribution) ?? 0;
+  const scenarioFeeBase = roundCurrency(scenarioNumericContract + scenarioNumericParking);
+  const scenarioAgentFee = roundCurrency(scenarioFeeBase * (selectedCalculations.agentFeePercent / 100));
+  const scenarioVat = roundCurrency(scenarioAgentFee * 0.2);
+  const scenarioDeveloperNet = roundCurrency(scenarioFeeBase - scenarioNumericDeveloperContribution - selectedSolicitorFee - scenarioAgentFee);
+  const scenarioAgentInvoice = roundCurrency(scenarioAgentFee + scenarioVat - selectedCalculations.reservationFee - scenarioNumericAgentContribution);
+  const currentAgentInvoice = selectedCalculations.expectedAgentInvoice ?? selectedCalculations.forecastAgentInvoice;
+  const forSaleSchemeUnits = (workspace?.units ?? []).filter((unit) => unit.saleStatus === "for_sale");
+  const selectedCurrentSaleValue = moneyNumber(selectedWorkspaceUnit?.currentExpectedSalePrice) ?? moneyNumber(selectedWorkspaceUnit?.listPrice) ?? 0;
+  const scenarioUnitGdv = roundCurrency(scenarioNumericContract + scenarioNumericParking);
+  const schemeGdvDeltaPerUnit = roundCurrency(scenarioUnitGdv - selectedCurrentSaleValue);
+  const currentForSaleGdv = forSaleSchemeUnits.reduce((sum, unit) => sum + (moneyNumber(unit.currentExpectedSalePrice) ?? moneyNumber(unit.listPrice) ?? 0), 0);
+  const proposedForSaleGdv = roundCurrency(currentForSaleGdv + (schemeGdvDeltaPerUnit * forSaleSchemeUnits.length));
+  const currentForSaleNetValues = forSaleSchemeUnits
+    .map((unit) => {
+      const storedNet = moneyNumber(unit.netProceeds);
+      if (storedNet !== null) return storedNet;
+      const unitValue = moneyNumber(unit.currentExpectedSalePrice) ?? moneyNumber(unit.listPrice);
+      if (unitValue === null) return null;
+      return roundCurrency(unitValue - (moneyNumber(unit.agentFee) ?? 0) - (moneyNumber(unit.solicitorFee) ?? 0) - (moneyNumber(unit.developerContribution) ?? 0));
+    })
+    .filter((value): value is number => value !== null);
+  const currentForSaleNet = currentForSaleNetValues.length > 0 ? roundCurrency(currentForSaleNetValues.reduce((sum, value) => sum + value, 0)) : null;
+  const schemeDeveloperNetDeltaPerUnit = selectedDeveloperNet !== null ? roundCurrency(scenarioDeveloperNet - selectedDeveloperNet) : null;
+  const proposedForSaleNet = currentForSaleNet !== null && schemeDeveloperNetDeltaPerUnit !== null
+    ? roundCurrency(currentForSaleNet + (schemeDeveloperNetDeltaPerUnit * forSaleSchemeUnits.length))
+    : null;
+
+  function updateSalesUrl(nextBuildingId: string, nextUnitId: string) {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("screen", "units");
+    if (nextBuildingId) params.set("building", nextBuildingId);
+    else params.delete("building");
+    if (nextUnitId) params.set("unit", nextUnitId);
+    else params.delete("unit");
+    window.history.pushState({}, "", `${window.location.pathname}?${params.toString()}`);
+  }
+
+  async function loadSalesWorkspace(nextBuildingId = buildingId) {
+    setIsLoadingWorkspace(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in again to load the Sales workspace.");
+      const params = new URLSearchParams();
+      if (nextBuildingId) params.set("buildingId", nextBuildingId);
+      const response = await fetch(`/api/sales/scheme?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Could not load Sales workspace.");
+      setWorkspace(payload as SalesWorkspaceData);
+      if ((payload as SalesWorkspaceData).selectedBuilding?.id) setBuildingId((payload as SalesWorkspaceData).selectedBuilding!.id);
+    } catch (error) {
+      onNotice(readableError(error));
+    } finally {
+      setIsLoadingWorkspace(false);
+    }
+  }
 
   useEffect(() => {
-    if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
-    if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
-  }, [buildingId, buildings]);
+    if (typeof window === "undefined") return;
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const nextBuildingId = params.get("building") ?? "";
+      const nextUnitId = params.get("unit") ?? "";
+      if (nextBuildingId) setBuildingId(nextBuildingId);
+      setSelectedUnitId(nextUnitId);
+      if (nextUnitId) window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    };
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, []);
+
+  useEffect(() => {
+    void loadSalesWorkspace(buildingId);
+  }, [buildingId]);
+
+  function chooseBuilding(nextBuildingId: string) {
+    setBuildingId(nextBuildingId);
+    setSelectedUnitId("");
+    setActionFilter("");
+    setScenarioOpen(false);
+    setPage(1);
+    updateSalesUrl(nextBuildingId, "");
+  }
+
+  function chooseFilter(nextFilter: SalesExplorerFilter) {
+    setFilter(nextFilter);
+    setActionFilter("");
+    setPage(1);
+  }
+
+  function selectUnit(unitId: string) {
+    setSelectedUnitId(unitId);
+    setScenarioOpen(false);
+    updateSalesUrl(effectiveBuildingId, unitId);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+  }
+
+  function showSchemeOverview() {
+    setSelectedUnitId("");
+    setScenarioOpen(false);
+    updateSalesUrl(effectiveBuildingId, "");
+  }
+
+  function resetScenario() {
+    setScenarioContractPrice(formatMoneyInput(selectedContractPrice));
+    setScenarioParkingValue(formatMoneyInput(selectedCalculations.parkingImpact));
+    setScenarioDeveloperContribution(formatMoneyInput(selectedCalculations.developerContribution));
+    setScenarioAgentContribution(formatMoneyInput(selectedCalculations.agentDeduction));
+  }
+
+  async function saveScenario() {
+    if (!selectedWorkspaceUnit || !workspace?.selectedBuilding || isSavingScenario) return;
+    setIsSavingScenario(true);
+    try {
+      if (!canEditIncentiveModel(selectedWorkspaceUnit.saleStatus)) throw new Error("Deal modelling is locked once a unit is reserved.");
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in again to save the incentive.");
+      const response = await fetch("/api/sales/scheme", {
+        body: JSON.stringify({
+          action: "unit_incentive",
+          agentContribution: moneyNumber(scenarioAgentContribution),
+          buildingId: workspace.selectedBuilding.id,
+          contractPrice: moneyNumber(scenarioContractPrice),
+          developerContribution: moneyNumber(scenarioDeveloperContribution),
+          parkingValue: moneyNumber(scenarioParkingValue),
+          unitId: selectedWorkspaceUnit.id,
+        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Could not save incentive.");
+      onNotice(`Incentive saved to ${selectedWorkspaceUnit.unitNumber}.`);
+      setScenarioOpen(false);
+      await reload();
+      await loadSalesWorkspace(workspace.selectedBuilding.id);
+    } catch (error) {
+      onNotice(readableError(error));
+    } finally {
+      setIsSavingScenario(false);
+    }
+  }
 
   return (
-    <div className="grid gap-5">
-      <section className="panel">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHeader title="Units" subtitle="Flat status, handover position, resident access and snag history." />
-          <select className="field min-h-10 sm:w-72" value={buildingId} onChange={(event) => setBuildingId(event.target.value)}>
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </select>
+    <div className="relative left-1/2 grid w-[calc(100vw-2rem)] max-w-[96rem] -translate-x-1/2 gap-5 sm:w-[calc(100vw-3rem)] lg:w-[calc(100vw-4rem)]">
+      {!selectedWorkspaceUnit && <section className="panel">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <h1 className="text-2xl font-semibold text-[#0F3D2E]">Sales</h1>
+            <span className="hidden h-6 w-px bg-[#d9ded6] sm:block" aria-hidden />
+            <p className="truncate text-sm font-semibold text-[#34413a]">{workspace?.selectedBuilding?.name ?? selectedBuilding?.name ?? "Select a building"}</p>
+            <span className="rounded-md border border-[#d9ded6] bg-[#f8faf7] px-2.5 py-1 text-xs font-semibold text-[#617169]">{workspace?.scheme.unitCount ?? 0} total units</span>
+            <span className="text-xs text-[#617169]">{workspace?.selectedBuilding?.updated_at ? `Updated ${formatDateTime(workspace.selectedBuilding.updated_at)}` : "Updated from current portal data"}</span>
+          </div>
+          <label className="field-label xl:w-80">
+            Building
+            <select className="field min-h-10" value={effectiveBuildingId} onChange={(event) => chooseBuilding(event.target.value)}>
+              {(workspace?.buildings.length ? workspace.buildings : buildings).map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+            </select>
+          </label>
         </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-[840px] w-full table-fixed border-separate border-spacing-0 text-sm">
-            <colgroup>
-              <col className="w-[22%]" />
-              <col className="w-[18%]" />
-              <col className="w-[28%]" />
-              <col className="w-[16%]" />
-              <col className="w-[16%]" />
-            </colgroup>
-            <thead>
-              <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
-                <th className="border-b border-[#d9ded6] px-3 py-2">Flat</th>
-                <th className="border-b border-[#d9ded6] px-3 py-2">Sale status</th>
-                <th className="border-b border-[#d9ded6] px-3 py-2">Handover</th>
-                <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Open snags</th>
-                <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Residents</th>
-              </tr>
-            </thead>
-            <tbody>
-              {buildingUnits.map((unit) => {
-                const unitHandovers = handovers.filter((handover) => handover.unit_id === unit.id);
-                const latestHandover = unitHandovers[0];
-                const openSnagCount = snags.filter((snag) => snag.unit_id === unit.id && !["closed", "resolved"].includes(snag.status)).length;
-                const residentUserIds = new Set(userUnitAccess.filter((access) => access.unit_id === unit.id).map((access) => access.user_id));
-                const residentCount = profiles.filter((person) => person.role === "resident" && residentUserIds.has(person.id) && person.active !== false).length;
-                const parkingLabel = unit.parking_bays?.length ? ` / Bay ${formatParkingBays(unit.parking_bays)}` : "";
-                return (
-                  <tr key={unit.id}>
-                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
-                      <p className="font-semibold text-[#1F2A24]">{unit.unit_number}</p>
-                      <p className="text-xs text-[#617169]">{unit.floor ?? "No floor"}{parkingLabel}</p>
-                    </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle"><span className={statusTone(unit.sale_status)}>{statusLabel(unit.sale_status)}</span></td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
-                      {handoverUnitIds.has(unit.id) ? (
-                        <span className="text-[#0F3D2E]">{formatDateTime(latestHandover?.handover_datetime ?? latestHandover?.created_at ?? latestHandover?.handover_date)}</span>
-                      ) : (
-                        <span className="text-[#617169]">Not handed over</span>
-                      )}
-                    </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-2 text-right align-middle tabular-nums">{openSnagCount}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-2 text-right align-middle tabular-nums">{residentCount}</td>
+      </section>}
+
+      {selectedWorkspaceUnit && selectedUnit && (
+        <section className="panel">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <button className="secondary min-h-9 self-start px-3 py-1.5 text-sm" type="button" onClick={showSchemeOverview}>
+              <ArrowLeft size={16} aria-hidden /> Back to sales overview
+            </button>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)] lg:w-[34rem]">
+              <label className="field-label">
+                Search sales
+                <span className="relative block">
+                  <input className="field" value={search} onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(1);
+                  }} placeholder="Find a unit" />
+                </span>
+              </label>
+              <label className="field-label">
+                Open unit
+                <select className="field" value={selectedWorkspaceUnit.id} onChange={(event) => selectUnit(event.target.value)}>
+                  {unitSelectorUnits.map((unit) => <option key={unit.id} value={unit.id}>Unit {unit.unitNumber} - {statusLabel(unit.saleStatus)}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap items-start justify-between gap-3 border-t border-[#e5e9e4] pt-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected sale file</p>
+              <h2 className="mt-1 text-2xl font-semibold text-[#0F3D2E]">Unit {selectedWorkspaceUnit.unitNumber}</h2>
+              <p className="mt-1 text-sm text-[#617169]">{selectedBuilding?.name ?? "Building"} / {selectedWorkspaceUnit.floor || "No floor"}</p>
+            </div>
+            <span className={statusTone(selectedWorkspaceUnit.saleStatus)}>{statusLabel(selectedWorkspaceUnit.saleStatus)}</span>
+          </div>
+          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+            <CalculationBlock title="Developer view" subtitle="Sale value, development-side deductions and net proceeds.">
+              <CalculationRow label="List price" value={formatCurrency(selectedListPrice)} />
+              <CalculationRow label={selectedWorkspaceUnit.saleStatus === "for_sale" ? "Expected sale price" : "Contract price"} value={formatCurrency(selectedContractPrice)} />
+              <CalculationRow label="Parking value" value={formatCurrency(selectedCalculations.parkingImpact)} />
+              <CalculationRow label="Developer contribution" value={`-${formatCurrency(selectedCalculations.developerContribution)}`} />
+              <CalculationRow label="Solicitor fee" value={workspace?.permissions.canViewUnitCommercials ? `-${formatCurrency(selectedSolicitorFee)}` : "Restricted"} />
+              <CalculationRow label="Agent fee / invoice impact" value={workspace?.permissions.canViewUnitCommercials ? `-${formatCurrency(selectedAgentFee)}` : "Restricted"} />
+              <CalculationRow label="Net developer proceeds" value={workspace?.permissions.canViewUnitCommercials ? formatCurrency(selectedDeveloperNet) : "Restricted"} strong />
+            </CalculationBlock>
+            <CalculationBlock title="Agent view" subtitle="Forecast agent invoice after deductions.">
+              <CalculationRow label="Agent fee %" value={formatPercent(selectedCalculations.agentFeePercent)} />
+              <CalculationRow label="Fee base" value={formatCurrency(selectedCalculations.agentCommissionBase)} />
+              <CalculationRow label="Net agent fee" value={formatCurrency(selectedCalculations.agentFee)} />
+              <CalculationRow label="VAT" value={formatCurrency(selectedCalculations.agentFeeVat)} />
+              <CalculationRow label="Reservation fee deduction" value={`-${formatCurrency(selectedCalculations.reservationFee)}`} />
+              <CalculationRow label="Agent contribution" value={`-${formatCurrency(selectedCalculations.agentDeduction)}`} />
+              <CalculationRow label="Forecast invoice" value={formatCurrency(currentAgentInvoice)} strong />
+            </CalculationBlock>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedUnitCanModel && <button className="secondary min-h-10 px-4 py-2 text-sm" type="button" onClick={() => {
+              resetScenario();
+              setScenarioOpen((current) => !current);
+            }}><Calculator size={16} aria-hidden /> {selectedSaleRecord ? "Edit commercial model" : "Model commercial terms"}</button>}
+            {!canEditIncentiveModel(selectedWorkspaceUnit.saleStatus) && workspace?.permissions.canViewUnitCommercials && (
+              <span className="inline-flex min-h-10 items-center rounded-md border border-[#d9ded6] bg-[#f8faf7] px-3 text-sm font-semibold text-[#617169]">Commercial position locked from reservation</span>
+            )}
+          </div>
+          {scenarioOpen && selectedUnitCanModel && (
+            <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+              <div className="grid gap-4 xl:grid-cols-3">
+                <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <h3 className="text-base font-semibold text-[#0F3D2E]">Deal inputs</h3>
+                  <p className="mt-1 text-sm text-[#617169]">Developer-only modelling before the reservation pack is received.</p>
+                  <div className="mt-4 grid gap-3">
+                    <label className="field-label">Proposed unit price<input className="field" inputMode="decimal" value={scenarioContractPrice} onChange={(event) => setScenarioContractPrice(formatMoneyInputChange(event.target.value))} /></label>
+                    <label className="field-label">Parking value<input className="field" inputMode="decimal" value={scenarioParkingValue} onChange={(event) => setScenarioParkingValue(formatMoneyInputChange(event.target.value))} /></label>
+                    <label className="field-label">Developer contribution<input className="field" inputMode="decimal" value={scenarioDeveloperContribution} onChange={(event) => setScenarioDeveloperContribution(formatMoneyInputChange(event.target.value))} /></label>
+                    <label className="field-label">Agent contribution<input className="field" inputMode="decimal" value={scenarioAgentContribution} onChange={(event) => setScenarioAgentContribution(formatMoneyInputChange(event.target.value))} /></label>
+                  </div>
+                </div>
+                <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <h4 className="font-semibold text-[#0F3D2E]">Live preview</h4>
+                  <div className="mt-3 grid gap-2">
+                    <CalculationRow label="Developer net before" value={formatCurrency(selectedDeveloperNet)} />
+                    <CalculationRow label="Developer net after" value={formatCurrency(scenarioDeveloperNet)} strong />
+                    <CalculationRow label="Developer difference" value={formatCurrency(scenarioDeveloperNet - (selectedDeveloperNet ?? 0))} />
+                    <CalculationRow label="Agent invoice before" value={formatCurrency(currentAgentInvoice)} />
+                    <CalculationRow label="Agent invoice after" value={formatCurrency(scenarioAgentInvoice)} strong />
+                    <CalculationRow label="Agent difference" value={formatCurrency(scenarioAgentInvoice - (currentAgentInvoice ?? 0))} />
+                  </div>
+                </div>
+                <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <h4 className="font-semibold text-[#0F3D2E]">Scheme impact</h4>
+                  <p className="mt-1 text-sm text-[#617169]">Forecast impact across {forSaleSchemeUnits.length} For Sale unit{forSaleSchemeUnits.length === 1 ? "" : "s"}.</p>
+                  <div className="mt-3 grid gap-2">
+                    <CalculationRow label="Applies to" value={`${forSaleSchemeUnits.length} For Sale unit${forSaleSchemeUnits.length === 1 ? "" : "s"}`} />
+                    <CalculationRow label="Current GDV" value={formatCurrency(currentForSaleGdv)} />
+                    <CalculationRow label="Proposed GDV" value={formatCurrency(proposedForSaleGdv)} strong />
+                    <CalculationRow label="GDV difference" value={formatCurrency(proposedForSaleGdv - currentForSaleGdv)} />
+                    <CalculationRow label="Current forecast net proceeds" value={formatCurrency(currentForSaleNet)} />
+                    <CalculationRow label="Proposed forecast net proceeds" value={formatCurrency(proposedForSaleNet)} strong />
+                    <CalculationRow label="Forecast difference" value={currentForSaleNet !== null && proposedForSaleNet !== null ? formatCurrency(proposedForSaleNet - currentForSaleNet) : "-"} />
+                  </div>
+                  <p className="mt-3 text-xs text-[#617169]">POC estimate based on current For Sale units.</p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => setScenarioOpen(false)}>Close panel</button>
+                <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={saveScenario} disabled={isSavingScenario}>
+                  {isSavingScenario ? "Saving..." : `Save incentive to ${selectedWorkspaceUnit.unitNumber}`}
+                </button>
+              </div>
+            </div>
+          )}
+          {canUseConveyancing && (
+            <div className="mt-5 border-t border-[#e5e9e4] pt-5">
+              <ConveyancingPocPanel
+                building={selectedBuilding}
+                onNotice={onNotice}
+                reload={reload}
+                saleNotes={selectedSaleNotes}
+                saleRecord={selectedSaleRecord}
+                unit={selectedUnit}
+                user={user}
+              />
+            </div>
+          )}
+        </section>
+      )}
+
+      {!selectedWorkspaceUnit && (
+        <>
+          {workspace?.permissions.canViewSchemeFinancials ? (
+            <section className="panel">
+              <SectionHeader title="Financial overview" subtitle="Forecast sales position for the selected building." />
+              <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                <CalculationBlock title="Revenue view" subtitle="List-price baseline compared with current sales forecast.">
+                  <CalculationRow label="Baseline GDV" value={formatCurrency(workspace.scheme.baselineGdv)} />
+                  <CalculationRow label="Forecast revenue" value={formatCurrency(workspace.scheme.currentForecastRevenue)} strong />
+                  <CalculationRow label="Variance" value={formatCurrency((workspace.scheme.currentForecastRevenue ?? 0) - (workspace.scheme.baselineGdv ?? 0))} />
+                </CalculationBlock>
+                <CalculationBlock title="Cost / debt view" subtitle="Core scheme assumptions and net sales position.">
+                  <CalculationRow label="Total development cost" value={workspace.settings?.totalDevelopmentCost === null || workspace.settings?.totalDevelopmentCost === undefined ? "Not set" : formatCurrency(workspace.settings.totalDevelopmentCost)} />
+                  <CalculationRow label="Total debt" value={workspace.settings?.totalDebt === null || workspace.settings?.totalDebt === undefined ? "Not set" : formatCurrency(workspace.settings.totalDebt)} />
+                  <CalculationRow label="Net sales proceeds" value={formatCurrency(workspace.scheme.netSalesProceeds)} strong />
+                </CalculationBlock>
+                <CalculationBlock title="Profit view" subtitle="Forecast return based on current POC sales values.">
+                  <CalculationRow label="Forecast profit" value={workspace.scheme.forecastProfit === null || workspace.scheme.forecastProfit === undefined ? "Not set" : formatCurrency(workspace.scheme.forecastProfit)} strong />
+                  <CalculationRow label="Profit margin" value={formatRatio(workspace.scheme.forecastProfitMargin)} />
+                  <CalculationRow label="Return on cost" value={formatRatio(workspace.scheme.returnOnCost)} />
+                  <CalculationRow label="Profit / debt" value={formatRatio(workspace.scheme.profitAsPercentageOfDebt)} />
+                </CalculationBlock>
+              </div>
+              {workspace.scheme.missingListPriceCount > 0 && <p className="mt-3 text-sm font-semibold text-[#8a5a12]">{workspace.scheme.missingListPriceCount} unit{workspace.scheme.missingListPriceCount === 1 ? "" : "s"} missing list price. Totals may be incomplete.</p>}
+            </section>
+          ) : (
+            <section className="panel">
+              <SectionHeader title="Sales overview" subtitle="Operational sales position for the selected building." />
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <SummaryTile label="Units" value={workspace?.scheme.unitCount ?? 0} />
+                <SummaryTile label="Baseline GDV" value={formatCurrency(workspace?.scheme.baselineGdv)} />
+                <SummaryTile label="Forecast revenue" value={formatCurrency(workspace?.scheme.currentForecastRevenue)} />
+              </div>
+            </section>
+          )}
+
+          <section className="panel self-start">
+            <SectionHeader title="Sales pipeline" subtitle="Click a stage to filter the sales table." />
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {pipeline.map((item) => (
+                <button key={item.value} className={`rounded-md border p-3 text-left ${activeFilter === item.value ? "border-[#0F3D2E] bg-[#edf5f1]" : "border-[#d9ded6] bg-[#f8faf7]"}`} type="button" onClick={() => chooseFilter(item.value)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-[#0F3D2E]">{item.label}</p>
+                    <ChevronRight size={16} aria-hidden className="mt-0.5 text-[#617169]" />
+                  </div>
+                  <p className="numeric-value mt-1 text-2xl font-semibold text-[#0F3D31]">{item.count}</p>
+                    <p className="numeric-value text-sm text-[#617169]">{formatCurrency(item.forecastValue)}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="panel">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <SectionHeader title="Sales results" subtitle={isLoadingWorkspace ? "Loading sales data..." : `${filteredUnits.length} unit${filteredUnits.length === 1 ? "" : "s"} shown`} />
+              <label className="field-label lg:w-72">
+                Search
+                <span className="relative block">
+                  <input className="field" value={search} onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(1);
+                  }} placeholder="Unit number" />
+                </span>
+              </label>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(["for_sale", "reserved", "exchanged", "completed", "all"] as SalesExplorerFilter[]).map((item) => (
+                <button key={item} className={`secondary min-h-9 px-3 py-1.5 text-sm ${activeFilter === item ? "filter-active" : ""}`} type="button" onClick={() => chooseFilter(item)}>
+                  {item === "all" ? "All sales" : statusLabel(item)}
+                </button>
+              ))}
+              {activeActionFilter && (
+                <button className="secondary filter-active min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => {
+                  setActionFilter("");
+                  setPage(1);
+                }}>
+                  {activeActionFilter} <X size={14} aria-hidden />
+                </button>
+              )}
+            </div>
+            <div className="mt-4 overflow-auto rounded-md border border-[#e5e9e4]">
+              <table className="min-w-[840px] w-full table-fixed border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
+                    <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Unit</th>
+                    <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Stage</th>
+                    <th className="border-b border-[#d9ded6] bg-white px-3 py-2 text-right">Price</th>
+                    <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Next action</th>
+                    <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Time in stage</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {buildingUnits.length === 0 && <p className="mt-3 rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units are available for this building.</p>}
-        </div>
-      </section>
-      <LeaseholderDefects
-        user={user}
-        profile={profile}
-        buildings={buildings}
-        units={units}
-        areas={areas}
-        snags={snags}
-        handovers={handovers}
-        handoverKeyItems={handoverKeyItems}
-        meterReadings={meterReadings}
-        photos={photos}
-        events={events}
-        profiles={profiles}
-        accessibleUnitIds={accessibleUnitIds}
-        onNotice={onNotice}
-        recordAudit={recordAudit}
-        reload={reload}
-        uploadFile={uploadFile}
-        residentView="internal"
-      />
+                </thead>
+                <tbody>
+                  {pagedUnits.map((unit) => (
+                    <tr key={unit.id} className="cursor-pointer bg-white hover:bg-[#f8faf7]" onClick={() => selectUnit(unit.id)}>
+                      <td className="border-b border-[#e5e9e4] px-3 py-2 font-semibold text-[#0F3D2E]">Unit {unit.unitNumber}</td>
+                      <td className="border-b border-[#e5e9e4] px-3 py-2"><span className={statusTone(unit.saleStatus)}>{statusLabel(unit.saleStatus)}</span></td>
+                      <td className="numeric-value border-b border-[#e5e9e4] px-3 py-2 text-right">{formatCurrency(unit.currentExpectedSalePrice ?? unit.listPrice)}</td>
+                      <td className="border-b border-[#e5e9e4] px-3 py-2">{unit.nextAction}</td>
+                      <td className="border-b border-[#e5e9e4] px-3 py-2">{timeInStageLabel(unit.timeInStage)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredUnits.length === 0 && <p className="m-3 rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units match this filter.</p>}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-[#617169]">
+              <span>Showing {pageStart}-{pageEnd} of {filteredUnits.length}</span>
+              <div className="flex gap-2">
+                <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={currentPage <= 1}>Previous</button>
+                <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages}>Next</button>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
+}
+
+function formatRatio(value?: number | null) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "Not set";
+  return formatPercent(value * 100);
+}
+
+function timeInStageLabel(value?: string | null) {
+  if (!value) return "-";
+  const then = new Date(value).getTime();
+  if (!Number.isFinite(then)) return formatDateTime(value);
+  const days = Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day";
+  return `${days} days`;
 }
 
 function ResidentHelp({ buildings, units }: { buildings: Building[]; units: Unit[] }) {
@@ -6556,6 +7266,1956 @@ function LeaseholderDefects({
   );
 }
 
+type SaleWorkflowGateId = "reservation" | "exchange" | "completion" | "handover";
+
+type SaleWorkflowAction = {
+  label: string;
+  message: string;
+  patch: Partial<UnitSaleRecord>;
+  unitStatus?: Unit["sale_status"];
+};
+
+type SaleWorkflowGate = {
+  id: SaleWorkflowGateId;
+  name: string;
+  status: string;
+  owner: string;
+  nextAction: string;
+  required: string;
+  timestamp: string;
+  keyValues: Array<{ label: string; value: string }>;
+  isComplete: boolean;
+  isActive: boolean;
+  blocker?: string;
+  primaryAction?: SaleWorkflowAction;
+};
+
+type SaleRecordPatch = Partial<UnitSaleRecord> & {
+  building_id: string;
+  unit_id: string;
+  updated_by: string;
+  created_by?: string | null;
+};
+
+function ConveyancingPocPanel({
+  building,
+  onNotice,
+  reload,
+  saleNotes,
+  saleRecord,
+  unit,
+  user,
+}: {
+  building?: Building;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleNotes: UnitSaleNote[];
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const gates = buildSaleWorkflowGates(saleRecord, unit);
+  const currentGate = gates.find((gate) => gate.isActive) ?? gates[0];
+  const [selectedGateId, setSelectedGateId] = useState<SaleWorkflowGateId>(currentGate.id);
+  const [isSavingWorkflow, setIsSavingWorkflow] = useState(false);
+  const [showNotesActivity, setShowNotesActivity] = useState(false);
+  const selectedGateCandidate = gates.find((gate) => gate.id === selectedGateId);
+  const selectedGate = selectedGateCandidate && (selectedGateCandidate.isComplete || selectedGateCandidate.isActive) ? selectedGateCandidate : currentGate;
+  const calculations = saleRecordCalculations(saleRecord);
+
+  async function runWorkflowAction(action?: SaleWorkflowAction) {
+    if (!action || isSavingWorkflow) return;
+    setIsSavingWorkflow(true);
+    try {
+      await saveSaleRecordPatch({ message: action.message, onNotice, patch: action.patch, reload, saleRecord, unit, user });
+      if (action.unitStatus && action.unitStatus !== unit.sale_status) {
+        const supabase = createSupabaseBrowserClient();
+        const { error } = await supabase.from("units").update({ sale_status: action.unitStatus }).eq("id", unit.id);
+        if (error) throw error;
+        await reload();
+      }
+      setSelectedGateId(currentGate.id);
+    } catch (error) {
+      onNotice(`Could not update workflow. ${readableError(error)}`);
+    } finally {
+      setIsSavingWorkflow(false);
+    }
+  }
+
+  function gateDetails(gateId: SaleWorkflowGateId) {
+    if (gateId === "reservation") {
+      return (
+        <div className="grid gap-4">
+          <UnitSaleStageChecklist
+            items={[
+              { label: "Buyer details", complete: Boolean(saleRecord?.buyer_name), helper: saleRecord?.buyer_name || "Missing" },
+              { label: "Reservation form", complete: saleRecord?.reservation_form_status === "uploaded" || saleRecord?.reservation_form_status === "approved", helper: workflowLabel(saleRecord?.reservation_form_status ?? "not_uploaded") },
+              { label: "Commercial comparison", complete: Boolean(saleRecord?.contract_price || saleRecord?.estimated_list_price || saleRecord?.list_price), helper: formatCurrency(saleRecord?.contract_price ?? saleRecord?.estimated_list_price ?? saleRecord?.list_price) },
+              { label: "Developer approval", complete: saleRecord?.reservation_form_status === "approved", helper: workflowLabel(saleRecord?.reservation_form_status ?? "not_uploaded") },
+            ]}
+          />
+          <UnitSaleReservationStageDetails onNotice={onNotice} reload={reload} saleRecord={saleRecord} unit={unit} user={user} />
+          <UnitSaleSingleDocumentPanel
+            checks={["buyer details", "approved deal", "reservation fee", "form uploaded"]}
+            onNotice={onNotice}
+            reload={reload}
+            saleRecord={saleRecord}
+            title="Reservation form"
+            type="reservation"
+            unit={unit}
+            user={user}
+          />
+        </div>
+      );
+    }
+
+    if (gateId === "exchange") {
+      return (
+        <div className="grid gap-4">
+          <UnitSaleStageChecklist
+            items={[
+              { label: "Exchange approval request", complete: Boolean(saleRecord?.exchange_approval_requested_at || saleRecord?.exchange_approval_status), helper: workflowLabel(saleRecord?.exchange_approval_status ?? "not_requested") },
+              { label: "Developer approval", complete: saleRecord?.exchange_approval_status === "approved", helper: workflowLabel(saleRecord?.exchange_approval_status ?? "not_requested") },
+              { label: "Agent invoice", complete: ["approved", "paid"].includes(saleRecord?.agent_invoice_status ?? ""), helper: workflowLabel(saleRecord?.agent_invoice_status ?? "not_uploaded") },
+              { label: "Solicitor payment", complete: Boolean(saleRecord?.first_payment_made_at), helper: saleRecord?.first_payment_made_at ? formatDate(saleRecord.first_payment_made_at) : "Not recorded" },
+              { label: "Actual exchange date", complete: Boolean(saleRecord?.actual_exchange_date || ["exchanged", "completed", "handed_over"].includes(unit.sale_status)), helper: formatDate(saleRecord?.actual_exchange_date) },
+            ]}
+          />
+          <UnitSaleExchangeStageDetails building={building} onNotice={onNotice} reload={reload} saleRecord={saleRecord} unit={unit} user={user} />
+          <UnitSaleSingleDocumentPanel
+            checks={["agent fee", "reservation fee deduction", "agent incentive deduction", "VAT"]}
+            onNotice={onNotice}
+            reload={reload}
+            saleRecord={saleRecord}
+            title="Agent invoice"
+            type="agent_invoice"
+            unit={unit}
+            user={user}
+          />
+          <UnitSaleFinancialReconciliationPanel saleRecord={saleRecord} variant="invoice" />
+          <UnitSalePaymentStageDetails onNotice={onNotice} reload={reload} saleRecord={saleRecord} unit={unit} user={user} />
+        </div>
+      );
+    }
+
+    if (gateId === "completion") {
+      return (
+        <div className="grid gap-4">
+          <UnitSaleStageChecklist
+            items={[
+              { label: "Completion statement", complete: saleRecord?.completion_statement_status === "approved", helper: workflowLabel(saleRecord?.completion_statement_status ?? "not_uploaded") },
+              { label: "Statement of account", complete: saleRecord?.statement_of_account_status === "approved", helper: workflowLabel(saleRecord?.statement_of_account_status ?? "not_uploaded") },
+              { label: "Developer approval/query", complete: completionDocumentStatus(saleRecord) === "approved", helper: workflowLabel(completionDocumentStatus(saleRecord)) },
+              { label: "Actual completion date", complete: Boolean(saleRecord?.actual_completion_date || ["completed", "handed_over"].includes(unit.sale_status)), helper: formatDate(saleRecord?.actual_completion_date) },
+            ]}
+          />
+          <UnitSaleSingleDocumentPanel
+            checks={["purchase price", "allowances", "deposit", "balance due"]}
+            onNotice={onNotice}
+            reload={reload}
+            saleRecord={saleRecord}
+            title="Completion statement"
+            type="completion_statement"
+            unit={unit}
+            user={user}
+          />
+          <UnitSaleSingleDocumentPanel
+            checks={["agent fee paid", "reservation fee", "solicitor fees", "net proceeds"]}
+            onNotice={onNotice}
+            reload={reload}
+            saleRecord={saleRecord}
+            title="Statement of account"
+            type="statement_of_account"
+            unit={unit}
+            user={user}
+          />
+          <UnitSaleCompletionDocumentExpectedFigures onNotice={onNotice} reload={reload} saleRecord={saleRecord} unit={unit} user={user} />
+          <UnitSaleCompletionStageDetails onNotice={onNotice} reload={reload} saleRecord={saleRecord} unit={unit} user={user} />
+        </div>
+      );
+    }
+
+    return (
+      <UnitSaleHandoverAvailabilityPanel saleRecord={saleRecord} unit={unit} />
+    );
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-white p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <SectionHeader title="Conveyancing POC" subtitle="Workflow timeline for the unit sale file." />
+        <div className="flex flex-wrap gap-2">
+          <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => setShowNotesActivity((current) => !current)}>
+            <FileText size={16} aria-hidden /> {showNotesActivity ? "Hide notes/activity" : `View notes/activity (${saleNotes.length})`}
+          </button>
+          <span className="inline-flex items-center rounded-md border border-[#d9ded6] bg-[#f8faf7] px-2.5 py-1 text-xs font-semibold uppercase text-[#617169]">Admin/Developer only</span>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(19rem,0.34fr)_minmax(0,0.66fr)] xl:items-start">
+          <UnitSaleWorkflowTimeline
+            selectedGateId={selectedGate.id}
+            gates={gates}
+            onSelectGate={setSelectedGateId}
+          />
+          <section className="rounded-md border border-[#e5e9e4] bg-white p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-[#617169]">Selected workflow step</p>
+                <h3 className="mt-1 text-base font-semibold text-[#0F3D2E]">{selectedGate.name}</h3>
+                <p className="mt-1 text-sm text-[#617169]">{selectedGate.required}</p>
+                <p className="mt-2 text-sm font-semibold text-[#34413a]">Next action: {selectedGate.nextAction}</p>
+              </div>
+              <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${workflowBadgeClass(selectedGate.status)}`}>{workflowLabel(selectedGate.status)}</span>
+            </div>
+            {selectedGate.blocker && <p className="mt-3 rounded-md border border-[#e7c16b] bg-[#fff9ec] p-3 text-sm font-semibold text-[#8a5a12]">{selectedGate.blocker}</p>}
+            <div className="mt-4">{gateDetails(selectedGate.id)}</div>
+            {selectedGate.isActive && selectedGate.primaryAction && (
+              <UnitSaleStepActions
+                actions={[selectedGate.primaryAction]}
+                isSaving={isSavingWorkflow}
+                onAction={runWorkflowAction}
+              />
+            )}
+          </section>
+        </div>
+        {showNotesActivity && (
+          <div>
+            <UnitSaleNotesSidePanel
+              onNotice={onNotice}
+              reload={reload}
+              saleNotes={saleNotes}
+              saleRecord={saleRecord}
+              unit={unit}
+              user={user}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function saleRecordCalculations(saleRecord?: UnitSaleRecord) {
+  const contractPrice = moneyNumber(saleRecord?.contract_price);
+  const listPrice = moneyNumber(saleRecord?.estimated_list_price) ?? moneyNumber(saleRecord?.list_price);
+  const parkingImpact = moneyNumber(saleRecord?.parking_value) ?? 0;
+  const agentFeePercent = moneyNumber(saleRecord?.agent_fee_percent) ?? 9;
+  const agentFeePriceBase = contractPrice ?? listPrice;
+  const agentCommissionBase = agentFeePriceBase !== null ? roundCurrency(agentFeePriceBase + parkingImpact) : null;
+  const storedAgentFee = moneyNumber(saleRecord?.agent_fee_amount);
+  const agentFee = storedAgentFee ?? (agentCommissionBase !== null ? roundCurrency(agentCommissionBase * (agentFeePercent / 100)) : null);
+  const agentFeeVat = agentFee !== null ? roundCurrency(agentFee * 0.2) : null;
+  const reservationFee = moneyNumber(saleRecord?.reservation_fee) ?? 0;
+  const agentDeduction = moneyNumber(saleRecord?.agent_invoice_deduction_value) ?? moneyNumber(saleRecord?.agent_contribution_value) ?? 0;
+  const developerContribution = moneyNumber(saleRecord?.completion_funds_adjustment) ?? moneyNumber(saleRecord?.developer_contribution_value) ?? 0;
+  const importedInvoice = moneyNumber(saleRecord?.agent_gross_invoice_amount);
+  const expectedAgentInvoice = agentFee !== null && agentFeeVat !== null ? roundCurrency(agentFee + agentFeeVat - reservationFee - agentDeduction) : null;
+  const forecastAgentInvoice = agentFee !== null && agentFeeVat !== null ? roundCurrency(agentFee + agentFeeVat - agentDeduction) : null;
+  const invoiceVariance = expectedAgentInvoice !== null && importedInvoice !== null ? roundCurrency(importedInvoice - expectedAgentInvoice) : null;
+  const amountPermitted = moneyNumber(saleRecord?.amount_permitted_to_release) ?? (contractPrice !== null ? roundCurrency(contractPrice * 0.1) : null);
+  const expectedFirstPayment = amountPermitted !== null ? roundCurrency(amountPermitted - reservationFee) : null;
+  const amountPaidFirst = moneyNumber(saleRecord?.amount_paid_from_first_payment);
+  const firstPaymentVariance = expectedFirstPayment !== null && amountPaidFirst !== null ? roundCurrency(amountPaidFirst - expectedFirstPayment) : null;
+  const expectedShortfall = expectedAgentInvoice !== null && amountPaidFirst !== null ? roundCurrency(expectedAgentInvoice - amountPaidFirst) : null;
+  const recordedShortfall = moneyNumber(saleRecord?.invoice_shortfall_amount);
+  const shortfallVariance = expectedShortfall !== null && recordedShortfall !== null ? roundCurrency(recordedShortfall - expectedShortfall) : null;
+  const grossSaleBeforeContributions = contractPrice !== null ? roundCurrency(contractPrice + parkingImpact) : null;
+  const otherConcessions = moneyNumber(saleRecord?.other_concessions_value) ?? 0;
+  const developerConcessions = roundCurrency(developerContribution + otherConcessions);
+  const netCompletionFunds = grossSaleBeforeContributions !== null ? roundCurrency(grossSaleBeforeContributions - developerConcessions) : null;
+  const priceDiscount = listPrice !== null && contractPrice !== null ? Math.max(0, listPrice - contractPrice) : null;
+  const unitImpact = priceDiscount !== null ? roundCurrency(priceDiscount + developerConcessions - parkingImpact) : null;
+  const comparableUnitsCount = moneyNumber(saleRecord?.comparable_units_count) ?? 0;
+  const repeatedImpact = unitImpact !== null ? roundCurrency(unitImpact * comparableUnitsCount) : null;
+  const deposit = moneyNumber(saleRecord?.deposit_amount) ?? (contractPrice !== null ? roundCurrency(contractPrice * 0.1) : null);
+  const expectedCompletionFunds = grossSaleBeforeContributions !== null ? roundCurrency(grossSaleBeforeContributions - reservationFee - (deposit ?? 0) - developerContribution - (agentFee ?? 0)) : null;
+
+  return {
+    agentDeduction,
+    agentCommissionBase,
+    agentFee,
+    agentFeePercent,
+    agentFeeVat,
+    amountPaidFirst,
+    amountPermitted,
+    developerConcessions,
+    developerContribution,
+    expectedAgentInvoice,
+    forecastAgentInvoice,
+    expectedFirstPayment,
+    expectedShortfall,
+    firstPaymentVariance,
+    grossSaleBeforeContributions,
+    importedInvoice,
+    invoiceVariance,
+    netCompletionFunds,
+    otherConcessions,
+    parkingImpact,
+    priceDiscount,
+    recordedShortfall,
+    repeatedImpact,
+    reservationFee,
+    shortfallVariance,
+    totalConcessions: developerConcessions,
+    unitImpact,
+    deposit,
+    expectedCompletionFunds,
+  };
+}
+
+function varianceLabel(value: number | null) {
+  if (value === null) return "-";
+  if (Math.abs(value) < 0.01) return "Matched";
+  return `${value > 0 ? "+" : ""}${formatCurrency(value)}`;
+}
+
+function workflowLabel(value?: string | null) {
+  return statusLabel(value ?? "not_started");
+}
+
+function workflowBadgeClass(value?: string | null) {
+  if (["approved", "available", "completed", "paid", "exchanged"].includes(value ?? "")) return "bg-[#edf5f1] text-[#0F3D2E]";
+  if (["requested", "submitted", "uploaded", "recorded", "under_review"].includes(value ?? "")) return "bg-[#fff4df] text-[#8a5a12]";
+  if (["query_raised", "rejected"].includes(value ?? "")) return "bg-[#fdecec] text-[#9b1c1c]";
+  return "bg-[#eef1ed] text-[#617169]";
+}
+
+function depositBasisLabel(saleRecord?: UnitSaleRecord) {
+  const contractPrice = moneyNumber(saleRecord?.contract_price);
+  const depositAmount = moneyNumber(saleRecord?.deposit_amount);
+  if (!contractPrice || depositAmount === null) return contractPrice ? "10% assumed" : "-";
+  const percentage = roundCurrency((depositAmount / contractPrice) * 100);
+  if (Math.abs(percentage - 10) < 0.1) return "10%";
+  if (Math.abs(percentage - 20) < 0.1) return "20%";
+  return `Other (${formatPercent(percentage)})`;
+}
+
+function approvedIncentivesLabel(saleRecord?: UnitSaleRecord) {
+  const calculations = saleRecordCalculations(saleRecord);
+  if (!saleRecord) return "-";
+  const parts = [
+    moneyNumber(saleRecord.developer_contribution_value) ? `Developer ${formatCurrency(saleRecord.developer_contribution_value)}` : "",
+    moneyNumber(saleRecord.other_concessions_value) ? `Other ${formatCurrency(saleRecord.other_concessions_value)}` : "",
+  ].filter(Boolean);
+  return parts.length ? `${formatCurrency(calculations.totalConcessions)} (${parts.join(", ")})` : formatCurrency(calculations.totalConcessions);
+}
+
+function reconciliationTone(value: number | null) {
+  if (value === null) return "bg-[#f8faf7] text-[#617169]";
+  if (Math.abs(value) < 0.01) return "bg-[#edf5f1] text-[#0F3D2E]";
+  return "bg-[#fff4df] text-[#8a5a12]";
+}
+
+async function saveSaleRecordPatch({
+  message,
+  onNotice,
+  patch,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  message: string;
+  onNotice: (notice: string) => void;
+  patch: Partial<UnitSaleRecord>;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const payload: SaleRecordPatch = {
+    ...(saleRecord ? { id: saleRecord.id } : {}),
+    ...patch,
+    building_id: unit.building_id,
+    unit_id: unit.id,
+    created_by: saleRecord?.created_by ?? user.id,
+    updated_by: user.id,
+  };
+
+  const { error } = await supabase.from("unit_sale_records").upsert(payload, { onConflict: "unit_id" }).select("id").single();
+  if (error) throw error;
+  onNotice(message);
+  await reload();
+}
+
+function completionDocumentStatus(saleRecord?: UnitSaleRecord) {
+  if (!saleRecord) return "not_uploaded";
+  if (saleRecord.completion_statement_status === "approved" && saleRecord.statement_of_account_status === "approved") return "approved";
+  if (saleRecord.completion_statement_status === "query_raised" || saleRecord.statement_of_account_status === "query_raised") return "query_raised";
+  if (saleRecord.completion_statement_status === "uploaded" || saleRecord.statement_of_account_status === "uploaded") return "uploaded";
+  return "not_uploaded";
+}
+
+function buildSaleWorkflowGates(saleRecord: UnitSaleRecord | undefined, unit: Unit): SaleWorkflowGate[] {
+  const calculations = saleRecordCalculations(saleRecord);
+  const now = new Date().toISOString();
+  const currentGateId = currentWorkflowGateId(saleRecord, unit);
+  const reservationStatus = saleRecord?.reservation_form_status ?? "not_uploaded";
+  const exchangeStatus = saleRecord?.exchange_approval_status ?? "not_requested";
+  const invoiceStatus = saleRecord?.agent_invoice_status ?? "not_uploaded";
+  const completionDocsStatus = completionDocumentStatus(saleRecord);
+  const reservationComplete = reservationStatus === "approved" || ["exchanged", "completed", "handed_over"].includes(unit.sale_status);
+  const inferredReservationWarning = reservationComplete && reservationStatus !== "approved"
+    ? `Imported status indicates ${statusLabel(unit.sale_status)}, reservation document missing.`
+    : undefined;
+  const completionConfirmed = Boolean(saleRecord?.actual_completion_date || ["completed", "handed_over"].includes(unit.sale_status));
+  const exchangeConfirmed = Boolean(saleRecord?.actual_exchange_date || ["exchanged", "completed", "handed_over"].includes(unit.sale_status));
+  const shortfallDue = (calculations.recordedShortfall ?? calculations.expectedShortfall ?? 0) > 0;
+  const reservationBlocker = reservationComplete ? undefined : reservationStatus === "query_raised" ? "Reservation pack query raised." : missingReservationValue(saleRecord);
+  const exchangeComplete = exchangeConfirmed;
+  const exchangeBlockers = [
+    exchangeStatus === "rejected" || exchangeStatus === "query_raised" ? "Exchange approval query raised." : undefined,
+    exchangeStatus === "approved" && !exchangeConfirmed ? "Actual exchange date still missing." : undefined,
+    invoiceBlocker(saleRecord, calculations),
+  ].filter(Boolean).join(" ");
+  const completionBlockers = [
+    completionDocsStatus === "query_raised" ? "Completion document query raised." : undefined,
+    completionDocsStatus === "approved" && !completionConfirmed ? "Actual completion date still missing." : undefined,
+  ].filter(Boolean).join(" ");
+
+  return [
+    {
+      id: "reservation",
+      name: "Reservation",
+      status: reservationComplete ? "approved" : reservationStatus,
+      owner: reservationOwner(saleRecord),
+      nextAction: reservationComplete ? "Reservation process already progressed." : reservationStatus === "uploaded" ? "Developer checks and approves the reservation pack." : "Await reservation pack from the sales agent.",
+      required: "Buyer details, reservation date, reservation fee holder and reservation form.",
+      timestamp: formatDateTime(saleRecord?.reservation_form_uploaded_at ?? saleRecord?.reservation_date),
+      keyValues: [
+        { label: "Buyer", value: saleRecord?.buyer_name || "-" },
+        { label: "Reservation", value: formatDate(saleRecord?.reservation_date) },
+        { label: "Fee holder", value: saleRecord?.reservation_fee_holder || "-" },
+      ],
+      isComplete: reservationComplete,
+      isActive: currentGateId === "reservation",
+      blocker: inferredReservationWarning ?? reservationBlocker,
+      primaryAction: reservationComplete || (reservationBlocker && reservationStatus !== "uploaded") ? undefined : reservationStatus === "uploaded"
+        ? { label: "Approve reservation pack", patch: { reservation_form_status: "approved" }, unitStatus: "reserved", message: "Reservation pack approved." }
+        : { label: "Mark pack uploaded", patch: { reservation_form_status: "uploaded", reservation_form_uploaded_at: now }, message: "Reservation pack marked as uploaded." },
+    },
+    {
+      id: "exchange",
+      name: "Exchange",
+      status: exchangeComplete ? "exchanged" : exchangeStatus,
+      owner: exchangeOwner(saleRecord, unit),
+      nextAction: exchangeComplete ? "Exchange confirmed." : exchangeStatus === "approved" ? "Solicitor confirms exchange and records payment details." : exchangeStatus === "requested" ? "Developer approves or queries exchange." : "Solicitor requests exchange approval.",
+      required: "Exchange approval, commercial basis, agent invoice/payment and actual exchange date.",
+      timestamp: formatDateTime(saleRecord?.actual_exchange_date ?? saleRecord?.exchange_approval_approved_at ?? saleRecord?.exchange_approval_requested_at ?? saleRecord?.agent_invoice_uploaded_at),
+      keyValues: [
+        { label: "Target", value: formatDate(saleRecord?.target_exchange_date) },
+        { label: "Invoice", value: workflowLabel(invoiceStatus) },
+        { label: "Actual", value: formatDate(saleRecord?.actual_exchange_date) },
+      ],
+      isComplete: exchangeComplete,
+      isActive: currentGateId === "exchange",
+      blocker: exchangeBlockers || undefined,
+      primaryAction: exchangeComplete ? undefined : exchangeStatus === "requested"
+        ? { label: "Approve exchange", patch: { exchange_approval_status: "approved", exchange_approval_approved_at: now }, message: "Exchange approved." }
+        : exchangeStatus === "approved"
+          ? { label: "Confirm exchange today", patch: { actual_exchange_date: todayInputValue() }, unitStatus: "exchanged", message: "Exchange date confirmed." }
+          : { label: "Request exchange approval", patch: { exchange_approval_status: "requested", exchange_approval_requested_at: now }, message: "Exchange approval requested." },
+    },
+    {
+      id: "completion",
+      name: "Completion",
+      status: completionConfirmed ? "completed" : "pending",
+      owner: completionConfirmed ? "Developer" : completionDocumentsOwner(saleRecord),
+      nextAction: completionConfirmed ? "Completion date confirmed." : completionDocsStatus === "approved" ? "Solicitor confirms actual completion date." : completionDocsStatus === "uploaded" ? "Developer reviews completion documents." : "Solicitor provides completion statement and statement of account.",
+      required: "Completion documents, developer approval/query and actual completion date.",
+      timestamp: formatDateTime(saleRecord?.actual_completion_date ?? saleRecord?.completion_statement_approved_at ?? saleRecord?.statement_of_account_approved_at ?? saleRecord?.completion_statement_uploaded_at),
+      keyValues: [
+        { label: "Documents", value: workflowLabel(completionDocsStatus) },
+        { label: "Actual", value: formatDate(saleRecord?.actual_completion_date) },
+        { label: "Unit status", value: statusLabel(unit.sale_status) },
+      ],
+      isComplete: completionConfirmed,
+      isActive: currentGateId === "completion",
+      blocker: completionBlockers || undefined,
+      primaryAction: completionConfirmed ? undefined : completionDocsStatus === "approved"
+        ? { label: "Confirm completion today", patch: { actual_completion_date: todayInputValue() }, unitStatus: "completed", message: "Completion date confirmed." }
+        : completionDocsStatus === "uploaded"
+          ? { label: "Approve completion docs", patch: { completion_statement_status: "approved", completion_statement_approved_at: now, statement_of_account_status: "approved", statement_of_account_approved_at: now }, message: "Completion documents approved." }
+          : { label: "Mark docs uploaded", patch: { completion_statement_status: "uploaded", completion_statement_uploaded_at: now, statement_of_account_status: "uploaded", statement_of_account_uploaded_at: now }, message: "Completion documents marked as uploaded." },
+    },
+    {
+      id: "handover",
+      name: "Handover",
+      status: unit.sale_status === "handed_over" ? "completed" : unit.sale_status === "completed" ? "available" : "not_ready",
+      owner: unit.sale_status === "completed" ? "Developer / handover team" : "Developer",
+      nextAction: unit.sale_status === "completed" ? "Use existing handover workflow." : unit.sale_status === "handed_over" ? "Handover complete." : "Complete the sale before handover.",
+      required: "Existing handover workflow remains the source of truth.",
+      timestamp: formatDate(unit.handover_date),
+      keyValues: [
+        { label: "Sale status", value: statusLabel(unit.sale_status) },
+        { label: "Handover date", value: formatDate(unit.handover_date) },
+        { label: "Completion date", value: formatDate(unit.completion_date ?? saleRecord?.actual_completion_date) },
+      ],
+      isComplete: unit.sale_status === "handed_over",
+      isActive: currentGateId === "handover",
+    },
+  ];
+}
+
+function currentWorkflowGateId(saleRecord: UnitSaleRecord | undefined, unit: Unit): SaleWorkflowGateId {
+  if (!saleRecord) return "reservation";
+  const reservationComplete = (saleRecord.reservation_form_status ?? "not_uploaded") === "approved" || ["exchanged", "completed", "handed_over"].includes(unit.sale_status);
+  if (!reservationComplete) return "reservation";
+  if (!saleRecord.actual_exchange_date && !["exchanged", "completed", "handed_over"].includes(unit.sale_status)) return "exchange";
+  if (!saleRecord.actual_completion_date && !["completed", "handed_over"].includes(unit.sale_status)) return "completion";
+  return "handover";
+}
+
+function reservationOwner(saleRecord?: UnitSaleRecord) {
+  const status = saleRecord?.reservation_form_status ?? "not_uploaded";
+  if (status === "uploaded") return "Developer";
+  if (status === "query_raised" || status === "not_uploaded") return "Sales agent";
+  return "Developer";
+}
+
+function exchangeOwner(saleRecord: UnitSaleRecord | undefined, unit: Unit) {
+  if (saleRecord?.actual_exchange_date || ["exchanged", "completed", "handed_over"].includes(unit.sale_status)) return "Solicitor";
+  const status = saleRecord?.exchange_approval_status ?? "not_requested";
+  if (status === "requested") return "Developer";
+  return "Solicitor";
+}
+
+function invoiceOwner(saleRecord: UnitSaleRecord | undefined, calculations: ReturnType<typeof saleRecordCalculations>) {
+  const status = saleRecord?.agent_invoice_status ?? "not_uploaded";
+  if (status === "uploaded" || status === "recorded" || status === "query_raised") return "Developer";
+  if (status === "approved" && !saleRecord?.first_payment_made_at) return "Solicitor";
+  if ((calculations.recordedShortfall ?? calculations.expectedShortfall ?? 0) > 0 && !saleRecord?.invoice_shortfall_paid_at) return "Developer";
+  if (status === "not_uploaded") return "Sales agent";
+  return "Developer";
+}
+
+function completionDocumentsOwner(saleRecord?: UnitSaleRecord) {
+  const status = completionDocumentStatus(saleRecord);
+  if (status === "uploaded" || status === "query_raised") return "Developer";
+  if (status === "not_uploaded") return "Solicitor";
+  return "Developer";
+}
+
+function missingDealValue(saleRecord?: UnitSaleRecord) {
+  if (!saleRecord?.contract_price) return "Contract price missing.";
+  if (!saleRecord?.estimated_list_price) return "List price missing.";
+  return undefined;
+}
+
+function missingReservationValue(saleRecord?: UnitSaleRecord) {
+  if (!saleRecord?.buyer_name) return "Buyer name missing.";
+  if (!saleRecord?.reservation_date) return "Reservation date missing.";
+  if (!saleRecord?.reservation_fee) return "Reservation fee missing.";
+  return undefined;
+}
+
+function invoiceNextAction(saleRecord: UnitSaleRecord | undefined, calculations: ReturnType<typeof saleRecordCalculations>) {
+  const status = saleRecord?.agent_invoice_status ?? "not_uploaded";
+  if (status === "not_uploaded") return "Sales agent uploads the invoice.";
+  if (status === "uploaded" || status === "recorded" || status === "query_raised") return "Developer checks expected invoice value and approves.";
+  if (status === "approved" && !saleRecord?.first_payment_made_at) return "Solicitor records payment made from deposit.";
+  if ((calculations.recordedShortfall ?? calculations.expectedShortfall ?? 0) > 0 && !saleRecord?.invoice_shortfall_paid_at) return "Developer records shortfall paid to agent.";
+  return "Mark invoice as paid once reconciled.";
+}
+
+function invoiceBlocker(saleRecord: UnitSaleRecord | undefined, calculations: ReturnType<typeof saleRecordCalculations>) {
+  if ((saleRecord?.agent_invoice_status ?? "not_uploaded") === "query_raised") return "Invoice query raised.";
+  if (calculations.invoiceVariance !== null && Math.abs(calculations.invoiceVariance) >= 1) return `Invoice variance ${varianceLabel(calculations.invoiceVariance)}.`;
+  if ((saleRecord?.agent_invoice_status ?? "not_uploaded") === "approved" && !saleRecord?.first_payment_made_at) return "First payment not recorded.";
+  return undefined;
+}
+
+function invoicePrimaryAction(saleRecord: UnitSaleRecord | undefined, calculations: ReturnType<typeof saleRecordCalculations>, now: string): SaleWorkflowAction | undefined {
+  const status = saleRecord?.agent_invoice_status ?? "not_uploaded";
+  const shortfallDue = (calculations.recordedShortfall ?? calculations.expectedShortfall ?? 0) > 0;
+  if (status === "not_uploaded") return { label: "Mark invoice uploaded", patch: { agent_invoice_status: "uploaded", agent_invoice_uploaded_at: now }, message: "Agent invoice marked as uploaded." };
+  if (status === "uploaded" || status === "recorded" || status === "query_raised") return { label: "Approve invoice", patch: { agent_invoice_status: "approved", agent_invoice_approved_at: now }, message: "Agent invoice approved." };
+  if (status === "approved" && saleRecord?.first_payment_made_at && shortfallDue && !saleRecord.invoice_shortfall_paid_at) return { label: "Mark shortfall paid", patch: { invoice_shortfall_paid_at: todayInputValue() }, message: "Invoice shortfall marked as paid." };
+  if (status === "approved" && saleRecord?.first_payment_made_at && (!shortfallDue || saleRecord.invoice_shortfall_paid_at)) return { label: "Mark invoice paid", patch: { agent_invoice_status: "paid" }, message: "Agent invoice marked as paid." };
+  return undefined;
+}
+
+function workflowActionsForGate(
+  gateId: SaleWorkflowGateId,
+  saleRecord: UnitSaleRecord | undefined,
+  unit: Unit,
+  calculations: ReturnType<typeof saleRecordCalculations>
+): SaleWorkflowAction[] {
+  const now = new Date().toISOString();
+  const actions: SaleWorkflowAction[] = [];
+
+  if (gateId === "reservation") {
+    actions.push({ label: "Mark pack uploaded", patch: { reservation_form_status: "uploaded", reservation_form_uploaded_at: now }, message: "Reservation pack marked as uploaded." });
+    actions.push({ label: "Approve reservation pack", patch: { reservation_form_status: "approved" }, message: "Reservation pack approved." });
+    actions.push({ label: "Query reservation pack", patch: { reservation_form_status: "query_raised" }, message: "Reservation pack query raised." });
+  }
+
+  if (gateId === "exchange") {
+    actions.push({ label: "Request exchange approval", patch: { exchange_approval_status: "requested", exchange_approval_requested_at: now }, message: "Exchange approval requested." });
+    actions.push({ label: "Approve exchange", patch: { exchange_approval_status: "approved", exchange_approval_approved_at: now }, message: "Exchange approved." });
+    actions.push({ label: "Query exchange", patch: { exchange_approval_status: "query_raised" }, message: "Exchange query raised." });
+    if (!saleRecord?.actual_exchange_date && !["exchanged", "completed", "handed_over"].includes(unit.sale_status)) {
+      actions.push({ label: "Confirm exchanged", patch: { actual_exchange_date: todayInputValue() }, message: "Exchange date confirmed." });
+    }
+  }
+
+  if (gateId === "completion") {
+    actions.push({ label: "Mark documents uploaded", patch: { completion_statement_status: "uploaded", completion_statement_uploaded_at: now, statement_of_account_status: "uploaded", statement_of_account_uploaded_at: now }, message: "Completion documents marked as uploaded." });
+    actions.push({ label: "Approve completion statement", patch: { completion_statement_status: "approved", completion_statement_approved_at: now }, message: "Completion statement approved." });
+    actions.push({ label: "Approve statement of account", patch: { statement_of_account_status: "approved", statement_of_account_approved_at: now }, message: "Statement of account approved." });
+    actions.push({ label: "Query documents", patch: { completion_statement_status: "query_raised", statement_of_account_status: "query_raised" }, message: "Completion document query raised." });
+    if (!saleRecord?.actual_completion_date && !["completed", "handed_over"].includes(unit.sale_status)) {
+      actions.push({ label: "Confirm completed", patch: { actual_completion_date: todayInputValue() }, message: "Completion date confirmed." });
+    }
+  }
+
+  return actions;
+}
+
+function UnitSaleStepActions({
+  actions,
+  isSaving,
+  onAction,
+}: {
+  actions: SaleWorkflowAction[];
+  isSaving: boolean;
+  onAction: (action: SaleWorkflowAction) => void;
+}) {
+  if (actions.length === 0) return null;
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-2 border-t border-[#e5e9e4] pt-4">
+      {actions.map((action) => (
+        <button key={action.label} className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => onAction(action)} disabled={isSaving}>
+          {action.label.toLowerCase().includes("query") ? <AlertTriangle size={16} aria-hidden /> : <CheckCircle2 size={16} aria-hidden />}
+          {isSaving ? "Saving..." : action.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function UnitSaleCurrentActionCard({ gate, isSaving, onAction }: { gate: SaleWorkflowGate; isSaving: boolean; onAction: () => void }) {
+  return (
+    <section className={`rounded-md border p-4 ${gate.blocker ? "border-[#e7c16b] bg-[#fff9ec]" : "border-[#cddbd3] bg-[#edf5f1]"}`}>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-[#617169]">Current action</p>
+          <h3 className="mt-1 text-xl font-semibold text-[#0F3D2E]">{gate.name}</h3>
+          <div className="mt-3 grid gap-2 text-sm text-[#34413a] sm:grid-cols-3">
+            <DetailField label="Owner" value={gate.owner} />
+            <DetailField label="Status" value={<span className={`rounded-md px-2 py-1 text-xs font-semibold ${workflowBadgeClass(gate.status)}`}>{workflowLabel(gate.status)}</span>} />
+            <DetailField label="When" value={gate.timestamp} />
+          </div>
+          <p className="mt-3 text-sm text-[#34413a]">{gate.nextAction}</p>
+          {gate.blocker && <p className="mt-2 text-sm font-semibold text-[#8a5a12]">{gate.blocker}</p>}
+        </div>
+        {gate.primaryAction && (
+          <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={onAction} disabled={isSaving}>
+            <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : gate.primaryAction.label}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleWorkflowTimeline({
+  selectedGateId,
+  gates,
+  onSelectGate,
+}: {
+  selectedGateId: SaleWorkflowGateId;
+  gates: SaleWorkflowGate[];
+  onSelectGate: (gateId: SaleWorkflowGateId) => void;
+}) {
+  return (
+    <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Sale timeline</h3>
+          <p className="mt-1 text-sm text-[#617169]">Follow the handoff from agent to developer to solicitor.</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3">
+        {gates.map((gate, index) => {
+          const isSelected = selectedGateId === gate.id;
+          const isLocked = !gate.isComplete && !gate.isActive;
+          return (
+            <button
+              key={gate.id}
+              className={`w-full rounded-md border p-3 text-left transition ${isLocked ? "cursor-not-allowed border-[#d9ded6] bg-[#f5f7f4] opacity-60" : isSelected ? "border-[#0F3D2E] bg-white shadow-[inset_4px_0_0_#D6A23A]" : gate.isComplete ? "border-[#d9ded6] bg-[#f5f7f4] opacity-75" : "border-[#d9ded6] bg-white"}`}
+              type="button"
+              onClick={() => {
+                if (!isLocked) onSelectGate(gate.id);
+              }}
+              disabled={isLocked}
+              aria-pressed={isSelected}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-3">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${gate.isComplete ? "bg-[#edf5f1] text-[#0F3D2E]" : gate.isActive ? "bg-[#0F3D2E] text-white" : "bg-[#eef1ed] text-[#617169]"}`}>
+                    {gate.isComplete ? <CheckCircle2 size={16} aria-hidden /> : index + 1}
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-[#0F3D2E]">{gate.name}</p>
+                      <span className={`rounded-md px-2 py-1 text-xs font-semibold ${workflowBadgeClass(gate.status)}`}>{workflowLabel(gate.status)}</span>
+                      {gate.isActive && <span className="rounded-md bg-[#fff4df] px-2 py-1 text-xs font-semibold text-[#8a5a12]">Active</span>}
+                      {isLocked && <span className="rounded-md bg-[#eef1ed] px-2 py-1 text-xs font-semibold text-[#617169]">Locked</span>}
+                      {isSelected && !gate.isActive && <span className="rounded-md bg-[#eef1ed] px-2 py-1 text-xs font-semibold text-[#617169]">Selected</span>}
+                    </div>
+                    <p className="mt-1 text-sm text-[#617169]">{gate.nextAction}</p>
+                    {gate.blocker && <p className="mt-1 text-sm font-semibold text-[#8a5a12]">{gate.blocker}</p>}
+                  </div>
+                </div>
+                <div className="grid gap-1 text-sm text-[#34413a] sm:min-w-44">
+                  <span><span className="font-semibold">Owner:</span> {gate.owner}</span>
+                  <span><span className="font-semibold">When:</span> {gate.timestamp}</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleStageChecklist({ items }: { items: Array<{ label: string; complete: boolean; helper: string }> }) {
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <h4 className="font-semibold text-[#0F3D2E]">Stage checks</h4>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-md border border-[#d9ded6] bg-white p-3">
+            <div className="flex items-start gap-2">
+              {item.complete ? <CheckCircle2 className="mt-0.5 text-[#0F3D2E]" size={16} aria-hidden /> : <AlertTriangle className="mt-0.5 text-[#8a5a12]" size={16} aria-hidden />}
+              <div>
+                <p className="text-sm font-semibold text-[#0F3D2E]">{item.label}</p>
+                <p className="mt-1 text-xs text-[#617169]">{item.helper}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type UnitSaleDocumentKind = "reservation" | "agent_invoice" | "completion_statement" | "statement_of_account";
+
+function UnitSaleSingleDocumentPanel({
+  checks,
+  onNotice,
+  reload,
+  saleRecord,
+  title,
+  type,
+  unit,
+  user,
+}: {
+  checks: string[];
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  title: string;
+  type: UnitSaleDocumentKind;
+  unit: Unit;
+  user: User;
+}) {
+  const initial = documentStateForKind(saleRecord, type);
+  const [url, setUrl] = useState(initial.url);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function saveDocumentLink() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSaleRecordPatch({
+        message: `${title} saved.`,
+        onNotice,
+        patch: documentPatchForKind(type, url.trim()),
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save document. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="font-semibold text-[#0F3D2E]">{title}</h4>
+          <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-xs font-semibold ${workflowBadgeClass(initial.status)}`}>{workflowLabel(initial.status)}</span>
+        </div>
+        {url.trim() && (
+          <a className="secondary min-h-9 px-3 py-1.5 text-xs" href={url.trim()} target="_blank" rel="noreferrer">
+            <FileText size={14} aria-hidden /> Open
+          </a>
+        )}
+      </div>
+      <label className="field-label mt-3">
+        Document link or path
+        <input className="field" value={url} onChange={(event) => setUrl(event.target.value)} />
+      </label>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1">
+          {checks.map((check) => <span key={check} className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-[#617169]">{check}</span>)}
+        </div>
+        <button className="secondary min-h-9 px-3 py-1.5 text-xs" type="button" onClick={saveDocumentLink} disabled={isSaving}>
+          <Upload size={14} aria-hidden /> {isSaving ? "Saving..." : "Save link"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function documentStateForKind(saleRecord: UnitSaleRecord | undefined, type: UnitSaleDocumentKind) {
+  if (type === "reservation") return { status: saleRecord?.reservation_form_status ?? "not_uploaded", url: saleRecord?.reservation_form_url ?? "" };
+  if (type === "agent_invoice") return { status: saleRecord?.agent_invoice_status ?? "not_uploaded", url: saleRecord?.agent_invoice_url ?? "" };
+  if (type === "completion_statement") return { status: saleRecord?.completion_statement_status ?? "not_uploaded", url: saleRecord?.completion_statement_url ?? "" };
+  return { status: saleRecord?.statement_of_account_status ?? "not_uploaded", url: saleRecord?.statement_of_account_url ?? "" };
+}
+
+function documentPatchForKind(type: UnitSaleDocumentKind, url: string): Partial<UnitSaleRecord> {
+  const uploadedAt = url ? new Date().toISOString() : null;
+  if (type === "reservation") return { reservation_form_url: url || null, reservation_form_status: url ? "uploaded" : "not_uploaded", reservation_form_uploaded_at: uploadedAt };
+  if (type === "agent_invoice") return { agent_invoice_url: url || null, agent_invoice_status: url ? "uploaded" : "not_uploaded", agent_invoice_uploaded_at: uploadedAt };
+  if (type === "completion_statement") return { completion_statement_url: url || null, completion_statement_status: url ? "uploaded" : "not_uploaded", completion_statement_uploaded_at: uploadedAt };
+  return { statement_of_account_url: url || null, statement_of_account_status: url ? "uploaded" : "not_uploaded", statement_of_account_uploaded_at: uploadedAt };
+}
+
+function UnitSaleExchangeStageDetails({
+  building,
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  building?: Building;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [targetExchangeDate, setTargetExchangeDate] = useState(saleRecord?.target_exchange_date ?? "");
+  const [actualExchangeDate, setActualExchangeDate] = useState(saleRecord?.actual_exchange_date ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function saveExchangeDates() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      if (isFutureDate(actualExchangeDate)) throw new Error("Actual exchange date cannot be in the future.");
+      await saveSaleRecordPatch({
+        message: "Exchange dates saved.",
+        onNotice,
+        patch: { target_exchange_date: targetExchangeDate || null, actual_exchange_date: actualExchangeDate || null },
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save exchange dates. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <label className="field-label">Target exchange<input className="field" type="date" value={targetExchangeDate} onChange={(event) => setTargetExchangeDate(event.target.value)} /></label>
+        <DetailField label="Approval requested" value={formatDateTime(saleRecord?.exchange_approval_requested_at)} />
+        <label className="field-label">Actual exchange<input className="field" type="date" max={todayInputValue()} value={actualExchangeDate} onChange={(event) => setActualExchangeDate(event.target.value)} /></label>
+      </div>
+      <div className="mt-4 grid gap-3 rounded-md border border-[#d9ded6] bg-white p-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DetailField label="Buyer" value={saleRecord?.buyer_name || "-"} />
+        <DetailField label="Contract price" value={formatCurrency(saleRecord?.contract_price)} />
+        <DetailField label="Incentives" value={approvedIncentivesLabel(saleRecord)} />
+        <DetailField label="Reservation fee" value={formatCurrency(saleRecord?.reservation_fee)} />
+        <DetailField label="Deposit basis" value={depositBasisLabel(saleRecord)} />
+        <DetailField label="Buyer solicitor" value={saleRecord?.buyer_solicitor || "-"} />
+        <DetailField label="Developer solicitor" value={saleRecord?.developer_solicitor || "Use building default"} />
+        <DetailField label="Building" value={building?.name ?? "-"} />
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={saveExchangeDates} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save exchange dates"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UnitSalePaymentStageDetails({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [invoiceReference, setInvoiceReference] = useState(saleRecord?.agent_invoice_reference ?? "");
+  const [invoiceDate, setInvoiceDate] = useState(saleRecord?.agent_invoice_date ?? "");
+  const [grossInvoiceAmount, setGrossInvoiceAmount] = useState(saleRecord?.agent_gross_invoice_amount?.toString() ?? "");
+  const amountPermitted = saleRecord?.amount_permitted_to_release?.toString() ?? "";
+  const [amountPaidFirst, setAmountPaidFirst] = useState(saleRecord?.amount_paid_from_first_payment?.toString() ?? "");
+  const [firstPaymentDate, setFirstPaymentDate] = useState(saleRecord?.first_payment_made_at ?? "");
+  const [shortfallAmount, setShortfallAmount] = useState(saleRecord?.invoice_shortfall_amount?.toString() ?? "");
+  const [shortfallPaidDate, setShortfallPaidDate] = useState(saleRecord?.invoice_shortfall_paid_at ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  function parseMoneyField(value: string, label: string) {
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`Enter a valid ${label}.`);
+    return parsed;
+  }
+
+  async function savePaymentDetails() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      if (isFutureDate(invoiceDate)) throw new Error("Invoice date cannot be in the future.");
+      if (isFutureDate(firstPaymentDate)) throw new Error("First payment date cannot be in the future.");
+      if (isFutureDate(shortfallPaidDate)) throw new Error("Shortfall paid date cannot be in the future.");
+      await saveSaleRecordPatch({
+        message: "Invoice and payment details saved.",
+        onNotice,
+        patch: {
+          agent_invoice_reference: invoiceReference.trim() || null,
+          agent_invoice_date: invoiceDate || null,
+          agent_gross_invoice_amount: parseMoneyField(grossInvoiceAmount, "invoice amount"),
+          amount_permitted_to_release: parseMoneyField(amountPermitted, "permitted release amount"),
+          amount_paid_from_first_payment: parseMoneyField(amountPaidFirst, "first payment amount"),
+          first_payment_made_at: firstPaymentDate || null,
+          invoice_shortfall_amount: parseMoneyField(shortfallAmount, "shortfall amount"),
+          invoice_shortfall_paid_at: shortfallPaidDate || null,
+        },
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save payment details. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="grid gap-3 lg:grid-cols-4">
+        <label className="field-label">Invoice reference<input className="field" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} /></label>
+        <label className="field-label">Invoice date<input className="field" type="date" max={todayInputValue()} value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} /></label>
+        <label className="field-label">Imported invoice amount<input className="field" type="number" min="0" step="100" value={grossInvoiceAmount} onChange={(event) => setGrossInvoiceAmount(event.target.value)} /></label>
+        <label className="field-label">Amount paid by solicitor<input className="field" type="number" min="0" step="100" value={amountPaidFirst} onChange={(event) => setAmountPaidFirst(event.target.value)} /></label>
+        <label className="field-label">First payment date<input className="field" type="date" max={todayInputValue()} value={firstPaymentDate} onChange={(event) => setFirstPaymentDate(event.target.value)} /></label>
+        <label className="field-label">Shortfall paid by developer<input className="field" type="number" min="0" step="100" value={shortfallAmount} onChange={(event) => setShortfallAmount(event.target.value)} /></label>
+        <label className="field-label">Shortfall paid date<input className="field" type="date" max={todayInputValue()} value={shortfallPaidDate} onChange={(event) => setShortfallPaidDate(event.target.value)} /></label>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={savePaymentDetails} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save payment details"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleCompletionStageDetails({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [actualCompletionDate, setActualCompletionDate] = useState(saleRecord?.actual_completion_date ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function saveCompletionDates() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      if (isFutureDate(actualCompletionDate)) throw new Error("Actual completion date cannot be in the future.");
+      await saveSaleRecordPatch({
+        message: "Completion date saved.",
+        onNotice,
+        patch: { actual_completion_date: actualCompletionDate || null },
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save completion dates. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <DetailField label="Unit sale status" value={statusLabel(unit.sale_status)} />
+        <DetailField label="Existing unit completion" value={formatDate(unit.completion_date)} />
+        <DetailField label="Handover date" value={formatDate(unit.handover_date)} />
+        <label className="field-label">Actual completion<input className="field" type="date" max={todayInputValue()} value={actualCompletionDate} onChange={(event) => setActualCompletionDate(event.target.value)} /></label>
+      </div>
+      <p className="mt-3 text-sm text-[#617169]">This records the conveyancing completion date. The existing unit status and handover workflow remain unchanged in this POC refactor.</p>
+      <div className="mt-4 flex justify-end">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={saveCompletionDates} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save completion date"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleNotesSidePanel({
+  onNotice,
+  reload,
+  saleNotes,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleNotes: UnitSaleNote[];
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [category, setCategory] = useState<UnitSaleNote["category"]>("general");
+  const [body, setBody] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const sortedNotes = [...saleNotes].sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  async function addNote() {
+    const trimmedBody = body.trim();
+    if (!saleRecord) {
+      onNotice("Save the sale record before adding notes.");
+      return;
+    }
+    if (!trimmedBody || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.from("unit_sale_notes").insert({
+        sale_record_id: saleRecord.id,
+        building_id: unit.building_id,
+        unit_id: unit.id,
+        category,
+        body: trimmedBody,
+        visibility: "admin_developer",
+        created_by: user.id,
+      });
+
+      if (error) throw error;
+
+      setBody("");
+      setCategory("general");
+      onNotice("Sale note added.");
+      await reload();
+    } catch (error) {
+      onNotice(`Could not add sale note. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <aside className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Notes & activity</h3>
+          <p className="mt-1 text-sm text-[#617169]">{sortedNotes.length} entr{sortedNotes.length === 1 ? "y" : "ies"}</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3">
+        <label className="field-label">
+          Category
+          <select className="field" value={category} onChange={(event) => setCategory(event.target.value as UnitSaleNote["category"])} disabled={!saleRecord || isSaving}>
+            {saleNoteCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        </label>
+        <label className="field-label">
+          Add note
+          <textarea className="field min-h-28 py-3" value={body} onChange={(event) => setBody(event.target.value)} disabled={!saleRecord || isSaving} />
+        </label>
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={addNote} disabled={!saleRecord || !body.trim() || isSaving}>
+          <Plus size={16} aria-hidden /> {isSaving ? "Adding..." : "Add note"}
+        </button>
+      </div>
+      <div className="mt-4 grid gap-3">
+        {sortedNotes.slice(0, 6).map((note) => (
+          <article key={note.id} className="rounded-md border border-[#d9ded6] bg-white p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className={`rounded-md px-2 py-1 text-xs font-semibold ${note.category === "blocker" ? "bg-[#fff4df] text-[#8a5a12]" : "bg-[#edf5f1] text-[#0F3D2E]"}`}>{saleNoteCategoryLabel(note.category)}</span>
+              <span className="text-xs text-[#617169]">{formatDateTime(note.created_at)}</span>
+            </div>
+            <p className="mt-2 text-xs font-semibold uppercase text-[#617169]">{note.source_label ?? (note.created_by ? "Portal user" : "Imported note")}</p>
+            <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm text-[#34413a]">{note.body}</p>
+          </article>
+        ))}
+        {sortedNotes.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-white p-3 text-sm text-[#617169]">No sale notes or imported activity yet.</p>}
+      </div>
+    </aside>
+  );
+}
+
+function UnitSaleReservationStageDetails({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [buyerName, setBuyerName] = useState(saleRecord?.buyer_name ?? "");
+  const [buyerEmail, setBuyerEmail] = useState(saleRecord?.buyer_email ?? "");
+  const [buyerPhone, setBuyerPhone] = useState(saleRecord?.buyer_phone ?? "");
+  const [buyerSolicitor, setBuyerSolicitor] = useState(saleRecord?.buyer_solicitor ?? "");
+  const [reservationDate, setReservationDate] = useState(saleRecord?.reservation_date ?? "");
+  const [reservationFee, setReservationFee] = useState(saleRecord?.reservation_fee?.toString() ?? "");
+  const [reservationFeeHolder, setReservationFeeHolder] = useState(saleRecord?.reservation_fee_holder ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  function nullableText(value: string) {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+
+  function nullableMoney(value: string, label: string) {
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`Enter a valid ${label}.`);
+    return parsed;
+  }
+
+  async function saveReservationDetails() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSaleRecordPatch({
+        message: "Reservation details saved.",
+        onNotice,
+        patch: {
+          buyer_name: nullableText(buyerName),
+          buyer_email: nullableText(buyerEmail),
+          buyer_phone: nullableText(buyerPhone),
+          buyer_solicitor: nullableText(buyerSolicitor),
+          reservation_date: reservationDate || null,
+          reservation_fee: nullableMoney(reservationFee, "reservation fee"),
+          reservation_fee_holder: nullableText(reservationFeeHolder),
+        },
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save reservation details. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <label className="field-label">Buyer name<input className="field" value={buyerName} onChange={(event) => setBuyerName(event.target.value)} /></label>
+        <label className="field-label">Buyer email<input className="field" type="email" value={buyerEmail} onChange={(event) => setBuyerEmail(event.target.value)} /></label>
+        <label className="field-label">Buyer phone<input className="field" value={buyerPhone} onChange={(event) => setBuyerPhone(event.target.value)} /></label>
+        <label className="field-label">Buyer solicitor<input className="field" value={buyerSolicitor} onChange={(event) => setBuyerSolicitor(event.target.value)} /></label>
+        <label className="field-label">Reservation date<input className="field" type="date" value={reservationDate} onChange={(event) => setReservationDate(event.target.value)} /></label>
+        <label className="field-label">Reservation fee<input className="field" type="number" min="0" step="100" value={reservationFee} onChange={(event) => setReservationFee(event.target.value)} /></label>
+        <label className="field-label lg:col-span-2">Reservation fee holder<input className="field" value={reservationFeeHolder} onChange={(event) => setReservationFeeHolder(event.target.value)} placeholder="Agent, solicitor or developer" /></label>
+      </div>
+
+      <div className="mt-4 grid gap-3 rounded-md border border-[#d9ded6] bg-white p-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DetailField label="Approved contract price" value={formatCurrency(saleRecord?.contract_price)} />
+        <DetailField label="Approved incentives" value={approvedIncentivesLabel(saleRecord)} />
+        <DetailField label="Approved parking terms" value={moneyNumber(saleRecord?.parking_value) ? formatCurrency(saleRecord?.parking_value) : saleRecord?.parking_allocation || "-"} />
+        <DetailField label="Deposit basis" value={depositBasisLabel(saleRecord)} />
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={saveReservationDetails} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save reservation details"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleRecordEditor({
+  building,
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  building?: Building;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [buyerName, setBuyerName] = useState(saleRecord?.buyer_name ?? "");
+  const [buyerEmail, setBuyerEmail] = useState(saleRecord?.buyer_email ?? "");
+  const [buyerPhone, setBuyerPhone] = useState(saleRecord?.buyer_phone ?? "");
+  const [reservationDate, setReservationDate] = useState(saleRecord?.reservation_date ?? "");
+  const [targetExchangeDate, setTargetExchangeDate] = useState(saleRecord?.target_exchange_date ?? "");
+  const [actualExchangeDate, setActualExchangeDate] = useState(saleRecord?.actual_exchange_date ?? "");
+  const [targetCompletionDate, setTargetCompletionDate] = useState(saleRecord?.target_completion_date ?? "");
+  const [actualCompletionDate, setActualCompletionDate] = useState(saleRecord?.actual_completion_date ?? "");
+  const [contractPrice, setContractPrice] = useState(saleRecord?.contract_price?.toString() ?? "");
+  const [reservationFee, setReservationFee] = useState(saleRecord?.reservation_fee?.toString() ?? "");
+  const [reservationFeeHolder, setReservationFeeHolder] = useState(saleRecord?.reservation_fee_holder ?? "");
+  const [depositAmount, setDepositAmount] = useState(saleRecord?.deposit_amount?.toString() ?? "");
+  const [salesAgent, setSalesAgent] = useState(saleRecord?.sales_agent ?? "");
+  const [buyerSolicitor, setBuyerSolicitor] = useState(saleRecord?.buyer_solicitor ?? "");
+  const [developerSolicitor, setDeveloperSolicitor] = useState(saleRecord?.developer_solicitor ?? "");
+  const [keyRisks, setKeyRisks] = useState(saleRecord?.key_risks ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  function nullableText(value: string) {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+
+  function nullableDate(value: string) {
+    return value || null;
+  }
+
+  function nullableMoney(value: string, label = "amount") {
+    if (!value.trim()) return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`Enter a valid ${label}.`);
+    return parsed;
+  }
+
+  async function saveSaleRecord() {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      if (isFutureDate(actualExchangeDate)) throw new Error("Actual exchange date cannot be in the future.");
+      if (isFutureDate(actualCompletionDate)) throw new Error("Actual completion date cannot be in the future.");
+      const supabase = createSupabaseBrowserClient();
+      const payload = {
+        ...(saleRecord ? { id: saleRecord.id } : {}),
+        building_id: unit.building_id,
+        unit_id: unit.id,
+        buyer_name: nullableText(buyerName),
+        buyer_email: nullableText(buyerEmail),
+        buyer_phone: nullableText(buyerPhone),
+        reservation_date: nullableDate(reservationDate),
+        target_exchange_date: nullableDate(targetExchangeDate),
+        actual_exchange_date: nullableDate(actualExchangeDate),
+        target_completion_date: nullableDate(targetCompletionDate),
+        actual_completion_date: nullableDate(actualCompletionDate),
+        contract_price: nullableMoney(contractPrice, "contract price"),
+        reservation_fee: nullableMoney(reservationFee, "reservation fee"),
+        reservation_fee_holder: nullableText(reservationFeeHolder),
+        deposit_amount: nullableMoney(depositAmount, "deposit amount"),
+        sales_agent: nullableText(salesAgent),
+        buyer_solicitor: nullableText(buyerSolicitor),
+        developer_solicitor: nullableText(developerSolicitor),
+        key_risks: nullableText(keyRisks),
+        created_by: saleRecord?.created_by ?? user.id,
+        updated_by: user.id,
+      };
+
+      const { error } = await supabase
+        .from("unit_sale_records")
+        .upsert(payload, { onConflict: "unit_id" })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      onNotice("Sale record saved.");
+      await reload();
+    } catch (error) {
+      onNotice(`Could not save sale record. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Basic sale record</h3>
+          <p className="mt-1 text-sm text-[#617169]">{building?.name ?? "Building"} / Unit {unit.unit_number}</p>
+        </div>
+        <span className="rounded-md border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">
+          {saleRecord ? `Updated ${formatDateTime(saleRecord.updated_at)}` : "Not saved yet"}
+        </span>
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <label className="field-label">Buyer name<input className="field" value={buyerName} onChange={(event) => setBuyerName(event.target.value)} /></label>
+        <label className="field-label">Buyer email<input className="field" type="email" value={buyerEmail} onChange={(event) => setBuyerEmail(event.target.value)} /></label>
+        <label className="field-label">Buyer phone<input className="field" value={buyerPhone} onChange={(event) => setBuyerPhone(event.target.value)} /></label>
+        <label className="field-label">Contract price<input className="field" type="number" min="0" step="1000" value={contractPrice} onChange={(event) => setContractPrice(event.target.value)} /></label>
+        <label className="field-label">Reservation fee<input className="field" type="number" min="0" step="100" value={reservationFee} onChange={(event) => setReservationFee(event.target.value)} /></label>
+        <label className="field-label">Reservation fee holder<input className="field" value={reservationFeeHolder} onChange={(event) => setReservationFeeHolder(event.target.value)} placeholder="Agent, solicitor or developer" /></label>
+        <label className="field-label">Deposit<input className="field" type="number" min="0" step="1000" value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)} /></label>
+        <label className="field-label">Reservation date<input className="field" type="date" value={reservationDate} onChange={(event) => setReservationDate(event.target.value)} /></label>
+        <label className="field-label">Sales agent<input className="field" value={salesAgent} onChange={(event) => setSalesAgent(event.target.value)} /></label>
+        <label className="field-label">Buyer solicitor<input className="field" value={buyerSolicitor} onChange={(event) => setBuyerSolicitor(event.target.value)} /></label>
+        <label className="field-label">Developer solicitor<input className="field" value={developerSolicitor} onChange={(event) => setDeveloperSolicitor(event.target.value)} /></label>
+        <label className="field-label">Target exchange<input className="field" type="date" value={targetExchangeDate} onChange={(event) => setTargetExchangeDate(event.target.value)} /></label>
+        <label className="field-label">Actual exchange<input className="field" type="date" value={actualExchangeDate} onChange={(event) => setActualExchangeDate(event.target.value)} /></label>
+        <label className="field-label">Target completion<input className="field" type="date" value={targetCompletionDate} onChange={(event) => setTargetCompletionDate(event.target.value)} /></label>
+        <label className="field-label">Actual completion<input className="field" type="date" value={actualCompletionDate} onChange={(event) => setActualCompletionDate(event.target.value)} /></label>
+        <label className="field-label lg:col-span-3">Key risks / blockers<textarea className="field min-h-24 py-3" value={keyRisks} onChange={(event) => setKeyRisks(event.target.value)} /></label>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-[#617169]">This POC record is separate from the unit sale status and handover workflow.</p>
+        <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={saveSaleRecord} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save sale record"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const saleNoteCategories: Array<{ value: UnitSaleNote["category"]; label: string }> = [
+  { value: "general", label: "General update" },
+  { value: "blocker", label: "Blocker" },
+  { value: "buyer_update", label: "Buyer update" },
+  { value: "solicitor_update", label: "Solicitor update" },
+  { value: "strategy", label: "Strategy" },
+  { value: "financial", label: "Financial" },
+];
+
+function saleNoteCategoryLabel(category: string) {
+  return saleNoteCategories.find((item) => item.value === category)?.label ?? statusLabel(category);
+}
+
+function UnitSaleNotesPanel({
+  onNotice,
+  reload,
+  saleNotes,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleNotes: UnitSaleNote[];
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [category, setCategory] = useState<UnitSaleNote["category"]>("general");
+  const [body, setBody] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const sortedNotes = [...saleNotes].sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+  async function addNote() {
+    const trimmedBody = body.trim();
+    if (!saleRecord) {
+      onNotice("Save the basic sale record before adding notes.");
+      return;
+    }
+    if (!trimmedBody || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.from("unit_sale_notes").insert({
+        sale_record_id: saleRecord.id,
+        building_id: unit.building_id,
+        unit_id: unit.id,
+        category,
+        body: trimmedBody,
+        visibility: "admin_developer",
+        created_by: user.id,
+      });
+
+      if (error) throw error;
+
+      setBody("");
+      setCategory("general");
+      onNotice("Sale note added.");
+      await reload();
+    } catch (error) {
+      onNotice(`Could not add sale note. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+        <h3 className="text-base font-semibold text-[#0F3D2E]">Add sale note</h3>
+        <p className="mt-1 text-sm text-[#617169]">Visible to Admin and Developer users only.</p>
+        <div className="mt-4 grid gap-3">
+          <label className="field-label">
+            Category
+            <select className="field" value={category} onChange={(event) => setCategory(event.target.value as UnitSaleNote["category"])} disabled={!saleRecord || isSaving}>
+              {saleNoteCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          <label className="field-label">
+            Note
+            <textarea className="field min-h-36 py-3" value={body} onChange={(event) => setBody(event.target.value)} disabled={!saleRecord || isSaving} />
+          </label>
+          {!saleRecord && (
+            <p className="rounded-md border border-[#d9ded6] bg-white p-3 text-sm text-[#617169]">Save the basic sale record before adding timeline notes.</p>
+          )}
+          <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={addNote} disabled={!saleRecord || !body.trim() || isSaving}>
+            <Plus size={16} aria-hidden /> {isSaving ? "Adding..." : "Add note"}
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-md border border-[#e5e9e4] bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Sale timeline</h3>
+            <p className="mt-1 text-sm text-[#617169]">{sortedNotes.length} note{sortedNotes.length === 1 ? "" : "s"} recorded</p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3">
+          {sortedNotes.map((note) => (
+            <article key={note.id} className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`status-badge ${note.category === "blocker" ? "bg-[#fff4df] text-[#8a5a12]" : "bg-[#edf5f1] text-[#0F3D2E]"}`}>{saleNoteCategoryLabel(note.category)}</span>
+                <span className="text-xs text-[#617169]">{formatDateTime(note.created_at)}</span>
+              </div>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-[#1F2A24]">{note.body}</p>
+              <p className="mt-3 text-xs font-semibold uppercase text-[#617169]">Visibility: Admin/Developer</p>
+            </article>
+          ))}
+          {sortedNotes.length === 0 && (
+            <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-4 text-sm text-[#617169]">No sale notes yet.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function UnitSaleDocumentsPanel({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [reservationFormUrl, setReservationFormUrl] = useState(saleRecord?.reservation_form_url ?? "");
+  const [agentInvoiceUrl, setAgentInvoiceUrl] = useState(saleRecord?.agent_invoice_url ?? "");
+  const [completionStatementUrl, setCompletionStatementUrl] = useState(saleRecord?.completion_statement_url ?? "");
+  const [statementOfAccountUrl, setStatementOfAccountUrl] = useState(saleRecord?.statement_of_account_url ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function updateDocument(patch: Partial<UnitSaleRecord>, message: string) {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSaleRecordPatch({ message, onNotice, patch, reload, saleRecord, unit, user });
+    } catch (error) {
+      onNotice(`Could not update document status. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const documents = [
+    {
+      title: "Reservation form",
+      status: saleRecord?.reservation_form_status ?? "not_uploaded",
+      url: reservationFormUrl,
+      setUrl: setReservationFormUrl,
+      savePatch: (url: string): Partial<UnitSaleRecord> => ({
+        reservation_form_url: url || null,
+        reservation_form_status: url ? "uploaded" : "not_uploaded",
+        reservation_form_uploaded_at: url ? new Date().toISOString() : null,
+      }),
+      approvePatch: { reservation_form_status: "approved" },
+      queryPatch: { reservation_form_status: "query_raised" },
+      checks: ["buyer details", "contract price", "reservation fee", "incentives"],
+    },
+    {
+      title: "Agent invoice",
+      status: saleRecord?.agent_invoice_status ?? "not_uploaded",
+      url: agentInvoiceUrl,
+      setUrl: setAgentInvoiceUrl,
+      savePatch: (url: string): Partial<UnitSaleRecord> => ({
+        agent_invoice_url: url || null,
+        agent_invoice_status: url ? "uploaded" : "not_uploaded",
+        agent_invoice_uploaded_at: url ? new Date().toISOString() : null,
+      }),
+      approvePatch: { agent_invoice_status: "approved", agent_invoice_approved_at: new Date().toISOString() },
+      queryPatch: { agent_invoice_status: "query_raised" },
+      checks: ["agent fee", "reservation fee deduction", "agent incentive deduction", "VAT"],
+    },
+    {
+      title: "Completion statement",
+      status: saleRecord?.completion_statement_status ?? "not_uploaded",
+      url: completionStatementUrl,
+      setUrl: setCompletionStatementUrl,
+      savePatch: (url: string): Partial<UnitSaleRecord> => ({
+        completion_statement_url: url || null,
+        completion_statement_status: url ? "uploaded" : "not_uploaded",
+        completion_statement_uploaded_at: url ? new Date().toISOString() : null,
+      }),
+      approvePatch: { completion_statement_status: "approved", completion_statement_approved_at: new Date().toISOString() },
+      queryPatch: { completion_statement_status: "query_raised" },
+      checks: ["purchase price", "allowances", "deposit", "balance due"],
+    },
+    {
+      title: "Statement of account",
+      status: saleRecord?.statement_of_account_status ?? "not_uploaded",
+      url: statementOfAccountUrl,
+      setUrl: setStatementOfAccountUrl,
+      savePatch: (url: string): Partial<UnitSaleRecord> => ({
+        statement_of_account_url: url || null,
+        statement_of_account_status: url ? "uploaded" : "not_uploaded",
+        statement_of_account_uploaded_at: url ? new Date().toISOString() : null,
+      }),
+      approvePatch: { statement_of_account_status: "approved", statement_of_account_approved_at: new Date().toISOString() },
+      queryPatch: { statement_of_account_status: "query_raised" },
+      checks: ["agent fee paid", "reservation fee", "solicitor fees", "net proceeds"],
+    },
+  ];
+
+  return (
+    <div className="mt-4 grid gap-4">
+      <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Document verification</h3>
+            <p className="mt-1 text-sm text-[#617169]">Track the documents that drive each approval gate.</p>
+          </div>
+          <span className="rounded-md border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">POC document links</span>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {documents.map((document) => (
+            <article key={document.title} className="rounded-md border border-[#d9ded6] bg-white p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-[#0F3D2E]">{document.title}</p>
+                  <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-xs font-semibold ${workflowBadgeClass(document.status)}`}>{workflowLabel(document.status)}</span>
+                </div>
+                {document.url && (
+                  <a className="secondary min-h-9 px-3 py-1.5 text-xs" href={document.url} target="_blank" rel="noreferrer">
+                    <FileText size={14} aria-hidden /> Open
+                  </a>
+                )}
+              </div>
+              <label className="field-label mt-3">
+                Document link or path
+                <input className="field" value={document.url} onChange={(event) => document.setUrl(event.target.value)} />
+              </label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button className="secondary min-h-9 px-3 py-1.5 text-xs" type="button" onClick={() => updateDocument(document.savePatch(document.url.trim()), `${document.title} saved.`)} disabled={isSaving}>
+                  <Upload size={14} aria-hidden /> Save
+                </button>
+                <button className="secondary min-h-9 px-3 py-1.5 text-xs" type="button" onClick={() => updateDocument(document.approvePatch, `${document.title} approved.`)} disabled={isSaving}>
+                  <CheckCircle2 size={14} aria-hidden /> Approve
+                </button>
+                <button className="secondary min-h-9 px-3 py-1.5 text-xs" type="button" onClick={() => updateDocument(document.queryPatch, `${document.title} query raised.`)} disabled={isSaving}>
+                  <AlertTriangle size={14} aria-hidden /> Query
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1">
+                {document.checks.map((check) => (
+                  <span key={check} className="rounded-md bg-[#f8faf7] px-2 py-1 text-xs font-semibold text-[#617169]">{check}</span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function UnitSaleFinancialReconciliationPanel({ saleRecord, variant = "full" }: { saleRecord?: UnitSaleRecord; variant?: "full" | "invoice" }) {
+  const calculations = saleRecordCalculations(saleRecord);
+
+  return (
+    <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Invoice and payment check</h3>
+          <p className="mt-1 text-sm text-[#617169]">Imported spreadsheet values compared with the current sale model.</p>
+        </div>
+        {saleRecord?.imported_at && <span className="rounded-md border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">Imported {formatDateTime(saleRecord.imported_at)}</span>}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryTile label="Expected payable amount" value={formatCurrency(calculations.expectedAgentInvoice)} />
+        <SummaryTile label="Imported invoice" value={formatCurrency(calculations.importedInvoice)} />
+        <SummaryTile label="Invoice variance" value={varianceLabel(calculations.invoiceVariance)} />
+        <SummaryTile label="Remaining shortfall" value={formatCurrency(calculations.expectedShortfall)} />
+      </div>
+
+      <div className={`mt-4 grid gap-3 ${variant === "invoice" ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
+        {variant === "full" && (
+          <section className="rounded-md border border-[#d9ded6] bg-white p-3">
+            <h4 className="font-semibold text-[#0F3D2E]">Deal values</h4>
+            <div className="mt-3 grid gap-3">
+              <DetailField label="List price" value={formatCurrency(saleRecord?.estimated_list_price)} />
+              <DetailField label="Contract price" value={formatCurrency(saleRecord?.contract_price)} />
+              <DetailField label="Price discount" value={formatCurrency(calculations.priceDiscount)} />
+              <DetailField label="Developer contribution" value={formatCurrency(calculations.developerContribution)} />
+              <DetailField label="Net completion funds" value={formatCurrency(calculations.netCompletionFunds)} />
+            </div>
+          </section>
+        )}
+        <section className="rounded-md border border-[#d9ded6] bg-white p-3">
+          <h4 className="font-semibold text-[#0F3D2E]">Agent invoice</h4>
+          <div className="mt-3 grid gap-3">
+            <DetailField label="Agent fee rate" value={formatPercent(calculations.agentFeePercent)} />
+            <DetailField label="Fee base" value={formatCurrency(calculations.agentCommissionBase)} />
+            <DetailField label="Net agent fee" value={formatCurrency(calculations.agentFee)} />
+            <DetailField label="VAT" value={formatCurrency(calculations.agentFeeVat)} />
+            <DetailField label="Reservation fee deduction" value={formatCurrency(calculations.reservationFee)} />
+            <DetailField label="Agent-funded incentive deduction" value={formatCurrency(calculations.agentDeduction)} />
+            <DetailField label="Invoice ref" value={saleRecord?.agent_invoice_reference || "-"} />
+            <DetailField label="Invoice date" value={formatDate(saleRecord?.agent_invoice_date)} />
+            <DetailField label="Variance" value={<span className={`rounded-md px-2 py-1 text-xs font-semibold ${reconciliationTone(calculations.invoiceVariance)}`}>{varianceLabel(calculations.invoiceVariance)}</span>} />
+          </div>
+        </section>
+
+        <section className="rounded-md border border-[#d9ded6] bg-white p-3">
+          <h4 className="font-semibold text-[#0F3D2E]">Solicitor payments</h4>
+          <div className="mt-3 grid gap-3">
+            <DetailField label="Deposit" value={formatCurrency(saleRecord?.deposit_amount)} />
+            <DetailField label="Permitted release" value={formatCurrency(calculations.amountPermitted)} />
+            <DetailField label="Expected first payment" value={formatCurrency(calculations.expectedFirstPayment)} />
+            <DetailField label="Paid from payment 1" value={formatCurrency(calculations.amountPaidFirst)} />
+            <DetailField label="First payment date" value={formatDate(saleRecord?.first_payment_made_at)} />
+            <DetailField label="Recorded shortfall" value={formatCurrency(calculations.recordedShortfall)} />
+            <DetailField label="Shortfall paid" value={formatDate(saleRecord?.invoice_shortfall_paid_at)} />
+            <DetailField label="Shortfall variance" value={<span className={`rounded-md px-2 py-1 text-xs font-semibold ${reconciliationTone(calculations.shortfallVariance)}`}>{varianceLabel(calculations.shortfallVariance)}</span>} />
+          </div>
+        </section>
+      </div>
+
+      {saleRecord?.incentive_summary && (
+        <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
+          <p className="text-xs font-semibold uppercase text-[#617169]">Imported incentive summary</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-[#34413a]">{saleRecord.incentive_summary}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function UnitSaleCompletionDocumentExpectedFigures({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const calculations = saleRecordCalculations(saleRecord);
+  const [queryNotes, setQueryNotes] = useState(saleRecord?.key_risks ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function saveQueryNotes() {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveSaleRecordPatch({
+        message: "Completion document query notes saved.",
+        onNotice,
+        patch: { key_risks: queryNotes.trim() || null },
+        reload,
+        saleRecord,
+        unit,
+        user,
+      });
+    } catch (error) {
+      onNotice(`Could not save query notes. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="font-semibold text-[#0F3D2E]">Expected completion figures</h4>
+          <p className="mt-1 text-sm text-[#617169]">Read-only check values for the completion statement and account statement.</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DetailField label="Contract price" value={formatCurrency(saleRecord?.contract_price)} />
+        <DetailField label="Reservation fee" value={formatCurrency(saleRecord?.reservation_fee)} />
+        <DetailField label="Deposit" value={formatCurrency(calculations.deposit)} />
+        <DetailField label="Incentives / allowances" value={formatCurrency(calculations.totalConcessions)} />
+        <DetailField label="Agent fee already paid" value={saleRecord?.first_payment_made_at ? formatCurrency(calculations.amountPaidFirst) : "-"} />
+        <DetailField label="Solicitor fees" value={formatCurrency(POC_SALES_SOLICITOR_FEE)} />
+        <DetailField label="Expected completion funds" value={formatCurrency(calculations.expectedCompletionFunds)} />
+        <DetailField label="Net proceeds" value={formatCurrency(calculations.netCompletionFunds)} />
+      </div>
+      <label className="field-label mt-4">
+        Query notes
+        <textarea className="field min-h-24 py-3" value={queryNotes} onChange={(event) => setQueryNotes(event.target.value)} />
+      </label>
+      <div className="mt-3 flex justify-end">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={saveQueryNotes} disabled={isSaving}>
+          <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save query notes"}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UnitSaleHandoverAvailabilityPanel({ saleRecord, unit }: { saleRecord?: UnitSaleRecord; unit: Unit }) {
+  const handoverReady = unit.sale_status === "completed" || unit.sale_status === "handed_over";
+
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <DetailField label="Unit sale status" value={statusLabel(unit.sale_status)} />
+        <DetailField label="Handover status" value={handoverReady ? "Available in existing handover workflow" : "Not available yet"} />
+        <DetailField label="Completion date" value={formatDate(unit.completion_date ?? saleRecord?.actual_completion_date)} />
+      </div>
+      <p className="mt-3 text-sm text-[#617169]">Use the existing handover workflow once the sale is completed. This POC does not rebuild keys, meters, photos or sign-off.</p>
+    </section>
+  );
+}
+
+function UnitSaleFinancialImpactPanel({
+  onNotice,
+  reload,
+  saleRecord,
+  unit,
+  user,
+}: {
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+  saleRecord?: UnitSaleRecord;
+  unit: Unit;
+  user: User;
+}) {
+  const [estimatedListPrice, setEstimatedListPrice] = useState(formatMoneyInput(saleRecord?.estimated_list_price));
+  const [contractPrice, setContractPrice] = useState(formatMoneyInput(saleRecord?.contract_price));
+  const [developerContributionValue, setDeveloperContributionValue] = useState(formatMoneyInput(saleRecord?.developer_contribution_value ?? saleRecord?.completion_funds_adjustment));
+  const [agentContributionValue, setAgentContributionValue] = useState(formatMoneyInput(saleRecord?.agent_contribution_value ?? saleRecord?.agent_invoice_deduction_value));
+  const [parkingValue, setParkingValue] = useState(formatMoneyInput(saleRecord?.parking_value));
+  const [otherConcessionsValue, setOtherConcessionsValue] = useState(formatMoneyInput(saleRecord?.other_concessions_value));
+  const [isSaving, setIsSaving] = useState(false);
+
+  function parseMoney(value: string) {
+    const parsed = moneyNumber(value);
+    if (parsed === null) return null;
+    if (!Number.isFinite(parsed) || parsed < 0) throw new Error("Enter valid positive amounts.");
+    return parsed;
+  }
+
+  const numericListPrice = moneyNumber(estimatedListPrice) ?? 0;
+  const numericContractPrice = moneyNumber(contractPrice) ?? 0;
+  const numericDeveloperContribution = moneyNumber(developerContributionValue) ?? 0;
+  const numericAgentContribution = moneyNumber(agentContributionValue) ?? 0;
+  const numericParking = moneyNumber(parkingValue) ?? 0;
+  const numericOther = moneyNumber(otherConcessionsValue) ?? 0;
+  const agentFeePercent = moneyNumber(saleRecord?.agent_fee_percent) ?? 9;
+  const priceDiscount = Math.max(0, numericListPrice - numericContractPrice);
+  const grossSaleBeforeContributions = numericContractPrice + numericParking;
+  const developerConcessions = numericDeveloperContribution + numericOther;
+  const netSaleBeforeCosts = Math.max(0, grossSaleBeforeContributions - developerConcessions);
+  const unitImpact = priceDiscount + developerConcessions - numericParking;
+  const agentCommission = roundCurrency(grossSaleBeforeContributions * (agentFeePercent / 100));
+  const agentVat = roundCurrency(agentCommission * 0.2);
+  const forecastAgentInvoice = roundCurrency(agentCommission + agentVat - numericAgentContribution);
+  const canEditDealModel = canEditIncentiveModel(unit.sale_status);
+
+  async function saveFinancialImpact() {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      if (!canEditDealModel) throw new Error("Deal modelling is locked once a unit is reserved.");
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sign in again to save the deal model.");
+      const response = await fetch("/api/sales/scheme", {
+        body: JSON.stringify({
+          action: "unit_incentive",
+          agentContribution: parseMoney(agentContributionValue),
+          agentFeePercent,
+          buildingId: unit.building_id,
+          contractPrice: parseMoney(contractPrice),
+          developerContribution: parseMoney(developerContributionValue),
+          estimatedListPrice: parseMoney(estimatedListPrice),
+          otherConcessionsValue: parseMoney(otherConcessionsValue),
+          parkingValue: parseMoney(parkingValue),
+          unitId: unit.id,
+        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "Could not save deal model.");
+
+      onNotice("Financial impact saved.");
+      await reload();
+    } catch (error) {
+      onNotice(`Could not save financial impact. ${readableError(error)}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (!canEditDealModel) {
+    return (
+      <div className="mt-4 grid gap-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <SummaryTile label="Price discount" value={formatCurrency(priceDiscount)} />
+          <SummaryTile label="Parking value" value={formatCurrency(numericParking)} />
+          <SummaryTile label="Developer concessions" value={formatCurrency(developerConcessions)} />
+          <SummaryTile label="Net sale before costs" value={formatCurrency(netSaleBeforeCosts)} />
+          <SummaryTile label="Agent forecast invoice" value={formatCurrency(forecastAgentInvoice)} />
+        </div>
+        <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-[#0F3D2E]">Agreed commercial position</h3>
+              <p className="mt-1 text-sm text-[#617169]">Deal modelling is locked from reservation onwards. The saved figures below feed the reservation, invoice and completion checks.</p>
+            </div>
+            <span className="rounded-md border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">
+              {saleRecord ? `Locked position updated ${formatDateTime(saleRecord.updated_at)}` : "No saved position"}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DetailField label="List / expected price" value={formatCurrency(numericListPrice)} />
+            <DetailField label="Agreed unit price" value={formatCurrency(numericContractPrice)} />
+            <DetailField label="Parking value" value={formatCurrency(numericParking)} />
+            <DetailField label="Developer contribution" value={formatCurrency(numericDeveloperContribution)} />
+            <DetailField label="Other developer concessions" value={formatCurrency(numericOther)} />
+            <DetailField label="Agent contribution" value={formatCurrency(numericAgentContribution)} />
+            <DetailField label="Agent fee rate" value={formatPercent(agentFeePercent)} />
+            <DetailField label="Forecast invoice" value={formatCurrency(forecastAgentInvoice)} />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 grid gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <SummaryTile label="Price discount" value={formatCurrency(priceDiscount)} />
+        <SummaryTile label="Parking value" value={formatCurrency(numericParking)} />
+        <SummaryTile label="Developer concessions" value={formatCurrency(developerConcessions)} />
+        <SummaryTile label="Net sale before costs" value={formatCurrency(netSaleBeforeCosts)} />
+        <SummaryTile label="Agent forecast invoice" value={formatCurrency(forecastAgentInvoice)} />
+      </div>
+
+      <section className="rounded-md border border-[#e5e9e4] bg-[#f8faf7] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Deal assumptions</h3>
+            <p className="mt-1 text-sm text-[#617169]">Model the proposed price and incentives before reservation.</p>
+          </div>
+          <span className="rounded-md border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">
+            {saleRecord ? `Updated ${formatDateTime(saleRecord.updated_at)}` : "Not saved yet"}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <label className="field-label">List / expected price<input className="field" inputMode="decimal" value={estimatedListPrice} onChange={(event) => setEstimatedListPrice(formatMoneyInputChange(event.target.value))} /></label>
+            <label className="field-label">Proposed unit price<input className="field" inputMode="decimal" value={contractPrice} onChange={(event) => setContractPrice(formatMoneyInputChange(event.target.value))} /></label>
+            <label className="field-label">Parking value<input className="field" inputMode="decimal" value={parkingValue} onChange={(event) => setParkingValue(formatMoneyInputChange(event.target.value))} /></label>
+            <label className="field-label">Developer contribution<input className="field" inputMode="decimal" value={developerContributionValue} onChange={(event) => setDeveloperContributionValue(formatMoneyInputChange(event.target.value))} /></label>
+            <label className="field-label">Other developer concessions<input className="field" inputMode="decimal" value={otherConcessionsValue} onChange={(event) => setOtherConcessionsValue(formatMoneyInputChange(event.target.value))} /></label>
+          </div>
+          <aside className="rounded-md border border-[#d9ded6] bg-white p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="font-semibold text-[#0F3D2E]">Agent position</h4>
+                <p className="mt-1 text-sm text-[#617169]">Forecast commission before the invoice stage.</p>
+              </div>
+              <span className="rounded-md bg-[#eef1ed] px-2 py-1 text-xs font-semibold text-[#617169]">{formatPercent(agentFeePercent)} fee</span>
+            </div>
+            <div className="mt-3 grid gap-3">
+              <DetailField label="Fee base" value={formatCurrency(grossSaleBeforeContributions)} />
+              <DetailField label="Commission" value={formatCurrency(agentCommission)} />
+              <DetailField label="VAT" value={formatCurrency(agentVat)} />
+              <label className="field-label">Agent contribution<input className="field" inputMode="decimal" value={agentContributionValue} onChange={(event) => setAgentContributionValue(formatMoneyInputChange(event.target.value))} /></label>
+              <DetailField label="Forecast invoice" value={formatCurrency(forecastAgentInvoice)} />
+            </div>
+          </aside>
+        </div>
+        <div className="mt-4 grid gap-3 rounded-md border border-[#d9ded6] bg-white p-3 sm:grid-cols-3">
+          <DetailField label="Price discount" value={formatCurrency(priceDiscount)} />
+          <DetailField label="Gross sale before contributions" value={formatCurrency(grossSaleBeforeContributions)} />
+          <DetailField label="Developer concessions" value={formatCurrency(developerConcessions)} />
+          <DetailField label="Net sale before costs" value={formatCurrency(netSaleBeforeCosts)} />
+          <DetailField label="This unit impact" value={formatCurrency(unitImpact)} />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[#617169]">Parking increases the sale value. Developer concessions reduce the developer net. Agent contribution reduces the agent forecast.</p>
+          <button className="primary min-h-10 px-4 py-2 text-sm" type="button" onClick={saveFinancialImpact} disabled={isSaving}>
+            <CheckCircle2 size={16} aria-hidden /> {isSaving ? "Saving..." : "Save draft"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function SelectedUnitHandover({
   building,
   existingHandover,
@@ -6886,7 +9546,35 @@ function SummaryTile({ label, value }: { label: string; value: string | number }
   return (
     <div className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
       <p className="text-xs font-semibold uppercase text-[#617169]">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-[#0F3D31]">{value}</p>
+      <p className="numeric-value mt-1 text-2xl font-semibold text-[#0F3D31]">{value}</p>
+    </div>
+  );
+}
+
+function CompactMetric({ label, value, tone = "default" }: { label: string; value: string | number; tone?: "default" | "warning" }) {
+  return (
+    <div className={`rounded-md border p-3 ${tone === "warning" ? "border-[#e7c16b] bg-[#fff9ec]" : "border-[#d9ded6] bg-[#f8faf7]"}`}>
+      <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">{label}</p>
+      <p className={`numeric-value mt-1 text-lg font-semibold ${tone === "warning" ? "text-[#8a5a12]" : "text-[#0F3D31]"}`}>{value}</p>
+    </div>
+  );
+}
+
+function CalculationBlock({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-4">
+      <h3 className="text-base font-semibold text-[#0F3D2E]">{title}</h3>
+      <p className="mt-1 text-sm text-[#617169]">{subtitle}</p>
+      <div className="mt-4 grid gap-2">{children}</div>
+    </section>
+  );
+}
+
+function CalculationRow({ label, value, strong = false }: { label: string; value: React.ReactNode; strong?: boolean }) {
+  return (
+    <div className={`flex items-start justify-between gap-4 border-t border-[#e5e9e4] pt-2 ${strong ? "text-[#0F3D2E]" : "text-[#34413a]"}`}>
+      <span className="text-sm font-medium">{label}</span>
+      <span className={`numeric-value text-right text-sm ${strong ? "font-bold" : "font-semibold"}`}>{value}</span>
     </div>
   );
 }
@@ -9092,7 +11780,7 @@ function DetailField({ label, value }: { label: string; value: React.ReactNode }
   return (
     <div>
       <p className="text-xs font-semibold uppercase text-[#617169]">{label}</p>
-      <p className="mt-1 text-[#34413a]">{value}</p>
+      <p className="numeric-value mt-1 text-[#34413a]">{value}</p>
     </div>
   );
 }
@@ -9390,7 +12078,7 @@ function filterBuildingsForRole(buildings: Building[], units: Unit[], profile: P
     const buildingIds = new Set(units.filter((unit) => accessibleUnitIds.includes(unit.id)).map((unit) => unit.building_id));
     return buildings.filter((building) => buildingIds.has(building.id));
   }
-  if (profile.role === "developer_representative" || profile.role === "contractor") {
+  if (profile.role === "developer_representative" || profile.role === "sales_agent" || profile.role === "conveyancer" || profile.role === "contractor") {
     return buildings.filter((building) => accessibleBuildingIds.includes(building.id));
   }
   return [];
@@ -9400,7 +12088,7 @@ function filterUnitsForRole(units: Unit[], profile: Profile | null, accessibleUn
   if (!profile) return [];
   if (profile.role === "admin" || profile.role === "developer") return units;
   if (profile.role === "resident") return units.filter((unit) => accessibleUnitIds.includes(unit.id));
-  if (profile.role === "developer_representative" || profile.role === "contractor") return units.filter((unit) => accessibleBuildingIds.includes(unit.building_id));
+  if (profile.role === "developer_representative" || profile.role === "sales_agent" || profile.role === "conveyancer" || profile.role === "contractor") return units.filter((unit) => accessibleBuildingIds.includes(unit.building_id));
   return [];
 }
 

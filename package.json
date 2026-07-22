@@ -9,6 +9,7 @@
     "lint": "eslint",
     "import:template": "node scripts/import-cleanup-template.mjs",
     "import:template:prod": "node scripts/import-cleanup-template.mjs --prod",
+    "import:conveyancing": "node scripts/import-conveyancing-data.mjs",
     "verify:template-import": "node scripts/verify-template-import.mjs",
     "docs:pdf": "node scripts/generate-system-guide-pdf.mjs",
     "seed:staging": "node scripts/seed-staging.mjs",
