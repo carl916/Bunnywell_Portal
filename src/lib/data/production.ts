@@ -1,4 +1,4 @@
-export type AppRole = "admin" | "developer" | "developer_representative" | "contractor" | "resident" | "user";
+export type AppRole = "admin" | "developer" | "developer_representative" | "sales_agent" | "conveyancer" | "contractor" | "resident" | "user";
 export type ResidentType = "leaseholder" | "tenant" | "letting_agent" | "managing_agent";
 
 export type Building = {
@@ -33,7 +33,7 @@ export type Organisation = {
   phone: string | null;
 };
 
-export type BuildingOrganisationRole = "main_contractor" | "developer_representative" | "supporting_trade";
+export type BuildingOrganisationRole = "main_contractor" | "developer_representative" | "supporting_trade" | "sales_agent" | "conveyancer";
 
 export type BuildingOrganisation = {
   id: string;

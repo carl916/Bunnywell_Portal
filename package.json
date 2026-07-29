@@ -12,6 +12,8 @@
     "verify:template-import": "node scripts/verify-template-import.mjs",
     "docs:pdf": "node scripts/generate-system-guide-pdf.mjs",
     "seed:staging": "node scripts/seed-staging.mjs",
+    "test:sales-permissions": "node --test tests/sales-permissions.test.mjs",
+    "test:sales": "node --test tests/sales-permissions.test.mjs tests/sales-reservation-redaction.test.mjs tests/sales-deal-structure.test.mjs tests/sales-currency.test.mjs tests/sales-commercial-model.test.mjs tests/sales-default-cascade.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

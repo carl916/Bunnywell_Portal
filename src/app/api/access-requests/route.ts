@@ -41,10 +41,40 @@ type RequestableBuilding = {
   allow_resident_access_requests?: boolean | null;
 };
 
+type RequestableUnit = {
+  id: string;
+  building_id: string;
+  unit_number: string;
+  floor?: string | null;
+};
+
+type RequestableFloor = {
+  building_id: string;
+  name: string;
+  sort_order?: number | null;
+};
+
 function isResidentRequestableBuilding(building?: RequestableBuilding | null) {
   if (!building) return false;
   if (building.status === "archived" || building.allow_resident_access_requests === false) return false;
   return true;
+}
+
+function sortUnitsByFloorOrder(units: RequestableUnit[], floors: RequestableFloor[]) {
+  const floorOrder = new Map(
+    floors.map((floor, index) => [
+      `${floor.building_id}:${floor.name.trim().toLowerCase()}`,
+      floor.sort_order ?? index,
+    ]),
+  );
+
+  return [...units].sort((a, b) => {
+    if (a.building_id !== b.building_id) return a.building_id.localeCompare(b.building_id);
+    const aFloorOrder = floorOrder.get(`${a.building_id}:${(a.floor ?? "").trim().toLowerCase()}`) ?? Number.MAX_SAFE_INTEGER;
+    const bFloorOrder = floorOrder.get(`${b.building_id}:${(b.floor ?? "").trim().toLowerCase()}`) ?? Number.MAX_SAFE_INTEGER;
+    if (aFloorOrder !== bFloorOrder) return aFloorOrder - bFloorOrder;
+    return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true });
+  });
 }
 
 function env(name: string) {
@@ -140,27 +170,33 @@ async function getAdminClientForRequest(request: Request) {
 export async function GET() {
   try {
     const supabase = createAdminClient();
-    const [{ data: buildings, error: buildingsError }, { data: units, error: unitsError }] = await Promise.all([
+    const [{ data: buildings, error: buildingsError }, { data: units, error: unitsError }, { data: floors, error: floorsError }] = await Promise.all([
       supabase
         .from("buildings")
         .select("id,name,status,allow_resident_access_requests")
         .order("name"),
       supabase
         .from("units")
-        .select("id,building_id,unit_number,floor,sale_status")
-        .order("unit_number"),
+        .select("id,building_id,unit_number,floor,sale_status"),
+      supabase
+        .from("building_floors")
+        .select("building_id,name,sort_order")
+        .order("sort_order"),
     ]);
 
-    if (buildingsError || unitsError) {
-      return NextResponse.json({ error: buildingsError?.message ?? unitsError?.message ?? "Could not load buildings." }, { status: 500 });
+    if (buildingsError || unitsError || floorsError) {
+      return NextResponse.json({ error: buildingsError?.message ?? unitsError?.message ?? floorsError?.message ?? "Could not load buildings." }, { status: 500 });
     }
 
     return NextResponse.json({
       buildings: (buildings ?? [])
         .filter(isResidentRequestableBuilding)
         .map((building) => ({ id: building.id, name: building.name })),
-      units: (units ?? [])
-        .filter((unit) => (buildings ?? []).some((building) => building.id === unit.building_id && isResidentRequestableBuilding(building)))
+      units: sortUnitsByFloorOrder(
+        (units ?? [])
+          .filter((unit) => (buildings ?? []).some((building) => building.id === unit.building_id && isResidentRequestableBuilding(building))) as RequestableUnit[],
+        (floors ?? []) as RequestableFloor[],
+      )
         .map((unit) => ({
         id: unit.id,
         buildingId: unit.building_id,

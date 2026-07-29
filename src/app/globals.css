@@ -88,6 +88,57 @@ textarea.field {
   font-weight: 600;
 }
 
+.gbp-input {
+  min-height: 2.875rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  align-items: center;
+  border-radius: 0.625rem;
+  border: 1px solid var(--bw-border-strong);
+  background: var(--bw-surface);
+  padding: 0 0.875rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.gbp-input:focus-within {
+  border-color: var(--bw-primary);
+  box-shadow: 0 0 0 3px rgba(214, 162, 58, 0.22);
+}
+
+.gbp-input[data-disabled="true"] {
+  cursor: not-allowed;
+  background: #f1eee7;
+  color: #8b968f;
+}
+
+.gbp-input-prefix {
+  color: var(--bw-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.gbp-input-control {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  outline: none;
+  padding: 0;
+}
+
+.gbp-input-control::placeholder {
+  color: #8b968f;
+}
+
+.gbp-input-control:disabled {
+  cursor: not-allowed;
+  color: #8b968f;
+}
+
 .primary,
 .secondary {
   display: inline-flex;
