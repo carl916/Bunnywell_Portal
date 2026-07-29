@@ -51,7 +51,7 @@ jobs:
         uses: supabase/setup-cli@v2
         with:
           version: latest
-	  github-token: ${{ github.token }}
+          github-token: ${{ github.token }}
 
       - name: Install rclone
         shell: bash
