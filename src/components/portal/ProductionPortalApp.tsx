@@ -7,6 +7,12 @@ import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
+import { GbpInput } from "@/components/portal/sales/GbpInput";
+import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
+import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
+import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
+import { buildDepositStructure, paymentScheduleSummary } from "@/lib/sales/deal-structure";
+import { formatGbp, parseGbpInput } from "@/lib/sales/currency";
 import {
   buildingAllowsFlatHandover,
   buildingAllowsResidentRoutineSnags,
@@ -97,6 +103,37 @@ type ResidentAccessRequest = {
   created_at: string;
 };
 
+type SetupUnitSaleAttempt = {
+  id: string;
+  unit_id: string;
+  is_active: boolean;
+  workflow_status: string;
+  buyer_name: string | null;
+  buyer_email: string | null;
+  buyer_phone: string | null;
+  buyer_solicitor_name: string | null;
+  reservation_submitted_at: string | null;
+  reservation_approved_at: string | null;
+  commercial_approved_at: string | null;
+  exchanged_at: string | null;
+  completed_at: string | null;
+};
+
+type SetupUnitSaleTerm = {
+  id: string;
+  sale_attempt_id: string;
+  is_current: boolean;
+  list_price_at_offer: number | null;
+  contract_price: number | null;
+};
+
+type SetupUnitSaleDocument = {
+  sale_attempt_id: string;
+  document_type: string;
+  status: string | null;
+  redacted_at: string | null;
+};
+
 type AuditEvent = {
   id: string;
   event_type: string;
@@ -108,8 +145,8 @@ type AuditEvent = {
   created_at: string;
 };
 
-type Tab = "dashboard" | "snags" | "units" | "setup_buildings" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
-type PrimaryNavKey = "dashboard" | "snags" | "units" | "setup" | "resident_home" | "resident_snags" | "resident_help";
+type Tab = "dashboard" | "snags" | "units" | "sales" | "setup_buildings" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
+type PrimaryNavKey = "dashboard" | "snags" | "units" | "sales" | "setup" | "resident_home" | "resident_snags" | "resident_help";
 
 type PortalScreenDefinition = {
   label: string;
@@ -184,6 +221,8 @@ const appRoles: Array<{ value: AppRole; label: string }> = [
   { value: "admin", label: "Admin" },
   { value: "developer", label: "Developer" },
   { value: "developer_representative", label: "Developer Representative" },
+  { value: "sales_agent", label: "Sales Agent" },
+  { value: "conveyancer", label: "Conveyancer" },
   { value: "contractor", label: "Contractor" },
   { value: "resident", label: "Resident" },
 ];
@@ -198,6 +237,8 @@ const residentTypes: Array<{ value: ResidentType; label: string }> = [
 const organisationTypes = [
   { value: "contractor", label: "Main contractor" },
   { value: "developer_representative", label: "Developer representative" },
+  { value: "sales_agent", label: "Sales agent" },
+  { value: "conveyancer", label: "Conveyancer" },
   { value: "supporting_trade", label: "Supporting trade" },
 ];
 
@@ -215,6 +256,11 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
   units: {
     label: "Units",
     roles: ["admin", "developer", "developer_representative"],
+    section: "internal",
+  },
+  sales: {
+    label: "Sales",
+    roles: ["admin", "developer", "sales_agent", "conveyancer"],
     section: "internal",
   },
   setup_buildings: {
@@ -589,6 +635,13 @@ function parseParkingBays(value: string) {
     .split(",")
     .map((item) => Number(item.trim()))
     .filter((item) => Number.isInteger(item) && item > 0);
+}
+
+function moneyInputToNumber(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const numeric = Number(trimmed.replace(/,/g, ""));
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : null;
 }
 
 function eventLabel(eventType: string) {
@@ -1024,7 +1077,21 @@ export function ProductionPortalApp() {
     setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
     const organisationBuildingIds = loadedProfile?.organisation_id
       ? loadedBuildingOrganisations
-        .filter((link) => link.organisation_id === loadedProfile.organisation_id && link.active !== false)
+        .filter((link) => (
+          link.organisation_id === loadedProfile.organisation_id
+          && link.active !== false
+          && (
+            loadedProfile.role === "sales_agent"
+              ? link.role_on_project === "sales_agent"
+              : loadedProfile.role === "conveyancer"
+                ? link.role_on_project === "conveyancer"
+                : loadedProfile.role === "developer_representative"
+                  ? link.role_on_project === "developer_representative"
+                  : loadedProfile.role === "contractor"
+                    ? link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade"
+                    : true
+          )
+        ))
         .map((link) => link.building_id)
       : [];
     setAccessibleBuildingIds(Array.from(new Set([
@@ -1173,11 +1240,23 @@ export function ProductionPortalApp() {
           uploadFile={uploadFile}
         />
       )}
+      {activeTab === "sales" && (
+        <SalesReservationWorkflow
+          user={user}
+          profile={profile}
+          buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
+          units={scopedUnits}
+          onNotice={setNotice}
+          reloadPortalData={() => loadAll()}
+        />
+      )}
       {(activeTab === "resident_home" || activeTab === "resident_snags") && (
         <LeaseholderDefects
           user={user}
           profile={profile}
           buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
           units={scopedUnits}
           areas={scopedAreas}
           snags={residentDefects}
@@ -1210,6 +1289,7 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
   if (tabs.includes("dashboard")) items.push({ key: "dashboard", label: "Dashboard", tab: "dashboard", activeTabs: ["dashboard"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
   if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
+  if (tabs.includes("sales")) items.push({ key: "sales", label: "Sales", tab: "sales", activeTabs: ["sales"], icon: <ClipboardCheck size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1641,6 +1721,7 @@ function SetupSection({
       {activeTab === "setup_people" && (
         <UserAdmin
           buildings={buildings}
+          buildingFloors={buildingFloors}
           units={units}
           organisations={organisations}
           profiles={profiles}
@@ -1957,18 +2038,118 @@ function BuildingStructureView({
 }) {
   const [floorName, setFloorName] = useState("");
   const [editingFloorOrder, setEditingFloorOrder] = useState(false);
+  const [setupSaleAttempts, setSetupSaleAttempts] = useState<SetupUnitSaleAttempt[]>([]);
+  const [setupSaleTerms, setSetupSaleTerms] = useState<SetupUnitSaleTerm[]>([]);
   const building = buildings.find((item) => item.id === selectedBuildingId) ?? buildings[0];
   const buildingId = building?.id ?? "";
   const floors = buildingFloors
     .filter((floor) => floor.building_id === building?.id)
     .sort((a, b) => a.sort_order - b.sort_order);
-  const buildingUnits = units.filter((unit) => unit.building_id === building?.id);
+  const buildingUnits = sortUnitsByFloorOrder(
+    units.filter((unit) => unit.building_id === building?.id),
+    buildingFloors,
+    building?.id,
+  );
   const communalAreas = areas
     .filter((area) => area.building_id === building?.id && area.area_type === "communal_area")
     .sort((a, b) => a.sort_order - b.sort_order);
   const unassignedCommunalAreas = communalAreas.filter((area) => !area.floor || !floors.some((floor) => floor.name === area.floor));
   const unmatchedUnits = buildingUnits.filter((unit) => unit.floor && !floors.some((floor) => floor.name === unit.floor));
   const noFloorUnits = buildingUnits.filter((unit) => !unit.floor);
+  const activeAttemptByUnit = useMemo(
+    () => new Map(setupSaleAttempts.filter((attempt) => attempt.is_active).map((attempt) => [attempt.unit_id, attempt])),
+    [setupSaleAttempts],
+  );
+  const currentTermByAttempt = useMemo(
+    () => new Map(setupSaleTerms.filter((term) => term.is_current).map((term) => [term.sale_attempt_id, term])),
+    [setupSaleTerms],
+  );
+
+  function unitPriceFor(unitId: string) {
+    const activeAttempt = activeAttemptByUnit.get(unitId);
+    const currentTerm = activeAttempt ? currentTermByAttempt.get(activeAttempt.id) : null;
+    return currentTerm?.list_price_at_offer ?? currentTerm?.contract_price ?? null;
+  }
+
+  function activeSaleAttemptIdFor(unitId: string) {
+    return activeAttemptByUnit.get(unitId)?.id ?? null;
+  }
+
+  async function loadSetupSalePrices() {
+    if (!buildingId || buildingUnits.length === 0) {
+      setSetupSaleAttempts([]);
+      setSetupSaleTerms([]);
+      return;
+    }
+
+    const supabase = createSupabaseBrowserClient();
+    const unitIds = buildingUnits.map((unit) => unit.id);
+    const { data: attemptRows, error: attemptsError } = await supabase
+      .from("unit_sale_attempts")
+      .select("id,unit_id,is_active")
+      .in("unit_id", unitIds);
+    if (attemptsError) {
+      onNotice(attemptsError.message);
+      setSetupSaleAttempts([]);
+      setSetupSaleTerms([]);
+      return;
+    }
+
+    const attempts = (attemptRows ?? []) as SetupUnitSaleAttempt[];
+    setSetupSaleAttempts(attempts);
+    const attemptIds = attempts.map((attempt) => attempt.id);
+    if (attemptIds.length === 0) {
+      setSetupSaleTerms([]);
+      return;
+    }
+
+    const { data: termRows, error: termsError } = await supabase
+      .from("unit_sale_terms")
+      .select("id,sale_attempt_id,is_current,list_price_at_offer,contract_price")
+      .in("sale_attempt_id", attemptIds);
+    if (termsError) {
+      onNotice(termsError.message);
+      setSetupSaleTerms([]);
+      return;
+    }
+    setSetupSaleTerms((termRows ?? []) as SetupUnitSaleTerm[]);
+  }
+
+  async function saveSetupUnitPrice(unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) {
+    const supabase = createSupabaseBrowserClient();
+    const { data } = await supabase.auth.getSession();
+    const response = await fetch("/api/sales/reservations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({
+        action: "save_commercial_model",
+        unitId: unit.id,
+        saleAttemptId,
+        listPriceAtOffer: price,
+        contractPrice: price,
+      }),
+    });
+    const text = await response.text();
+    let payload: { error?: string } = {};
+    if (text.trim()) {
+      try {
+        payload = JSON.parse(text) as { error?: string };
+      } catch {
+        throw new Error(`Unit price could not be saved. The server returned a ${response.status || "non-JSON"} response instead of JSON.`);
+      }
+    }
+    if (!response.ok) throw new Error(payload.error ?? "Unit price could not be saved.");
+    await loadSetupSalePrices();
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadSetupSalePrices(), 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildingId, buildingUnits.length]);
 
   async function moveFloor(floorId: string, direction: -1 | 1) {
     const currentIndex = floors.findIndex((floor) => floor.id === floorId);
@@ -2040,6 +2221,9 @@ function BuildingStructureView({
               buildingId={building.id}
               onNotice={onNotice}
               reload={reload}
+              unitPriceFor={unitPriceFor}
+              activeSaleAttemptIdFor={activeSaleAttemptIdFor}
+              saveUnitPrice={saveSetupUnitPrice}
             />
           ))}
           {unmatchedUnits.length > 0 && (
@@ -2054,6 +2238,9 @@ function BuildingStructureView({
               buildingId={building.id}
               onNotice={onNotice}
               reload={reload}
+              unitPriceFor={unitPriceFor}
+              activeSaleAttemptIdFor={activeSaleAttemptIdFor}
+              saveUnitPrice={saveSetupUnitPrice}
               warning
             />
           )}
@@ -2069,6 +2256,9 @@ function BuildingStructureView({
               buildingId={building.id}
               onNotice={onNotice}
               reload={reload}
+              unitPriceFor={unitPriceFor}
+              activeSaleAttemptIdFor={activeSaleAttemptIdFor}
+              saveUnitPrice={saveSetupUnitPrice}
               warning
             />
           )}
@@ -2118,6 +2308,9 @@ function FloorBlock({
   unitTypeAreas,
   onNotice,
   reload,
+  unitPriceFor,
+  activeSaleAttemptIdFor,
+  saveUnitPrice,
   warning = false,
 }: {
   floor?: BuildingFloor;
@@ -2131,10 +2324,14 @@ function FloorBlock({
   unitTypeAreas: UnitTypeArea[];
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
+  unitPriceFor: (unitId: string) => number | null;
+  activeSaleAttemptIdFor: (unitId: string) => string | null;
+  saveUnitPrice: (unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) => Promise<void>;
   warning?: boolean;
 }) {
   const [unitNumber, setUnitNumber] = useState("");
   const [unitSizeSqm, setUnitSizeSqm] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
   const [unitParkingBays, setUnitParkingBays] = useState("");
   const [unitTypeId, setUnitTypeId] = useState("");
   const [communalName, setCommunalName] = useState("");
@@ -2143,8 +2340,13 @@ function FloorBlock({
   const deleteFloorHelp = "Move or delete units and communal areas before deleting this floor.";
 
   async function addUnitToFloor() {
-    if (!unitNumber || !unitSizeSqm || !unitTypeId) {
-      onNotice("Unit number, size and unit type are required.");
+    if (!unitNumber || !unitSizeSqm || !unitTypeId || !unitPrice) {
+      onNotice("Unit number, size, unit price and unit type are required.");
+      return;
+    }
+    const parsedUnitPrice = parseGbpInput(unitPrice);
+    if (parsedUnitPrice === null) {
+      onNotice("Enter a valid unit price.");
       return;
     }
     const duplicateUnit = units.some((unit) => unit.building_id === buildingId && unit.unit_number.toLowerCase() === unitNumber.trim().toLowerCase());
@@ -2167,6 +2369,11 @@ function FloorBlock({
       onNotice(error.code === "23505" ? `Unit ${unitNumber.trim()} already exists in this building.` : error.message);
       return;
     }
+    try {
+      await saveUnitPrice(data, parsedUnitPrice);
+    } catch (priceError) {
+      onNotice(priceError instanceof Error ? `Unit created, but price was not saved: ${priceError.message}` : "Unit created, but price was not saved.");
+    }
     const templateAreas = unitTypeAreas.filter((area) => area.unit_type_id === unitTypeId && !area.optional);
     if (templateAreas.length > 0) {
       const { error: areaError } = await supabase.from("areas").insert(templateAreas.map((area) => ({
@@ -2180,6 +2387,7 @@ function FloorBlock({
     }
     setUnitNumber("");
     setUnitSizeSqm("");
+    setUnitPrice("");
     setUnitParkingBays("");
     setUnitTypeId("");
     await reload();
@@ -2273,23 +2481,27 @@ function FloorBlock({
                     buildingFloors={buildingFloors}
                     unitTypes={unitTypes}
                     unitType={unitType}
+                    unitPrice={unitPriceFor(unit.id)}
+                    activeSaleAttemptId={activeSaleAttemptIdFor(unit.id)}
                     onNotice={onNotice}
                     reload={reload}
+                    saveUnitPrice={saveUnitPrice}
                   />
                 );
               })}
               {units.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
             </div>
             {!warning && (
-              <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+              <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
                 <input className="field" value={unitNumber} onChange={(event) => setUnitNumber(event.target.value)} placeholder={`Add unit to ${floorName}`} />
                 <input className="field" value={unitSizeSqm} onChange={(event) => setUnitSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
+                <GbpInput value={unitPrice} onChange={setUnitPrice} placeholder="Unit price" aria-label="Unit price" />
                 <input className="field" value={unitParkingBays} onChange={(event) => setUnitParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
                 <select className="field" value={unitTypeId} onChange={(event) => setUnitTypeId(event.target.value)}>
                   <option value="">Unit type</option>
                   {unitTypes.map((unitType) => <option key={unitType.id} value={unitType.id}>{unitType.name}</option>)}
                 </select>
-                <button className="secondary" onClick={addUnitToFloor} disabled={!unitNumber || !unitSizeSqm || !unitTypeId}>Add unit</button>
+                <button className="secondary" onClick={addUnitToFloor} disabled={!unitNumber || !unitSizeSqm || !unitPrice || !unitTypeId}>Add unit</button>
               </div>
             )}
           </div>
@@ -2431,22 +2643,29 @@ function UnitStructureCard({
   buildingFloors,
   unitTypes,
   unitType,
+  unitPrice,
+  activeSaleAttemptId,
   onNotice,
   reload,
+  saveUnitPrice,
 }: {
   unit: Unit;
   areas: Area[];
   buildingFloors: BuildingFloor[];
   unitTypes: UnitType[];
   unitType: string;
+  unitPrice: number | null;
+  activeSaleAttemptId: string | null;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
+  saveUnitPrice: (unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) => Promise<void>;
 }) {
   const [roomName, setRoomName] = useState("");
   const [editing, setEditing] = useState(false);
   const [editNumber, setEditNumber] = useState(unit.unit_number);
   const [editFloor, setEditFloor] = useState(unit.floor ?? "");
   const [editSizeSqm, setEditSizeSqm] = useState(unit.size_sqm?.toString() ?? "");
+  const [editUnitPrice, setEditUnitPrice] = useState(unitPrice?.toString() ?? "");
   const [editParkingBays, setEditParkingBays] = useState(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
   const [editUnitTypeId, setEditUnitTypeId] = useState(unit.unit_type_id ?? "");
   const [editSaleStatus, setEditSaleStatus] = useState<Unit["sale_status"]>(unit.sale_status);
@@ -2469,6 +2688,7 @@ function UnitStructureCard({
     setEditNumber(unit.unit_number);
     setEditFloor(unit.floor ?? "");
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
+    setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
@@ -2476,7 +2696,7 @@ function UnitStructureCard({
     setPendingRooms([]);
     setPendingAmenity(false);
     setDeleteWarning("");
-  }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id]);
+  }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id, unitPrice]);
 
   function stageRoom() {
     const trimmed = roomName.trim();
@@ -2498,6 +2718,11 @@ function UnitStructureCard({
   async function saveUnit() {
     if (!editNumber || !editFloor || !editSizeSqm || !editUnitTypeId) {
       onNotice("Unit number, floor, size and unit type are required.");
+      return;
+    }
+    const nextUnitPrice = editUnitPrice.trim() ? parseGbpInput(editUnitPrice) : null;
+    if (editUnitPrice.trim() && nextUnitPrice === null) {
+      onNotice("Enter a valid unit price.");
       return;
     }
     if (editSaleStatus === "handed_over" && unit.sale_status !== "handed_over") {
@@ -2536,6 +2761,14 @@ function UnitStructureCard({
     }).eq("id", unit.id);
     if (error) onNotice(error.message);
     else {
+      if (nextUnitPrice !== null) {
+        try {
+          await saveUnitPrice(unit, nextUnitPrice, activeSaleAttemptId);
+        } catch (priceError) {
+          onNotice(priceError instanceof Error ? priceError.message : "Unit price could not be saved.");
+          return;
+        }
+      }
       if (areasToRemove.length > 0) {
         const { error: removeError } = await supabase.from("areas").delete().in("id", areasToRemove);
         if (removeError) {
@@ -2578,6 +2811,7 @@ function UnitStructureCard({
     setEditNumber(unit.unit_number);
     setEditFloor(unit.floor ?? "");
     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
+    setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
     setEditSaleStatus(unit.sale_status);
@@ -2629,13 +2863,16 @@ function UnitStructureCard({
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <input className="field" value={editSizeSqm} onChange={(event) => setEditSizeSqm(event.target.value)} placeholder="Size sqm" type="number" min="0" step="0.1" />
-                    <input className="field" value={editParkingBays} onChange={(event) => setEditParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
+                    <GbpInput value={editUnitPrice} onChange={setEditUnitPrice} placeholder="Unit price" aria-label={`Unit ${unit.unit_number} price`} />
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
+                    <input className="field" value={editParkingBays} onChange={(event) => setEditParkingBays(event.target.value)} placeholder="Parking bays, e.g. 12, 13" />
                     <select className="field" value={editUnitTypeId} onChange={(event) => setEditUnitTypeId(event.target.value)}>
                       <option value="">Unit type</option>
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {unit.sale_status === "handed_over" ? (
                       <select className="field" value="handed_over" disabled title="Handed Over is controlled by the handover workflow">
                         <option value="handed_over">Handed Over</option>
@@ -2715,6 +2952,7 @@ function UnitStructureCard({
                   <div>
                     <h4 className="font-semibold">Unit {unit.unit_number}</h4>
                     <p className="text-sm text-[#617169]">{unitType}{unit.size_sqm ? ` / ${unit.size_sqm} sqm` : ""}</p>
+                    <p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>Unit price: {unitPrice === null ? "Not set" : formatGbp(unitPrice)}</p>
                     <p className="text-xs text-[#617169]">Parking: {formatParkingBays(unit.parking_bays)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -3149,6 +3387,15 @@ function AdminSetup({
             reload={reload}
           />
 
+          <BuildingSalesSetup
+            key={`${selectedBuilding.id}-sales-setup`}
+            building={selectedBuilding}
+            units={units.filter((unit) => unit.building_id === selectedBuilding.id)}
+            recordAudit={recordAudit}
+            onNotice={onNotice}
+            reload={reload}
+          />
+
           <div className="border-t border-[#e5e9e4] pt-5">
             <BuildingStructureView
               buildings={buildings}
@@ -3200,6 +3447,325 @@ function AdminSetup({
           </div>
         )}
       </section>
+    </section>
+  );
+}
+
+function BuildingSalesSetup({
+  building,
+  units,
+  recordAudit,
+  onNotice,
+  reload,
+}: {
+  building: Building;
+  units: Unit[];
+  recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
+  onNotice: (notice: string) => void;
+  reload: () => Promise<void>;
+}) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [buildCost, setBuildCost] = useState("");
+  const [agentFeePercent, setAgentFeePercent] = useState("");
+  const [reservationFee, setReservationFee] = useState("");
+  const [reservationFeeHolder, setReservationFeeHolder] = useState("sales_agent");
+  const [exchangeDepositPercent, setExchangeDepositPercent] = useState("10");
+  const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
+  const [secondDepositPercent, setSecondDepositPercent] = useState("");
+  const [secondDepositMonths, setSecondDepositMonths] = useState("");
+
+  const depositStructure = buildDepositStructure({
+    exchangeDepositPercent: moneyInputToNumber(exchangeDepositPercent) ?? 10,
+    secondDepositEnabled,
+    secondDepositPercent: moneyInputToNumber(secondDepositPercent) ?? 0,
+    secondDepositMonthsAfterExchange: moneyInputToNumber(secondDepositMonths) ?? null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSalesDefaults() {
+      setIsLoading(true);
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase
+          .from("building_sale_defaults")
+          .select("*")
+          .eq("building_id", building.id)
+          .maybeSingle();
+        if (error) throw error;
+        if (cancelled) return;
+        setBuildCost(data?.build_cost?.toString() ?? "");
+        setAgentFeePercent(data?.default_agent_fee_percent?.toString() ?? "");
+        setReservationFee(data?.reservation_fee?.toString() ?? "");
+        setReservationFeeHolder(data?.reservation_fee_holder_default ?? "sales_agent");
+        setExchangeDepositPercent(data?.exchange_deposit_percent?.toString() ?? "10");
+        setSecondDepositEnabled(Boolean(data?.second_deposit_enabled));
+        setSecondDepositPercent(data?.second_deposit_percent?.toString() ?? "");
+        setSecondDepositMonths(data?.second_deposit_months_after_exchange?.toString() ?? "");
+      } catch (error) {
+        if (!cancelled) onNotice(error instanceof Error ? error.message : "Could not load sales setup.");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    void loadSalesDefaults();
+    return () => {
+      cancelled = true;
+    };
+  }, [building.id, onNotice]);
+
+  async function saveSalesDefaults() {
+    if (!depositStructure.isValid) {
+      onNotice(depositStructure.error ?? "Payment schedule is invalid.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const defaultsPayload = buildBuildingSaleDefaultsPayload({
+        buildingId: building.id,
+        buildCost,
+        agentFeePercent: moneyInputToNumber(agentFeePercent),
+        reservationFee,
+        reservationFeeHolder,
+        depositStructure,
+      });
+      const scheduleRows = [
+        {
+          building_id: building.id,
+          sequence_no: 1,
+          payment_stage: "exchange",
+          label: `${depositStructure.exchangeDepositPercent}% exchange deposit`,
+          due_offset_days: 0,
+          percent_of_contract_price: depositStructure.exchangeDepositPercent,
+          includes_reservation_fee: true,
+        },
+        ...(depositStructure.secondDepositEnabled ? [{
+          building_id: building.id,
+          sequence_no: 2,
+          payment_stage: "delayed_deposit",
+          label: `${depositStructure.secondDepositPercent}% second deposit`,
+          due_offset_days: (depositStructure.secondDepositMonthsAfterExchange ?? 0) * 31,
+          percent_of_contract_price: depositStructure.secondDepositPercent,
+          includes_reservation_fee: false,
+        }] : []),
+        {
+          building_id: building.id,
+          sequence_no: depositStructure.secondDepositEnabled ? 3 : 2,
+          payment_stage: "completion",
+          label: `${depositStructure.completionBalancePercent}% balance on completion`,
+          due_offset_days: 0,
+          percent_of_contract_price: depositStructure.completionBalancePercent,
+          includes_reservation_fee: false,
+        },
+      ];
+      const { error: defaultsError } = await supabase
+        .from("building_sale_defaults")
+        .upsert(defaultsPayload, { onConflict: "building_id" });
+      if (defaultsError) throw defaultsError;
+
+      const { error: deleteScheduleError } = await supabase
+        .from("building_sale_default_payment_schedule")
+        .delete()
+        .eq("building_id", building.id);
+      if (deleteScheduleError) throw deleteScheduleError;
+
+      const { error: insertScheduleError } = await supabase
+        .from("building_sale_default_payment_schedule")
+        .insert(scheduleRows);
+      if (insertScheduleError) throw insertScheduleError;
+
+      const cascade = await applyDefaultDealSetupToUnreservedUnits(supabase, defaultsPayload, scheduleRows);
+      await recordAudit({
+        event_type: "building_deal_defaults_updated",
+        entity_type: "building",
+        entity_id: building.id,
+        summary: `Sales deal defaults updated: ${building.name}`,
+        metadata: { building: building.name, ...defaultsPayload, deposit_summary: paymentScheduleSummary(depositStructure), cascade },
+      });
+      onNotice(`Sales setup saved for ${building.name}. ${defaultDealSetupCascadeSummary(cascade)}`);
+      await reload();
+    } catch (error) {
+      console.error("Sales setup save failed", { buildingId: building.id, error });
+      const message = error instanceof Error ? error.message : "";
+      onNotice(message.includes("second_deposit") || message.includes("build_cost")
+        ? "Sales setup could not be saved because the sales defaults schema is out of date. Run the latest Supabase migrations and try again."
+        : "Sales setup could not be saved. Check the sales setup values and try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function applyDefaultDealSetupToUnreservedUnits(
+    supabase: ReturnType<typeof createSupabaseBrowserClient>,
+    defaultsPayload: ReturnType<typeof buildBuildingSaleDefaultsPayload>,
+    defaultScheduleRows: Array<{
+      sequence_no: number;
+      payment_stage: string;
+      label: string;
+      due_offset_days: number;
+      percent_of_contract_price: number;
+      includes_reservation_fee: boolean;
+    }>,
+  ) {
+    if (units.length === 0) {
+      return classifyDefaultDealSetupCascade({ units, attempts: [] });
+    }
+
+    const unitIds = units.map((unit) => unit.id);
+    const { data: attemptRows, error: attemptsError } = await supabase
+      .from("unit_sale_attempts")
+      .select("id,unit_id,is_active,workflow_status,buyer_name,buyer_email,buyer_phone,buyer_solicitor_name,reservation_submitted_at,reservation_approved_at,commercial_approved_at,exchanged_at,completed_at")
+      .in("unit_id", unitIds);
+    if (attemptsError) throw attemptsError;
+
+    const attempts = (attemptRows ?? []) as SetupUnitSaleAttempt[];
+    const attemptIds = attempts.map((attempt) => attempt.id);
+    let documents: SetupUnitSaleDocument[] = [];
+    if (attemptIds.length > 0) {
+      const { data: documentRows, error: documentsError } = await supabase
+        .from("unit_sale_documents")
+        .select("sale_attempt_id,document_type,status,redacted_at")
+        .in("sale_attempt_id", attemptIds);
+      if (documentsError) throw documentsError;
+      documents = (documentRows ?? []) as SetupUnitSaleDocument[];
+    }
+
+    const cascade = classifyDefaultDealSetupCascade({ units, attempts, documents });
+    if (cascade.eligibleAttemptIds.length === 0) return cascade;
+
+    const { data: termRows, error: termsError } = await supabase
+      .from("unit_sale_terms")
+      .select("id,sale_attempt_id,is_current")
+      .eq("is_current", true)
+      .in("sale_attempt_id", cascade.eligibleAttemptIds);
+    if (termsError) throw termsError;
+
+    const currentTerms = (termRows ?? []) as Array<{ id: string; sale_attempt_id: string; is_current: boolean }>;
+    if (currentTerms.length === 0) return cascade;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const now = new Date().toISOString();
+    const termsPatch = {
+      reservation_fee: defaultsPayload.reservation_fee,
+      reservation_fee_holder: defaultsPayload.reservation_fee_holder_default,
+      agent_fee_percent: defaultsPayload.default_agent_fee_percent,
+      vat_rate: defaultsPayload.default_vat_rate,
+      solicitor_fee: defaultsPayload.default_sales_solicitor_fee,
+      exchange_deposit_percent: defaultsPayload.exchange_deposit_percent,
+      second_deposit_enabled: defaultsPayload.second_deposit_enabled,
+      second_deposit_percent: defaultsPayload.second_deposit_percent,
+      second_deposit_months_after_exchange: defaultsPayload.second_deposit_months_after_exchange,
+      completion_balance_percent: depositStructure.completionBalancePercent,
+      deposit_summary: paymentScheduleSummary(depositStructure),
+      updated_by_user_id: sessionData.session?.user.id ?? null,
+      updated_at: now,
+    };
+
+    const { error: termsUpdateError } = await supabase
+      .from("unit_sale_terms")
+      .update(termsPatch)
+      .in("id", currentTerms.map((term) => term.id));
+    if (termsUpdateError) throw termsUpdateError;
+
+    const currentTermByAttemptId = new Map(currentTerms.map((term) => [term.sale_attempt_id, term.id]));
+    const saleAttemptIdsWithTerms = Array.from(currentTermByAttemptId.keys());
+    const { error: deleteUnitScheduleError } = await supabase
+      .from("unit_sale_payment_schedule")
+      .delete()
+      .in("sale_attempt_id", saleAttemptIdsWithTerms);
+    if (deleteUnitScheduleError) throw deleteUnitScheduleError;
+
+    const unitScheduleRows = saleAttemptIdsWithTerms.flatMap((saleAttemptId) => defaultScheduleRows.map((row) => ({
+      sale_attempt_id: saleAttemptId,
+      sale_terms_id: currentTermByAttemptId.get(saleAttemptId) ?? null,
+      sequence_no: row.sequence_no,
+      payment_stage: row.payment_stage,
+      label: row.label,
+      due_event: row.payment_stage === "completion" ? "completion" : row.payment_stage === "exchange" ? "exchange" : "manual_date",
+      due_offset_days: row.due_offset_days,
+      percent_of_contract_price: row.percent_of_contract_price,
+      fixed_amount: null,
+      includes_reservation_fee: row.includes_reservation_fee,
+      expected_amount: null,
+      status: "pending",
+      created_by_user_id: sessionData.session?.user.id ?? null,
+      updated_by_user_id: sessionData.session?.user.id ?? null,
+    })));
+
+    if (unitScheduleRows.length > 0) {
+      const { error: insertUnitScheduleError } = await supabase
+        .from("unit_sale_payment_schedule")
+        .insert(unitScheduleRows);
+      if (insertUnitScheduleError) throw insertUnitScheduleError;
+    }
+
+    return cascade;
+  }
+
+  return (
+    <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
+      <div>
+        <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
+        <p className="mt-1 text-sm text-[#617169]">Default commercial deal structure for new sale attempts in {building.name}.</p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <h4 className="font-bold text-[#0F3D2E]">Development information</h4>
+          <label className="field-label mt-3">
+            Build cost
+            <GbpInput value={buildCost} onChange={setBuildCost} placeholder="Total build cost" aria-label="Build cost" />
+          </label>
+        </div>
+
+        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h4 className="font-bold text-[#0F3D2E]">Default deal setup</h4>
+              <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
+            </div>
+            {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <label className="field-label">Default agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Default reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} aria-label="Default reservation fee" /></label>
+            <label className="field-label">
+              Default reservation fee holder
+              <select className="field" value={reservationFeeHolder} onChange={(event) => setReservationFeeHolder(event.target.value)}>
+                <option value="sales_agent">Sales agent</option>
+                <option value="developer">Developer</option>
+                <option value="conveyancer">Conveyancer</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label className="field-label">Initial exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} /></label>
+            <label className="option-card min-h-11 px-3 py-2 md:col-span-2">
+              <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" />
+              Optional second deposit
+            </label>
+            {secondDepositEnabled && (
+              <>
+                <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} /></label>
+                <label className="field-label">Second deposit timing<input className="field" inputMode="numeric" value={secondDepositMonths} onChange={(event) => setSecondDepositMonths(event.target.value)} placeholder="Months after exchange" /></label>
+              </>
+            )}
+          </div>
+          <div className={`mt-4 rounded-md border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+            <div className="flex justify-between gap-4">
+              <span>Completion balance</span>
+              <strong className="numeric-value">{depositStructure.completionBalancePercent}%</strong>
+            </div>
+            <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid}>
+              Save sales setup
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -3674,6 +4240,7 @@ function DeveloperSnagging({
 
 function UserAdmin({
   buildings,
+  buildingFloors,
   units,
   organisations,
   profiles,
@@ -3685,6 +4252,7 @@ function UserAdmin({
   reload,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   organisations: Organisation[];
   profiles: Profile[];
@@ -3703,6 +4271,7 @@ function UserAdmin({
       {mode === "add" ? (
         <UserEnrolment
           buildings={buildings}
+          buildingFloors={buildingFloors}
           units={units}
           organisations={organisations}
           onCancel={() => setMode("list")}
@@ -3713,6 +4282,7 @@ function UserAdmin({
       ) : (
         <UserDirectory
           buildings={buildings}
+          buildingFloors={buildingFloors}
           units={units}
           organisations={organisations}
           profiles={profiles}
@@ -3760,6 +4330,7 @@ type AccessListRow = {
 
 function UserDirectory({
   buildings,
+  buildingFloors,
   units,
   organisations,
   profiles,
@@ -3774,6 +4345,7 @@ function UserDirectory({
   reload,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   organisations: Organisation[];
   profiles: Profile[];
@@ -3984,6 +4556,7 @@ function UserDirectory({
                   <UserEditPanel
                     profile={row.profile}
                     buildings={buildings}
+                    buildingFloors={buildingFloors}
                     units={units}
                     organisations={organisations}
                     profiles={profiles}
@@ -4059,6 +4632,7 @@ function UserDirectory({
                         <UserEditPanel
                           profile={row.profile}
                           buildings={buildings}
+                          buildingFloors={buildingFloors}
                           units={units}
                           organisations={organisations}
                           profiles={profiles}
@@ -4333,6 +4907,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function UserEditPanel({
   profile,
   buildings,
+  buildingFloors,
   units,
   organisations,
   profiles,
@@ -4346,6 +4921,7 @@ function UserEditPanel({
 }: {
   profile: Profile;
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   organisations: Organisation[];
   profiles: Profile[];
@@ -4372,7 +4948,7 @@ function UserEditPanel({
   const isResident = role === "resident";
   const isActive = profile.active !== false;
   const hasEmail = Boolean(profile.email?.trim());
-  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
+  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor" || role === "sales_agent" || role === "conveyancer";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
   const selectedUnitIds = selectedUnitIdsFromFlatRows(flatAccessRows);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
@@ -4647,7 +5223,7 @@ function UserEditPanel({
           <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
         )}
         {isResident && (
-          <FlatAccessRowsPicker buildings={buildings} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
+          <FlatAccessRowsPicker buildings={buildings} buildingFloors={buildingFloors} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
         )}
         <button className="primary mt-4 w-full" onClick={saveUser} disabled={isSaving || !canSave}>
           {isSaving ? "Saving changes" : "Save changes"}
@@ -4736,6 +5312,8 @@ function AccessBuildingPicker({ buildings, selectedBuildingIds, onToggle }: { bu
 function roleAccessSummary(role: AppRole) {
   if (role === "admin") return "Admins have access to all buildings.";
   if (role === "developer") return "Developers have access to all buildings.";
+  if (role === "sales_agent") return "Sales agents are limited to their assigned buildings and future sales pipeline actions.";
+  if (role === "conveyancer") return "Conveyancers are limited to their assigned buildings and future exchange/completion actions.";
   return "";
 }
 
@@ -4775,11 +5353,13 @@ function AccessSummary({ message }: { message: string }) {
 
 function FlatAccessRowsPicker({
   buildings,
+  buildingFloors,
   units,
   rows,
   onChange,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   rows: FlatAccessDraft[];
   onChange: (rows: FlatAccessDraft[]) => void;
@@ -4819,7 +5399,7 @@ function FlatAccessRowsPicker({
           </p>
         )}
         {rows.map((row) => {
-          const buildingUnits = unitOptionsByBuilding[row.buildingId] ?? [];
+          const buildingUnits = sortUnitsByFloorOrder(unitOptionsByBuilding[row.buildingId] ?? [], buildingFloors, row.buildingId);
           const selectedOtherUnitIds = new Set(rows.filter((item) => item.id !== row.id).map((item) => item.unitId).filter(Boolean));
 
           return (
@@ -4873,6 +5453,7 @@ function FlatAccessRowsPicker({
 
 function UserEnrolment({
   buildings,
+  buildingFloors,
   units,
   organisations,
   onCancel,
@@ -4881,6 +5462,7 @@ function UserEnrolment({
   reload,
 }: {
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   organisations: Organisation[];
   onCancel: () => void;
@@ -4900,7 +5482,7 @@ function UserEnrolment({
   const [flatAccessRows, setFlatAccessRows] = useState<FlatAccessDraft[]>(() => emptyFlatAccessRows());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isResident = role === "resident";
-  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor";
+  const needsOrganisationAndBuilding = role === "developer_representative" || role === "contractor" || role === "sales_agent" || role === "conveyancer";
   const organisationsForRole = organisations.filter((organisation) => organisation.type === role);
   const selectedUnitIds = selectedUnitIdsFromFlatRows(flatAccessRows);
   const selectedUnits = units.filter((unit) => selectedUnitIds.includes(unit.id));
@@ -5080,7 +5662,7 @@ function UserEnrolment({
         <AccessBuildingPicker buildings={buildings} selectedBuildingIds={selectedBuildingIds} onToggle={toggleBuilding} />
       )}
       {isResident && (
-        <FlatAccessRowsPicker buildings={buildings} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
+        <FlatAccessRowsPicker buildings={buildings} buildingFloors={buildingFloors} units={units} rows={flatAccessRows} onChange={setFlatAccessRows} />
       )}
       <button className="primary mt-4 w-full" onClick={enrolUser} disabled={isSubmitting || !canCreateUser}>
         {isSubmitting ? "Enrolling user" : sendInviteEmail ? "Send invite and assign access" : "Create user and assign access"}
@@ -5397,6 +5979,7 @@ function SnagWorkflow({
       <SnagList
         title=""
         buildings={buildings}
+        buildingFloors={buildingFloors}
         snags={snags}
         units={units}
         areas={areas}
@@ -5476,7 +6059,7 @@ function DeveloperActions({
       });
       if (status === "open") setResponseNote("");
       onNotice(status === "closed" ? "Snag closed" : "Information sent and status updated");
-      await reload();
+      await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not update snag status.");
     } finally {
@@ -5596,6 +6179,14 @@ async function saveSnagStatusChange({
   if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
 }
 
+async function reloadAfterSavedSnagStatus(reload: () => Promise<void>) {
+  try {
+    await reload();
+  } catch (error) {
+    console.warn("Snag status was saved, but the refreshed list could not be loaded.", error);
+  }
+}
+
 function DeveloperCloseAction({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -5610,7 +6201,7 @@ function DeveloperCloseAction({ user, snag, onNotice, reload }: { user: User; sn
         closedAt: new Date().toISOString(),
       });
       onNotice("Snag closed");
-      await reload();
+      await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not close snag.");
     } finally {
@@ -5642,7 +6233,7 @@ function ContractorResolveAction({ user, snag, onNotice, reload }: { user: User;
     try {
       await saveSnagStatusChange({ user, snag, nextStatus: "resolved_by_contractor" });
       onNotice("Snag marked as resolved");
-      await reload();
+      await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not mark snag as resolved.");
     } finally {
@@ -5679,7 +6270,7 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
       setInfoRequest("");
       setShowInfoRequest(false);
       onNotice("Request sent and status updated to Needs more info");
-      await reload();
+      await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not send request.");
     } finally {
@@ -5693,7 +6284,7 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
     try {
       await saveSnagStatusChange({ user, snag, nextStatus: "resolved_by_contractor" });
       onNotice("Snag marked as resolved");
-      await reload();
+      await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not mark snag as resolved.");
     } finally {
@@ -5852,6 +6443,7 @@ function UnitsSection({
         user={user}
         profile={profile}
         buildings={buildings}
+        buildingFloors={buildingFloors}
         units={units}
         areas={areas}
         snags={snags}
@@ -5911,6 +6503,7 @@ function LeaseholderDefects({
   user,
   profile,
   buildings,
+  buildingFloors,
   units,
   areas,
   snags,
@@ -5931,6 +6524,7 @@ function LeaseholderDefects({
   user: User;
   profile: Profile | null;
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
   snags: ProductionSnag[];
@@ -5948,8 +6542,10 @@ function LeaseholderDefects({
   onGoToSnags?: () => void;
   residentView?: "internal" | "home" | "snags";
 }) {
-  const userUnits = (profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units)
-    .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+  const userUnits = sortUnitsByFloorOrder(
+    profile?.role === "resident" ? units.filter((unit) => accessibleUnitIds.includes(unit.id)) : units,
+    buildingFloors,
+  );
   const residentBuildingIds = Array.from(new Set(userUnits.map((unit) => unit.building_id)));
   const hasMultipleBuildings = residentBuildingIds.length > 1;
   const hasSingleUnit = userUnits.length === 1;
@@ -6336,6 +6932,7 @@ function LeaseholderDefects({
               <SnagList
                 title="Snag history"
                 buildings={buildings}
+                buildingFloors={buildingFloors}
                 snags={filteredDefects}
                 units={units}
                 areas={areas}
@@ -6514,6 +7111,7 @@ function LeaseholderDefects({
           {showSnagTools && <SnagList
             title={profile?.role === "resident" ? "Snag history" : "Defect list"}
             buildings={buildings}
+            buildingFloors={buildingFloors}
             snags={filteredDefects}
             units={units}
             areas={areas}
@@ -6894,6 +7492,7 @@ function SummaryTile({ label, value }: { label: string; value: string | number }
 function HandoverAndMeters({
   user,
   buildings,
+  buildingFloors,
   units,
   handovers,
   handoverKeyItems,
@@ -6906,6 +7505,7 @@ function HandoverAndMeters({
 }: {
   user: User;
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   units: Unit[];
   handovers: Handover[];
   handoverKeyItems: HandoverKeyItem[];
@@ -6917,7 +7517,11 @@ function HandoverAndMeters({
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
 }) {
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
-  const buildingUnits = units.filter((unit) => unit.building_id === buildingId).sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+  const buildingUnits = sortUnitsByFloorOrder(
+    units.filter((unit) => unit.building_id === buildingId),
+    buildingFloors,
+    buildingId,
+  );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
   const selectedUnit = units.find((unit) => unit.id === unitId);
   const selectedBuilding = buildings.find((building) => building.id === selectedUnit?.building_id);
@@ -6948,11 +7552,15 @@ function HandoverAndMeters({
   const totalKeys = keyItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 
   useEffect(() => {
-    const nextUnits = units.filter((unit) => unit.building_id === buildingId).sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+    const nextUnits = sortUnitsByFloorOrder(
+      units.filter((unit) => unit.building_id === buildingId),
+      buildingFloors,
+      buildingId,
+    );
     if (nextUnits.length > 0 && !nextUnits.some((unit) => unit.id === unitId)) {
       setUnitId(nextUnits[0].id);
     }
-  }, [buildingId, unitId, units]);
+  }, [buildingFloors, buildingId, unitId, units]);
 
   function resetDraft() {
     setStep(0);
@@ -8067,6 +8675,7 @@ function ReportsPanel({
 function SnagList({
   title,
   buildings,
+  buildingFloors,
   snags,
   units,
   areas,
@@ -8089,6 +8698,7 @@ function SnagList({
 }: {
   title: string;
   buildings: Building[];
+  buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
   areas: Area[];
@@ -8122,7 +8732,11 @@ function SnagList({
   const availableBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
   const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
-  const buildingUnits = units.filter((unit) => unit.building_id === selectedBuildingId);
+  const buildingUnits = sortUnitsByFloorOrder(
+    units.filter((unit) => unit.building_id === selectedBuildingId),
+    buildingFloors,
+    selectedBuildingId,
+  );
   const buildingCommunalAreas = areas
     .filter((area) => area.building_id === selectedBuildingId && area.area_type === "communal_area")
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -8159,6 +8773,7 @@ function SnagList({
   const closedTodaySnagIds = statusEventSnagIds("closed");
   const rejectedTodaySnagIds = statusEventSnagIds("rejected_back_to_contractor");
   const moreInfoTodaySnagIds = statusEventSnagIds("needs_more_info");
+  const buildingUnitOrder = new Map(buildingUnits.map((unit, index) => [unit.id, index]));
   const filtered = snags
     .filter((snag) => snag.building_id === selectedBuildingId)
     .filter((snag) => {
@@ -8190,9 +8805,9 @@ function SnagList({
       return true;
     })
     .sort((a, b) => {
-      const unitA = units.find((unit) => unit.id === a.unit_id)?.unit_number ?? "Communal";
-      const unitB = units.find((unit) => unit.id === b.unit_id)?.unit_number ?? "Communal";
-      const unitCompare = unitA.localeCompare(unitB, undefined, { numeric: true });
+      const unitA = a.unit_id ? buildingUnitOrder.get(a.unit_id) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+      const unitB = b.unit_id ? buildingUnitOrder.get(b.unit_id) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+      const unitCompare = unitA - unitB;
       if (unitCompare !== 0) return unitCompare;
       const areaA = areas.find((area) => area.id === a.area_id)?.name ?? "";
       const areaB = areas.find((area) => area.id === b.area_id)?.name ?? "";
@@ -9390,7 +10005,7 @@ function filterBuildingsForRole(buildings: Building[], units: Unit[], profile: P
     const buildingIds = new Set(units.filter((unit) => accessibleUnitIds.includes(unit.id)).map((unit) => unit.building_id));
     return buildings.filter((building) => buildingIds.has(building.id));
   }
-  if (profile.role === "developer_representative" || profile.role === "contractor") {
+  if (profile.role === "developer_representative" || profile.role === "contractor" || profile.role === "sales_agent" || profile.role === "conveyancer") {
     return buildings.filter((building) => accessibleBuildingIds.includes(building.id));
   }
   return [];
@@ -9400,7 +10015,7 @@ function filterUnitsForRole(units: Unit[], profile: Profile | null, accessibleUn
   if (!profile) return [];
   if (profile.role === "admin" || profile.role === "developer") return units;
   if (profile.role === "resident") return units.filter((unit) => accessibleUnitIds.includes(unit.id));
-  if (profile.role === "developer_representative" || profile.role === "contractor") return units.filter((unit) => accessibleBuildingIds.includes(unit.building_id));
+  if (profile.role === "developer_representative" || profile.role === "contractor" || profile.role === "sales_agent" || profile.role === "conveyancer") return units.filter((unit) => accessibleBuildingIds.includes(unit.building_id));
   return [];
 }
 

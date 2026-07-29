@@ -1,0 +1,363 @@
+name: Supabase production backup to Dropbox
+
+on:
+  # Allows the backup to be started manually from GitHub Actions.
+  workflow_dispatch:
+
+  # Runs every day at 02:17 UTC.
+  # This is 02:17 during GMT and 03:17 during BST.
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: read
+
+# Prevent two production backups from running simultaneously.
+concurrency:
+  group: supabase-backup-production
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Back up production
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      # Folder name used within Dropbox.
+      PROJECT_NAME: bunnywell-portal-production
+
+      # Must match the rclone remote name created on your computer.
+      DROPBOX_REMOTE: dropbox
+
+      # Root Dropbox folder.
+      DROPBOX_ROOT: Supabase Backups
+
+      # Production database and Dropbox credentials.
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+      RCLONE_CONFIG_B64: ${{ secrets.RCLONE_CONFIG_B64 }}
+
+      # Creates a temporary rclone S3 remote called "supabasestorage".
+      RCLONE_CONFIG_SUPABASESTORAGE_TYPE: s3
+      RCLONE_CONFIG_SUPABASESTORAGE_PROVIDER: Other
+      RCLONE_CONFIG_SUPABASESTORAGE_ACCESS_KEY_ID: ${{ secrets.SUPABASE_PROD_S3_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_SUPABASESTORAGE_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_PROD_S3_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_SUPABASESTORAGE_ENDPOINT: ${{ secrets.SUPABASE_PROD_S3_ENDPOINT }}
+      RCLONE_CONFIG_SUPABASESTORAGE_REGION: ${{ secrets.SUPABASE_PROD_S3_REGION }}
+      RCLONE_CONFIG_SUPABASESTORAGE_FORCE_PATH_STYLE: "true"
+
+    steps:
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install rclone
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+          sudo apt-get install --yes rclone
+
+      - name: Check required secrets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          missing=0
+
+          check_secret() {
+            local value="$1"
+            local name="$2"
+
+            if [ -z "$value" ]; then
+              echo "::error::GitHub secret $name is missing or empty."
+              missing=1
+            fi
+          }
+
+          check_secret "$RCLONE_CONFIG_B64" "RCLONE_CONFIG_B64"
+          check_secret "$SUPABASE_DB_URL" "SUPABASE_PROD_DB_URL"
+          check_secret "$RCLONE_CONFIG_SUPABASESTORAGE_ACCESS_KEY_ID" \
+            "SUPABASE_PROD_S3_ACCESS_KEY_ID"
+          check_secret "$RCLONE_CONFIG_SUPABASESTORAGE_SECRET_ACCESS_KEY" \
+            "SUPABASE_PROD_S3_SECRET_ACCESS_KEY"
+          check_secret "$RCLONE_CONFIG_SUPABASESTORAGE_ENDPOINT" \
+            "SUPABASE_PROD_S3_ENDPOINT"
+          check_secret "$RCLONE_CONFIG_SUPABASESTORAGE_REGION" \
+            "SUPABASE_PROD_S3_REGION"
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Configure Dropbox
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p "$HOME/.config/rclone"
+
+          printf '%s' "$RCLONE_CONFIG_B64" \
+            | base64 --decode \
+            > "$HOME/.config/rclone/rclone.conf"
+
+          chmod 600 "$HOME/.config/rclone/rclone.conf"
+
+          echo "Available rclone remotes:"
+          rclone listremotes
+
+          if ! rclone listremotes | grep -Fx "${DROPBOX_REMOTE}:"; then
+            echo "::error::The Dropbox remote '${DROPBOX_REMOTE}' was not found."
+            exit 1
+          fi
+
+          echo "Checking Dropbox connection..."
+          rclone lsd "${DROPBOX_REMOTE}:"
+
+      - name: Create and upload database backup
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          STAMP="$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
+
+          DB_DIR="$RUNNER_TEMP/database-$STAMP"
+          UPLOAD_DIR="$RUNNER_TEMP/database-upload-$STAMP"
+
+          mkdir -p "$DB_DIR"
+          mkdir -p "$UPLOAD_DIR"
+
+          echo "Backing up database roles..."
+
+          supabase db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file "$DB_DIR/roles.sql" \
+            --role-only
+
+          echo "Backing up database schema..."
+
+          supabase db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file "$DB_DIR/schema.sql"
+
+          echo "Backing up database data..."
+
+          supabase db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file "$DB_DIR/data.sql" \
+            --data-only \
+            --use-copy \
+            --exclude "storage.buckets_vectors" \
+            --exclude "storage.vector_indexes"
+
+          # Confirm the dump files were actually created.
+          test -s "$DB_DIR/roles.sql"
+          test -s "$DB_DIR/schema.sql"
+          test -s "$DB_DIR/data.sql"
+
+          ARCHIVE_NAME="${PROJECT_NAME}-${STAMP}.tar.gz"
+          ARCHIVE="$UPLOAD_DIR/$ARCHIVE_NAME"
+
+          echo "Creating compressed database archive..."
+
+          tar \
+            --create \
+            --gzip \
+            --file "$ARCHIVE" \
+            --directory "$DB_DIR" \
+            roles.sql schema.sql data.sql
+
+          # Create a checksum that can be used to verify the archive later.
+          (
+            cd "$UPLOAD_DIR"
+            sha256sum "$ARCHIVE_NAME" > "${ARCHIVE_NAME}.sha256"
+          )
+
+          REMOTE_DIR="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}/database/${STAMP}"
+
+          echo "Uploading database backup to Dropbox..."
+
+          rclone copy \
+            "$UPLOAD_DIR" \
+            "$REMOTE_DIR" \
+            --transfers 2 \
+            --checkers 4 \
+            --retries 3 \
+            --low-level-retries 10
+
+          echo "Checking database upload..."
+
+          rclone check \
+            "$UPLOAD_DIR" \
+            "$REMOTE_DIR" \
+            --one-way
+
+          echo "BACKUP_STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - name: Mirror Supabase Storage to Dropbox
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          BUCKET_FILE="$RUNNER_TEMP/storage-buckets-${BACKUP_STAMP}.txt"
+          DROPBOX_BUCKET_FILE="$RUNNER_TEMP/dropbox-storage-buckets-${BACKUP_STAMP}.txt"
+
+          CURRENT_ROOT="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}/storage/current"
+          HISTORY_ROOT="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}/storage/history/${BACKUP_STAMP}"
+          MANIFEST_ROOT="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}/storage/manifests/${BACKUP_STAMP}"
+
+          echo "Checking Supabase Storage connection..."
+
+          rclone lsd "supabasestorage:" \
+            --s3-list-version 2
+
+          echo "Reading Supabase Storage bucket list..."
+
+          rclone lsf "supabasestorage:" \
+            --dirs-only \
+            --max-depth 1 \
+            --s3-list-version 2 \
+            | sed 's#/$##' \
+            | sort \
+            > "$BUCKET_FILE"
+
+          echo "Storage buckets found:"
+
+          if [ -s "$BUCKET_FILE" ]; then
+            cat "$BUCKET_FILE"
+          else
+            echo "No Storage buckets found."
+          fi
+
+          while IFS= read -r bucket || [ -n "$bucket" ]; do
+            [ -z "$bucket" ] && continue
+
+            echo "Backing up Storage bucket: $bucket"
+
+            rclone sync \
+              "supabasestorage:${bucket}" \
+              "${CURRENT_ROOT}/${bucket}" \
+              --backup-dir "${HISTORY_ROOT}/${bucket}" \
+              --s3-list-version 2 \
+              --delete-after \
+              --max-delete 100 \
+              --fast-list \
+              --create-empty-src-dirs \
+              --transfers 4 \
+              --checkers 8 \
+              --retries 3 \
+              --low-level-retries 10
+
+          done < "$BUCKET_FILE"
+
+          # Check whether any complete buckets have been deleted from Supabase.
+          #
+          # A deleted bucket is moved from the current Dropbox folder into the
+          # dated history folder rather than being permanently deleted.
+          if rclone lsf "$CURRENT_ROOT" \
+            --dirs-only \
+            --max-depth 1 \
+            > "$DROPBOX_BUCKET_FILE" 2>/dev/null; then
+
+            sed -i 's#/$##' "$DROPBOX_BUCKET_FILE"
+
+            while IFS= read -r existing_bucket || [ -n "$existing_bucket" ]; do
+              [ -z "$existing_bucket" ] && continue
+
+              if ! grep -Fxq "$existing_bucket" "$BUCKET_FILE"; then
+                echo "Supabase bucket was deleted: $existing_bucket"
+                echo "Moving its Dropbox copy into history..."
+
+                rclone move \
+                  "${CURRENT_ROOT}/${existing_bucket}" \
+                  "${HISTORY_ROOT}/deleted-buckets/${existing_bucket}" \
+                  --delete-empty-src-dirs
+
+                # Remove the source folder if an empty folder remains.
+                rclone purge \
+                  "${CURRENT_ROOT}/${existing_bucket}" \
+                  2>/dev/null || true
+              fi
+
+            done < "$DROPBOX_BUCKET_FILE"
+          fi
+
+          # Record which buckets existed during this backup.
+          rclone copyto \
+            "$BUCKET_FILE" \
+            "${MANIFEST_ROOT}/buckets.txt"
+
+          if rclone lsf "$CURRENT_ROOT" >/dev/null 2>&1; then
+            echo "Current Storage backup size:"
+            rclone size "$CURRENT_ROOT"
+          else
+            echo "No Storage objects currently backed up."
+          fi
+
+      - name: Apply retention
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          purge_timestamp_folders() {
+            local root="$1"
+            local days="$2"
+            local cutoff
+            local folder
+            local folder_list
+
+            cutoff="$(date -u -d "${days} days ago" +'%Y-%m-%dT%H-%M-%SZ')"
+            folder_list="$RUNNER_TEMP/retention-folders-${days}.txt"
+
+            if ! rclone lsf "$root" \
+              --dirs-only \
+              --max-depth 1 \
+              > "$folder_list" 2>/dev/null; then
+              return 0
+            fi
+
+            while IFS= read -r folder || [ -n "$folder" ]; do
+              folder="${folder%/}"
+
+              # Only remove folders that use the expected timestamp format.
+              if [[ "$folder" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}Z$ ]] \
+                && [[ "$folder" < "$cutoff" ]]; then
+
+                echo "Removing expired backup folder: $root/$folder"
+                rclone purge "$root/$folder"
+              fi
+
+            done < "$folder_list"
+          }
+
+          BASE="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}"
+
+          # Retain daily database backups for 90 days.
+          purge_timestamp_folders "${BASE}/database" 90
+
+          # Retain replaced and deleted Storage files for 365 days.
+          purge_timestamp_folders "${BASE}/storage/history" 365
+
+          # Retain Storage bucket manifests for 365 days.
+          purge_timestamp_folders "${BASE}/storage/manifests" 365
+
+      - name: Show backup summary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          BASE="${DROPBOX_REMOTE}:${DROPBOX_ROOT}/${PROJECT_NAME}"
+
+          echo "Database backup:"
+          rclone lsl "${BASE}/database/${BACKUP_STAMP}"
+
+          echo
+
+          if rclone lsf "${BASE}/storage/current" >/dev/null 2>&1; then
+            echo "Current Storage backup:"
+            rclone size "${BASE}/storage/current"
+          else
+            echo "No Storage objects currently backed up."
+          fi

@@ -38,6 +38,216 @@ The production feature should support:
 - Role-based access for Developer, Sales Agent, and Conveyancer.
 - Future forecasting and exit scenario modelling.
 
+## POC UI Patterns To Retain
+
+The disposable conveyancing POC established several UI patterns that should be carried forward into the production build.
+
+These are product learnings, not implementation instructions to copy the POC code wholesale.
+
+### Sales Overview
+
+Keep a scheme-level Sales workspace before the user opens a unit sale file.
+
+The overview should include:
+
+- Building selector.
+- Financial overview.
+- Sales pipeline.
+- Sales results table.
+- Search by unit number.
+- Unit selector/open unit control where useful.
+
+The financial overview should use calculation-style panels rather than isolated KPI cards.
+
+Preferred panels:
+
+- Revenue view.
+- Cost / debt view.
+- Profit view.
+
+The Sales pipeline should remain prominent and easy to scan:
+
+- For Sale.
+- Reserved.
+- Exchanged.
+- Completed.
+
+Each pipeline stage should show:
+
+- Unit count.
+- Total value.
+- Click/filter behaviour.
+
+The sales results table should remain dense and operational, showing:
+
+- Unit.
+- Stage.
+- Price.
+- Next action.
+- Time in stage.
+
+### Selected Unit Sale File
+
+When a user opens a unit, the page should become a focused sale file rather than a continuation of the overview.
+
+Retain:
+
+- Back to sales overview action.
+- Search sales input.
+- Open unit dropdown including unit status.
+- Selected sale file heading.
+- Unit number.
+- Building/floor context.
+- Sale status badge.
+
+The sale file should not show unnecessary scheme overview clutter once a unit is selected.
+
+### Developer View And Agent View
+
+The POC's two-panel commercial summary is an important pattern to retain.
+
+The selected sale file should show:
+
+- Developer view.
+- Agent view.
+
+These should be calculation-style lists with labels and values close together, right-aligned numeric values, and tabular numerals.
+
+Developer view should show the developer's commercial outcome, including:
+
+- List price.
+- Expected sale price or contract price.
+- Parking value.
+- Developer contribution.
+- Solicitor fee.
+- Agent fee / invoice impact.
+- Net developer proceeds.
+
+Agent view should show the agent invoice calculation, including:
+
+- Agent fee percentage.
+- Fee base.
+- Net agent fee.
+- VAT.
+- Reservation fee deduction.
+- Agent contribution.
+- Forecast invoice.
+
+This split is important because developer contributions and agent contributions affect different sides of the deal.
+
+### Commercial Model Panel
+
+The POC commercial model panel should be retained as a concept.
+
+Before reservation, the developer should be able to open a discreet modelling panel to test the commercial deal.
+
+The panel should use three areas:
+
+- Deal inputs.
+- Live preview.
+- Scheme impact.
+
+Deal inputs should include:
+
+- Proposed unit price.
+- Parking value.
+- Developer contribution.
+- Agent contribution.
+
+Live preview should show:
+
+- Developer net before.
+- Developer net after.
+- Developer difference.
+- Agent invoice before.
+- Agent invoice after.
+- Agent difference.
+
+Scheme impact should show the effect if the same commercial change is applied across remaining For Sale units.
+
+It should include:
+
+- Applies to X For Sale units.
+- Current GDV.
+- Proposed GDV.
+- GDV difference.
+- Current forecast net proceeds.
+- Proposed forecast net proceeds.
+- Forecast difference.
+
+The production implementation should describe this as commercial modelling or deal modelling, not just incentive modelling.
+
+Once a unit is reserved, the commercial position should normally lock for simple workflow purposes. Future versions may support post-reservation amendments through a controlled approval process.
+
+### Sale Timeline
+
+The POC showed that the timeline should be the centrepiece of the sale file.
+
+Production should retain a four-stage timeline:
+
+- Reservation.
+- Exchange.
+- Completion.
+- Handover.
+
+The timeline should show:
+
+- Stage status.
+- Owner / who has the ball.
+- Next action.
+- Relevant timestamp.
+- Locked/future state where applicable.
+- Completed history where applicable.
+
+Detailed tasks should sit inside the selected stage, not as separate top-level timeline stages.
+
+### Stage Detail Panel
+
+The selected workflow stage should show the relevant checks, forms, documents, and actions for that stage.
+
+Avoid showing every possible sale field at once.
+
+Reservation should focus on:
+
+- Buyer details.
+- Reservation form.
+- Reservation fee.
+- Commercial comparison.
+- Developer approval/query.
+
+Exchange should focus on:
+
+- Approved commercial package.
+- Commercial Approval / Ready for Exchange.
+- Agent invoice as part of the commercial package.
+- Exchange date recording.
+- Solicitor payment recording after exchange.
+
+Completion should focus on:
+
+- Completion statement.
+- Statement of account.
+- Developer approval/query.
+- Completion date recording.
+
+Handover should point to the existing handover workflow rather than rebuilding it.
+
+### Notes And Activity
+
+Notes and activity should remain available, but should not dominate the sale file screen.
+
+The POC pattern of a compact "View notes/activity" action is preferred over a permanent large notes sidebar.
+
+### Naming Cleanup For Production
+
+Do not carry forward POC labels into production UI.
+
+Replace:
+
+- "Conveyancing POC" with "Sale timeline" or "Sale file".
+- "Admin/Developer only" with role-appropriate visibility.
+- "Model incentive" with "Edit commercial model" or "Model commercial terms".
+
 ## Key Concepts
 
 ### Unit

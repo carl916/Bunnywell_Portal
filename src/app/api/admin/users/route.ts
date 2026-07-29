@@ -35,8 +35,9 @@ function env(name: string) {
   return value;
 }
 
-const validRoles: AppRole[] = ["admin", "developer", "developer_representative", "contractor", "resident", "user"];
+const validRoles: AppRole[] = ["admin", "developer", "developer_representative", "sales_agent", "conveyancer", "contractor", "resident", "user"];
 const validResidentTypes: ResidentType[] = ["leaseholder", "tenant", "letting_agent", "managing_agent"];
+const buildingScopedRoles: AppRole[] = ["developer_representative", "sales_agent", "conveyancer", "contractor"];
 
 function isValidRole(role: AppRole) {
   return validRoles.includes(role);
@@ -44,6 +45,10 @@ function isValidRole(role: AppRole) {
 
 function isValidResidentType(value?: ResidentType | null) {
   return Boolean(value && validResidentTypes.includes(value));
+}
+
+function needsOrganisationAndBuilding(role: AppRole) {
+  return buildingScopedRoles.includes(role);
 }
 
 function normalizeEmail(value?: string | null) {
@@ -159,12 +164,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Resident type is required for resident users." }, { status: 400 });
     }
 
-    if ((role === "developer_representative" || role === "contractor") && !body.organisationId) {
-      return NextResponse.json({ error: "Developer representatives and contractors must be linked to an organisation." }, { status: 400 });
+    if (needsOrganisationAndBuilding(role) && !body.organisationId) {
+      return NextResponse.json({ error: "This role must be linked to an organisation." }, { status: 400 });
     }
 
-    if ((role === "developer_representative" || role === "contractor") && buildingIds.length === 0) {
-      return NextResponse.json({ error: "Developer representatives and contractors must be assigned to at least one building." }, { status: 400 });
+    if (needsOrganisationAndBuilding(role) && buildingIds.length === 0) {
+      return NextResponse.json({ error: "This role must be assigned to at least one building." }, { status: 400 });
     }
 
     if (role === "resident" && unitAccess.length > 0) {
@@ -205,7 +210,7 @@ export async function POST(request: Request) {
       phone: body.phone?.trim() || null,
       role,
       resident_type: role === "resident" ? residentType : null,
-      organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
+      organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null,
       active: true,
     });
 
@@ -353,12 +358,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Resident type is required for resident users." }, { status: 400 });
     }
 
-    if ((role === "developer_representative" || role === "contractor") && !body.organisationId) {
-      return NextResponse.json({ error: "Developer representatives and contractors must be linked to an organisation." }, { status: 400 });
+    if (needsOrganisationAndBuilding(role) && !body.organisationId) {
+      return NextResponse.json({ error: "This role must be linked to an organisation." }, { status: 400 });
     }
 
-    if ((role === "developer_representative" || role === "contractor") && buildingIds.length === 0) {
-      return NextResponse.json({ error: "Developer representatives and contractors must be assigned to at least one building." }, { status: 400 });
+    if (needsOrganisationAndBuilding(role) && buildingIds.length === 0) {
+      return NextResponse.json({ error: "This role must be assigned to at least one building." }, { status: 400 });
     }
 
     if (role === "resident" && unitAccess.length > 0) {
@@ -380,7 +385,7 @@ export async function PATCH(request: Request) {
       phone: body.phone?.trim() || null,
       role,
       resident_type: role === "resident" ? residentType : null,
-      organisation_id: role === "developer_representative" || role === "contractor" ? body.organisationId || null : null,
+      organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null,
     }).eq("id", userId);
 
     if (profileError) {
