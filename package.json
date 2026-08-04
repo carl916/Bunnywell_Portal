@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "validate:template": "node scripts/validate-cleanup-template.mjs",
     "import:template": "node scripts/import-cleanup-template.mjs",
     "import:template:prod": "node scripts/import-cleanup-template.mjs --prod",
     "verify:template-import": "node scripts/verify-template-import.mjs",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -192,6 +192,7 @@ type SnagDraft = {
   responsibleOrganisationId: string;
   priority: "P1" | "P2" | "P3";
   photoDataUrl: string;
+  videoFile: File | null;
 };
 
 const emptySnagDraft: SnagDraft = {
@@ -206,7 +207,34 @@ const emptySnagDraft: SnagDraft = {
   responsibleOrganisationId: "",
   priority: "P2",
   photoDataUrl: "",
+  videoFile: null,
 };
+
+type SnagMediaUpload = {
+  fileUrl: string;
+  mediaType: "image" | "video";
+  storagePath: string;
+  thumbnailUrl: string | null;
+  thumbnailStoragePath: string | null;
+  thumbnailSquareUrl: string | null;
+  thumbnailSquareStoragePath: string | null;
+  thumbnailLandscapeUrl: string | null;
+  thumbnailLandscapeStoragePath: string | null;
+  reportImageUrl: string | null;
+  reportImageStoragePath: string | null;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  durationSeconds: number | null;
+};
+
+type UploadSnagMedia = (input: { imageDataUrl?: string; videoFile?: File | null }, folder: string) => Promise<SnagMediaUpload[]>;
+
+const SNAG_IMAGE_MAX_DIMENSION = 1600;
+const SNAG_REPORT_IMAGE_MAX_DIMENSION = 1200;
+const SNAG_THUMBNAIL_SIZE = 480;
+const SNAG_VIDEO_MAX_SECONDS = 40;
+const SNAG_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
+const SNAG_VIDEO_MAX_DIMENSION = 1280;
 
 const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
   { value: "for_sale", label: "For Sale" },
@@ -514,34 +542,59 @@ function photoCreatedTime(photo: SnagPhoto) {
   return Number.isNaN(time) ? 0 : time;
 }
 
+function snagMediaType(photo: SnagPhoto) {
+  return photo.media_type ?? "image";
+}
+
 function primarySnagPhoto(photos: SnagPhoto[]) {
-  const usablePhotos = photos.filter((photo) => photo.file_url);
+  const usablePhotos = photos.filter((photo) => photo.file_url && snagMediaType(photo) === "image");
   const originalPhotos = usablePhotos.filter((photo) => photo.photo_type === "original" || photo.photo_type === "annotated");
   const candidates = originalPhotos.length > 0 ? originalPhotos : usablePhotos;
 
   return [...candidates].sort((a, b) => photoCreatedTime(a) - photoCreatedTime(b))[0];
 }
 
-function supabaseStorageThumbnailUrl(fileUrl: string, width: number, height: number) {
-  try {
-    const url = new URL(fileUrl);
-    const publicPath = "/storage/v1/object/public/";
-    const signedPath = "/storage/v1/object/sign/";
-    if (url.pathname.includes(publicPath)) {
-      url.pathname = url.pathname.replace(publicPath, "/storage/v1/render/image/public/");
-    } else if (url.pathname.includes(signedPath)) {
-      url.pathname = url.pathname.replace(signedPath, "/storage/v1/render/image/sign/");
-    } else {
-      return "";
-    }
-    url.searchParams.set("width", String(width));
-    url.searchParams.set("height", String(height));
-    url.searchParams.set("resize", "cover");
-    url.searchParams.set("quality", "70");
-    return url.toString();
-  } catch {
-    return "";
+function primarySnagMedia(photos: SnagPhoto[]) {
+  return primarySnagPhoto(photos) ?? [...photos]
+    .filter((photo) => photo.file_url)
+    .sort((a, b) => photoCreatedTime(a) - photoCreatedTime(b))[0];
+}
+
+function snagThumbnailUrl(photo: SnagPhoto, width: number, height: number) {
+  if (snagMediaType(photo) === "video") {
+    return photo.thumbnail_landscape_url ?? photo.thumbnail_url ?? photo.thumbnail_square_url ?? "";
   }
+  const shapedThumbnail = width === height ? photo.thumbnail_square_url : photo.thumbnail_landscape_url;
+  return shapedThumbnail ?? photo.thumbnail_url ?? photo.file_url;
+}
+
+function snagReportImageUrl(photo: SnagPhoto) {
+  if (snagMediaType(photo) === "video") {
+    return photo.report_image_url ?? photo.thumbnail_landscape_url ?? photo.thumbnail_url ?? photo.thumbnail_square_url ?? "";
+  }
+  return photo.report_image_url ?? photo.file_url;
+}
+
+function snagMediaInsertPayload(snagId: string, upload: SnagMediaUpload, photoType: SnagPhoto["photo_type"], userId: string) {
+  return {
+    snag_id: snagId,
+    file_url: upload.fileUrl,
+    photo_type: photoType,
+    media_type: upload.mediaType,
+    thumbnail_url: upload.thumbnailUrl,
+    thumbnail_square_url: upload.thumbnailSquareUrl,
+    thumbnail_landscape_url: upload.thumbnailLandscapeUrl,
+    report_image_url: upload.reportImageUrl,
+    storage_path: upload.storagePath,
+    thumbnail_storage_path: upload.thumbnailStoragePath,
+    thumbnail_square_storage_path: upload.thumbnailSquareStoragePath,
+    thumbnail_landscape_storage_path: upload.thumbnailLandscapeStoragePath,
+    report_image_storage_path: upload.reportImageStoragePath,
+    mime_type: upload.mimeType,
+    file_size_bytes: upload.fileSizeBytes,
+    duration_seconds: upload.durationSeconds,
+    uploaded_by_user_id: userId,
+  };
 }
 
 function readableError(error: unknown, fallback = "Please try again or contact support.") {
@@ -650,7 +703,7 @@ function eventLabel(eventType: string) {
     assigned: "Assigned",
     created: "Created",
     note: "Note",
-    photo_added: "Photo Added",
+    photo_added: "Media Added",
     priority_changed: "Priority Changed",
     report_generated: "Report Generated",
     status_change: "Status Change",
@@ -1101,18 +1154,92 @@ export function ProductionPortalApp() {
     setLastDataRefreshAt(new Date().toISOString());
   }
 
-  async function uploadFile(dataUrl: string, folder: string) {
+  async function uploadStorageBlob(path: string, blob: Blob, contentType: string) {
     const supabase = createSupabaseBrowserClient();
-    const blob = await (await fetch(dataUrl)).blob();
-    const path = `${folder}/${crypto.randomUUID()}.jpg`;
     const { error } = await supabase.storage.from("snag-images").upload(path, blob, {
-      contentType: "image/jpeg",
+      contentType,
       upsert: false,
     });
 
     if (error) throw error;
 
     return supabase.storage.from("snag-images").getPublicUrl(path).data.publicUrl;
+  }
+
+  async function uploadFile(dataUrl: string, folder: string) {
+    const blob = await imageDataUrlToBlob(dataUrl, SNAG_IMAGE_MAX_DIMENSION, 0.82);
+    return uploadStorageBlob(`${folder}/${crypto.randomUUID()}.jpg`, blob, "image/jpeg");
+  }
+
+  async function uploadSnagMedia(input: { imageDataUrl?: string; videoFile?: File | null }, folder: string) {
+    const uploads: SnagMediaUpload[] = [];
+
+    if (input.imageDataUrl) {
+      const id = crypto.randomUUID();
+      const imageBlob = await imageDataUrlToBlob(input.imageDataUrl, SNAG_IMAGE_MAX_DIMENSION, 0.82);
+      const originalPath = `${folder}/${id}.jpg`;
+      const fileUrl = await uploadStorageBlob(originalPath, imageBlob, "image/jpeg");
+      const [squareBlob, landscapeBlob, reportBlob] = await Promise.all([
+        imageBlobToVariantBlob(imageBlob, { width: SNAG_THUMBNAIL_SIZE, height: SNAG_THUMBNAIL_SIZE, fit: "cover", quality: 0.76 }),
+        imageBlobToVariantBlob(imageBlob, { width: SNAG_THUMBNAIL_SIZE, height: Math.round(SNAG_THUMBNAIL_SIZE * 0.75), fit: "cover", quality: 0.76 }),
+        imageBlobToVariantBlob(imageBlob, { maxDimension: SNAG_REPORT_IMAGE_MAX_DIMENSION, fit: "contain", quality: 0.82 }),
+      ]);
+      const squarePath = `_derived/${folder}/${id}-thumb-square.jpg`;
+      const landscapePath = `_derived/${folder}/${id}-thumb-landscape.jpg`;
+      const reportPath = `_derived/${folder}/${id}-report.jpg`;
+      const [thumbnailSquareUrl, thumbnailLandscapeUrl, reportImageUrl] = await Promise.all([
+        uploadStorageBlob(squarePath, squareBlob, "image/jpeg"),
+        uploadStorageBlob(landscapePath, landscapeBlob, "image/jpeg"),
+        uploadStorageBlob(reportPath, reportBlob, "image/jpeg"),
+      ]);
+
+      uploads.push({
+        fileUrl,
+        mediaType: "image",
+        storagePath: originalPath,
+        thumbnailUrl: thumbnailLandscapeUrl,
+        thumbnailStoragePath: landscapePath,
+        thumbnailSquareUrl,
+        thumbnailSquareStoragePath: squarePath,
+        thumbnailLandscapeUrl,
+        thumbnailLandscapeStoragePath: landscapePath,
+        reportImageUrl,
+        reportImageStoragePath: reportPath,
+        mimeType: "image/jpeg",
+        fileSizeBytes: imageBlob.size,
+        durationSeconds: null,
+      });
+    }
+
+    if (input.videoFile) {
+      const videoMetadata = await validateSnagVideo(input.videoFile);
+      const id = crypto.randomUUID();
+      const extension = videoFileExtension(input.videoFile);
+      const videoPath = `videos/${folder}/${id}.${extension}`;
+      const fileUrl = await uploadStorageBlob(videoPath, input.videoFile, input.videoFile.type || "video/mp4");
+      const thumbnailBlob = await videoFileToThumbnailBlob(input.videoFile, SNAG_THUMBNAIL_SIZE, Math.round(SNAG_THUMBNAIL_SIZE * 0.75));
+      const thumbnailPath = `_derived/videos/${folder}/${id}-thumb.jpg`;
+      const thumbnailUrl = await uploadStorageBlob(thumbnailPath, thumbnailBlob, "image/jpeg");
+
+      uploads.push({
+        fileUrl,
+        mediaType: "video",
+        storagePath: videoPath,
+        thumbnailUrl,
+        thumbnailStoragePath: thumbnailPath,
+        thumbnailSquareUrl: null,
+        thumbnailSquareStoragePath: null,
+        thumbnailLandscapeUrl: thumbnailUrl,
+        thumbnailLandscapeStoragePath: thumbnailPath,
+        reportImageUrl: thumbnailUrl,
+        reportImageStoragePath: thumbnailPath,
+        mimeType: input.videoFile.type || "video/mp4",
+        fileSizeBytes: input.videoFile.size,
+        durationSeconds: videoMetadata.durationSeconds,
+      });
+    }
+
+    return uploads;
   }
 
   async function recordAudit(event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) {
@@ -1212,7 +1339,7 @@ export function ProductionPortalApp() {
           profiles={profiles}
           onNotice={setNotice}
           reload={loadAll}
-          uploadFile={uploadFile}
+          uploadSnagMedia={uploadSnagMedia}
           recordAudit={recordAudit}
           requestedFilters={snagListFilters}
         />
@@ -1238,6 +1365,7 @@ export function ProductionPortalApp() {
           recordAudit={recordAudit}
           reload={loadAll}
           uploadFile={uploadFile}
+          uploadSnagMedia={uploadSnagMedia}
         />
       )}
       {activeTab === "sales" && (
@@ -1271,6 +1399,7 @@ export function ProductionPortalApp() {
           recordAudit={recordAudit}
           reload={loadAll}
           uploadFile={uploadFile}
+          uploadSnagMedia={uploadSnagMedia}
           onGoToSnags={() => setTab("resident_snags")}
           residentView={activeTab === "resident_home" ? "home" : "snags"}
         />
@@ -3983,7 +4112,7 @@ function DeveloperSnagging({
   buildingOrganisations,
   onNotice,
   reload,
-  uploadFile,
+  uploadSnagMedia,
   onClose,
   onDirtyChange,
 }: {
@@ -3997,7 +4126,7 @@ function DeveloperSnagging({
   buildingOrganisations: BuildingOrganisation[];
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
-  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
   onClose: () => void;
   onDirtyChange: (hasUnsavedChanges: boolean) => void;
 }) {
@@ -4044,6 +4173,7 @@ function DeveloperSnagging({
     || draft.tradeId
     || draft.responsibleOrganisationId
     || draft.photoDataUrl
+    || draft.videoFile
     || contextSignature(draft) !== cleanContextSignature,
   );
 
@@ -4098,7 +4228,7 @@ function DeveloperSnagging({
     const formTopBefore = formRef.current?.getBoundingClientRect().top ?? null;
     const supabase = createSupabaseBrowserClient();
     try {
-      const photoUrl = await uploadFile(savedDraft.photoDataUrl, "snags");
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: savedDraft.photoDataUrl, videoFile: savedDraft.videoFile }, "snags");
       const { data, error } = await supabase.from("snags").insert({
         building_id: snagBuildingId,
         unit_id: snagUnitId,
@@ -4118,8 +4248,9 @@ function DeveloperSnagging({
 
       if (error) throw error;
 
-      const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
-      if (photoError) throw photoError;
+      const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(data.id, upload, "annotated", user.id));
+      const { error: mediaError } = await supabase.from("snag_photos").insert(mediaRows);
+      if (mediaError) throw mediaError;
 
       const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
       if (eventError) throw eventError;
@@ -4132,6 +4263,7 @@ function DeveloperSnagging({
         unitId: savedDraft.unitId,
         areaId: savedDraft.areaId,
         responsibleOrganisationId: savedDraft.responsibleOrganisationId,
+        videoFile: null,
       };
 
       if (closeAfterSave) {
@@ -4221,6 +4353,7 @@ function DeveloperSnagging({
           <span className="text-xs text-[#617169]">Defaults to the main contractor. Choose a supporting trade for exception snags.</span>
           {draft.buildingId && !mainContractorId && <span className="text-xs text-[#8a5a12]">No main contractor is set for this building yet.</span>}
         </label>
+        <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} />
         <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button className="primary" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
@@ -5873,7 +6006,7 @@ function SnagWorkflow({
   profiles,
   onNotice,
   reload,
-  uploadFile,
+  uploadSnagMedia,
   recordAudit,
   requestedFilters,
 }: {
@@ -5893,7 +6026,7 @@ function SnagWorkflow({
   profiles: Profile[];
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
-  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   requestedFilters?: SnagListFilters;
 }) {
@@ -5953,7 +6086,7 @@ function SnagWorkflow({
           buildingOrganisations={buildingOrganisations}
           onNotice={onNotice}
           reload={reload}
-          uploadFile={uploadFile}
+          uploadSnagMedia={uploadSnagMedia}
           onClose={() => {
             setAddSnagHasUnsavedChanges(false);
             setShowAddSnag(false);
@@ -5990,7 +6123,7 @@ function SnagWorkflow({
         user={user}
         onNotice={onNotice}
         reload={reload}
-        uploadFile={uploadFile}
+        uploadSnagMedia={uploadSnagMedia}
         requestedFilters={requestedFilters}
         onDetailViewChange={setIsViewingSnagDetails}
         showFilters
@@ -6018,7 +6151,7 @@ function SnagWorkflow({
           return (
             <>
               {(canClose || canRespondToInfoRequest) && <DeveloperActions user={user} snag={snag} onNotice={onNotice} reload={reload} allowDirectClose={usesExternalWorkflow} />}
-              {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} />}
+              {canResolve && <ContractorActions user={user} snag={snag} onNotice={onNotice} reload={reload} uploadSnagMedia={uploadSnagMedia} />}
             </>
           );
         }}
@@ -6256,10 +6389,14 @@ function ContractorResolveAction({ user, snag, onNotice, reload }: { user: User;
   );
 }
 
-function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void> }) {
+function ContractorActions({ user, snag, onNotice, reload, uploadSnagMedia }: { user: User; snag: ProductionSnag; onNotice: (notice: string) => void; reload: () => Promise<void>; uploadSnagMedia: UploadSnagMedia }) {
   const [showInfoRequest, setShowInfoRequest] = useState(false);
+  const [showResolveMedia, setShowResolveMedia] = useState(false);
   const [infoRequest, setInfoRequest] = useState("");
+  const [resolutionPhoto, setResolutionPhoto] = useState("");
+  const [resolutionVideoFile, setResolutionVideoFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState<"request" | "resolve" | null>(null);
+  const hasResolveMedia = Boolean(resolutionPhoto || resolutionVideoFile);
 
   async function requestInfo() {
     const trimmed = infoRequest.trim();
@@ -6282,8 +6419,25 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
     if (isSaving) return;
     setIsSaving("resolve");
     try {
-      await saveSnagStatusChange({ user, snag, nextStatus: "resolved_by_contractor" });
-      onNotice("Snag marked as resolved");
+      const mediaUploads = hasResolveMedia
+        ? await uploadSnagMedia({ imageDataUrl: resolutionPhoto, videoFile: resolutionVideoFile }, "resolutions")
+        : [];
+      await saveSnagStatusChange({
+        user,
+        snag,
+        nextStatus: "resolved_by_contractor",
+        comment: mediaUploads.length > 0 ? "Resolved with completion media" : null,
+      });
+      if (mediaUploads.length > 0) {
+        const supabase = createSupabaseBrowserClient();
+        const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(snag.id, upload, "resolution_photo", user.id));
+        const { error: mediaError } = await supabase.from("snag_photos").insert(mediaRows);
+        if (mediaError) throw new Error(`Snag marked as resolved, but completion media could not be saved: ${mediaError.message}`);
+      }
+      setResolutionPhoto("");
+      setResolutionVideoFile(null);
+      setShowResolveMedia(false);
+      onNotice(mediaUploads.length > 0 ? "Snag marked as resolved with media" : "Snag marked as resolved");
       await reloadAfterSavedSnagStatus(reload);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Could not mark snag as resolved.");
@@ -6300,10 +6454,19 @@ function ContractorActions({ user, snag, onNotice, reload }: { user: User; snag:
         <button className="snag-action-link snag-action-warning" onClick={() => setShowInfoRequest((current) => !current)} disabled={Boolean(isSaving)} type="button">
           <CircleHelp size={16} aria-hidden /> Request info
         </button>
+        <button className="snag-action-link" onClick={() => setShowResolveMedia((current) => !current)} disabled={Boolean(isSaving)} type="button">
+          <Camera size={16} aria-hidden /> Add media
+        </button>
         <button className="snag-action-link snag-action-success" onClick={markResolved} disabled={Boolean(isSaving)} type="button">
-          <CheckCircle2 size={16} aria-hidden /> {isSaving === "resolve" ? "Updating..." : "Resolve"}
+          <CheckCircle2 size={16} aria-hidden /> {isSaving === "resolve" ? "Updating..." : hasResolveMedia ? "Resolve with media" : "Resolve"}
         </button>
       </div>
+      {showResolveMedia && (
+        <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-2">
+          <VideoInput value={resolutionVideoFile} onChange={setResolutionVideoFile} disabled={Boolean(isSaving)} />
+          <PhotoInput value={resolutionPhoto} onChange={setResolutionPhoto} disabled={Boolean(isSaving)} />
+        </div>
+      )}
       {showInfoRequest && (
         <div className="grid gap-2 rounded-md border border-[#e2c8a6] bg-[#fff8ec] p-2">
           <input
@@ -6346,6 +6509,7 @@ function UnitsSection({
   recordAudit,
   reload,
   uploadFile,
+  uploadSnagMedia,
 }: {
   user: User;
   profile: Profile | null;
@@ -6366,6 +6530,7 @@ function UnitsSection({
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
 }) {
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const handoverUnitIds = new Set(handovers.map((handover) => handover.unit_id));
@@ -6458,6 +6623,7 @@ function UnitsSection({
         recordAudit={recordAudit}
         reload={reload}
         uploadFile={uploadFile}
+        uploadSnagMedia={uploadSnagMedia}
         residentView="internal"
       />
     </div>
@@ -6518,6 +6684,7 @@ function LeaseholderDefects({
   recordAudit,
   reload,
   uploadFile,
+  uploadSnagMedia,
   onGoToSnags,
   residentView = "internal",
 }: {
@@ -6539,6 +6706,7 @@ function LeaseholderDefects({
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   reload: () => Promise<void>;
   uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
   onGoToSnags?: () => void;
   residentView?: "internal" | "home" | "snags";
 }) {
@@ -6558,6 +6726,7 @@ function LeaseholderDefects({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [isSubmittingDefect, setIsSubmittingDefect] = useState(false);
   const [defectStatusFilter, setDefectStatusFilter] = useState("");
   const [defectPriorityFilter, setDefectPriorityFilter] = useState("");
@@ -6629,7 +6798,7 @@ function LeaseholderDefects({
     const supabase = createSupabaseBrowserClient();
     setIsSubmittingDefect(true);
     try {
-      const photoUrl = await uploadFile(photo, "defects");
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, "defects");
       const { data, error } = await supabase.from("snags").insert({
         building_id: selectedUnit.building_id,
         unit_id: selectedUnit.id,
@@ -6646,8 +6815,9 @@ function LeaseholderDefects({
 
       if (error) throw error;
 
-      const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: data.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
-      if (photoError) throw photoError;
+      const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(data.id, upload, "annotated", user.id));
+      const { error: mediaError } = await supabase.from("snag_photos").insert(mediaRows);
+      if (mediaError) throw mediaError;
 
       const { error: eventError } = await supabase.from("snag_events").insert({ snag_id: data.id, event_type: "created", new_value: "open", created_by_user_id: user.id });
       if (eventError) {
@@ -6658,6 +6828,7 @@ function LeaseholderDefects({
       setTitle("");
       setDescription("");
       setPhoto("");
+      setVideoFile(null);
       onNotice(eventError ? "Defect submitted, but the activity history could not be recorded." : "Defect submitted.");
       await reload();
     } catch (error) {
@@ -6889,6 +7060,7 @@ function LeaseholderDefects({
                   </select>
                   <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Short title" disabled={isSubmittingDefect || !selectedUnit} />
                   <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What needs attention?" disabled={isSubmittingDefect || !selectedUnit} />
+                  <VideoInput value={videoFile} onChange={setVideoFile} disabled={isSubmittingDefect || !selectedUnit} />
                   <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
                   <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Report a snag"}</button>
                 </FormPanel>
@@ -6943,7 +7115,7 @@ function LeaseholderDefects({
                 user={user}
                 onNotice={onNotice}
                 reload={reload}
-                uploadFile={uploadFile}
+                uploadSnagMedia={uploadSnagMedia}
                 actions={() => null}
                 residentMode
               />
@@ -7063,6 +7235,7 @@ function LeaseholderDefects({
               </select>
               <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
               <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
+              <VideoInput value={videoFile} onChange={setVideoFile} disabled={isSubmittingDefect || !selectedUnit} />
               <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
               <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : profile?.role === "resident" ? "Report snag" : "Submit defect"}</button>
             </FormPanel>
@@ -7122,7 +7295,7 @@ function LeaseholderDefects({
             user={user}
             onNotice={onNotice}
             reload={reload}
-            uploadFile={uploadFile}
+            uploadSnagMedia={uploadSnagMedia}
             actions={(snag) => profile?.role === "resident" ? null : <TriageActions user={user} snag={snag} buildings={buildings} organisations={[]} onNotice={onNotice} reload={reload} />}
           />}
           {showMeterTools && <section className="rounded-md border border-[#d9ded6] bg-white p-4">
@@ -8315,13 +8488,14 @@ function ReportsPanel({
       const trade = trades.find((item) => item.id === snag.trade_id)?.name ?? "No trade";
       const area = areas.find((item) => item.id === snag.area_id)?.name ?? "No area";
       const description = snag.description?.trim() || "No description";
-      const photo = includePhotos ? primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id)) : undefined;
+      const photo = includePhotos ? primarySnagMedia(photos.filter((item) => item.snag_id === snag.id)) : undefined;
       let imageData = "";
       let imageSize = { width: 0, height: 0 };
       if (photo) {
         try {
-          imageData = await imageUrlToDataUrl(photo.file_url, { normalizeOrientation: true });
-          imageSize = fittedImageSize(imageData, 130, 94);
+          const reportImageUrl = snagReportImageUrl(photo);
+          imageData = reportImageUrl ? await imageUrlToDataUrl(reportImageUrl, { normalizeOrientation: true }) : "";
+          if (imageData) imageSize = fittedImageSize(imageData, 130, 94);
         } catch {
           imageData = "";
         }
@@ -8686,7 +8860,7 @@ function SnagList({
   user,
   onNotice,
   reload,
-  uploadFile,
+  uploadSnagMedia,
   actions,
   listActions,
   canReject = false,
@@ -8709,7 +8883,7 @@ function SnagList({
   user: User;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
-  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
   actions?: (snag: ProductionSnag) => React.ReactNode;
   listActions?: (snag: ProductionSnag) => React.ReactNode;
   canReject?: boolean;
@@ -8960,7 +9134,7 @@ function SnagList({
         trade={trades.find((trade) => trade.id === selectedSnag.trade_id)}
         tradeControl={tradeControl?.(selectedSnag, trades.find((trade) => trade.id === selectedSnag.trade_id))}
         unit={units.find((unit) => unit.id === selectedSnag.unit_id)}
-        uploadFile={uploadFile}
+        uploadSnagMedia={uploadSnagMedia}
         user={user}
       />
     );
@@ -9030,7 +9204,7 @@ function SnagList({
             const unit = units.find((item) => item.id === snag.unit_id);
             const area = areas.find((item) => item.id === snag.area_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
-            const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
+            const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
             const rowActions = listActions?.(snag);
 
             return (
@@ -9104,7 +9278,7 @@ function SnagList({
                   const unit = units.find((item) => item.id === snag.unit_id);
                   const area = areas.find((item) => item.id === snag.area_id);
                   const trade = trades.find((item) => item.id === snag.trade_id);
-                  const photo = primarySnagPhoto(photos.filter((item) => item.snag_id === snag.id));
+                  const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
                   const rowActions = listActions?.(snag);
 
                   return (
@@ -9155,7 +9329,7 @@ function SnagList({
       {previewPhoto && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setPreviewPhoto(null)}>
           <div className="max-h-[90vh] max-w-5xl rounded-md bg-white p-3 shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <img src={previewPhoto.file_url} alt="" className="max-h-[78vh] w-auto rounded-md object-contain" />
+            <SnagMediaPreview media={previewPhoto} />
             <div className="mt-3 flex justify-end">
               <button className="secondary" onClick={() => setPreviewPhoto(null)}>Close</button>
             </div>
@@ -9168,6 +9342,22 @@ function SnagList({
 
 function PhotoThumb({ photo, onOpen }: { photo: SnagPhoto; onOpen: (photo: SnagPhoto) => void }) {
   return <SnagThumbnail photo={photo} onOpen={onOpen} className="h-10 w-14 rounded border border-[#d9ded6]" width={240} height={180} />;
+}
+
+function SnagMediaPreview({ media }: { media: SnagPhoto }) {
+  if (snagMediaType(media) === "video") {
+    return (
+      <video
+        src={media.file_url}
+        className="max-h-[78vh] max-w-[88vw] rounded-md bg-black"
+        controls
+        playsInline
+        preload="metadata"
+      />
+    );
+  }
+
+  return <img src={media.file_url} alt="" className="max-h-[78vh] w-auto rounded-md object-contain" />;
 }
 
 function SnagThumbnail({
@@ -9186,7 +9376,8 @@ function SnagThumbnail({
   const containerRef = useRef<HTMLButtonElement | null>(null);
   const [visibleUrl, setVisibleUrl] = useState<string | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const thumbnailUrl = supabaseStorageThumbnailUrl(photo.file_url, width, height);
+  const thumbnailUrl = snagThumbnailUrl(photo, width, height);
+  const isVideo = snagMediaType(photo) === "video";
   const shouldLoad = visibleUrl === thumbnailUrl;
   const failed = failedUrl === thumbnailUrl;
 
@@ -9215,11 +9406,11 @@ function SnagThumbnail({
           event.stopPropagation();
           onOpen(photo);
         }}
-        aria-label="Open full photo"
-        title="Open full photo"
+        aria-label={isVideo ? "Open video" : "Open full photo"}
+        title={isVideo ? "Open video" : "Open full photo"}
         type="button"
       >
-        Open
+        {isVideo ? <Film size={16} aria-hidden /> : "Open"}
       </button>
     );
   }
@@ -9232,20 +9423,25 @@ function SnagThumbnail({
         event.stopPropagation();
         onOpen(photo);
       }}
-      aria-label="Open photo preview"
-      title="View photo"
+      aria-label={isVideo ? "Open video preview" : "Open photo preview"}
+      title={isVideo ? "View video" : "View photo"}
       type="button"
     >
       <span className="absolute inset-0 animate-pulse bg-[#eef1ec]" aria-hidden />
       {shouldLoad && (
         <img
-          src={thumbnailUrl}
+          src={visibleUrl}
           alt=""
           className="relative h-full w-full object-cover transition hover:opacity-80"
           loading="lazy"
           decoding="async"
           onError={() => setFailedUrl(thumbnailUrl)}
         />
+      )}
+      {isVideo && (
+        <span className="absolute inset-0 grid place-items-center bg-black/20 text-white" aria-hidden>
+          <Film size={16} />
+        </span>
       )}
     </button>
   );
@@ -9273,7 +9469,7 @@ function SnagDetailPage({
   trade,
   tradeControl,
   unit,
-  uploadFile,
+  uploadSnagMedia,
   user,
 }: {
   actions?: React.ReactNode;
@@ -9295,11 +9491,12 @@ function SnagDetailPage({
   trade?: Trade;
   tradeControl?: React.ReactNode;
   unit?: Unit;
-  uploadFile: (dataUrl: string, folder: string) => Promise<string>;
+  uploadSnagMedia: UploadSnagMedia;
   user: User;
 }) {
   const [note, setNote] = useState("");
   const [photo, setPhoto] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [rejectPhoto, setRejectPhoto] = useState("");
   const [showReject, setShowReject] = useState(false);
@@ -9307,7 +9504,7 @@ function SnagDetailPage({
   const [activityTab, setActivityTab] = useState<ActivityTab>("timeline");
   const [showAllAudit, setShowAllAudit] = useState(false);
   const [expandedNoteGroups, setExpandedNoteGroups] = useState<string[]>([]);
-  const primaryPhoto = primarySnagPhoto(photos);
+  const primaryMedia = primarySnagMedia(photos);
   const area = areas.find((item) => item.id === snag.area_id);
   const displayStatusLabel = residentMode ? residentSnagStatusLabel : statusLabel;
   const sortedEvents = useMemo(() => [...events].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), [events]);
@@ -9321,12 +9518,12 @@ function SnagDetailPage({
     ? [
         { key: "timeline", label: "Timeline" },
         { key: "notes", label: "Notes" },
-        { key: "photos", label: "Photos" },
+        { key: "photos", label: "Media" },
       ]
     : [
         { key: "timeline", label: "Timeline" },
         { key: "notes", label: "Notes" },
-        { key: "photos", label: "Photos" },
+        { key: "photos", label: "Media" },
         { key: "audit", label: "Audit" },
       ];
 
@@ -9414,25 +9611,22 @@ function SnagDetailPage({
   }
 
   async function addPhoto() {
-    if (!photo) return;
-    const photoUrl = await uploadFile(photo, "snag-updates");
+    if (!photo && !videoFile) return;
+    const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, "snag-updates");
     const supabase = createSupabaseBrowserClient();
-    const { error: photoError } = await supabase.from("snag_photos").insert({
-      snag_id: snag.id,
-      file_url: photoUrl,
-      photo_type: "resolution_photo",
-      uploaded_by_user_id: user.id,
-    });
+    const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(snag.id, upload, "resolution_photo", user.id));
+    const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
     const { error: eventError } = await supabase.from("snag_events").insert({
       snag_id: snag.id,
       event_type: "photo_added",
       new_value: snag.status,
-      comment: "Photo added",
+      comment: mediaUploads.some((upload) => upload.mediaType === "video") ? "Media added" : "Photo added",
       created_by_user_id: user.id,
     });
-    if (photoError || eventError) onNotice(photoError?.message ?? eventError?.message ?? "Could not add photo.");
+    if (photoError || eventError) onNotice(photoError?.message ?? eventError?.message ?? "Could not add media.");
     else {
       setPhoto("");
+      setVideoFile(null);
       setShowPhotoInput(false);
       await reload();
     }
@@ -9446,8 +9640,9 @@ function SnagDetailPage({
     const { error: statusError } = await supabase.from("snags").update({ status: "rejected_back_to_contractor" }).eq("id", snag.id);
     let photoErrorMessage = "";
     if (rejectPhoto) {
-      const photoUrl = await uploadFile(rejectPhoto, "rejections");
-      const { error: photoError } = await supabase.from("snag_photos").insert({ snag_id: snag.id, file_url: photoUrl, photo_type: "annotated", uploaded_by_user_id: user.id });
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: rejectPhoto }, "rejections");
+      const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(snag.id, upload, "annotated", user.id));
+      const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
       photoErrorMessage = photoError?.message ?? "";
     }
     const { error: eventError } = await supabase.from("snag_events").insert({
@@ -9509,9 +9704,22 @@ function SnagDetailPage({
       <div className="grid gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(460px,1.1fr)]">
         <div className="grid gap-4">
           <div className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
-            {primaryPhoto ? (
-              <button className="block w-full cursor-pointer" onClick={() => onOpenPhoto(primaryPhoto)}>
-                <img src={primaryPhoto.file_url} alt="" className="max-h-[520px] w-full cursor-pointer rounded-md object-contain" />
+            {primaryMedia ? (
+              <button className="block w-full cursor-pointer" onClick={() => onOpenPhoto(primaryMedia)}>
+                {snagMediaType(primaryMedia) === "video" ? (
+                  <span className="relative grid min-h-56 place-items-center overflow-hidden rounded-md bg-[#1F2A24] text-white">
+                    {snagThumbnailUrl(primaryMedia, 480, 360) ? (
+                      <img src={snagThumbnailUrl(primaryMedia, 480, 360)} alt="" className="max-h-[520px] w-full object-contain opacity-80" />
+                    ) : (
+                      <Film size={44} aria-hidden />
+                    )}
+                    <span className="absolute inset-0 grid place-items-center bg-black/20">
+                      <Film size={44} aria-hidden />
+                    </span>
+                  </span>
+                ) : (
+                  <img src={primaryMedia.file_url} alt="" className="max-h-[520px] w-full cursor-pointer rounded-md object-contain" />
+                )}
               </button>
             ) : (
               <div className="grid min-h-56 place-items-center rounded-md border border-dashed border-[#cbd4ce] bg-white text-sm text-[#9aa59f]">No photo</div>
@@ -9532,16 +9740,17 @@ function SnagDetailPage({
           </div>
           <div className="rounded-md border border-[#d9ded6] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold">Photos</p>
-              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowPhotoInput((current) => !current)}>Add photo</button>
+              <p className="text-sm font-semibold">Media</p>
+              <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => setShowPhotoInput((current) => !current)}>Add media</button>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {photos.length > 0 ? photos.map((photo) => <PhotoThumb key={photo.id} photo={photo} onOpen={onOpenPhoto} />) : <span className="text-sm text-[#9aa59f]">None</span>}
             </div>
             {showPhotoInput && (
               <div className="mt-3 grid gap-2 border-t border-[#e5e9e4] pt-3">
+                <VideoInput value={videoFile} onChange={setVideoFile} />
                 <PhotoInput value={photo} onChange={setPhoto} />
-                <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={addPhoto} disabled={!photo}>Save photo</button>
+                <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={addPhoto} disabled={!photo && !videoFile}>Save media</button>
               </div>
             )}
           </div>
@@ -9568,7 +9777,7 @@ function SnagDetailPage({
               <p className="mt-1 text-lg font-semibold text-[#0F3D2E]">{noteEvents.length}</p>
             </div>
             <div className="rounded-md border border-[#d9ded6] bg-white p-2">
-              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Photos</p>
+              <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Media</p>
               <p className="mt-1 text-lg font-semibold text-[#0F3D2E]">{photos.length}</p>
             </div>
             <div className="rounded-md border border-[#d9ded6] bg-white p-2 sm:col-span-2">
@@ -9654,14 +9863,20 @@ function SnagDetailPage({
             <div className="mt-4 grid gap-3">
               {sortedPhotos.map((item) => (
                 <button key={item.id} className="grid cursor-pointer grid-cols-[5rem_minmax(0,1fr)] gap-3 rounded-md border border-[#d9ded6] bg-white p-2 text-left transition hover:border-[#D6A23A]" onClick={() => onOpenPhoto(item)}>
-                  <img src={item.file_url} alt="" className="h-16 w-20 rounded-md border border-[#d9ded6] object-cover" />
+                  <span className="grid h-16 w-20 place-items-center overflow-hidden rounded-md border border-[#d9ded6] bg-[#FBFAF6] text-[#9aa59f]">
+                    {snagThumbnailUrl(item, 240, 180) ? (
+                      <img src={snagThumbnailUrl(item, 240, 180)} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                    ) : (
+                      <Film size={18} aria-hidden />
+                    )}
+                  </span>
                   <span className="self-center text-sm">
-                    <span className="block font-semibold text-[#0F3D2E]">{item.photo_type === "resolution_photo" ? "Follow-up photo" : "Snag photo"}</span>
+                    <span className="block font-semibold text-[#0F3D2E]">{snagMediaType(item) === "video" ? "Video" : item.photo_type === "resolution_photo" ? "Follow-up photo" : "Snag photo"}</span>
                     <span className="mt-1 block text-xs text-[#617169]">{formatDateTime(item.created_at)} / {authorName(item.uploaded_by_user_id)}</span>
                   </span>
                 </button>
               ))}
-              {sortedPhotos.length === 0 && <p className="text-sm text-[#617169]">No photos added.</p>}
+              {sortedPhotos.length === 0 && <p className="text-sm text-[#617169]">No media added.</p>}
             </div>
           )}
           {activityTab === "audit" && (
@@ -9692,7 +9907,7 @@ function SnagDetailPage({
       {previewPhoto && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" onClick={() => setPreviewPhoto(null)}>
           <div className="max-h-[90vh] max-w-5xl rounded-md bg-white p-3 shadow-xl" onClick={(event) => event.stopPropagation()}>
-            <img src={previewPhoto.file_url} alt="" className="max-h-[78vh] w-auto rounded-md object-contain" />
+            <SnagMediaPreview media={previewPhoto} />
             <div className="mt-3 flex justify-end">
               <button className="secondary" onClick={() => setPreviewPhoto(null)}>Close</button>
             </div>
@@ -9722,25 +9937,35 @@ function FormPanel({ title, children }: { title: string; children: React.ReactNo
 }
 
 function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or take photo" }: { value: string; onChange: (value: string) => void; disabled?: boolean; label?: string }) {
-  function loadFile(file?: File) {
+  const [isPreparing, setIsPreparing] = useState(false);
+  const isDisabled = disabled || isPreparing;
+
+  async function loadFile(file?: File) {
     if (!file || disabled) return;
-    const reader = new FileReader();
-    reader.onload = () => onChange(String(reader.result));
-    reader.readAsDataURL(file);
+    setIsPreparing(true);
+    try {
+      onChange(await imageFileToDataUrl(file, SNAG_IMAGE_MAX_DIMENSION, 0.82));
+    } finally {
+      setIsPreparing(false);
+    }
   }
 
   return (
     <div className="grid h-full gap-2">
-      <label className={`camera-action ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
-        {value ? "Replace photo" : label}
+        {isPreparing ? "Preparing photo..." : value ? "Replace photo" : label}
         <input
           type="file"
           accept="image/*"
           capture="environment"
           className="sr-only"
-          disabled={disabled}
-          onChange={(event) => loadFile(event.target.files?.[0])}
+          disabled={isDisabled}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.currentTarget.value = "";
+            void loadFile(file);
+          }}
         />
       </label>
       <div className="grid min-h-44 place-items-center rounded-xl border border-dashed border-[#d9ded6] bg-white p-2">
@@ -9751,7 +9976,7 @@ function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or t
         )}
       </div>
       {value && (
-        <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={disabled} onClick={() => onChange("")}>
+        <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={isDisabled} onClick={() => onChange("")}>
           Remove photo
         </button>
       )}
@@ -9766,6 +9991,8 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
   const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
   const [drawing, setDrawing] = useState(false);
   const [isAnnotating, setIsAnnotating] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const isDisabled = disabled || isPreparing;
 
   useEffect(() => {
     if (!baseImage) return;
@@ -9820,20 +10047,22 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
     onChange(canvas.toDataURL("image/jpeg", 0.82));
   }
 
-  function loadFile(file?: File) {
+  async function loadFile(file?: File) {
     if (!file || disabled) return;
-    const reader = new FileReader();
-    reader.onload = () => {
+    setIsPreparing(true);
+    try {
+      const preparedImage = await imageFileToDataUrl(file, SNAG_IMAGE_MAX_DIMENSION, 0.82);
       setStrokes([]);
       setBaseImage("");
       setIsAnnotating(false);
-      onChange(String(reader.result));
-    };
-    reader.readAsDataURL(file);
+      onChange(preparedImage);
+    } finally {
+      setIsPreparing(false);
+    }
   }
 
   function openAnnotationEditor() {
-    if (!value || disabled) return;
+    if (!value || isDisabled) return;
     setStrokes([]);
     setBaseImage(value);
     setIsAnnotating(true);
@@ -9848,17 +10077,19 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
 
   return (
     <div className="grid gap-2">
-      <label className={`camera-action ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
-        {value ? "Replace photo" : "Add or take photo"}
+        {isPreparing ? "Preparing photo..." : value ? "Replace photo" : "Add or take photo"}
         <input
           type="file"
           accept="image/*"
           capture="environment"
           className="sr-only"
-          disabled={disabled}
+          disabled={isDisabled}
           onChange={(event) => {
-            loadFile(event.target.files?.[0]);
+            const file = event.target.files?.[0];
+            event.currentTarget.value = "";
+            void loadFile(file);
           }}
         />
       </label>
@@ -9866,14 +10097,14 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
         <div className="grid gap-2">
           {!isAnnotating && (
             <>
-              <button className="secondary min-h-11 w-full justify-center px-4 py-2 text-sm" onClick={openAnnotationEditor} disabled={disabled} aria-label="Annotate photo">
+              <button className="secondary min-h-11 w-full justify-center px-4 py-2 text-sm" onClick={openAnnotationEditor} disabled={isDisabled} aria-label="Annotate photo">
                 <Pencil size={17} aria-hidden />
                 Annotate Photo
               </button>
               <button
                 className="group relative cursor-pointer overflow-hidden rounded-md border border-[#d9ded6] bg-[#eef1ec] text-left transition hover:border-[#D6A23A] hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={openAnnotationEditor}
-                disabled={disabled}
+                disabled={isDisabled}
                 aria-label="Open photo annotation editor"
               >
                 <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0F3D2E]/92 px-2.5 py-1 text-xs font-semibold text-white shadow-md sm:text-sm">
@@ -9885,7 +10116,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
                   className="max-h-[28rem] min-h-44 w-full cursor-pointer object-contain transition group-hover:scale-[1.01] group-hover:opacity-95"
                 />
               </button>
-              <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={disabled} onClick={removePhoto}>Remove photo</button>
+              <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={isDisabled} onClick={removePhoto}>Remove photo</button>
             </>
           )}
           {isAnnotating && (
@@ -9895,13 +10126,13 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
                 className="h-auto w-full touch-none cursor-crosshair rounded-md border border-[#d9ded6] bg-[#eef1ec]"
                 aria-label="Photo annotation editor"
                 onPointerDown={(event) => {
-                  if (disabled) return;
+                  if (isDisabled) return;
                   event.currentTarget.setPointerCapture(event.pointerId);
                   setDrawing(true);
                   setStrokes((current) => [...current, [point(event)]]);
                 }}
                 onPointerMove={(event) => {
-                  if (!drawing || disabled) return;
+                  if (!drawing || isDisabled) return;
                   setStrokes((current) => {
                     const next = [...current];
                     const latest = next[next.length - 1] ?? [];
@@ -9913,11 +10144,11 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
                 onPointerCancel={() => setDrawing(false)}
               />
               <div className="grid grid-cols-3 gap-2">
-                <button className="secondary" onClick={() => setStrokes((current) => current.slice(0, -1))} disabled={disabled}>Undo</button>
-                <button className="secondary" onClick={() => setStrokes([])} disabled={disabled}>Clear</button>
+                <button className="secondary" onClick={() => setStrokes((current) => current.slice(0, -1))} disabled={isDisabled}>Undo</button>
+                <button className="secondary" onClick={() => setStrokes([])} disabled={isDisabled}>Clear</button>
                 <button
                   className="secondary"
-                  disabled={disabled}
+                  disabled={isDisabled}
                   onClick={removePhoto}
                 >
                   Remove
@@ -9929,6 +10160,274 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
       )}
     </div>
   );
+}
+
+function VideoInput({ value, onChange, disabled = false }: { value: File | null; onChange: (value: File | null) => void; disabled?: boolean }) {
+  const [error, setError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+  const isDisabled = disabled || isChecking;
+
+  async function loadFile(file?: File) {
+    if (!file || disabled) return;
+    setError("");
+    setIsChecking(true);
+    try {
+      await validateSnagVideo(file);
+      onChange(file);
+    } catch (error) {
+      onChange(null);
+      setError(readableError(error, "Video could not be added."));
+    } finally {
+      setIsChecking(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-2">
+      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+        <Film size={18} aria-hidden />
+        {isChecking ? "Checking video..." : value ? "Replace video" : "Add optional video"}
+        <input
+          type="file"
+          accept="video/mp4,video/webm,video/quicktime,video/*"
+          capture="environment"
+          className="sr-only"
+          disabled={isDisabled}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.currentTarget.value = "";
+            void loadFile(file);
+          }}
+        />
+      </label>
+      {value && (
+        <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-2 text-sm">
+          <p className="truncate font-semibold text-[#0F3D2E]">{value.name || "Selected video"}</p>
+          <p className="text-xs text-[#617169]">{formatFileSize(value.size)}</p>
+          <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={isDisabled} onClick={() => onChange(null)} type="button">
+            Remove video
+          </button>
+        </div>
+      )}
+      {error && <p className="rounded-md border border-[#f0c58c] bg-[#fff8ec] px-3 py-2 text-xs font-semibold text-[#7c5b1b]">{error}</p>}
+    </div>
+  );
+}
+
+type ImageVariantOptions = {
+  fit: "contain" | "cover";
+  quality: number;
+  maxDimension?: number;
+  width?: number;
+  height?: number;
+};
+
+type LoadedImageSource = {
+  source: CanvasImageSource;
+  width: number;
+  height: number;
+  cleanup: () => void;
+};
+
+type SnagVideoMetadata = {
+  durationSeconds: number | null;
+  width: number | null;
+  height: number | null;
+};
+
+async function imageFileToDataUrl(file: File, maxDimension: number, quality: number) {
+  const blob = await imageBlobToVariantBlob(file, { maxDimension, fit: "contain", quality });
+  return blobToDataUrl(blob);
+}
+
+async function imageDataUrlToBlob(dataUrl: string, maxDimension: number, quality: number) {
+  const blob = await (await fetch(dataUrl)).blob();
+  return imageBlobToVariantBlob(blob, { maxDimension, fit: "contain", quality });
+}
+
+async function imageBlobToVariantBlob(blob: Blob, options: ImageVariantOptions) {
+  const loaded = await loadImageSource(blob);
+  try {
+    return drawImageSourceToBlob(loaded.source, loaded.width, loaded.height, options);
+  } finally {
+    loaded.cleanup();
+  }
+}
+
+async function loadImageSource(blob: Blob): Promise<LoadedImageSource> {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" });
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        cleanup: () => bitmap.close(),
+      };
+    } catch {
+      // Fall back to HTMLImageElement below; some browsers/storage formats do not support createImageBitmap.
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const element = new Image();
+    element.onload = () => resolve(element);
+    element.onerror = () => reject(new Error("Image could not be loaded."));
+    element.src = objectUrl;
+  });
+
+  return {
+    source: image,
+    width: image.naturalWidth,
+    height: image.naturalHeight,
+    cleanup: () => URL.revokeObjectURL(objectUrl),
+  };
+}
+
+async function drawImageSourceToBlob(source: CanvasImageSource, sourceWidth: number, sourceHeight: number, options: ImageVariantOptions) {
+  const largestSide = Math.max(sourceWidth, sourceHeight);
+  const scaleForMaxDimension = options.maxDimension && largestSide > options.maxDimension
+    ? options.maxDimension / largestSide
+    : 1;
+  const targetWidth = options.width ?? Math.max(1, Math.round(sourceWidth * scaleForMaxDimension));
+  const targetHeight = options.height ?? Math.max(1, Math.round(sourceHeight * scaleForMaxDimension));
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Image could not be prepared.");
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, targetWidth, targetHeight);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+
+  if (options.fit === "cover" && options.width && options.height) {
+    const scale = Math.max(options.width / sourceWidth, options.height / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    context.drawImage(source, (options.width - drawWidth) / 2, (options.height - drawHeight) / 2, drawWidth, drawHeight);
+  } else {
+    context.drawImage(source, 0, 0, targetWidth, targetHeight);
+  }
+
+  return canvasToJpegBlob(canvas, options.quality);
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Image could not be encoded."));
+    }, "image/jpeg", quality);
+  });
+}
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+async function validateSnagVideo(file: File): Promise<SnagVideoMetadata> {
+  if (file.size > SNAG_VIDEO_MAX_BYTES) {
+    throw new Error(`Video must be ${formatFileSize(SNAG_VIDEO_MAX_BYTES)} or smaller.`);
+  }
+
+  const metadata = await readVideoMetadata(file);
+  if (metadata.durationSeconds && metadata.durationSeconds > SNAG_VIDEO_MAX_SECONDS + 0.25) {
+    throw new Error(`Video must be ${SNAG_VIDEO_MAX_SECONDS} seconds or shorter.`);
+  }
+
+  const largestDimension = Math.max(metadata.width ?? 0, metadata.height ?? 0);
+  if (largestDimension > SNAG_VIDEO_MAX_DIMENSION) {
+    throw new Error("Video resolution is above the 720p cap. Record or export at 720p, then try again.");
+  }
+
+  return metadata;
+}
+
+function readVideoMetadata(file: File) {
+  return new Promise<SnagVideoMetadata>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : null;
+      resolve({
+        durationSeconds: duration,
+        width: video.videoWidth || null,
+        height: video.videoHeight || null,
+      });
+      cleanup();
+    };
+    video.onerror = () => {
+      cleanup();
+      reject(new Error("Video could not be read."));
+    };
+    video.src = objectUrl;
+  });
+}
+
+async function videoFileToThumbnailBlob(file: File, width: number, height: number) {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("Video thumbnail could not be created."));
+      video.src = objectUrl;
+      video.load();
+    });
+
+    const seekTarget = Math.min(1, Math.max(0, Number.isFinite(video.duration) ? video.duration * 0.1 : 0));
+    await new Promise<void>((resolve) => {
+      video.onseeked = () => resolve();
+      video.currentTime = seekTarget;
+      window.setTimeout(resolve, 1200);
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Video thumbnail could not be prepared.");
+    context.fillStyle = "#1F2A24";
+    context.fillRect(0, 0, width, height);
+
+    const sourceWidth = video.videoWidth || width;
+    const sourceHeight = video.videoHeight || height;
+    const scale = Math.max(width / sourceWidth, height / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    context.drawImage(video, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+
+    return canvasToJpegBlob(canvas, 0.76);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function videoFileExtension(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension && ["mp4", "webm", "mov", "m4v"].includes(extension)) return extension;
+  if (file.type.includes("webm")) return "webm";
+  if (file.type.includes("quicktime")) return "mov";
+  return "mp4";
 }
 
 async function imageUrlToDataUrl(url: string, options: { normalizeOrientation?: boolean; maxDimension?: number } = {}) {

@@ -15,7 +15,8 @@ const supabase = createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredE
 });
 
 const validSaleStatuses = new Set(["for_sale", "reserved", "exchanged", "completed", "handed_over"]);
-const validRoles = new Set(["admin", "developer", "developer_representative", "contractor", "resident", "user"]);
+const validRoles = new Set(["admin", "developer", "developer_representative", "contractor", "resident", "sales_agent", "conveyancer", "user"]);
+const validBuildingOrganisationRoles = new Set(["main_contractor", "developer_representative", "supporting_trade", "sales_agent", "conveyancer"]);
 const generatedPasswords = [];
 const defaultTrades = [
   { name: "Decorating", sort_order: 10 },
@@ -93,6 +94,7 @@ function readSheet(workbook, name) {
   const headerValues = sheet.getRow(3).values.slice(1);
   const headers = headerValues.map((value) => clean(cellValue(value))).filter(Boolean);
   if (!headers?.length) throw new Error(`Missing header row in sheet: ${name}`);
+  assertUniqueHeaders(name, headers);
 
   const records = [];
   for (let rowNumber = 4; rowNumber <= sheet.rowCount; rowNumber += 1) {
@@ -102,6 +104,19 @@ function readSheet(workbook, name) {
   }
 
   return records;
+}
+
+function assertUniqueHeaders(sheetName, headers) {
+  const seen = new Set();
+  const duplicates = [];
+  for (const header of headers) {
+    const key = header.toLowerCase();
+    if (seen.has(key)) duplicates.push(header);
+    seen.add(key);
+  }
+  if (duplicates.length) {
+    throw new Error(`Duplicate header(s) in sheet "${sheetName}": ${[...new Set(duplicates)].join(", ")}`);
+  }
 }
 
 function normalizeCell(value) {
@@ -179,13 +194,14 @@ function validateData(data) {
 
   for (const [index, row] of data.organisations.entries()) {
     if (!clean(row.organisation_name)) errors.push(`Organisations row ${index + 4}: missing organisation_name`);
-    if (!["developer_representative", "contractor"].includes(clean(row.organisation_type))) errors.push(`Organisations row ${index + 4}: invalid organisation_type`);
+    if (!["developer_representative", "contractor", "supporting_trade", "sales_agent", "conveyancer"].includes(clean(row.organisation_type))) errors.push(`Organisations row ${index + 4}: invalid organisation_type`);
     organisations.add(clean(row.organisation_name));
   }
 
   for (const [index, row] of data.buildingOrganisations.entries()) {
     if (!buildingCodes.has(clean(row.building_code))) errors.push(`Building Organisations row ${index + 4}: unknown building_code`);
     if (!organisations.has(clean(row.organisation_name))) errors.push(`Building Organisations row ${index + 4}: unknown organisation_name`);
+    if (!validBuildingOrganisationRoles.has(normalizeBuildingOrganisationRole(row.role_on_project))) errors.push(`Building Organisations row ${index + 4}: invalid role_on_project ${row.role_on_project}`);
   }
 
   for (const [index, row] of data.usersAccess.entries()) {
@@ -201,7 +217,7 @@ async function importBuildings(rows) {
   const result = new Map();
   for (const row of rows) {
     const pcDate = dateOrNull(row.pc_date) || dateOrNull(row.practical_completion_date);
-    const pcConfirmed = yesOrDefault(row.pc_confirmed, false);
+    const pcConfirmed = yesOrDefault(row.pc_confirmed, Boolean(pcDate && pcDate <= todayIso()));
     const payload = {
       name: clean(row.building_name),
       address_line_1: clean(row.address_line_1) || null,
@@ -438,7 +454,7 @@ async function importBuildingOrganisations(rows, buildingByCode, organisationByN
     const { error } = await supabase.from("building_organisations").upsert({
       building_id: building.id,
       organisation_id: organisation.id,
-      role_on_project: clean(row.role_on_project),
+      role_on_project: normalizeBuildingOrganisationRole(row.role_on_project),
     }, { onConflict: "building_id,organisation_id,role_on_project" });
     if (error) throw error;
   }
@@ -576,9 +592,21 @@ function splitList(value) {
   return clean(value).split(",").map((item) => item.trim()).filter(Boolean);
 }
 
+function normalizeBuildingOrganisationRole(value) {
+  const role = clean(value);
+  if (role === "contractor" || role === "main contractor") return "main_contractor";
+  if (role === "developer representative") return "developer_representative";
+  if (role === "supporting trade" || role === "trade") return "supporting_trade";
+  return role;
+}
+
 function dateOrNull(value) {
   const text = clean(value);
   return text ? text.slice(0, 10) : null;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function addYears(value, years) {

@@ -53,13 +53,14 @@ supabase/schema.sql
 supabase/seed.sql
 ```
 
-Create a storage bucket for final snag images:
+Create a storage bucket for snag images, optional snag videos and generated image variants:
 
 ```text
 snag-images
 ```
 
 The schema also creates this bucket if the SQL is run with sufficient Supabase permissions.
+Generated thumbnails and report JPEGs are stored below `_derived/` in this bucket and are intentionally excluded from the Storage backup mirror.
 
 Add the project credentials to `.env.local`:
 
