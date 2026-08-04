@@ -2,6 +2,12 @@
 
 Use this after validating `docs/bunnywell-database-cleanup-template-v2.xlsx` and clearing the target database.
 
+```powershell
+npm.cmd run validate:template
+```
+
+The validator checks the whole workbook by default. Use `npm.cmd run validate:template -- --building="Priors Gate"` only when you want a detailed spotlight for one building.
+
 ## Dev / Staging
 
 Dev and staging can create or update users from the `Users Access` tab.
@@ -33,6 +39,8 @@ IMPORT_DEFAULT_USER_PASSWORD=
 ## Production
 
 Production import skips all user changes.
+
+Before importing, take a production backup and run `scripts/database/production-cleandown-preserve-admin.sql` in the production Supabase SQL Editor. That script clears application data, deletes non-admin Auth users, and recreates the admin profile for `carl.gilbert@gmail.com`.
 
 ```powershell
 npm.cmd install

@@ -39,7 +39,7 @@ Supabase database backups depend on the project plan.
 - Pro projects include daily database backups.
 - Point-in-Time Recovery is available as a paid add-on on eligible plans.
 
-Supabase database backups cover the Postgres database. They do not restore Storage files themselves, so snag photos need separate consideration if they become business-critical.
+Supabase database backups cover the Postgres database. They do not restore Storage files themselves, so snag media needs separate consideration if it becomes business-critical.
 
 ## Recommended Backup Policy
 
@@ -55,7 +55,8 @@ For the current POC / early production phase:
 For mature production:
 
 - Enable Supabase Point-in-Time Recovery.
-- Add a regular Storage export process for snag photos.
+- Keep the GitHub Actions Storage mirror enabled for original snag images, videos, handover images and meter images.
+- Exclude reproducible `_derived/` Storage objects from long-term backups; these are generated thumbnails and report-size JPEGs, not source evidence.
 - Test restoring production backup into a temporary or dev Supabase project at least monthly.
 
 ## Before Running Production Migrations

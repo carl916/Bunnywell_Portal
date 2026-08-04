@@ -241,8 +241,10 @@ jobs:
               "supabasestorage:${bucket}" \
               "${CURRENT_ROOT}/${bucket}" \
               --backup-dir "${HISTORY_ROOT}/${bucket}" \
+              --exclude "_derived/**" \
               --s3-list-version 2 \
               --delete-after \
+              --delete-excluded \
               --max-delete 100 \
               --fast-list \
               --create-empty-src-dirs \
