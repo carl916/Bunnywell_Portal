@@ -4353,8 +4353,8 @@ function DeveloperSnagging({
           <span className="text-xs text-[#617169]">Defaults to the main contractor. Choose a supporting trade for exception snags.</span>
           {draft.buildingId && !mainContractorId && <span className="text-xs text-[#8a5a12]">No main contractor is set for this building yet.</span>}
         </label>
-        <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
         <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} />
+        <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button className="primary" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
             <Plus size={16} aria-hidden /> {isSaving ? "Saving..." : "Save and add another"}
@@ -6463,8 +6463,8 @@ function ContractorActions({ user, snag, onNotice, reload, uploadSnagMedia }: { 
       </div>
       {showResolveMedia && (
         <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-2">
-          <PhotoInput value={resolutionPhoto} onChange={setResolutionPhoto} disabled={Boolean(isSaving)} />
           <VideoInput value={resolutionVideoFile} onChange={setResolutionVideoFile} disabled={Boolean(isSaving)} />
+          <PhotoInput value={resolutionPhoto} onChange={setResolutionPhoto} disabled={Boolean(isSaving)} />
         </div>
       )}
       {showInfoRequest && (
@@ -7060,8 +7060,8 @@ function LeaseholderDefects({
                   </select>
                   <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Short title" disabled={isSubmittingDefect || !selectedUnit} />
                   <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What needs attention?" disabled={isSubmittingDefect || !selectedUnit} />
-                  <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
                   <VideoInput value={videoFile} onChange={setVideoFile} disabled={isSubmittingDefect || !selectedUnit} />
+                  <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
                   <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : "Report a snag"}</button>
                 </FormPanel>
               ) : (
@@ -7235,8 +7235,8 @@ function LeaseholderDefects({
               </select>
               <input className="field" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={50} placeholder="Title" disabled={isSubmittingDefect || !selectedUnit} />
               <textarea className="field min-h-24 py-3" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description" disabled={isSubmittingDefect || !selectedUnit} />
-              <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
               <VideoInput value={videoFile} onChange={setVideoFile} disabled={isSubmittingDefect || !selectedUnit} />
+              <PhotoInput value={photo} onChange={setPhoto} disabled={isSubmittingDefect || !selectedUnit} />
               <button className="primary" onClick={createDefect} disabled={isSubmittingDefect || !canSubmitDefect}>{isSubmittingDefect ? "Submitting..." : profile?.role === "resident" ? "Report snag" : "Submit defect"}</button>
             </FormPanel>
           ) : (
@@ -9748,8 +9748,8 @@ function SnagDetailPage({
             </div>
             {showPhotoInput && (
               <div className="mt-3 grid gap-2 border-t border-[#e5e9e4] pt-3">
-                <PhotoInput value={photo} onChange={setPhoto} />
                 <VideoInput value={videoFile} onChange={setVideoFile} />
+                <PhotoInput value={photo} onChange={setPhoto} />
                 <button className="secondary min-h-9 justify-self-end px-3 py-1.5 text-sm" onClick={addPhoto} disabled={!photo && !videoFile}>Save media</button>
               </div>
             )}
