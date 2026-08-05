@@ -112,6 +112,9 @@ type SetupUnitSaleAttempt = {
   buyer_email: string | null;
   buyer_phone: string | null;
   buyer_solicitor_name: string | null;
+  buyer_person_name: string | null;
+  buyer_company_name: string | null;
+  reservation_date: string | null;
   reservation_submitted_at: string | null;
   reservation_approved_at: string | null;
   commercial_approved_at: string | null;
@@ -3746,7 +3749,7 @@ function BuildingSalesSetup({
     const unitIds = units.map((unit) => unit.id);
     const { data: attemptRows, error: attemptsError } = await supabase
       .from("unit_sale_attempts")
-      .select("id,unit_id,is_active,workflow_status,buyer_name,buyer_email,buyer_phone,buyer_solicitor_name,reservation_submitted_at,reservation_approved_at,commercial_approved_at,exchanged_at,completed_at")
+      .select("id,unit_id,is_active,workflow_status,buyer_name,buyer_person_name,buyer_company_name,buyer_email,buyer_phone,buyer_solicitor_name,reservation_date,reservation_submitted_at,reservation_approved_at,commercial_approved_at,exchanged_at,completed_at")
       .in("unit_id", unitIds);
     if (attemptsError) throw attemptsError;
 

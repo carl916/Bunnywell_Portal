@@ -9,6 +9,7 @@ const workflowSource = readFileSync("src/components/portal/sales/SalesReservatio
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
 const migrationSource = readFileSync("supabase/migrations/20260723_sales_stage_timestamp_and_commercial_model_rpc.sql", "utf8");
 const buyerIncentivesMigrationSource = readFileSync("supabase/migrations/20260725_sales_buyer_incentives_and_identity.sql", "utf8");
+const reservationApprovalMigrationSource = readFileSync("supabase/migrations/20260804_reservation_approval_workflow.sql", "utf8");
 const commercialModelSource = readFileSync("src/lib/sales/commercial-model.ts", "utf8");
 
 function functionBody(source, name) {
@@ -137,13 +138,44 @@ test("reservation submission requires checked terms and split buyer identity", (
   const body = functionBody(routeSource, "saveReservation");
   assert.match(body, /buyerPersonName/);
   assert.match(body, /buyerCompanyName/);
+  assert.match(body, /reservationDate/);
+  assert.match(body, /workflow_status:\s*"awaiting_approval"/);
+  assert.match(body, /sale_status:\s*"for_sale"/);
   assert.match(body, /reservationTermsChecked !== true/);
   assert.match(body, /reservation_submitted_by_name: requester\.name/);
   assert.match(body, /reservation_submitted_by_email: requester\.email/);
   assert.match(workflowSource, /Personal buyer name/);
   assert.match(workflowSource, /Company buyer name/);
+  assert.match(workflowSource, /Reservation date/);
   assert.match(workflowSource, /Submitted by/);
   assert.doesNotMatch(workflowSource, /Submitter email/);
+});
+
+test("reservation approval uses the form date and developer reject action", () => {
+  const approveBody = functionBody(routeSource, "approveReservation");
+  const rejectBody = functionBody(routeSource, "rejectReservation");
+
+  assert.match(reservationApprovalMigrationSource, /reservation_date date/);
+  assert.match(reservationApprovalMigrationSource, /'awaiting_approval'/);
+  assert.match(reservationApprovalMigrationSource, /'approved'/);
+  assert.match(reservationApprovalMigrationSource, /'rejected'/);
+  assert.match(approveBody, /workflow_status:\s*"approved"/);
+  assert.match(approveBody, /reservation_date:\s*reservationDate/);
+  assert.match(approveBody, /reservationDateTimestamp\(reservationDate\)/);
+  assert.match(approveBody, /sale_status:\s*"reserved", reservation_date:\s*reservationDate/);
+  assert.match(rejectBody, /workflow_status:\s*"rejected"/);
+  assert.match(rejectBody, /reservation_rejection_reason:\s*rejectionReason/);
+  assert.match(workflowSource, /Reject reservation/);
+  assert.match(workflowSource, /Awaiting developer approval/);
+  assert.doesNotMatch(workflowSource, /Query reservation/);
+  assert.doesNotMatch(workflowSource, /Mark reservation as failed/);
+});
+
+test("reservation UI keeps document and activity history visible", () => {
+  assert.match(workflowSource, /DocumentVersionHistory/);
+  assert.match(workflowSource, /unit_sale_document_versions"\)\s+\.select\("\*"\)\s+\.in\("document_id", documentIds\)\s+\.order\("version_number"/);
+  assert.match(workflowSource, /unit_sale_workflow_events/);
+  assert.match(workflowSource, /Activity \{activeWorkflowEvents\.length\}/);
 });
 
 test("buyer identity migration backfills legacy buyer name without concatenating fields", () => {

@@ -30,6 +30,7 @@ type SaleAttempt = {
   buyer_email: string | null;
   buyer_phone: string | null;
   buyer_solicitor_name: string | null;
+  reservation_date: string | null;
   reservation_submitted_at: string | null;
   reservation_terms_checked: boolean | null;
   reservation_submitted_by_user_id: string | null;
@@ -37,6 +38,13 @@ type SaleAttempt = {
   reservation_submitted_by_email: string | null;
   reservation_approved_at: string | null;
   reservation_approved_by_user_id: string | null;
+  reservation_approved_by_name: string | null;
+  reservation_approved_by_email: string | null;
+  reservation_rejected_at: string | null;
+  reservation_rejected_by_user_id: string | null;
+  reservation_rejected_by_name: string | null;
+  reservation_rejected_by_email: string | null;
+  reservation_rejection_reason: string | null;
   commercial_approved_at: string | null;
   commercial_approved_by_user_id: string | null;
   exchanged_at: string | null;
@@ -122,10 +130,23 @@ type SaleDocumentVersion = {
   id: string;
   document_id: string;
   version_number: number;
+  is_current: boolean;
   file_name: string;
   file_size_bytes: number | null;
   uploaded_at: string;
   redacted_at: string | null;
+};
+
+type SaleWorkflowEvent = {
+  id: string;
+  sale_attempt_id: string;
+  event_type: string;
+  from_status: string | null;
+  to_status: string | null;
+  summary: string;
+  metadata: Record<string, unknown> | null;
+  created_by_user_id: string | null;
+  created_at: string;
 };
 
 type SaleInvoice = {
@@ -196,18 +217,21 @@ function daysSince(value?: string | null) {
 }
 
 function saleStatusDate(unit: Unit, attempt?: SaleAttempt) {
+  if (unit.sale_status === "reserved") return attempt?.reservation_date ?? null;
   if (attempt?.stage_entered_at) return attempt.stage_entered_at;
   if (unit.sale_status === "completed") return attempt?.completed_at ?? unit.completion_date ?? attempt?.created_at ?? null;
   if (unit.sale_status === "exchanged") return attempt?.exchanged_at ?? attempt?.commercial_approved_at ?? attempt?.created_at ?? null;
-  if (unit.sale_status === "reserved") return attempt?.reservation_approved_at ?? attempt?.reservation_submitted_at ?? attempt?.created_at ?? null;
   return attempt?.created_at ?? null;
 }
 
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     draft: "Draft",
-    reservation_submitted: "Submitted",
-    reservation_query_raised: "Query raised",
+    awaiting_approval: "Awaiting developer approval",
+    approved: "Approved",
+    rejected: "Rejected",
+    reservation_submitted: "Awaiting developer approval",
+    reservation_query_raised: "Rejected",
     reservation_approved: "Approved",
     awaiting_commercial_approval: "Awaiting commercial approval",
     ready_for_exchange: "Ready for Exchange",
@@ -291,6 +315,16 @@ function buyerDisplay(attempt?: SaleAttempt | null) {
   const person = splitPerson || legacyPerson;
   if (person && company && person.toLowerCase() !== company.toLowerCase()) return `${person}\nPurchasing through ${company}`;
   return company || person || "-";
+}
+
+function hasRequiredBuyerInfo(attempt?: SaleAttempt | null) {
+  return Boolean(
+    attempt
+    && buyerDisplay(attempt) !== "-"
+    && attempt.buyer_email?.trim()
+    && attempt.buyer_phone?.trim()
+    && attempt.buyer_solicitor_name?.trim(),
+  );
 }
 
 function FieldValue({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -397,6 +431,33 @@ function PdfUploadBox({
   );
 }
 
+function DocumentVersionHistory({
+  versions,
+  onOpen,
+}: {
+  versions: SaleDocumentVersion[];
+  onOpen: (version: SaleDocumentVersion) => void;
+}) {
+  if (versions.length === 0) return null;
+
+  return (
+    <div className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3">
+      <h6 className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Document history</h6>
+      <div className="mt-2 grid gap-2">
+        {versions.map((version) => (
+          <div key={version.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-[#34413a]">
+            <span>
+              Version {version.version_number}: {version.file_name} {fileSizeLabel(version.file_size_bytes)}
+              {version.is_current ? " current" : ""}
+            </span>
+            <button className="secondary min-h-9 px-3" type="button" onClick={() => onOpen(version)}>Open</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SalesReservationWorkflow({
   user,
   profile,
@@ -431,6 +492,7 @@ export function SalesReservationWorkflow({
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleRow[]>([]);
   const [documents, setDocuments] = useState<SaleDocument[]>([]);
   const [versions, setVersions] = useState<SaleDocumentVersion[]>([]);
+  const [workflowEvents, setWorkflowEvents] = useState<SaleWorkflowEvent[]>([]);
   const [invoices, setInvoices] = useState<SaleInvoice[]>([]);
   const [invoicePayments, setInvoicePayments] = useState<SaleInvoicePayment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -440,6 +502,7 @@ export function SalesReservationWorkflow({
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
   const [buyerSolicitorName, setBuyerSolicitorName] = useState("");
+  const [reservationDate, setReservationDate] = useState("");
   const [reservationTermsChecked, setReservationTermsChecked] = useState(false);
   const [contractPrice, setContractPrice] = useState("");
   const [reservationFee, setReservationFee] = useState("");
@@ -477,8 +540,7 @@ export function SalesReservationWorkflow({
   const [statementOfAccountFile, setStatementOfAccountFile] = useState<File | null>(null);
   const [completionQueryNote, setCompletionQueryNote] = useState("");
   const [completionDate, setCompletionDate] = useState("");
-  const [queryNote, setQueryNote] = useState("");
-  const [failReason, setFailReason] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState("");
   const [salesStageFilter, setSalesStageFilter] = useState<SalesStageFilter>("all");
   const [salesSearch, setSalesSearch] = useState("");
@@ -487,14 +549,12 @@ export function SalesReservationWorkflow({
   const [showCommercialModel, setShowCommercialModel] = useState(false);
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
   const [showForecasting, setShowForecasting] = useState(false);
-  const [showFailReservationConfirm, setShowFailReservationConfirm] = useState(false);
-  const [confirmFailReservation, setConfirmFailReservation] = useState(false);
+  const [showRejectReservationConfirm, setShowRejectReservationConfirm] = useState(false);
   const [hasReadSalesUrl, setHasReadSalesUrl] = useState(false);
 
   const role = profile?.role ?? "user";
   const canSubmitReservation = canPerformSalesAction(role, "submit_reservation");
   const canApproveReservation = canPerformSalesAction(role, "approve_reservation");
-  const canFailReservation = canPerformSalesAction(role, "fail_reservation");
   const canSubmitAgentInvoice = canPerformSalesAction(role, "submit_agent_invoice");
   const canManageCommercialTerms = canPerformSalesAction(role, "manage_commercial_terms");
   const canApproveCommercialPackage = canPerformSalesAction(role, "approve_commercial_package");
@@ -511,19 +571,25 @@ export function SalesReservationWorkflow({
   const failedAttempts = attempts.filter((attempt) => attempt.unit_id === unitId && attempt.workflow_status === "fallen_through");
   const activeTerms = activeAttempt ? terms.find((item) => item.sale_attempt_id === activeAttempt.id && item.is_current) : null;
   const reservationDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "reservation_form") : null;
-  const reservationVersion = reservationDocument ? versions.find((item) => item.document_id === reservationDocument.id && !item.redacted_at) : null;
+  const reservationVersions = reservationDocument
+    ? versions
+      .filter((item) => item.document_id === reservationDocument.id && !item.redacted_at)
+      .sort((a, b) => b.version_number - a.version_number)
+    : [];
+  const reservationVersion = reservationVersions.find((item) => item.is_current) ?? reservationVersions[0] ?? null;
   const agentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice") : null;
-  const agentInvoiceVersion = agentInvoiceDocument ? versions.find((item) => item.document_id === agentInvoiceDocument.id && !item.redacted_at) : null;
+  const agentInvoiceVersion = agentInvoiceDocument ? versions.find((item) => item.document_id === agentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
   const completionStatementDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "completion_statement") : null;
-  const completionStatementVersion = completionStatementDocument ? versions.find((item) => item.document_id === completionStatementDocument.id && !item.redacted_at) : null;
+  const completionStatementVersion = completionStatementDocument ? versions.find((item) => item.document_id === completionStatementDocument.id && item.is_current && !item.redacted_at) : null;
   const statementOfAccountDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "statement_of_account") : null;
-  const statementOfAccountVersion = statementOfAccountDocument ? versions.find((item) => item.document_id === statementOfAccountDocument.id && !item.redacted_at) : null;
+  const statementOfAccountVersion = statementOfAccountDocument ? versions.find((item) => item.document_id === statementOfAccountDocument.id && item.is_current && !item.redacted_at) : null;
   const activeInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id) : null;
   const activeInvoicePayments = activeInvoice ? invoicePayments.filter((item) => item.invoice_id === activeInvoice.id) : [];
   const solicitorPayment = activeInvoicePayments.find((item) => item.payment_source === "solicitor_deposit");
   const developerShortfallPayment = activeInvoicePayments.find((item) => item.payment_source === "developer_shortfall");
   const activePaymentSchedule = activeAttempt ? paymentSchedule.filter((item) => item.sale_attempt_id === activeAttempt.id).sort((a, b) => a.sequence_no - b.sequence_no) : [];
-  const reservationApproved = activeAttempt ? ["reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
+  const activeWorkflowEvents = activeAttempt ? workflowEvents.filter((event) => event.sale_attempt_id === activeAttempt.id) : [];
+  const reservationApproved = activeAttempt ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
   const commercialApproved = activeAttempt?.workflow_status === "ready_for_exchange" || Boolean(activeAttempt?.commercial_approved_at);
   const readyForExchange = activeAttempt ? ["ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
   const exchangeRecorded = activeAttempt ? ["exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) || Boolean(activeAttempt.exchanged_at) : false;
@@ -664,8 +730,16 @@ export function SalesReservationWorkflow({
     ...(activeTerms?.additional_special_conditions?.filter((condition) => condition.trim()) ?? []),
     ...(activeTerms?.parking_location_details ? [activeTerms.parking_location_details] : []),
   ].filter((condition, index, items) => items.findIndex((item) => item.toLowerCase() === condition.toLowerCase()) === index);
+  const todayDate = new Date().toISOString().slice(0, 10);
   const buyerIdentityEntered = Boolean(buyerPersonName.trim() || buyerCompanyName.trim());
+  const buyerDetailsComplete = buyerIdentityEntered && Boolean(buyerEmail.trim()) && Boolean(buyerPhone.trim()) && Boolean(buyerSolicitorName.trim());
   const submittedByName = activeAttempt?.reservation_submitted_by_name ?? "-";
+  const approvedByName = activeAttempt?.reservation_approved_by_name ?? activeAttempt?.reservation_approved_by_email ?? activeAttempt?.reservation_approved_by_user_id ?? "-";
+  const rejectionByName = activeAttempt?.reservation_rejected_by_name ?? activeAttempt?.reservation_rejected_by_email ?? activeAttempt?.reservation_rejected_by_user_id ?? "-";
+  const formalReservationDate = activeAttempt?.reservation_date ?? reservationDate;
+  const reservationDateMissing = !formalReservationDate;
+  const reservationDateIsFuture = Boolean(formalReservationDate && formalReservationDate > todayDate);
+  const activeRejectionReason = activeAttempt?.reservation_rejection_reason ?? reservationDocument?.query_note ?? "";
   const saleUsesProtectedSnapshot = Boolean(
     activeTerms
     && selectedUnit
@@ -695,7 +769,7 @@ export function SalesReservationWorkflow({
     const attempt = activeAttemptByUnit.get(unit.id);
     if (unit.sale_status === "completed" || attempt?.workflow_status === "completed") return "handover";
     if (unit.sale_status === "exchanged" || attempt?.workflow_status === "exchanged" || attempt?.workflow_status === "completion_pending") return "completion";
-    if (unit.sale_status === "reserved" || attempt?.reservation_approved_at || ["reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt?.workflow_status ?? "")) return "exchange";
+    if (unit.sale_status === "reserved" || attempt?.reservation_approved_at || ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt?.workflow_status ?? "")) return "exchange";
     return "reservation";
   }
   const selectedWorkflowStage: SaleWorkflowStage = selectedUnit ? workflowStageForUnit(selectedUnit) : "reservation";
@@ -706,7 +780,7 @@ export function SalesReservationWorkflow({
       key: "reservation" as const,
       label: "Reservation",
       owner: "Sales agent / Developer",
-      status: reservationApproved ? "Approved" : activeAttempt?.workflow_status === "reservation_query_raised" ? "Query raised" : activeAttempt ? "Submitted" : "Not started",
+      status: reservationApproved ? "Approved" : ["awaiting_approval", "reservation_submitted"].includes(activeAttempt?.workflow_status ?? "") ? "Awaiting developer approval" : ["rejected", "reservation_query_raised"].includes(activeAttempt?.workflow_status ?? "") ? "Rejected" : activeAttempt ? "Draft" : "Not started",
       summary: "Buyer details, reservation fee, reservation form and developer approval.",
     },
     {
@@ -731,23 +805,25 @@ export function SalesReservationWorkflow({
       summary: "Existing handover workflow becomes available after completion.",
     },
   ];
-  const reservationState: "not_started" | "awaiting_developer_review" | "queried" | "approved" | "failed" = (() => {
+  const reservationState: "not_started" | "awaiting_approval" | "rejected" | "approved" | "failed" = (() => {
     if (activeAttempt?.workflow_status === "fallen_through") return "failed";
     if (reservationApproved) return "approved";
-    if (activeAttempt?.workflow_status === "reservation_query_raised") return "queried";
-    if (activeAttempt?.workflow_status === "reservation_submitted") return "awaiting_developer_review";
+    if (["rejected", "reservation_query_raised"].includes(activeAttempt?.workflow_status ?? "")) return "rejected";
+    if (["awaiting_approval", "reservation_submitted"].includes(activeAttempt?.workflow_status ?? "")) return "awaiting_approval";
     return "not_started";
   })();
   const reservationStateLabel: Record<typeof reservationState, string> = {
     not_started: "Not started",
-    awaiting_developer_review: "Awaiting developer review",
-    queried: "Query raised",
+    awaiting_approval: "Awaiting developer approval",
+    rejected: "Rejected",
     approved: "Approved",
     failed: "Failed",
   };
-  const reservationCanBeEdited = canSubmitReservation && ["not_started", "queried"].includes(reservationState);
-  const reservationCanBeReviewed = canApproveReservation && reservationState === "awaiting_developer_review";
-  const reservationCanFail = canFailReservation && activeAttempt && ["reservation_submitted", "reservation_query_raised", "reservation_approved"].includes(activeAttempt.workflow_status);
+  const reservationCanBeEdited = canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
+  const reservationCanBeReviewed = canApproveReservation && reservationState === "awaiting_approval";
+  const approvalBlocked = !activeAttempt || !reservationVersion || reservationDateMissing || reservationDateIsFuture || !hasRequiredBuyerInfo(activeAttempt);
+  const commercialModelLocked = Boolean(activeAttempt && !["draft", "rejected", "reservation_query_raised"].includes(activeAttempt.workflow_status));
+  const commercialModelEditable = canManageCommercialTerms && !commercialModelLocked;
   const displayedPaymentSchedule = activePaymentSchedule.length > 0
     ? activePaymentSchedule
     : [
@@ -821,9 +897,10 @@ export function SalesReservationWorkflow({
 
   function nextActionForUnit(unit: Unit) {
     const attempt = activeAttemptByUnit.get(unit.id);
-    if (!attempt) return "Reserve unit";
-    if (attempt.workflow_status === "reservation_query_raised") return "Resolve reservation query";
-    if (unit.sale_status === "for_sale") return "Reserve unit";
+    if (!attempt) return "Submit reservation";
+    if (["rejected", "reservation_query_raised"].includes(attempt.workflow_status)) return "Resolve rejected reservation";
+    if (["awaiting_approval", "reservation_submitted"].includes(attempt.workflow_status)) return "Awaiting developer approval";
+    if (unit.sale_status === "for_sale") return "Submit reservation";
     if (unit.sale_status === "reserved") {
       if (!attempt.commercial_approved_at && attempt.workflow_status !== "ready_for_exchange") return "Commercial approval";
       return "Record exchange";
@@ -915,6 +992,7 @@ export function SalesReservationWorkflow({
       setBuyerEmail("");
       setBuyerPhone("");
       setBuyerSolicitorName("");
+      setReservationDate("");
       setReservationTermsChecked(false);
       setContractPrice("");
       setReservationFee(selectedBuildingDefault?.reservation_fee?.toString() ?? "");
@@ -957,10 +1035,8 @@ export function SalesReservationWorkflow({
       setStatementOfAccountFile(null);
       setCompletionQueryNote("");
       setCompletionDate("");
-      setQueryNote("");
-      setFailReason("");
-      setShowFailReservationConfirm(false);
-      setConfirmFailReservation(false);
+      setRejectionReason("");
+      setShowRejectReservationConfirm(false);
       setShowAdvancedDealSetup(false);
       return;
     }
@@ -972,6 +1048,7 @@ export function SalesReservationWorkflow({
     setBuyerEmail(activeAttempt.buyer_email ?? "");
     setBuyerPhone(activeAttempt.buyer_phone ?? "");
     setBuyerSolicitorName(activeAttempt.buyer_solicitor_name ?? "");
+    setReservationDate(activeAttempt.reservation_date ?? "");
     setReservationTermsChecked(Boolean(activeAttempt.reservation_terms_checked));
     setContractPrice(activeTerms?.contract_price?.toString() ?? activeTerms?.list_price_at_offer?.toString() ?? "");
     setReservationFee(activeTerms?.reservation_fee?.toString() ?? selectedBuildingDefault?.reservation_fee?.toString() ?? "");
@@ -1020,10 +1097,8 @@ export function SalesReservationWorkflow({
     setStatementOfAccountFile(null);
     setCompletionQueryNote(completionStatementDocument?.query_note ?? statementOfAccountDocument?.query_note ?? "");
     setCompletionDate(activeAttempt.completed_at ?? "");
-    setQueryNote(reservationDocument?.query_note ?? "");
-    setFailReason("");
-    setShowFailReservationConfirm(false);
-    setConfirmFailReservation(false);
+    setRejectionReason("");
+    setShowRejectReservationConfirm(false);
     setShowAdvancedDealSetup(false);
   }, [activeAttempt, activeInvoice, activeTerms, completionStatementDocument, developerShortfallPayment, reservationDocument, selectedBuildingDefault, solicitorPayment, statementOfAccountDocument]);
 
@@ -1044,6 +1119,7 @@ export function SalesReservationWorkflow({
       setPaymentSchedule([]);
       setDocuments([]);
       setVersions([]);
+      setWorkflowEvents([]);
       setInvoices([]);
       setInvoicePayments([]);
       return;
@@ -1067,23 +1143,26 @@ export function SalesReservationWorkflow({
         setPaymentSchedule([]);
         setDocuments([]);
         setVersions([]);
+        setWorkflowEvents([]);
         setInvoices([]);
         setInvoicePayments([]);
         return;
       }
 
-      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult] = await Promise.all([
+      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, workflowEventsResult] = await Promise.all([
         supabase.from("unit_sale_terms").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_payment_schedule").select("*").in("sale_attempt_id", attemptIds).order("sequence_no"),
         supabase.from("unit_sale_documents").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoices").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", attemptIds),
+        supabase.from("unit_sale_workflow_events").select("*").in("sale_attempt_id", attemptIds).order("created_at", { ascending: false }),
       ]);
       if (termsResult.error) throw termsResult.error;
       if (scheduleResult.error) throw scheduleResult.error;
       if (documentsResult.error) throw documentsResult.error;
       if (invoicesResult.error) throw invoicesResult.error;
       if (invoicePaymentsResult.error) throw invoicePaymentsResult.error;
+      if (workflowEventsResult.error) throw workflowEventsResult.error;
 
       const loadedDocuments = (documentsResult.data ?? []) as SaleDocument[];
       setTerms((termsResult.data ?? []) as SaleTerms[]);
@@ -1091,6 +1170,7 @@ export function SalesReservationWorkflow({
       setDocuments(loadedDocuments);
       setInvoices((invoicesResult.data ?? []) as SaleInvoice[]);
       setInvoicePayments((invoicePaymentsResult.data ?? []) as SaleInvoicePayment[]);
+      setWorkflowEvents((workflowEventsResult.data ?? []) as SaleWorkflowEvent[]);
 
       const documentIds = loadedDocuments.map((document) => document.id);
       if (documentIds.length === 0) {
@@ -1102,7 +1182,7 @@ export function SalesReservationWorkflow({
         .from("unit_sale_document_versions")
         .select("*")
         .in("document_id", documentIds)
-        .eq("is_current", true);
+        .order("version_number", { ascending: false });
       if (versionsError) throw versionsError;
       setVersions((versionRows ?? []) as SaleDocumentVersion[]);
     } catch (error) {
@@ -1202,17 +1282,32 @@ export function SalesReservationWorkflow({
       onNotice("Enter a personal buyer name, company name, or both before saving the reservation.");
       return;
     }
+    if (!buyerEmail.trim() || !buyerPhone.trim() || !buyerSolicitorName.trim()) {
+      onNotice("Enter the buyer email, phone and solicitor before submitting the reservation.");
+      return;
+    }
+    if (!reservationDate) {
+      onNotice("Enter the reservation date shown on the signed reservation form.");
+      return;
+    }
+    if (reservationDate > todayDate) {
+      onNotice("Reservation date cannot be in the future.");
+      return;
+    }
     if (!reservationTermsChecked) {
       onNotice("Confirm that the reservation form reflects the developer-approved commercial terms.");
       return;
     }
     if (!reservationFormFile && !reservationVersion) {
-      onNotice("Upload the reservation form PDF before reserving the unit.");
+      onNotice("Upload the reservation form PDF before submitting the reservation.");
       return;
     }
 
     setIsSaving(true);
     try {
+      if (activeAttempt?.id && reservationFormFile) {
+        await uploadReservationForm(activeAttempt.id);
+      }
       const payload = await postReservationJson({
         action: "save_reservation",
         unitId: selectedUnit.id,
@@ -1221,10 +1316,11 @@ export function SalesReservationWorkflow({
         buyerEmail,
         buyerPhone,
         buyerSolicitorName,
+        reservationDate,
         reservationTermsChecked,
       });
-      if (payload.saleAttemptId) await uploadReservationForm(payload.saleAttemptId);
-      onNotice(reservationState === "queried" ? `Reservation resubmitted for Unit ${selectedUnit.unit_number}.` : `Reservation submitted for Unit ${selectedUnit.unit_number}.`);
+      if (!activeAttempt?.id && payload.saleAttemptId) await uploadReservationForm(payload.saleAttemptId);
+      onNotice(reservationState === "rejected" ? `Reservation resubmitted for Unit ${selectedUnit.unit_number}.` : `Reservation submitted for Unit ${selectedUnit.unit_number}.`);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Reservation could not be saved.");
@@ -1237,7 +1333,7 @@ export function SalesReservationWorkflow({
     if (!activeAttempt || !selectedUnit) return;
     setIsSaving(true);
     try {
-      await postReservationJson({ action: "approve_reservation", saleAttemptId: activeAttempt.id });
+      await postReservationJson({ action: "approve_reservation", saleAttemptId: activeAttempt.id, reservationDate: formalReservationDate });
       onNotice(`Reservation approved. Unit ${selectedUnit.unit_number} marked Reserved.`);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
@@ -1247,35 +1343,21 @@ export function SalesReservationWorkflow({
     }
   }
 
-  async function queryReservation() {
-    if (!activeAttempt) return;
-    setIsSaving(true);
-    try {
-      await postReservationJson({ action: "query_reservation", saleAttemptId: activeAttempt.id, queryNote });
-      onNotice("Reservation query raised.");
-      await Promise.all([loadSalesData(), reloadPortalData()]);
-    } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Reservation could not be queried.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function failReservation() {
+  async function rejectReservation() {
     if (!activeAttempt || !selectedUnit) return;
-    if (!confirmFailReservation) {
-      onNotice("Confirm the redaction before failing the reservation.");
+    if (!rejectionReason.trim()) {
+      onNotice("Add a rejection reason.");
       return;
     }
     setIsSaving(true);
     try {
-      await postReservationJson({ action: "fail_reservation", saleAttemptId: activeAttempt.id, failReason });
-      onNotice(`Reservation failed and redacted. Unit ${selectedUnit.unit_number} returned to For Sale.`);
-      setShowFailReservationConfirm(false);
-      setConfirmFailReservation(false);
+      await postReservationJson({ action: "reject_reservation", saleAttemptId: activeAttempt.id, rejectionReason });
+      onNotice(`Reservation rejected. Unit ${selectedUnit.unit_number} remains For Sale.`);
+      setShowRejectReservationConfirm(false);
+      setRejectionReason("");
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Reservation could not be failed.");
+      onNotice(error instanceof Error ? error.message : "Reservation could not be rejected.");
     } finally {
       setIsSaving(false);
     }
@@ -1808,7 +1890,7 @@ export function SalesReservationWorkflow({
 
           <div ref={commercialModelControlRef} className="mt-4 scroll-mt-4 flex flex-wrap items-center gap-2">
             {canManageCommercialTerms && (
-              <button className="secondary" onClick={toggleCommercialModel}>
+              <button className="secondary" onClick={toggleCommercialModel} disabled={commercialModelLocked}>
                 {showCommercialModel ? "Close commercial model" : "Edit commercial model"}
               </button>
             )}
@@ -1822,8 +1904,8 @@ export function SalesReservationWorkflow({
                   <p className="mt-1 text-sm text-[#617169]">Developer-only modelling before commercial approval.</p>
                   <div className="mt-4 grid gap-3">
                     <h5 className="text-sm font-bold text-[#0F3D2E]">Commercial model</h5>
-                    <label className="field-label">Proposed contract price<GbpInput value={contractPrice} onChange={setContractPrice} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Proposed contract price" /></label>
-                    <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Parking value" /></label>
+                    <label className="field-label">Proposed contract price<GbpInput value={contractPrice} onChange={setContractPrice} disabled={!commercialModelEditable} aria-label="Proposed contract price" /></label>
+                    <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!commercialModelEditable} aria-label="Parking value" /></label>
                     <div className="rounded-md border border-[#eef0eb] bg-white p-3">
                       <h5 className="text-sm font-bold text-[#0F3D2E]">Buyer incentives and special conditions</h5>
                       <div className="mt-3 grid gap-3">
@@ -1831,11 +1913,11 @@ export function SalesReservationWorkflow({
                           Developer contribution
                           <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
                             {developerContributionValueType === "percent" ? (
-                              <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Developer contribution percent" />
+                              <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!commercialModelEditable} aria-label="Developer contribution percent" />
                             ) : (
-                              <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Developer contribution amount" />
+                              <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!commercialModelEditable} aria-label="Developer contribution amount" />
                             )}
-                            <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Developer contribution value type">
+                            <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable} aria-label="Developer contribution value type">
                               <option value="amount">GBP amount</option>
                               <option value="percent">% of price</option>
                             </select>
@@ -1846,18 +1928,18 @@ export function SalesReservationWorkflow({
                           Agent contribution
                           <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
                             {agentContributionValueType === "percent" ? (
-                              <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Agent contribution percent" />
+                              <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!commercialModelEditable} aria-label="Agent contribution percent" />
                             ) : (
-                              <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Agent contribution amount" />
+                              <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!commercialModelEditable} aria-label="Agent contribution amount" />
                             )}
-                            <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Agent contribution value type">
+                            <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable} aria-label="Agent contribution value type">
                               <option value="amount">GBP amount</option>
                               <option value="percent">% of price</option>
                             </select>
                           </div>
                           {agentContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewAgentContribution)}</span>}
                         </label>
-                        <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Parking contribution" /></label>
+                        <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!commercialModelEditable} aria-label="Parking contribution" /></label>
                         <div className="grid gap-2">
                           <span className="field-label">Additional conditions</span>
                           {additionalSpecialConditions.map((condition, index) => (
@@ -1866,14 +1948,14 @@ export function SalesReservationWorkflow({
                                 className="field"
                                 value={condition}
                                 onChange={(event) => setAdditionalSpecialConditions((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                                disabled={!canManageCommercialTerms || commercialApproved}
+                                disabled={!commercialModelEditable}
                               />
-                              <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!canManageCommercialTerms || commercialApproved || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
+                              <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!commercialModelEditable || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
                                 <X size={16} aria-hidden />
                               </button>
                             </div>
                           ))}
-                          <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!canManageCommercialTerms || commercialApproved}>Add condition</button>
+                          <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!commercialModelEditable}>Add condition</button>
                         </div>
                       </div>
                     </div>
@@ -1883,7 +1965,7 @@ export function SalesReservationWorkflow({
                           <h5 className="text-sm font-bold text-[#0F3D2E]">Advanced deal setup</h5>
                           <p className="mt-1 text-xs text-[#617169]">These values normally come from the building defaults. Only change them for unit-specific exceptions.</p>
                         </div>
-                        <button className="secondary" type="button" onClick={() => setShowAdvancedDealSetup((value) => !value)} disabled={!canManageCommercialTerms || commercialApproved}>
+                        <button className="secondary" type="button" onClick={() => setShowAdvancedDealSetup((value) => !value)} disabled={!commercialModelEditable}>
                           {showAdvancedDealSetup ? "Hide setup" : "Edit deal setup"}
                         </button>
                       </div>
@@ -1900,26 +1982,26 @@ export function SalesReservationWorkflow({
                       </div>
                     ) : (
                       <>
-                        <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
-                        <label className="field-label">Reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Reservation fee" /></label>
+                        <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                        <label className="field-label">Reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} disabled={!commercialModelEditable} aria-label="Reservation fee" /></label>
                         <label className="field-label">
                           Reservation fee holder
-                          <select className="field" value={reservationFeeHolder} onChange={(event) => setReservationFeeHolder(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved}>
+                          <select className="field" value={reservationFeeHolder} onChange={(event) => setReservationFeeHolder(event.target.value)} disabled={!commercialModelEditable}>
                             <option value="sales_agent">Sales agent</option>
                             <option value="developer">Developer</option>
                             <option value="conveyancer">Conveyancer</option>
                             <option value="other">Other</option>
                           </select>
                         </label>
-                        <label className="field-label">Exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
+                        <label className="field-label">Exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         <label className="option-card min-h-10 px-3 py-2 text-sm">
-                          <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!canManageCommercialTerms || commercialApproved} />
+                          <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!commercialModelEditable} />
                           Optional second deposit
                         </label>
                         {secondDepositEnabled && (
                           <>
-                            <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
-                            <label className="field-label">Second deposit timing<input className="field" inputMode="numeric" value={secondDepositMonthsAfterExchange} onChange={(event) => setSecondDepositMonthsAfterExchange(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} placeholder="Months after exchange" /></label>
+                            <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                            <label className="field-label">Second deposit timing<input className="field" inputMode="numeric" value={secondDepositMonthsAfterExchange} onChange={(event) => setSecondDepositMonthsAfterExchange(event.target.value)} disabled={!commercialModelEditable} placeholder="Months after exchange" /></label>
                           </>
                         )}
                         <div className={`rounded-md border p-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
@@ -1961,7 +2043,7 @@ export function SalesReservationWorkflow({
                   setShowCommercialModel(false);
                   setShowAdvancedDealSetup(false);
                 }}>Close panel</button>
-                <button className="primary" onClick={() => void saveCommercialPackage()} disabled={isSaving || commercialApproved || !previewDepositStructure.isValid}>
+                <button className="primary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !commercialModelEditable || !previewDepositStructure.isValid}>
                   Save commercial model
                 </button>
               </div>
@@ -1974,7 +2056,9 @@ export function SalesReservationWorkflow({
                 <h4 className="text-lg font-bold text-[#0F3D2E]">Sales timeline</h4>
                 <p className="text-sm text-[#617169]">Follow the handoff from agent to developer to conveyancer.</p>
               </div>
-              <button className="secondary" type="button">View notes/activity (0)</button>
+              <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
+                Activity {activeWorkflowEvents.length}
+              </span>
             </div>
             <div className="mt-4 grid gap-3 lg:grid-cols-4">
               {workflowStages.map((stage, index) => {
@@ -2000,6 +2084,24 @@ export function SalesReservationWorkflow({
                 );
               })}
             </div>
+            {activeWorkflowEvents.length > 0 && (
+              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-3">
+                <h5 className="text-sm font-bold text-[#0F3D2E]">Activity</h5>
+                <div className="mt-2 grid gap-2">
+                  {activeWorkflowEvents.slice(0, 8).map((event) => (
+                    <div key={event.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
+                      <div className="flex flex-wrap justify-between gap-3">
+                        <strong>{event.summary}</strong>
+                        <span className="text-[#617169]">{formatDateTime(event.created_at)}</span>
+                      </div>
+                      {typeof event.metadata?.rejectionReason === "string" && (
+                        <p className="mt-1 text-[#7a271a]">{event.metadata.rejectionReason}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {activeWorkflowStage === "reservation" && (
@@ -2018,10 +2120,13 @@ export function SalesReservationWorkflow({
               {reservationCanBeEdited && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
                   <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
-                    {reservationState === "queried" && (
-                      <div className="mb-4 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                        <strong className="block">Developer query</strong>
-                        <span>{reservationDocument?.query_note || "Developer has queried the reservation pack. Update and resubmit."}</span>
+                    {reservationState === "rejected" && (
+                      <div className="mb-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">
+                        <strong className="block">Reservation rejected</strong>
+                        <span>{activeRejectionReason || "Developer rejected the reservation pack. Update and resubmit."}</span>
+                        {activeAttempt?.reservation_rejected_at && (
+                          <span className="mt-1 block text-xs font-semibold uppercase">Rejected {formatDateTime(activeAttempt.reservation_rejected_at)} by {rejectionByName}</span>
+                        )}
                       </div>
                     )}
                     <h5 className="font-bold text-[#0F3D2E]">Buyer and reservation form</h5>
@@ -2043,6 +2148,7 @@ export function SalesReservationWorkflow({
                       <label className="field-label">Buyer email<input className="field" type="email" value={buyerEmail} onChange={(event) => setBuyerEmail(event.target.value)} disabled={!reservationCanBeEdited} /></label>
                       <label className="field-label">Buyer phone<input className="field" value={buyerPhone} onChange={(event) => setBuyerPhone(event.target.value)} disabled={!reservationCanBeEdited} /></label>
                       <label className="field-label">Buyer solicitor<input className="field" value={buyerSolicitorName} onChange={(event) => setBuyerSolicitorName(event.target.value)} disabled={!reservationCanBeEdited} /></label>
+                      <label className="field-label">Reservation date<input className="field" type="date" max={todayDate} value={reservationDate} onChange={(event) => setReservationDate(event.target.value)} disabled={!reservationCanBeEdited} /></label>
                       <div className="md:col-span-2">
                         <PdfUploadBox
                           id={`reservation-form-${selectedUnit.id}`}
@@ -2054,6 +2160,7 @@ export function SalesReservationWorkflow({
                           onFile={setReservationFormFile}
                           onClear={() => setReservationFormFile(null)}
                         />
+                        <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
                       </div>
                     </div>
                     <label className="mt-4 flex items-start gap-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm font-semibold text-[#34413a]">
@@ -2061,8 +2168,8 @@ export function SalesReservationWorkflow({
                       <span>I have checked that the reservation form reflects the developer-approved commercial terms.</span>
                     </label>
                     <div className="mt-4 flex justify-end">
-                      <button className="primary" onClick={() => void saveReservation()} disabled={isSaving || !buyerIdentityEntered || !reservationTermsChecked}>
-                        {reservationState === "queried" ? "Resubmit reservation" : "Reserve unit"}
+                      <button className="primary" onClick={() => void saveReservation()} disabled={isSaving || !buyerDetailsComplete || !reservationDate || !reservationTermsChecked}>
+                        {reservationState === "rejected" ? "Resubmit reservation" : "Submit reservation"}
                       </button>
                     </div>
                   </div>
@@ -2083,7 +2190,7 @@ export function SalesReservationWorkflow({
                 </div>
               )}
 
-              {reservationState === "awaiting_developer_review" && (
+              {reservationState === "awaiting_approval" && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.85fr)]">
                   <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
                     <h5 className="font-bold text-[#0F3D2E]">Submitted reservation pack</h5>
@@ -2092,8 +2199,10 @@ export function SalesReservationWorkflow({
                       <FieldValue label="Buyer email" value={activeAttempt?.buyer_email} />
                       <FieldValue label="Buyer phone" value={activeAttempt?.buyer_phone} />
                       <FieldValue label="Buyer solicitor" value={activeAttempt?.buyer_solicitor_name} />
-                      <FieldValue label="Submitted" value={formatDateTime(activeAttempt?.reservation_submitted_at)} />
+                      <FieldValue label="Reservation date" value={activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing"} />
+                      <FieldValue label="Submitted date and time" value={formatDateTime(activeAttempt?.reservation_submitted_at)} />
                       <FieldValue label="Submitted by" value={submittedByName} />
+                      <FieldValue label="Uploaded reservation form" value={reservationVersion?.file_name ?? "Missing"} />
                     </div>
                     <div className="mt-4">
                       <PdfUploadBox
@@ -2106,25 +2215,33 @@ export function SalesReservationWorkflow({
                         onFile={setReservationFormFile}
                         onClear={() => setReservationFormFile(null)}
                       />
+                      <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
                     </div>
                   </div>
 
                   <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
                     <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
-                    <p className="mt-1 text-sm text-[#617169]">Check the reservation form against the saved commercial terms before approving.</p>
+                    <span className="mt-2 inline-flex rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-xs font-bold uppercase text-[#617169]">Awaiting developer approval</span>
                     <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
                       <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value">{money(selectedContractValue)}</strong></div>
                       <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(displayReservationFee)}</strong></div>
                       <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee holder</span><strong>{describeReservationFeeHolder(displayReservationFeeHolder)}</strong></div>
-                      <div className="flex justify-between gap-4"><span>Payment schedule</span><strong className="text-right">{displayedPaymentSchedule.map((row) => row.label).join(", ")}</strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payment schedule</span><strong className="text-right">{displayedPaymentSchedule.map((row) => row.label).join(", ")}</strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer-funded incentives</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent-funded incentives</span><strong className="numeric-value text-right">{activeAgentContributionLabel}</strong></div>
+                      <div className="flex justify-between gap-4"><span>Special conditions</span><strong className="text-right">{activeSpecialConditions.length ? activeSpecialConditions.join(", ") : "-"}</strong></div>
                     </div>
-                    <label className="field-label mt-4">Query note<textarea className="field min-h-20" value={queryNote} onChange={(event) => setQueryNote(event.target.value)} disabled={!reservationCanBeReviewed} /></label>
+                    {!activeAttempt?.reservation_date && (
+                      <label className="field-label mt-4">
+                        Reservation date
+                        <input className="field" type="date" max={todayDate} value={reservationDate} onChange={(event) => setReservationDate(event.target.value)} disabled={!reservationCanBeReviewed} />
+                      </label>
+                    )}
                     <div className="mt-4 flex flex-wrap justify-end gap-2">
-                      <button className="secondary" onClick={() => setShowFailReservationConfirm(true)} disabled={!reservationCanFail}>Mark reservation as failed</button>
                       {reservationCanBeReviewed && (
                         <>
-                          <button className="secondary" onClick={() => void queryReservation()} disabled={isSaving || !activeAttempt}>Query reservation</button>
-                          <button className="primary" onClick={() => void approveReservation()} disabled={isSaving || !activeAttempt || !reservationVersion}>Approve reservation</button>
+                          <button className="danger-button" onClick={() => setShowRejectReservationConfirm(true)} disabled={isSaving || !activeAttempt}>Reject reservation</button>
+                          <button className="primary" onClick={() => void approveReservation()} disabled={isSaving || approvalBlocked}>Approve reservation</button>
                         </>
                       )}
                     </div>
@@ -2137,34 +2254,28 @@ export function SalesReservationWorkflow({
                   <h5 className="font-bold text-[#0F3D2E]">Reservation approved</h5>
                   <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <FieldValue label="Buyer" value={buyerDisplay(activeAttempt)} />
+                    <FieldValue label="Reservation date" value={activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing"} />
+                    <FieldValue label="Submitted date and time" value={formatDateTime(activeAttempt?.reservation_submitted_at)} />
+                    <FieldValue label="Submitted by" value={submittedByName} />
+                    <FieldValue label="Approved date and time" value={formatDateTime(activeAttempt?.reservation_approved_at)} />
+                    <FieldValue label="Approved by" value={approvedByName} />
                     <FieldValue label="Contract price" value={money(selectedContractValue)} />
                     <FieldValue label="Reservation fee" value={money(displayReservationFee)} />
-                    <FieldValue label="Reservation submitted" value={formatDate(activeAttempt?.reservation_submitted_at)} />
-                    <FieldValue label="Approved" value={formatDate(activeAttempt?.reservation_approved_at)} />
-                    <FieldValue label="Reservation form" value={reservationVersion?.file_name ?? "-"} />
+                    <FieldValue label="Uploaded reservation form" value={reservationVersion?.file_name ?? "-"} />
                     <FieldValue label="Fee holder" value={describeReservationFeeHolder(displayReservationFeeHolder)} />
                     <FieldValue label="Payment schedule" value={displayedPaymentSchedule.map((row) => row.label).join(", ")} />
                   </div>
-                  {reservationCanFail && (
-                    <div className="mt-4 flex justify-end">
-                      <button className="secondary" onClick={() => setShowFailReservationConfirm(true)}>Mark reservation as failed</button>
-                    </div>
-                  )}
+                  <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
                 </div>
               )}
 
-              {showFailReservationConfirm && (
-                <div className="mt-4 rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-4">
-                  <h5 className="font-bold text-[#5c4a1f]">Fail and redact reservation</h5>
-                  <p className="mt-1 text-sm text-[#5c4a1f]">Buyer details and active reservation documents will be redacted. The historical audit record will remain.</p>
-                  <label className="field-label mt-3">Reason<textarea className="field min-h-20" value={failReason} onChange={(event) => setFailReason(event.target.value)} disabled={!canFailReservation} /></label>
-                  <label className="option-card mt-3 min-h-10 px-3 py-2 text-sm">
-                    <input checked={confirmFailReservation} onChange={(event) => setConfirmFailReservation(event.target.checked)} type="checkbox" disabled={!canFailReservation} />
-                    I understand this redacts active buyer details and reservation documents.
-                  </label>
+              {showRejectReservationConfirm && reservationCanBeReviewed && (
+                <div className="mt-4 rounded-lg border border-[#f1b8b2] bg-[#fff4f2] p-4">
+                  <h5 className="font-bold text-[#7a271a]">Reject reservation</h5>
+                  <label className="field-label mt-3">Rejection reason<textarea className="field min-h-20" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} /></label>
                   <div className="mt-3 flex flex-wrap justify-end gap-2">
-                    <button className="secondary" onClick={() => setShowFailReservationConfirm(false)}>Cancel</button>
-                    {canFailReservation && <button className="danger-button" onClick={() => void failReservation()} disabled={isSaving || !activeAttempt || !confirmFailReservation}>Fail reservation</button>}
+                    <button className="secondary" onClick={() => setShowRejectReservationConfirm(false)}>Cancel</button>
+                    <button className="danger-button" onClick={() => void rejectReservation()} disabled={isSaving || !activeAttempt || !rejectionReason.trim()}>Reject reservation</button>
                   </div>
                 </div>
               )}
@@ -2232,7 +2343,7 @@ export function SalesReservationWorkflow({
                         className="field min-h-20"
                         value={depositSummary}
                         onChange={(event) => setDepositSummary(event.target.value)}
-                        disabled={!canManageCommercialTerms || commercialApproved}
+                        disabled={!commercialModelEditable}
                         placeholder="Example: 10% on exchange, balance on completion"
                       />
                     </label>
@@ -2258,14 +2369,14 @@ export function SalesReservationWorkflow({
                   <div className="rounded-md border border-[#e2ded3] bg-white p-4">
                     <h5 className="font-bold text-[#0F3D2E]">Commercial terms</h5>
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Parking value" /></label>
+                      <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!commercialModelEditable} aria-label="Parking value" /></label>
                       <label className="field-label">
                         Developer contribution
                         <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
                           {developerContributionValueType === "percent"
-                            ? <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} />
-                            : <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Developer contribution amount" />}
-                          <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!canManageCommercialTerms || commercialApproved}>
+                            ? <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!commercialModelEditable} />
+                            : <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!commercialModelEditable} aria-label="Developer contribution amount" />}
+                          <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable}>
                             <option value="amount">GBP amount</option>
                             <option value="percent">% of price</option>
                           </select>
@@ -2275,21 +2386,21 @@ export function SalesReservationWorkflow({
                         Agent contribution
                         <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
                           {agentContributionValueType === "percent"
-                            ? <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} />
-                            : <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Agent contribution amount" />}
-                          <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!canManageCommercialTerms || commercialApproved}>
+                            ? <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!commercialModelEditable} />
+                            : <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!commercialModelEditable} aria-label="Agent contribution amount" />}
+                          <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable}>
                             <option value="amount">GBP amount</option>
                             <option value="percent">% of price</option>
                           </select>
                         </div>
                       </label>
-                      <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Parking contribution" /></label>
-                      <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
-                      <label className="field-label">Solicitor fee<GbpInput value={solicitorFee} onChange={setSolicitorFee} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Solicitor fee" /></label>
-                      <label className="field-label">Invoice reference<input className="field" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
-                      <label className="field-label">Invoice date<input className="field" type="date" value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
-                      <label className="field-label">Uploaded invoice amount<GbpInput value={invoiceGrossAmount} onChange={setInvoiceGrossAmount} disabled={!canManageCommercialTerms || commercialApproved} aria-label="Uploaded invoice amount" /></label>
-                      <label className="field-label md:col-span-2">Commercial summary<textarea className="field min-h-20" value={commercialSummary} onChange={(event) => setCommercialSummary(event.target.value)} disabled={!canManageCommercialTerms || commercialApproved} /></label>
+                      <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!commercialModelEditable} aria-label="Parking contribution" /></label>
+                      <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                      <label className="field-label">Solicitor fee<GbpInput value={solicitorFee} onChange={setSolicitorFee} disabled={!commercialModelEditable} aria-label="Solicitor fee" /></label>
+                      <label className="field-label">Invoice reference<input className="field" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} disabled={!commercialModelEditable} /></label>
+                      <label className="field-label">Invoice date<input className="field" type="date" value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} disabled={!commercialModelEditable} /></label>
+                      <label className="field-label">Uploaded invoice amount<GbpInput value={invoiceGrossAmount} onChange={setInvoiceGrossAmount} disabled={!commercialModelEditable} aria-label="Uploaded invoice amount" /></label>
+                      <label className="field-label md:col-span-2">Commercial summary<textarea className="field min-h-20" value={commercialSummary} onChange={(event) => setCommercialSummary(event.target.value)} disabled={!commercialModelEditable} /></label>
                       <div className="md:col-span-2 grid gap-2">
                         <span className="field-label">Additional conditions</span>
                         {additionalSpecialConditions.map((condition, index) => (
@@ -2298,14 +2409,14 @@ export function SalesReservationWorkflow({
                               className="field"
                               value={condition}
                               onChange={(event) => setAdditionalSpecialConditions((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                              disabled={!canManageCommercialTerms || commercialApproved}
+                              disabled={!commercialModelEditable}
                             />
-                            <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!canManageCommercialTerms || commercialApproved || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
+                            <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!commercialModelEditable || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
                               <X size={16} aria-hidden />
                             </button>
                           </div>
                         ))}
-                        <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!canManageCommercialTerms || commercialApproved}>Add condition</button>
+                        <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!commercialModelEditable}>Add condition</button>
                       </div>
                     </div>
                   </div>
@@ -2348,7 +2459,7 @@ export function SalesReservationWorkflow({
                   </div>
 
                   <div className="flex flex-wrap justify-end gap-2">
-                    {canManageCommercialTerms && <button className="secondary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !activeAttempt || commercialApproved}>Save commercial package</button>}
+                    {canManageCommercialTerms && <button className="secondary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !activeAttempt || !commercialModelEditable}>Save commercial package</button>}
                     {canApproveCommercialPackage && (
                       <button
                         className="primary"

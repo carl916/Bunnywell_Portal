@@ -63,6 +63,7 @@ export type Unit = {
   unit_type: string | null;
   size_sqm: number | null;
   sale_status: "for_sale" | "reserved" | "exchanged" | "completed" | "handed_over";
+  reservation_date: string | null;
   completion_date: string | null;
   handover_date: string | null;
   parking_bays: number[] | null;

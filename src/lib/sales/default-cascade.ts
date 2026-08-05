@@ -14,6 +14,7 @@ export type CascadeSaleAttempt = {
   buyer_email?: string | null;
   buyer_phone?: string | null;
   buyer_solicitor_name?: string | null;
+  reservation_date?: string | null;
   reservation_submitted_at?: string | null;
   reservation_approved_at?: string | null;
   commercial_approved_at?: string | null;
@@ -48,8 +49,9 @@ function hasReservationDraftData(attempt: CascadeSaleAttempt, documents: Cascade
     || hasText(attempt.buyer_email)
     || hasText(attempt.buyer_phone)
     || hasText(attempt.buyer_solicitor_name)
+    || Boolean(attempt.reservation_date)
     || Boolean(attempt.reservation_submitted_at)
-    || ["reservation_submitted", "reservation_query_raised"].includes(attempt.workflow_status)
+    || ["awaiting_approval", "rejected", "reservation_submitted", "reservation_query_raised"].includes(attempt.workflow_status)
     || documents.some((document) => (
       document.sale_attempt_id === attempt.id
       && document.document_type === "reservation_form"
@@ -80,7 +82,7 @@ export function classifyDefaultDealSetupCascade(input: {
 
   for (const unit of input.units) {
     const attempt = attemptsByUnit.get(unit.id);
-    if (unit.sale_status === "reserved" || attempt?.reservation_approved_at || attempt?.commercial_approved_at || ["reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt?.workflow_status ?? "")) {
+    if (unit.sale_status === "reserved" || attempt?.reservation_approved_at || attempt?.commercial_approved_at || ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt?.workflow_status ?? "")) {
       result.reservedSkipped += 1;
       continue;
     }

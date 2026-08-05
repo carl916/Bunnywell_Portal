@@ -21,6 +21,7 @@ type ReservationPayload = {
   action?:
     | "save_reservation"
     | "approve_reservation"
+    | "reject_reservation"
     | "query_reservation"
     | "fail_reservation"
     | "save_commercial_model"
@@ -39,6 +40,7 @@ type ReservationPayload = {
   buyerEmail?: string;
   buyerPhone?: string;
   buyerSolicitorName?: string;
+  reservationDate?: string | null;
   reservationTermsChecked?: boolean | null;
   reservationFee?: string | number | null;
   reservationFeeHolder?: string | null;
@@ -75,6 +77,7 @@ type ReservationPayload = {
   completionQueryNote?: string | null;
   completionDate?: string | null;
   reservationFormPath?: string | null;
+  rejectionReason?: string | null;
   queryNote?: string | null;
   failReason?: string | null;
 };
@@ -106,6 +109,29 @@ function normaliseInteger(value?: string | number | null) {
 function normaliseDate(value?: string | null) {
   const trimmed = value?.trim() ?? "";
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
+function isFutureDate(value: string) {
+  return value > new Date().toISOString().slice(0, 10);
+}
+
+function reservationDateTimestamp(value: string) {
+  return `${value}T00:00:00.000Z`;
+}
+
+function hasRequiredBuyerInfo(attempt: {
+  buyer_name?: string | null;
+  buyer_person_name?: string | null;
+  buyer_company_name?: string | null;
+  buyer_email?: string | null;
+  buyer_phone?: string | null;
+  buyer_solicitor_name?: string | null;
+}) {
+  const hasBuyerIdentity = Boolean(normaliseText(attempt.buyer_person_name) || normaliseText(attempt.buyer_company_name) || normaliseText(attempt.buyer_name));
+  return hasBuyerIdentity
+    && Boolean(normaliseText(attempt.buyer_email))
+    && Boolean(normaliseText(attempt.buyer_phone))
+    && Boolean(normaliseText(attempt.buyer_solicitor_name));
 }
 
 function normaliseContributionType(value?: string | null, fallback: "amount" | "percent" = "amount") {
@@ -475,6 +501,12 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   const buyerPersonName = normaliseText(payload.buyerPersonName) ?? normaliseText(payload.buyerName);
   const buyerCompanyName = normaliseText(payload.buyerCompanyName);
   if (!buyerPersonName && !buyerCompanyName) throw new Error("Enter a personal buyer name, company name, or both.");
+  if (!normaliseText(payload.buyerEmail)) throw new Error("Enter the buyer email before submitting the reservation.");
+  if (!normaliseText(payload.buyerPhone)) throw new Error("Enter the buyer phone before submitting the reservation.");
+  if (!normaliseText(payload.buyerSolicitorName)) throw new Error("Enter the buyer solicitor before submitting the reservation.");
+  const reservationDate = normaliseDate(payload.reservationDate);
+  if (!reservationDate) throw new Error("Enter the reservation date shown on the signed reservation form.");
+  if (isFutureDate(reservationDate)) throw new Error("Reservation date cannot be in the future.");
   if (payload.reservationTermsChecked !== true) {
     throw new Error("Confirm that the reservation form reflects the developer-approved commercial terms.");
   }
@@ -486,26 +518,14 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   let attempt = await activeAttemptForUnit(adminClient, unit.id);
 
   if (!attempt) {
-    const { data, error } = await adminClient.from("unit_sale_attempts").insert({
-      building_id: unit.building_id,
-      unit_id: unit.id,
-      attempt_number: await nextAttemptNumber(adminClient, unit.id),
-      workflow_status: "reservation_submitted",
-      is_active: true,
-      stage_entered_at: now,
-      created_by_user_id: requester.id,
-      updated_by_user_id: requester.id,
-      reservation_submitted_at: now,
-    }).select("*").single();
-    if (error) throw error;
-    attempt = data;
+    attempt = await createDraftSaleAttempt(adminClient, requester, unit);
   }
 
-  if (["fallen_through", "superseded", "completed"].includes(attempt.workflow_status)) {
-    throw new Error("This sale attempt cannot be edited.");
+  if (!["draft", "rejected", "reservation_query_raised"].includes(attempt.workflow_status)) {
+    throw new Error("This reservation cannot be edited in its current approval state.");
   }
 
-  const wasQueried = attempt.workflow_status === "reservation_query_raised";
+  const wasRejected = ["rejected", "reservation_query_raised"].includes(attempt.workflow_status);
   const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
     buyer_name: buyerPersonName ?? buyerCompanyName,
     buyer_person_name: buyerPersonName,
@@ -513,12 +533,23 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
     buyer_email: normaliseText(payload.buyerEmail),
     buyer_phone: normaliseText(payload.buyerPhone),
     buyer_solicitor_name: normaliseText(payload.buyerSolicitorName),
-    workflow_status: attempt.workflow_status === "reservation_approved" ? attempt.workflow_status : "reservation_submitted",
+    workflow_status: "awaiting_approval",
+    reservation_date: reservationDate,
     reservation_submitted_at: now,
     reservation_terms_checked: true,
     reservation_submitted_by_user_id: requester.id,
     reservation_submitted_by_name: requester.name,
     reservation_submitted_by_email: requester.email,
+    reservation_approved_at: null,
+    reservation_approved_by_user_id: null,
+    reservation_approved_by_name: null,
+    reservation_approved_by_email: null,
+    reservation_rejected_at: null,
+    reservation_rejected_by_user_id: null,
+    reservation_rejected_by_name: null,
+    reservation_rejected_by_email: null,
+    reservation_rejection_reason: null,
+    stage_entered_at: now,
     updated_by_user_id: requester.id,
     updated_at: now,
   }).eq("id", attempt.id).select("*").single();
@@ -530,7 +561,7 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   const termsPayload = {
     sale_attempt_id: attempt.id,
     is_current: true,
-    status: updatedAttempt.workflow_status === "reservation_approved" ? "approved" : "submitted",
+    status: "submitted",
     ...termsSnapshotFromDefaults({ defaults, currentTerms, payload, usePayloadCommercials: false }),
     updated_by_user_id: requester.id,
     updated_at: now,
@@ -552,10 +583,23 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   }
   if (saleTermsId) await replacePaymentSchedule(adminClient, requester, attempt, saleTermsId, termsPayload);
 
+  await adminClient.from("units").update({
+    sale_status: "for_sale",
+    reservation_date: null,
+  }).eq("id", unit.id);
+
+  await adminClient.from("unit_sale_documents").update({
+    status: "under_review",
+    query_note: null,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("sale_attempt_id", attempt.id).eq("document_type", "reservation_form");
+
   await insertEvent(adminClient, attempt, requester, {
-    type: wasQueried ? "reservation_resubmitted" : "reservation_submitted",
+    type: wasRejected ? "reservation_resubmitted" : "reservation_submitted",
     toStatus: updatedAttempt.workflow_status,
-    summary: wasQueried ? `Reservation resubmitted for unit ${unit.unit_number}.` : `Reservation submitted for unit ${unit.unit_number}.`,
+    summary: wasRejected ? `Reservation resubmitted for unit ${unit.unit_number}.` : `Reservation submitted for unit ${unit.unit_number}.`,
+    metadata: { reservationDate },
   });
 
   return { saleAttemptId: attempt.id };
@@ -581,13 +625,6 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
 
   const attempt = await loadSaleAttempt(adminClient, saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (
-    documentType === "reservation_form"
-    && !["draft", "reservation_submitted", "reservation_query_raised"].includes(attempt.workflow_status)
-  ) {
-    throw new Error("Approved reservation forms cannot be replaced from the reservation entry step.");
-  }
-  await ensureSaleDocumentsBucket(adminClient);
 
   const documentResult = await adminClient
     .from("unit_sale_documents")
@@ -600,6 +637,27 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   const documentError = documentResult.error;
 
   if (documentError) throw documentError;
+  if (documentType === "reservation_form") {
+    let hasCurrentReservationVersion = false;
+    if (document?.id) {
+      const { data: currentVersion, error: currentVersionError } = await adminClient
+        .from("unit_sale_document_versions")
+        .select("id")
+        .eq("document_id", document.id)
+        .eq("is_current", true)
+        .is("redacted_at", null)
+        .maybeSingle();
+      if (currentVersionError) throw currentVersionError;
+      hasCurrentReservationVersion = Boolean(currentVersion);
+    }
+    const canUploadBeforeSubmission = ["draft", "rejected", "reservation_query_raised"].includes(attempt.workflow_status);
+    const canCompleteMissingAwaitingUpload = ["awaiting_approval", "reservation_submitted"].includes(attempt.workflow_status) && !hasCurrentReservationVersion;
+    if (!canUploadBeforeSubmission && !canCompleteMissingAwaitingUpload) {
+      throw new Error("Reservation forms are locked while awaiting approval and after approval.");
+    }
+  }
+  await ensureSaleDocumentsBucket(adminClient);
+
   const isReplacement = Boolean(document);
   if (!document) {
     const { data, error } = await adminClient.from("unit_sale_documents").insert({
@@ -755,9 +813,15 @@ async function approveReservation(adminClient: SupabaseClient, requester: Reques
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (attempt.workflow_status !== "reservation_submitted") {
+  if (!["awaiting_approval", "reservation_submitted"].includes(attempt.workflow_status)) {
     throw new Error("A submitted reservation pack is required before approval.");
   }
+  if (!hasRequiredBuyerInfo(attempt)) {
+    throw new Error("Buyer email, phone, solicitor and buyer name are required before approval.");
+  }
+  const reservationDate = normaliseDate(payload.reservationDate ?? attempt.reservation_date);
+  if (!reservationDate) throw new Error("Reservation date is required before approval.");
+  if (isFutureDate(reservationDate)) throw new Error("Reservation date cannot be in the future.");
 
   const { data: reservationVersion, error: reservationVersionError } = await adminClient
     .from("unit_sale_document_versions")
@@ -773,10 +837,13 @@ async function approveReservation(adminClient: SupabaseClient, requester: Reques
   const now = new Date().toISOString();
 
   const { data: updatedAttempt, error } = await adminClient.from("unit_sale_attempts").update({
-    workflow_status: "reservation_approved",
+    workflow_status: "approved",
+    reservation_date: reservationDate,
     reservation_approved_at: now,
     reservation_approved_by_user_id: requester.id,
-    stage_entered_at: now,
+    reservation_approved_by_name: requester.name,
+    reservation_approved_by_email: requester.email,
+    stage_entered_at: reservationDateTimestamp(reservationDate),
     updated_by_user_id: requester.id,
     updated_at: now,
   }).eq("id", attempt.id).select("*").single();
@@ -798,15 +865,79 @@ async function approveReservation(adminClient: SupabaseClient, requester: Reques
     updated_at: now,
   }).eq("sale_attempt_id", attempt.id).eq("document_type", "reservation_form");
 
-  await adminClient.from("units").update({ sale_status: "reserved" }).eq("id", attempt.unit_id);
+  await adminClient.from("units").update({ sale_status: "reserved", reservation_date: reservationDate }).eq("id", attempt.unit_id);
 
   await insertEvent(adminClient, attempt, requester, {
     type: "reservation_approved",
-    toStatus: "reservation_approved",
+    toStatus: "approved",
     summary: "Reservation approved. Unit marked Reserved.",
+    metadata: { reservationDate },
   });
 
   return { saleAttemptId: updatedAttempt.id };
+}
+
+async function rejectReservation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "approve_reservation")) throw new Error("Only developers can reject reservations.");
+  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
+  const rejectionReason = normaliseText(payload.rejectionReason);
+  if (!rejectionReason) throw new Error("Add a rejection reason.");
+
+  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
+  if (!["awaiting_approval", "reservation_submitted"].includes(attempt.workflow_status)) {
+    throw new Error("Only reservations awaiting developer approval can be rejected.");
+  }
+
+  const now = new Date().toISOString();
+  await adminClient.from("unit_sale_attempts").update({
+    workflow_status: "rejected",
+    reservation_rejected_at: now,
+    reservation_rejected_by_user_id: requester.id,
+    reservation_rejected_by_name: requester.name,
+    reservation_rejected_by_email: requester.email,
+    reservation_rejection_reason: rejectionReason,
+    stage_entered_at: now,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("id", attempt.id);
+
+  await adminClient.from("unit_sale_terms").update({
+    status: "draft",
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("sale_attempt_id", attempt.id).eq("is_current", true);
+
+  await adminClient.from("unit_sale_documents").update({
+    status: "uploaded",
+    query_note: null,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("sale_attempt_id", attempt.id).eq("document_type", "reservation_form");
+
+  await adminClient.from("units").update({
+    sale_status: "for_sale",
+    reservation_date: null,
+  }).eq("id", attempt.unit_id);
+
+  await adminClient.from("unit_sale_notes").insert({
+    sale_attempt_id: attempt.id,
+    building_id: attempt.building_id,
+    unit_id: attempt.unit_id,
+    category: "blocker",
+    visibility: "shared_sale_file",
+    body: rejectionReason,
+    created_by_user_id: requester.id,
+  });
+
+  await insertEvent(adminClient, attempt, requester, {
+    type: "reservation_rejected",
+    toStatus: "rejected",
+    summary: "Reservation rejected. Unit remains For Sale.",
+    metadata: { rejectionReason },
+  });
+
+  return { saleAttemptId: attempt.id };
 }
 
 async function queryReservation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
@@ -938,7 +1069,7 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
 
   await assertCanUseBuilding(adminClient, requester, buildingId);
   const attempt = existingAttempt ?? (unitId ? await activeAttemptForUnit(adminClient, unitId) : null);
-  if (attempt && !["draft", "reservation_submitted", "reservation_query_raised", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt.workflow_status)) {
+  if (attempt && !["draft", "rejected", "reservation_query_raised"].includes(attempt.workflow_status)) {
     throw new Error("This commercial package cannot be edited.");
   }
 
@@ -994,7 +1125,7 @@ async function approveCommercialPackage(adminClient: SupabaseClient, requester: 
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt.workflow_status)) {
+  if (!["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt.workflow_status)) {
     throw new Error("Approve the reservation before commercial approval.");
   }
 
@@ -1462,6 +1593,7 @@ export async function POST(request: Request) {
     action = payload.action ?? "save_reservation";
     if (action === "save_reservation") return NextResponse.json(await saveReservation(adminClient, requester, payload));
     if (action === "approve_reservation") return NextResponse.json(await approveReservation(adminClient, requester, payload));
+    if (action === "reject_reservation") return NextResponse.json(await rejectReservation(adminClient, requester, payload));
     if (action === "query_reservation") return NextResponse.json(await queryReservation(adminClient, requester, payload));
     if (action === "fail_reservation") return NextResponse.json(await failReservation(adminClient, requester, payload));
     if (action === "save_commercial_model" || action === "save_commercial_package") return NextResponse.json(await saveCommercialModel(adminClient, requester, payload));
@@ -1476,7 +1608,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const fallback = action === "save_commercial_model" || action === "save_commercial_package"
       ? "Commercial model could not be saved."
-      : action === "save_reservation" || action === "approve_reservation" || action === "query_reservation" || action === "fail_reservation"
+      : action === "save_reservation" || action === "approve_reservation" || action === "reject_reservation" || action === "query_reservation" || action === "fail_reservation"
         ? "Reservation could not be completed."
         : "Sales action could not be completed.";
     return NextResponse.json({ error: error instanceof Error ? error.message : fallback }, { status: 400 });
