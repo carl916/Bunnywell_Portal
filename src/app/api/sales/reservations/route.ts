@@ -892,6 +892,7 @@ async function rejectReservation(adminClient: SupabaseClient, requester: Request
   const now = new Date().toISOString();
   await adminClient.from("unit_sale_attempts").update({
     workflow_status: "rejected",
+    reservation_terms_checked: false,
     reservation_rejected_at: now,
     reservation_rejected_by_user_id: requester.id,
     reservation_rejected_by_name: requester.name,

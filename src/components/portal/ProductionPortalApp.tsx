@@ -238,6 +238,9 @@ const SNAG_THUMBNAIL_SIZE = 480;
 const SNAG_VIDEO_MAX_SECONDS = 40;
 const SNAG_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
 const SNAG_VIDEO_MAX_DIMENSION = 1280;
+const SNAG_VIDEO_CAPTURE_FPS = 30;
+const SNAG_VIDEO_BITRATE = 2_500_000;
+const SNAG_VIDEO_AUDIO_BITRATE = 128_000;
 
 const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
   { value: "for_sale", label: "For Sale" },
@@ -1215,12 +1218,14 @@ export function ProductionPortalApp() {
     }
 
     if (input.videoFile) {
-      const videoMetadata = await validateSnagVideo(input.videoFile);
+      const preparedVideo = await prepareSnagVideoFile(input.videoFile);
+      const videoFile = preparedVideo.file;
+      const videoMetadata = preparedVideo.metadata;
       const id = crypto.randomUUID();
-      const extension = videoFileExtension(input.videoFile);
+      const extension = videoFileExtension(videoFile);
       const videoPath = `videos/${folder}/${id}.${extension}`;
-      const fileUrl = await uploadStorageBlob(videoPath, input.videoFile, input.videoFile.type || "video/mp4");
-      const thumbnailBlob = await videoFileToThumbnailBlob(input.videoFile, SNAG_THUMBNAIL_SIZE, Math.round(SNAG_THUMBNAIL_SIZE * 0.75));
+      const fileUrl = await uploadStorageBlob(videoPath, videoFile, videoFile.type || "video/mp4");
+      const thumbnailBlob = await videoFileToThumbnailBlob(videoFile, SNAG_THUMBNAIL_SIZE, Math.round(SNAG_THUMBNAIL_SIZE * 0.75));
       const thumbnailPath = `_derived/videos/${folder}/${id}-thumb.jpg`;
       const thumbnailUrl = await uploadStorageBlob(thumbnailPath, thumbnailBlob, "image/jpeg");
 
@@ -1236,8 +1241,8 @@ export function ProductionPortalApp() {
         thumbnailLandscapeStoragePath: thumbnailPath,
         reportImageUrl: thumbnailUrl,
         reportImageStoragePath: thumbnailPath,
-        mimeType: input.videoFile.type || "video/mp4",
-        fileSizeBytes: input.videoFile.size,
+        mimeType: videoFile.type || "video/mp4",
+        fileSizeBytes: videoFile.size,
         durationSeconds: videoMetadata.durationSeconds,
       });
     }
@@ -1624,7 +1629,7 @@ function Shell({
 function positiveNotice(notice: string) {
   const lower = notice.toLowerCase();
   if (/(cannot|could not|error|failed|invalid|missing|unable)/.test(lower)) return false;
-  return /(added|closed|completed|created|deleted|reactivated|reset|resolved|saved|sent|updated|welcome)/.test(lower);
+  return /(added|approved|closed|completed|created|deleted|marked|reactivated|reconciled|reset|resolved|saved|sent|submitted|updated|uploaded|welcome)/.test(lower);
 }
 
 function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
@@ -10167,29 +10172,44 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
 
 function VideoInput({ value, onChange, disabled = false }: { value: File | null; onChange: (value: File | null) => void; disabled?: boolean }) {
   const [error, setError] = useState("");
-  const [isChecking, setIsChecking] = useState(false);
-  const isDisabled = disabled || isChecking;
+  const [status, setStatus] = useState<"idle" | "checking" | "preparing">("idle");
+  const [notice, setNotice] = useState("");
+  const isWorking = status !== "idle";
+  const isDisabled = disabled || isWorking;
 
   async function loadFile(file?: File) {
     if (!file || disabled) return;
     setError("");
-    setIsChecking(true);
+    setNotice("");
+    setStatus("checking");
     try {
-      await validateSnagVideo(file);
-      onChange(file);
+      const preparedVideo = await prepareSnagVideoFile(file, {
+        onPrepareStart: () => setStatus("preparing"),
+      });
+      onChange(preparedVideo.file);
+      if (preparedVideo.wasPrepared) {
+        const sizeLabel = videoDimensionsLabel(preparedVideo.metadata);
+        setNotice(`Video reduced${sizeLabel ? ` to ${sizeLabel}` : ""} for upload.`);
+      }
     } catch (error) {
       onChange(null);
       setError(readableError(error, "Video could not be added."));
     } finally {
-      setIsChecking(false);
+      setStatus("idle");
     }
+  }
+
+  function clearVideo() {
+    setError("");
+    setNotice("");
+    onChange(null);
   }
 
   return (
     <div className="grid gap-2">
       <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Film size={18} aria-hidden />
-        {isChecking ? "Checking video..." : value ? "Replace video" : "Add optional video"}
+        {status === "preparing" ? "Reducing video..." : status === "checking" ? "Checking video..." : value ? "Replace video" : "Add optional video"}
         <input
           type="file"
           accept="video/mp4,video/webm,video/quicktime,video/*"
@@ -10207,11 +10227,12 @@ function VideoInput({ value, onChange, disabled = false }: { value: File | null;
         <div className="grid gap-2 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-2 text-sm">
           <p className="truncate font-semibold text-[#0F3D2E]">{value.name || "Selected video"}</p>
           <p className="text-xs text-[#617169]">{formatFileSize(value.size)}</p>
-          <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={isDisabled} onClick={() => onChange(null)} type="button">
+          <button className="secondary min-h-9 justify-self-start px-3 py-1.5 text-sm" disabled={isDisabled} onClick={clearVideo} type="button">
             Remove video
           </button>
         </div>
       )}
+      {value && notice && <p className="rounded-md border border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-xs font-semibold text-[#34413a]">{notice}</p>}
       {error && <p className="rounded-md border border-[#f0c58c] bg-[#fff8ec] px-3 py-2 text-xs font-semibold text-[#7c5b1b]">{error}</p>}
     </div>
   );
@@ -10236,6 +10257,12 @@ type SnagVideoMetadata = {
   durationSeconds: number | null;
   width: number | null;
   height: number | null;
+};
+
+type PreparedSnagVideo = {
+  file: File;
+  metadata: SnagVideoMetadata;
+  wasPrepared: boolean;
 };
 
 async function imageFileToDataUrl(file: File, maxDimension: number, quality: number) {
@@ -10341,22 +10368,198 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
 }
 
-async function validateSnagVideo(file: File): Promise<SnagVideoMetadata> {
-  if (file.size > SNAG_VIDEO_MAX_BYTES) {
-    throw new Error(`Video must be ${formatFileSize(SNAG_VIDEO_MAX_BYTES)} or smaller.`);
-  }
-
+async function prepareSnagVideoFile(file: File, options: { onPrepareStart?: () => void } = {}): Promise<PreparedSnagVideo> {
   const metadata = await readVideoMetadata(file);
   if (metadata.durationSeconds && metadata.durationSeconds > SNAG_VIDEO_MAX_SECONDS + 0.25) {
     throw new Error(`Video must be ${SNAG_VIDEO_MAX_SECONDS} seconds or shorter.`);
   }
 
-  const largestDimension = Math.max(metadata.width ?? 0, metadata.height ?? 0);
-  if (largestDimension > SNAG_VIDEO_MAX_DIMENSION) {
-    throw new Error("Video resolution is above the 720p cap. Record or export at 720p, then try again.");
+  const needsPreparation = videoNeedsPreparation(file, metadata);
+  if (!needsPreparation) {
+    validatePreparedSnagVideo(file, metadata);
+    return { file, metadata, wasPrepared: false };
   }
 
-  return metadata;
+  const targetSize = cappedVideoDimensions(metadata);
+  if (!targetSize) {
+    validatePreparedSnagVideo(file, metadata);
+    return { file, metadata, wasPrepared: false };
+  }
+
+  options.onPrepareStart?.();
+  const preparedFile = await transcodeSnagVideo(file, targetSize);
+  const preparedMetadata = await readVideoMetadata(preparedFile);
+  validatePreparedSnagVideo(preparedFile, preparedMetadata);
+  return { file: preparedFile, metadata: preparedMetadata, wasPrepared: true };
+}
+
+function validatePreparedSnagVideo(file: File, metadata: SnagVideoMetadata) {
+  if (metadata.durationSeconds && metadata.durationSeconds > SNAG_VIDEO_MAX_SECONDS + 0.25) {
+    throw new Error(`Video must be ${SNAG_VIDEO_MAX_SECONDS} seconds or shorter.`);
+  }
+
+  if (file.size > SNAG_VIDEO_MAX_BYTES) {
+    throw new Error(`Video must be ${formatFileSize(SNAG_VIDEO_MAX_BYTES)} or smaller after preparation.`);
+  }
+
+  const largestDimension = Math.max(metadata.width ?? 0, metadata.height ?? 0);
+  if (largestDimension > SNAG_VIDEO_MAX_DIMENSION) {
+    throw new Error("Video resolution is above the 720p cap, and this browser could not reduce it automatically.");
+  }
+}
+
+function videoNeedsPreparation(file: File, metadata: SnagVideoMetadata) {
+  const largestDimension = Math.max(metadata.width ?? 0, metadata.height ?? 0);
+  return largestDimension > SNAG_VIDEO_MAX_DIMENSION || file.size > SNAG_VIDEO_MAX_BYTES;
+}
+
+function cappedVideoDimensions(metadata: SnagVideoMetadata) {
+  if (!metadata.width || !metadata.height) return null;
+  const largestDimension = Math.max(metadata.width, metadata.height);
+  const scale = largestDimension > SNAG_VIDEO_MAX_DIMENSION ? SNAG_VIDEO_MAX_DIMENSION / largestDimension : 1;
+  return {
+    width: evenVideoDimension(metadata.width * scale),
+    height: evenVideoDimension(metadata.height * scale),
+  };
+}
+
+function evenVideoDimension(value: number) {
+  return Math.max(2, Math.round(value / 2) * 2);
+}
+
+function videoDimensionsLabel(metadata: SnagVideoMetadata) {
+  if (!metadata.width || !metadata.height) return "";
+  return `${metadata.width}x${metadata.height}`;
+}
+
+async function transcodeSnagVideo(file: File, targetSize: { width: number; height: number }) {
+  if (typeof MediaRecorder === "undefined") {
+    throw new Error("This browser cannot reduce video resolution automatically. Try another browser, or record at 720p.");
+  }
+
+  const canvas = document.createElement("canvas");
+  if (typeof canvas.captureStream !== "function") {
+    throw new Error("This browser cannot reduce video resolution automatically. Try another browser, or record at 720p.");
+  }
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Video could not be prepared.");
+
+  canvas.width = targetSize.width;
+  canvas.height = targetSize.height;
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+
+  const objectUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  const videoStream = canvas.captureStream(SNAG_VIDEO_CAPTURE_FPS);
+  let animationFrame = 0;
+  let stopTimeout = 0;
+  let audioContext: AudioContext | null = null;
+  let audioSource: MediaElementAudioSourceNode | null = null;
+  const audioTracks: MediaStreamTrack[] = [];
+  let recorder: MediaRecorder | null = null;
+
+  try {
+    video.src = objectUrl;
+    video.playsInline = true;
+    video.preload = "auto";
+
+    await new Promise<void>((resolve, reject) => {
+      video.onloadeddata = () => resolve();
+      video.onerror = () => reject(new Error("Video could not be prepared."));
+      video.load();
+    });
+
+    const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (AudioContextConstructor) {
+      try {
+        audioContext = new AudioContextConstructor();
+        await audioContext.resume();
+        audioSource = audioContext.createMediaElementSource(video);
+        const destination = audioContext.createMediaStreamDestination();
+        audioSource.connect(destination);
+        audioTracks.push(...destination.stream.getAudioTracks());
+      } catch {
+        audioContext = null;
+      }
+    }
+    if (audioTracks.length === 0) video.muted = true;
+
+    const recordingStream = new MediaStream([
+      ...videoStream.getVideoTracks(),
+      ...audioTracks,
+    ]);
+    const mimeType = supportedVideoRecordingMimeType();
+    recorder = mimeType
+      ? new MediaRecorder(recordingStream, { mimeType, videoBitsPerSecond: SNAG_VIDEO_BITRATE, audioBitsPerSecond: SNAG_VIDEO_AUDIO_BITRATE })
+      : new MediaRecorder(recordingStream, { videoBitsPerSecond: SNAG_VIDEO_BITRATE, audioBitsPerSecond: SNAG_VIDEO_AUDIO_BITRATE });
+    const activeRecorder = recorder;
+    const chunks: Blob[] = [];
+    const recordedBlob = new Promise<Blob>((resolve, reject) => {
+      activeRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      activeRecorder.onerror = () => reject(new Error("Video could not be prepared."));
+      activeRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: activeRecorder.mimeType || mimeType || "video/webm" });
+        if (blob.size > 0) resolve(blob);
+        else reject(new Error("Video could not be prepared."));
+      };
+    });
+
+    const ended = new Promise<void>((resolve, reject) => {
+      video.onended = () => resolve();
+      video.onerror = () => reject(new Error("Video could not be prepared."));
+      stopTimeout = window.setTimeout(() => reject(new Error("Video preparation timed out.")), (SNAG_VIDEO_MAX_SECONDS + 8) * 1000);
+    });
+
+    const drawFrame = () => {
+      context.fillStyle = "#1F2A24";
+      context.fillRect(0, 0, targetSize.width, targetSize.height);
+      context.drawImage(video, 0, 0, targetSize.width, targetSize.height);
+      if (!video.ended && !video.paused) animationFrame = window.requestAnimationFrame(drawFrame);
+    };
+
+    recorder.start(1000);
+    await video.play();
+    drawFrame();
+    await ended;
+    if (recorder.state !== "inactive") recorder.stop();
+
+    const blob = await recordedBlob;
+    return new File([blob], preparedVideoFileName(file, blob.type || mimeType || "video/webm"), {
+      type: blob.type || mimeType || "video/webm",
+      lastModified: Date.now(),
+    });
+  } finally {
+    if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    if (stopTimeout) window.clearTimeout(stopTimeout);
+    video.pause();
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    videoStream.getTracks().forEach((track) => track.stop());
+    audioTracks.forEach((track) => track.stop());
+    audioSource?.disconnect();
+    void audioContext?.close();
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function supportedVideoRecordingMimeType() {
+  const candidates = [
+    "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+    "video/mp4",
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm",
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
+function preparedVideoFileName(file: File, mimeType: string) {
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "snag-video";
+  const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+  return `${baseName}-720p.${extension}`;
 }
 
 function readVideoMetadata(file: File) {

@@ -345,6 +345,7 @@ function PdfUploadBox({
   onOpen,
   onFile,
   onClear,
+  onRemoveCurrent,
 }: {
   id: string;
   label: string;
@@ -354,6 +355,7 @@ function PdfUploadBox({
   onOpen?: () => void;
   onFile: (file: File | null) => void;
   onClear: () => void;
+  onRemoveCurrent?: () => void;
 }) {
   const selectedName = file?.name ?? null;
 
@@ -375,10 +377,16 @@ function PdfUploadBox({
           </button>
         </div>
         {!disabled && (
-          <label className="secondary mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
-            Replace PDF
-            <input className="sr-only" type="file" accept="application/pdf" onChange={(event) => onFile(event.target.files?.[0] ?? null)} />
-          </label>
+          onRemoveCurrent ? (
+            <button className="secondary mt-3 min-h-9 w-fit px-3 py-1.5 text-sm" type="button" onClick={onRemoveCurrent}>
+              <X size={14} aria-hidden /> Remove PDF
+            </button>
+          ) : (
+            <label className="secondary mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
+              Replace PDF
+              <input className="sr-only" type="file" accept="application/pdf" onChange={(event) => onFile(event.target.files?.[0] ?? null)} />
+            </label>
+          )
         )}
       </div>
     );
@@ -458,6 +466,72 @@ function DocumentVersionHistory({
   );
 }
 
+function AdditionalConditionsEditor({
+  conditions,
+  onChange,
+  disabled = false,
+}: {
+  conditions: string[];
+  onChange: (conditions: string[]) => void;
+  disabled?: boolean;
+}) {
+  const [draftCondition, setDraftCondition] = useState("");
+  const cleanConditions = conditions.map((condition) => condition.trim()).filter(Boolean);
+
+  function addCondition() {
+    const nextCondition = draftCondition.trim();
+    if (!nextCondition) return;
+    onChange([...cleanConditions, nextCondition]);
+    setDraftCondition("");
+  }
+
+  function removeCondition(index: number) {
+    onChange(cleanConditions.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  return (
+    <div className="grid gap-2">
+      <span className="field-label">Additional conditions</span>
+      {cleanConditions.length > 0 && (
+        <div className="grid gap-2">
+          {cleanConditions.map((condition, index) => (
+            <div key={`${condition}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#e5e9e4] bg-white px-3 py-2 text-sm text-[#34413a]">
+              <span className="min-w-0 flex-1 break-words font-semibold">{condition}</span>
+              <button
+                className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-bold text-[#b42318] hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                onClick={() => removeCondition(index)}
+                disabled={disabled}
+                aria-label={`Remove condition ${condition}`}
+              >
+                <X size={15} aria-hidden /> Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input
+          className="field"
+          value={draftCondition}
+          onChange={(event) => setDraftCondition(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addCondition();
+            }
+          }}
+          placeholder="Type a condition"
+          disabled={disabled}
+        />
+        <button className="secondary min-h-10 px-4" type="button" onClick={addCondition} disabled={disabled || !draftCondition.trim()}>
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SalesReservationWorkflow({
   user,
   profile,
@@ -476,6 +550,7 @@ export function SalesReservationWorkflow({
   reloadPortalData: () => Promise<void>;
 }) {
   const commercialModelControlRef = useRef<HTMLDivElement | null>(null);
+  const stayOnReservationStageRef = useRef(false);
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const buildingUnits = useMemo(
     () => sortUnitsByFloorOrder(
@@ -508,6 +583,8 @@ export function SalesReservationWorkflow({
   const [reservationFee, setReservationFee] = useState("");
   const [reservationFeeHolder, setReservationFeeHolder] = useState("sales_agent");
   const [reservationFormFile, setReservationFormFile] = useState<File | null>(null);
+  const [reservationDocumentRemoved, setReservationDocumentRemoved] = useState(false);
+  const [reservationDocumentHistoryUnlocked, setReservationDocumentHistoryUnlocked] = useState(false);
   const [parkingValue, setParkingValue] = useState("");
   const [developerContribution, setDeveloperContribution] = useState("");
   const [developerContributionValueType, setDeveloperContributionValueType] = useState<"amount" | "percent">("amount");
@@ -577,6 +654,8 @@ export function SalesReservationWorkflow({
       .sort((a, b) => b.version_number - a.version_number)
     : [];
   const reservationVersion = reservationVersions.find((item) => item.is_current) ?? reservationVersions[0] ?? null;
+  const visibleReservationVersion = reservationDocumentRemoved ? null : reservationVersion;
+  const showReservationDocumentHistory = reservationDocumentHistoryUnlocked || reservationVersions.some((version) => !version.is_current);
   const agentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice") : null;
   const agentInvoiceVersion = agentInvoiceDocument ? versions.find((item) => item.document_id === agentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
   const completionStatementDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "completion_statement") : null;
@@ -923,6 +1002,7 @@ export function SalesReservationWorkflow({
   }
 
   function openSaleFile(nextUnitId: string) {
+    stayOnReservationStageRef.current = false;
     setUnitId(nextUnitId);
     setSelectedSaleUnitId(nextUnitId);
     setShowCommercialModel(false);
@@ -933,10 +1013,22 @@ export function SalesReservationWorkflow({
   }
 
   function backToSalesOverview() {
+    stayOnReservationStageRef.current = false;
     setSelectedSaleUnitId("");
     setShowCommercialModel(false);
     writeSalesUrl({ building: buildingId, unit: null, filter: salesStageFilter });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function setReservationFormPdf(file: File | null) {
+    setReservationFormFile(file);
+    if (file) setReservationDocumentHistoryUnlocked(reservationDocumentRemoved || reservationVersions.length > 0);
+  }
+
+  function removeCurrentReservationPdf() {
+    setReservationFormFile(null);
+    setReservationDocumentRemoved(true);
+    setReservationDocumentHistoryUnlocked(true);
   }
 
   useEffect(() => {
@@ -972,8 +1064,10 @@ export function SalesReservationWorkflow({
   }, [buildingId, salesSearch, salesStageFilter]);
 
   useEffect(() => {
-    if (selectedSaleUnitId && selectedUnit) setActiveWorkflowStage(selectedWorkflowStage);
-  }, [selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
+    if (!selectedSaleUnitId || !selectedUnit) return;
+    if (stayOnReservationStageRef.current && activeWorkflowStage === "reservation" && selectedWorkflowStage !== "reservation") return;
+    setActiveWorkflowStage(selectedWorkflowStage);
+  }, [activeWorkflowStage, selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
 
   useEffect(() => {
     if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
@@ -998,6 +1092,8 @@ export function SalesReservationWorkflow({
       setReservationFee(selectedBuildingDefault?.reservation_fee?.toString() ?? "");
       setReservationFeeHolder(selectedBuildingDefault?.reservation_fee_holder_default ?? "sales_agent");
       setReservationFormFile(null);
+      setReservationDocumentRemoved(false);
+      setReservationDocumentHistoryUnlocked(false);
       setParkingValue("");
       setDeveloperContribution("");
       setDeveloperContributionValueType("amount");
@@ -1086,6 +1182,8 @@ export function SalesReservationWorkflow({
     setInvoiceVatAmount(activeInvoice?.vat_amount?.toString() ?? "");
     setInvoiceGrossAmount(activeInvoice?.gross_amount?.toString() ?? "");
     setReservationFormFile(null);
+    setReservationDocumentRemoved(false);
+    setReservationDocumentHistoryUnlocked(false);
     setAgentInvoiceFile(null);
     setExchangeDate(activeAttempt.exchanged_at ?? "");
     setSolicitorPaymentAmount(solicitorPayment?.amount?.toString() ?? "");
@@ -1197,13 +1295,58 @@ export function SalesReservationWorkflow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId, units.length]);
 
+  function resetCommercialModelDraft() {
+    const loadedAdditionalConditions = activeTerms?.additional_special_conditions?.filter((condition) => condition.trim()) ?? [];
+    const legacyParkingCondition = activeTerms?.parking_location_details?.trim();
+    const combinedAdditionalConditions = [
+      ...loadedAdditionalConditions,
+      ...(legacyParkingCondition && !loadedAdditionalConditions.some((condition) => condition.toLowerCase() === legacyParkingCondition.toLowerCase()) ? [legacyParkingCondition] : []),
+    ];
+
+    setContractPrice(activeTerms?.contract_price?.toString() ?? activeTerms?.list_price_at_offer?.toString() ?? "");
+    setReservationFee(activeTerms?.reservation_fee?.toString() ?? selectedBuildingDefault?.reservation_fee?.toString() ?? "");
+    setReservationFeeHolder(activeTerms?.reservation_fee_holder ?? selectedBuildingDefault?.reservation_fee_holder_default ?? "sales_agent");
+    setParkingValue(activeTerms?.parking_value?.toString() ?? "");
+    setDeveloperContribution((activeTerms?.developer_contribution_value ?? activeTerms?.developer_contribution)?.toString() ?? "");
+    setDeveloperContributionValueType(activeTerms?.developer_contribution_value_type ?? "amount");
+    setAgentContribution((activeTerms?.agent_contribution_value ?? activeTerms?.agent_contribution)?.toString() ?? "");
+    setAgentContributionValueType(activeTerms?.agent_contribution_value_type ?? "amount");
+    setParkingContributionValue(activeTerms?.parking_contribution_value?.toString() ?? "");
+    setParkingLocationDetails("");
+    setAdditionalSpecialConditions(combinedAdditionalConditions);
+    setAgentFeePercent(activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+    setSolicitorFee(activeTerms?.solicitor_fee?.toString() ?? selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
+    setExchangeDepositPercent(activeTerms?.exchange_deposit_percent?.toString() ?? selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
+    setSecondDepositEnabled(Boolean(activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled));
+    setSecondDepositPercent(activeTerms?.second_deposit_percent?.toString() ?? selectedBuildingDefault?.second_deposit_percent?.toString() ?? "");
+    setSecondDepositMonthsAfterExchange(activeTerms?.second_deposit_months_after_exchange?.toString() ?? selectedBuildingDefault?.second_deposit_months_after_exchange?.toString() ?? "");
+    setDepositSummary(activeTerms?.deposit_summary ?? paymentScheduleSummary({
+      exchangeDepositPercent: activeTerms?.exchange_deposit_percent ?? selectedBuildingDefault?.exchange_deposit_percent ?? 10,
+      secondDepositEnabled: activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled ?? false,
+      secondDepositPercent: activeTerms?.second_deposit_percent ?? selectedBuildingDefault?.second_deposit_percent ?? 0,
+      secondDepositMonthsAfterExchange: activeTerms?.second_deposit_months_after_exchange ?? selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
+    }));
+    setCommercialSummary(activeTerms?.commercial_summary ?? "");
+    setInvoiceReference(activeInvoice?.invoice_reference ?? "");
+    setInvoiceDate(activeInvoice?.invoice_date ?? "");
+    setInvoiceNetAmount(activeInvoice?.net_amount?.toString() ?? "");
+    setInvoiceVatAmount(activeInvoice?.vat_amount?.toString() ?? "");
+    setInvoiceGrossAmount(activeInvoice?.gross_amount?.toString() ?? "");
+  }
+
+  function cancelCommercialModel() {
+    resetCommercialModelDraft();
+    setShowCommercialModel(false);
+    setShowAdvancedDealSetup(false);
+  }
+
   function toggleCommercialModel() {
     const next = !showCommercialModel;
-    setShowCommercialModel(next);
     if (!next) {
-      setShowAdvancedDealSetup(false);
+      cancelCommercialModel();
       return;
     }
+    setShowCommercialModel(next);
     window.requestAnimationFrame(() => {
       commercialModelControlRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -1298,7 +1441,7 @@ export function SalesReservationWorkflow({
       onNotice("Confirm that the reservation form reflects the developer-approved commercial terms.");
       return;
     }
-    if (!reservationFormFile && !reservationVersion) {
+    if (!reservationFormFile && !visibleReservationVersion) {
       onNotice("Upload the reservation form PDF before submitting the reservation.");
       return;
     }
@@ -1321,6 +1464,8 @@ export function SalesReservationWorkflow({
       });
       if (!activeAttempt?.id && payload.saleAttemptId) await uploadReservationForm(payload.saleAttemptId);
       onNotice(reservationState === "rejected" ? `Reservation resubmitted for Unit ${selectedUnit.unit_number}.` : `Reservation submitted for Unit ${selectedUnit.unit_number}.`);
+      setReservationDocumentRemoved(false);
+      setReservationDocumentHistoryUnlocked(false);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Reservation could not be saved.");
@@ -1334,6 +1479,8 @@ export function SalesReservationWorkflow({
     setIsSaving(true);
     try {
       await postReservationJson({ action: "approve_reservation", saleAttemptId: activeAttempt.id, reservationDate: formalReservationDate });
+      stayOnReservationStageRef.current = true;
+      setActiveWorkflowStage("reservation");
       onNotice(`Reservation approved. Unit ${selectedUnit.unit_number} marked Reserved.`);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
@@ -1355,6 +1502,7 @@ export function SalesReservationWorkflow({
       onNotice(`Reservation rejected. Unit ${selectedUnit.unit_number} remains For Sale.`);
       setShowRejectReservationConfirm(false);
       setRejectionReason("");
+      setReservationTermsChecked(false);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Reservation could not be rejected.");
@@ -1415,7 +1563,7 @@ export function SalesReservationWorkflow({
         agentContributionValueType,
         parkingContributionValue,
         parkingLocationDetails,
-        additionalSpecialConditions,
+        additionalSpecialConditions: additionalSpecialConditions.map((condition) => condition.trim()).filter(Boolean),
         commercialSummary,
         invoiceReference,
         invoiceDate,
@@ -1940,23 +2088,7 @@ export function SalesReservationWorkflow({
                           {agentContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewAgentContribution)}</span>}
                         </label>
                         <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!commercialModelEditable} aria-label="Parking contribution" /></label>
-                        <div className="grid gap-2">
-                          <span className="field-label">Additional conditions</span>
-                          {additionalSpecialConditions.map((condition, index) => (
-                            <div key={index} className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                              <input
-                                className="field"
-                                value={condition}
-                                onChange={(event) => setAdditionalSpecialConditions((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                                disabled={!commercialModelEditable}
-                              />
-                              <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!commercialModelEditable || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
-                                <X size={16} aria-hidden />
-                              </button>
-                            </div>
-                          ))}
-                          <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!commercialModelEditable}>Add condition</button>
-                        </div>
+                        <AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} />
                       </div>
                     </div>
                     <div className="border-t border-[#eef0eb] pt-3">
@@ -2039,10 +2171,7 @@ export function SalesReservationWorkflow({
                 </div>
               </div>
               <div className="mt-4 flex justify-end gap-2">
-                <button className="secondary" onClick={() => {
-                  setShowCommercialModel(false);
-                  setShowAdvancedDealSetup(false);
-                }}>Close panel</button>
+                <button className="secondary" onClick={cancelCommercialModel}>Cancel</button>
                 <button className="primary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !commercialModelEditable || !previewDepositStructure.isValid}>
                   Save commercial model
                 </button>
@@ -2069,7 +2198,10 @@ export function SalesReservationWorkflow({
                     key={stage.key}
                     className={`flex h-full min-h-36 flex-col items-stretch rounded-lg border p-4 text-left transition ${isSelected ? "border-[#0F3D2E] bg-white shadow-sm" : "border-[#d9ded6] bg-white"} ${isLocked ? "cursor-not-allowed opacity-55" : "hover:border-[#0F3D2E]"}`}
                     onClick={() => {
-                      if (!isLocked) setActiveWorkflowStage(stage.key);
+                      if (!isLocked) {
+                        stayOnReservationStageRef.current = false;
+                        setActiveWorkflowStage(stage.key);
+                      }
                     }}
                     disabled={isLocked}
                   >
@@ -2154,13 +2286,14 @@ export function SalesReservationWorkflow({
                           id={`reservation-form-${selectedUnit.id}`}
                           label="Upload reservation form PDF"
                           file={reservationFormFile}
-                          currentVersion={reservationVersion}
+                          currentVersion={visibleReservationVersion}
                           disabled={!reservationCanBeEdited}
-                          onOpen={reservationVersion ? () => void openDocumentVersion(reservationVersion) : undefined}
-                          onFile={setReservationFormFile}
+                          onOpen={visibleReservationVersion ? () => void openDocumentVersion(visibleReservationVersion) : undefined}
+                          onFile={setReservationFormPdf}
                           onClear={() => setReservationFormFile(null)}
+                          onRemoveCurrent={reservationState === "rejected" && reservationVersion ? removeCurrentReservationPdf : undefined}
                         />
-                        <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
+                        {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                       </div>
                     </div>
                     <label className="mt-4 flex items-start gap-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm font-semibold text-[#34413a]">
@@ -2209,13 +2342,13 @@ export function SalesReservationWorkflow({
                         id={`reservation-form-review-${selectedUnit.id}`}
                         label="Upload reservation form PDF"
                         file={reservationFormFile}
-                        currentVersion={reservationVersion}
+                        currentVersion={visibleReservationVersion}
                         disabled
-                        onOpen={reservationVersion ? () => void openDocumentVersion(reservationVersion) : undefined}
-                        onFile={setReservationFormFile}
+                        onOpen={visibleReservationVersion ? () => void openDocumentVersion(visibleReservationVersion) : undefined}
+                        onFile={setReservationFormPdf}
                         onClear={() => setReservationFormFile(null)}
                       />
-                      <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
+                      {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                     </div>
                   </div>
 
@@ -2245,6 +2378,21 @@ export function SalesReservationWorkflow({
                         </>
                       )}
                     </div>
+                    {showRejectReservationConfirm && reservationCanBeReviewed && (
+                      <div className="mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3">
+                        <label className="field-label">
+                          Rejection reason
+                          <textarea className="field min-h-20" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} />
+                        </label>
+                        <div className="mt-3 flex flex-wrap justify-end gap-2">
+                          <button className="secondary min-h-9 px-3 py-1.5 text-sm" onClick={() => {
+                            setShowRejectReservationConfirm(false);
+                            setRejectionReason("");
+                          }}>Cancel</button>
+                          <button className="danger-button min-h-9 px-3 py-1.5 text-sm" onClick={() => void rejectReservation()} disabled={isSaving || !activeAttempt || !rejectionReason.trim()}>Confirm rejection</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -2265,18 +2413,7 @@ export function SalesReservationWorkflow({
                     <FieldValue label="Fee holder" value={describeReservationFeeHolder(displayReservationFeeHolder)} />
                     <FieldValue label="Payment schedule" value={displayedPaymentSchedule.map((row) => row.label).join(", ")} />
                   </div>
-                  <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />
-                </div>
-              )}
-
-              {showRejectReservationConfirm && reservationCanBeReviewed && (
-                <div className="mt-4 rounded-lg border border-[#f1b8b2] bg-[#fff4f2] p-4">
-                  <h5 className="font-bold text-[#7a271a]">Reject reservation</h5>
-                  <label className="field-label mt-3">Rejection reason<textarea className="field min-h-20" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} /></label>
-                  <div className="mt-3 flex flex-wrap justify-end gap-2">
-                    <button className="secondary" onClick={() => setShowRejectReservationConfirm(false)}>Cancel</button>
-                    <button className="danger-button" onClick={() => void rejectReservation()} disabled={isSaving || !activeAttempt || !rejectionReason.trim()}>Reject reservation</button>
-                  </div>
+                  {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                 </div>
               )}
 
@@ -2401,22 +2538,8 @@ export function SalesReservationWorkflow({
                       <label className="field-label">Invoice date<input className="field" type="date" value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} disabled={!commercialModelEditable} /></label>
                       <label className="field-label">Uploaded invoice amount<GbpInput value={invoiceGrossAmount} onChange={setInvoiceGrossAmount} disabled={!commercialModelEditable} aria-label="Uploaded invoice amount" /></label>
                       <label className="field-label md:col-span-2">Commercial summary<textarea className="field min-h-20" value={commercialSummary} onChange={(event) => setCommercialSummary(event.target.value)} disabled={!commercialModelEditable} /></label>
-                      <div className="md:col-span-2 grid gap-2">
-                        <span className="field-label">Additional conditions</span>
-                        {additionalSpecialConditions.map((condition, index) => (
-                          <div key={index} className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                            <input
-                              className="field"
-                              value={condition}
-                              onChange={(event) => setAdditionalSpecialConditions((items) => items.map((item, itemIndex) => itemIndex === index ? event.target.value : item))}
-                              disabled={!commercialModelEditable}
-                            />
-                            <button className="secondary min-h-10 px-3" type="button" onClick={() => setAdditionalSpecialConditions((items) => items.filter((_, itemIndex) => itemIndex !== index))} disabled={!commercialModelEditable || additionalSpecialConditions.length === 1} aria-label="Remove special condition">
-                              <X size={16} aria-hidden />
-                            </button>
-                          </div>
-                        ))}
-                        <button className="secondary w-fit" type="button" onClick={() => setAdditionalSpecialConditions((items) => [...items, ""])} disabled={!commercialModelEditable}>Add condition</button>
+                      <div className="md:col-span-2">
+                        <AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} />
                       </div>
                     </div>
                   </div>
