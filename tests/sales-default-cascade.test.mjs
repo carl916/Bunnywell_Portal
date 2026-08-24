@@ -40,11 +40,15 @@ test("building default cascade skips reservation drafts", () => {
       { id: "buyer-draft", sale_status: "for_sale" },
       { id: "uploaded-form", sale_status: "for_sale" },
       { id: "submitted", sale_status: "for_sale" },
+      { id: "awaiting", sale_status: "for_sale" },
+      { id: "rejected", sale_status: "for_sale" },
     ],
     attempts: [
       { id: "attempt-buyer", unit_id: "buyer-draft", is_active: true, workflow_status: "draft", buyer_name: "Buyer One" },
       { id: "attempt-uploaded", unit_id: "uploaded-form", is_active: true, workflow_status: "draft" },
       { id: "attempt-submitted", unit_id: "submitted", is_active: true, workflow_status: "reservation_submitted" },
+      { id: "attempt-awaiting", unit_id: "awaiting", is_active: true, workflow_status: "awaiting_approval" },
+      { id: "attempt-rejected", unit_id: "rejected", is_active: true, workflow_status: "rejected", reservation_date: "2026-08-03" },
     ],
     documents: [
       { sale_attempt_id: "attempt-uploaded", document_type: "reservation_form", status: "uploaded", redacted_at: null },
@@ -52,7 +56,7 @@ test("building default cascade skips reservation drafts", () => {
   });
 
   assert.deepEqual(result.eligibleUnitIds, []);
-  assert.equal(result.draftReservationsSkipped, 3);
+  assert.equal(result.draftReservationsSkipped, 5);
 });
 
 test("building sales setup communicates cascade scope and count summary", () => {
