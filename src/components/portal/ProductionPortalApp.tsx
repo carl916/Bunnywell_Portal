@@ -4140,9 +4140,11 @@ function DeveloperSnagging({
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingResponsibleOrganisation, setIsChangingResponsibleOrganisation] = useState(false);
   const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
   const formRef = useRef<HTMLDivElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
   const selectedArea = areas.find((area) => area.id === draft.areaId);
   const selectedBuilding = buildings.find((building) => building.id === (draft.buildingId || selectedUnit?.building_id || selectedArea?.building_id));
@@ -4160,6 +4162,7 @@ function DeveloperSnagging({
   const resolvedResponsibleOrganisationId = draft.responsibleOrganisationId && validResponsibleOrganisationIds.has(draft.responsibleOrganisationId)
     ? draft.responsibleOrganisationId
     : mainContractorId;
+  const resolvedResponsibleOrganisation = organisations.find((organisation) => organisation.id === resolvedResponsibleOrganisationId);
   const availableFloors = buildingFloors
     .filter((floor) => floor.building_id === selectedBuilding?.id)
     .sort((a, b) => a.sort_order - b.sort_order);
@@ -4191,6 +4194,13 @@ function DeveloperSnagging({
 
   useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
 
+  useEffect(() => {
+    const textarea = descriptionInputRef.current;
+    if (!textarea) return;
+    textarea.style.height = "84px";
+    textarea.style.height = `${Math.max(84, textarea.scrollHeight)}px`;
+  }, [draft.description]);
+
   function contextSignature(source: SnagDraft) {
     return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId, source.responsibleOrganisationId].join("|");
   }
@@ -4210,6 +4220,7 @@ function DeveloperSnagging({
   function resetAndClose() {
     setCleanContextSignature(contextSignature(emptySnagDraft));
     setDraft(emptySnagDraft);
+    setIsChangingResponsibleOrganisation(false);
     onDirtyChange(false);
     onClose();
   }
@@ -4301,78 +4312,74 @@ function DeveloperSnagging({
   return (
     <div ref={formRef} className="max-w-xl">
       <FormPanel title="Add developer snag">
-        <select className="field" value={draft.buildingId} onChange={(event) => setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" })} disabled={isSaving}>
-          <option value="">Select building</option>
-          {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-        </select>
-        <select className={`field ${draft.floor ? "filter-active" : ""}`} value={draft.floor} onChange={(event) => setDraft({ ...draft, floor: event.target.value, unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId}>
-          <option value="">All floors</option>
-          {availableFloors.map((floor) => <option key={floor.id} value={floor.name}>{floor.name}</option>)}
-        </select>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            className={draft.locationType === "unit" ? "primary" : "secondary"}
-            onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })}
-            disabled={isSaving || !draft.buildingId}
-            type="button"
-          >
-            Unit
-          </button>
-          <button
-            className={draft.locationType === "communal" ? "primary" : "secondary"}
-            onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })}
-            disabled={isSaving || !draft.buildingId}
-            type="button"
-          >
-            Communal
-          </button>
-        </div>
-        {draft.locationType === "unit" && (
-          <select className="field" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={isSaving || !draft.buildingId}>
-            <option value="">Select unit</option>
-            {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+        <div className="grid gap-2">
+          <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
+            setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" });
+            setIsChangingResponsibleOrganisation(false);
+          }} disabled={isSaving}>
+            <option value="">Select building</option>
+            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
           </select>
-        )}
-        <select className="field" value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={isSaving || !draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
-          <option value="">{draft.locationType === "unit" ? "Select room / private area" : "Select communal area"}</option>
-          {areaOptions.map((area) => (
-            <option key={area.id} value={area.id}>
-              {area.name}{area.floor && draft.locationType === "communal" ? ` / ${area.floor}` : ""}
-            </option>
-          ))}
-        </select>
-        <input ref={titleInputRef} className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={isSaving || !draft.buildingId} />
-        <textarea className="field min-h-24 py-3" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
-        <select className="field" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
-          <option value="">Trade</option>
-          {trades.length === 0 && <option value="" disabled>No trades configured</option>}
-          {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
-        </select>
-        <label className="grid gap-1">
-          <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#50645b]">Responsible organisation</span>
-          <select className="field" value={resolvedResponsibleOrganisationId} onChange={(event) => setDraft({ ...draft, responsibleOrganisationId: event.target.value })} disabled={isSaving || !draft.buildingId}>
-            <option value="">No responsible organisation selected</option>
-            {responsibleOrganisationOptions.map(({ link, organisation }) => (
-              <option key={`${link.role_on_project}-${organisation.id}`} value={organisation.id}>
-                {organisation.name} {link.role_on_project === "main_contractor" ? "(main contractor)" : "(supporting trade)"}
-              </option>
-            ))}
+          <div className="developer-snag-toggle grid grid-cols-2 gap-1.5" role="group" aria-label="Location type">
+            <button className={draft.locationType === "unit" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "unit"}>Unit</button>
+            <button className={draft.locationType === "communal" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "communal"}>Communal</button>
+          </div>
+          <div className={draft.locationType === "unit" ? "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-2" : "grid"}>
+            <select className={`field ${draft.floor ? "filter-active" : ""}`} aria-label="Floor" value={draft.floor} onChange={(event) => setDraft({ ...draft, floor: event.target.value, unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId}>
+              <option value="">All floors</option>
+              {availableFloors.map((floor) => <option key={floor.id} value={floor.name}>{floor.name}</option>)}
+            </select>
+            {draft.locationType === "unit" && (
+              <select className="field min-w-0" aria-label="Unit" value={draft.unitId} onChange={(event) => setDraft({ ...draft, unitId: event.target.value, areaId: "" })} disabled={isSaving || !draft.buildingId}>
+                <option value="">Select unit</option>
+                {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+              </select>
+            )}
+          </div>
+          <select className="field" aria-label={draft.locationType === "unit" ? "Room or private area" : "Communal area"} value={draft.areaId} onChange={(event) => setDraft({ ...draft, areaId: event.target.value })} disabled={isSaving || !draft.buildingId || (draft.locationType === "unit" && !draft.unitId)}>
+            <option value="">{draft.locationType === "unit" ? "Select room / private area" : "Select communal area"}</option>
+            {areaOptions.map((area) => <option key={area.id} value={area.id}>{area.name}{area.floor && draft.locationType === "communal" ? ` / ${area.floor}` : ""}</option>)}
           </select>
-          <span className="text-xs text-[#617169]">Defaults to the main contractor. Choose a supporting trade for exception snags.</span>
-          {draft.buildingId && !mainContractorId && <span className="text-xs text-[#8a5a12]">No main contractor is set for this building yet.</span>}
-        </label>
-        <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} />
-        <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <button className="primary" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
-            <Plus size={16} aria-hidden /> {isSaving ? "Saving..." : "Save and add another"}
-          </button>
-          <button className="secondary" onClick={() => createDeveloperSnag(true)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
-            Save and close
-          </button>
-          <button className="snag-action-link justify-center px-2" onClick={cancelDraft} disabled={isSaving} type="button">
-            Cancel
-          </button>
+          <input ref={titleInputRef} className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} maxLength={50} placeholder="Title" disabled={isSaving || !draft.buildingId} />
+          <textarea ref={descriptionInputRef} className="field min-h-[84px] resize-none overflow-hidden py-2.5" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" disabled={isSaving || !draft.buildingId} />
+          <select className="field" aria-label="Trade" value={draft.tradeId} onChange={(event) => setDraft({ ...draft, tradeId: event.target.value })} disabled={isSaving || !draft.buildingId}>
+            <option value="">Trade</option>
+            {trades.length === 0 && <option value="" disabled>No trades configured</option>}
+            {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
+          </select>
+          <div className="rounded-md bg-[#f8faf7] px-3 py-2 text-sm">
+            <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[#617169]">Assigned to:</span>
+              <span className="min-w-0 flex-1 font-semibold text-[#0F3D2E]">{resolvedResponsibleOrganisation?.name ?? "Not assigned"}</span>
+              <button className="snag-action-link" type="button" onClick={() => setIsChangingResponsibleOrganisation((current) => !current)} disabled={isSaving || !draft.buildingId} aria-expanded={isChangingResponsibleOrganisation} aria-controls="developer-snag-responsible-organisation">
+                {isChangingResponsibleOrganisation ? "Done" : "Change"}
+              </button>
+            </div>
+            {isChangingResponsibleOrganisation && (
+              <label id="developer-snag-responsible-organisation" className="mt-2 grid gap-1">
+                <span className="sr-only">Responsible organisation</span>
+                <select className="field" value={resolvedResponsibleOrganisationId} onChange={(event) => {
+                  setDraft({ ...draft, responsibleOrganisationId: event.target.value });
+                  setIsChangingResponsibleOrganisation(false);
+                }} disabled={isSaving || !draft.buildingId}>
+                  <option value="">No responsible organisation selected</option>
+                  {responsibleOrganisationOptions.map(({ link, organisation }) => <option key={`${link.role_on_project}-${organisation.id}`} value={organisation.id}>{organisation.name} {link.role_on_project === "main_contractor" ? "(main contractor)" : "(supporting trade)"}</option>)}
+                </select>
+              </label>
+            )}
+            {draft.buildingId && !mainContractorId && <p className="mt-1 text-xs text-[#8a5a12]">No main contractor is set for this building yet.</p>}
+          </div>
+          <div className="developer-snag-media grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+            <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
+            <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} compactLabel />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-2">
+            <button className="primary col-span-2 sm:col-span-1" onClick={() => createDeveloperSnag(false)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">
+              <Plus size={16} aria-hidden /> {isSaving ? "Saving..." : "Save and add another"}
+            </button>
+            <button className="secondary" onClick={() => createDeveloperSnag(true)} disabled={isSaving || !draft.buildingId || !draft.areaId || !draft.title.trim() || !draft.photoDataUrl} type="button">Save and close</button>
+            <button className="snag-action-link min-h-11 justify-center px-2" onClick={cancelDraft} disabled={isSaving} type="button">Cancel</button>
+          </div>
         </div>
       </FormPanel>
     </div>
@@ -10170,7 +10177,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
   );
 }
 
-function VideoInput({ value, onChange, disabled = false }: { value: File | null; onChange: (value: File | null) => void; disabled?: boolean }) {
+function VideoInput({ value, onChange, disabled = false, compactLabel = false }: { value: File | null; onChange: (value: File | null) => void; disabled?: boolean; compactLabel?: boolean }) {
   const [error, setError] = useState("");
   const [status, setStatus] = useState<"idle" | "checking" | "preparing">("idle");
   const [notice, setNotice] = useState("");
@@ -10209,7 +10216,7 @@ function VideoInput({ value, onChange, disabled = false }: { value: File | null;
     <div className="grid gap-2">
       <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Film size={18} aria-hidden />
-        {status === "preparing" ? "Reducing video..." : status === "checking" ? "Checking video..." : value ? "Replace video" : "Add optional video"}
+        {status === "preparing" ? "Reducing video..." : status === "checking" ? "Checking video..." : value ? "Replace video" : compactLabel ? "Video" : "Add optional video"}
         <input
           type="file"
           accept="video/mp4,video/webm,video/quicktime,video/*"

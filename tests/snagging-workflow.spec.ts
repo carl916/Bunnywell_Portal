@@ -269,7 +269,7 @@ async function createDeveloperSnag(page: Page, spec: SnagDraftSpec, saveAndClose
     await form.getByPlaceholder("Description").fill("");
   }
 
-  await form.locator("input[type='file']").last().setInputFiles(photoPath(spec.photoIndex));
+  await form.locator("input[type='file'][accept='image/*']").setInputFiles(photoPath(spec.photoIndex));
   await expect(form.getByRole("button", { name: /Annotate photo/i })).toBeVisible();
 
   if (saveAndClose) {

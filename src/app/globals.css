@@ -684,6 +684,31 @@ textarea.field {
   transform: translateY(-1px);
 }
 
+.developer-snag-toggle .primary,
+.developer-snag-toggle .secondary {
+  min-height: 2.75rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.developer-snag-media > * {
+  min-width: 0;
+}
+
+.developer-snag-media .camera-action {
+  min-height: 3.25rem;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.developer-snag-media > :last-child .camera-action {
+  border-style: solid;
+  border-color: var(--bw-border-strong);
+  background: var(--bw-surface);
+  box-shadow: none;
+  font-weight: 700;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;
