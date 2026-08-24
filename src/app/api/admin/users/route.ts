@@ -134,6 +134,40 @@ async function getAdminClientForRequest(request: Request) {
   return { adminClient, user: userData.user };
 }
 
+export async function GET(request: Request) {
+  try {
+    const { adminClient, response } = await getAdminClientForRequest(request);
+    if (response || !adminClient) return response;
+
+    const users: { id: string; lastSignInAt: string | null }[] = [];
+    const perPage = 1000;
+    let page = 1;
+
+    while (true) {
+      const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage });
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      users.push(...data.users.map((user) => ({
+        id: user.id,
+        lastSignInAt: user.last_sign_in_at ?? null,
+      })));
+
+      if (data.users.length < perPage) break;
+      page += 1;
+    }
+
+    return NextResponse.json({ users });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unexpected error." },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { adminClient, response } = await getAdminClientForRequest(request);

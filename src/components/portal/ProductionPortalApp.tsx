@@ -4465,12 +4465,12 @@ type AccessListRow = {
   kind: "profile" | "request";
   name: string;
   email: string;
-  typeLabel: string;
   status: "active" | "deactivated" | "pending" | "approved" | "rejected";
   roleLabel: string;
   phone: string;
   allocation: string;
   createdAt: string | null;
+  lastSignInAt: string | null;
   sortRank: number;
   profile?: Profile;
   request?: ResidentAccessRequest;
@@ -4509,6 +4509,39 @@ function UserDirectory({
 }) {
   const [filter, setFilter] = useState<AccessListFilter>("all");
   const [selectedRequestId, setSelectedRequestId] = useState("");
+  const [lastSignInsByUserId, setLastSignInsByUserId] = useState<Record<string, string | null>>({});
+  const [lastSignInsStatus, setLastSignInsStatus] = useState<"loading" | "loaded" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLastSignIns() {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      });
+      const payload = (await response.json()) as {
+        users?: { id: string; lastSignInAt: string | null }[];
+        error?: string;
+      };
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload.users) {
+        setLastSignInsStatus("error");
+        return;
+      }
+
+      setLastSignInsByUserId(Object.fromEntries(payload.users.map((user) => [user.id, user.lastSignInAt])));
+      setLastSignInsStatus("loaded");
+    }
+
+    void loadLastSignIns().catch(() => {
+      if (!cancelled) setLastSignInsStatus("error");
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   function userStatus(profile: Profile) {
     return profile.active === false ? "deactivated" : "active";
@@ -4547,12 +4580,12 @@ function UserDirectory({
         kind: "profile",
         name: profile.full_name || profile.name || "No name",
         email: profile.email,
-        typeLabel: "User",
         status,
         roleLabel: profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : statusLabel(profile.role),
         phone: profile.phone || "",
         allocation: allocationLabel(profile),
         createdAt: profile.created_at ?? null,
+        lastSignInAt: lastSignInsByUserId[profile.id] ?? null,
         sortRank: status === "active" ? 1 : 2,
         profile,
       };
@@ -4566,12 +4599,12 @@ function UserDirectory({
       kind: "request",
       name: request.full_name,
       email: request.email,
-      typeLabel: "Access request",
       status: request.status,
       roleLabel: statusLabel(request.resident_type),
       phone: request.phone,
       allocation: requestUnitsLabel(request),
       createdAt: request.created_at,
+      lastSignInAt: null,
       sortRank: request.status === "pending" ? 0 : request.status === "approved" ? 3 : 4,
       request,
     }));
@@ -4611,6 +4644,13 @@ function UserDirectory({
     if (row.kind === "profile") return editingUserId === row.id ? "Close" : "Edit";
     if (row.status === "pending") return selectedRequestId === row.id ? "Close" : "Review";
     return selectedRequestId === row.id ? "Close" : "View";
+  }
+
+  function lastSignInLabel(row: AccessListRow) {
+    if (row.kind === "request") return "—";
+    if (lastSignInsStatus === "loading") return "Loading…";
+    if (lastSignInsStatus === "error") return "Unavailable";
+    return row.lastSignInAt ? formatDate(row.lastSignInAt) : "Never";
   }
 
   function rowActionIcon(row: AccessListRow, isOpen: boolean) {
@@ -4678,16 +4718,14 @@ function UserDirectory({
                   <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
                   <p className="mt-0.5 truncate text-sm text-[#66736B]">{row.email}</p>
                 </div>
-                <div className="flex max-w-[8.5rem] flex-col items-end gap-1">
-                  <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
-                  <span className="rounded-md bg-white px-2 py-1 text-right text-xs font-semibold leading-tight text-[#617169]">{row.typeLabel}</span>
-                </div>
+                <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created/submitted</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last login</span><span className="min-w-0 text-right font-medium">{lastSignInLabel(row)}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -4730,12 +4768,12 @@ function UserDirectory({
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Status</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Role or resident type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation / requested flats</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Created / submitted</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Last login</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
@@ -4751,7 +4789,6 @@ function UserDirectory({
                       <p className="font-medium">{row.name}</p>
                       <p className="text-xs text-[#617169]">{row.email}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.typeLabel}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
                     </td>
@@ -4761,6 +4798,7 @@ function UserDirectory({
                       <p className="max-w-md truncate">{row.allocation}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastSignInLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
