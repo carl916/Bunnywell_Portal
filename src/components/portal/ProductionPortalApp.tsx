@@ -329,6 +329,8 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
   },
 };
 
+const hiddenScreens = new Set<Tab>(["units"]);
+
 const legacyScreenAliases: Record<string, Tab> = {
   admin: "setup_buildings",
   buildings: "setup_buildings",
@@ -441,7 +443,7 @@ function clearScreenFromUrl() {
 }
 
 function canAccessScreen(role: AppRole, tab: Tab) {
-  return portalScreens[tab].roles.includes(role);
+  return !hiddenScreens.has(tab) && portalScreens[tab].roles.includes(role);
 }
 
 function roleTabs(role: AppRole): Tab[] {
@@ -4369,7 +4371,7 @@ function DeveloperSnagging({
             )}
             {draft.buildingId && !mainContractorId && <p className="mt-1 text-xs text-[#8a5a12]">No main contractor is set for this building yet.</p>}
           </div>
-          <div className="developer-snag-media grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+          <div className="developer-snag-media grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
             <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
             <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} compactLabel />
           </div>
@@ -4457,8 +4459,6 @@ function requestUnitsLabel(request: ResidentAccessRequest) {
     .join(", ");
 }
 
-type AccessListFilter = "all" | "pending_requests" | "active_users" | "deactivated_users" | "rejected_requests";
-
 type AccessListRow = {
   id: string;
   key: string;
@@ -4507,7 +4507,6 @@ function UserDirectory({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  const [filter, setFilter] = useState<AccessListFilter>("all");
   const [selectedRequestId, setSelectedRequestId] = useState("");
   const [lastSignInsByUserId, setLastSignInsByUserId] = useState<Record<string, string | null>>({});
   const [lastSignInsStatus, setLastSignInsStatus] = useState<"loading" | "loaded" | "error">("loading");
@@ -4614,22 +4613,6 @@ function UserDirectory({
     ));
   })();
 
-  const filteredRows = rows.filter((row) => {
-    if (filter === "pending_requests") return row.kind === "request" && row.status === "pending";
-    if (filter === "active_users") return row.kind === "profile" && row.status === "active";
-    if (filter === "deactivated_users") return row.kind === "profile" && row.status === "deactivated";
-    if (filter === "rejected_requests") return row.kind === "request" && row.status === "rejected";
-    return true;
-  });
-
-  const filters: { value: AccessListFilter; label: string; count: number }[] = [
-    { value: "all", label: "All", count: rows.length },
-    { value: "pending_requests", label: "Pending requests", count: rows.filter((row) => row.kind === "request" && row.status === "pending").length },
-    { value: "active_users", label: "Active users", count: profiles.filter((profile) => profile.active !== false).length },
-    { value: "deactivated_users", label: "Deactivated users", count: profiles.filter((profile) => profile.active === false).length },
-    { value: "rejected_requests", label: "Rejected requests", count: rows.filter((row) => row.kind === "request" && row.status === "rejected").length },
-  ];
-
   function toggleProfile(profileId: string) {
     setSelectedRequestId("");
     onEditUser(editingUserId === profileId ? "" : profileId);
@@ -4650,7 +4633,7 @@ function UserDirectory({
     if (row.kind === "request") return "—";
     if (lastSignInsStatus === "loading") return "Loading…";
     if (lastSignInsStatus === "error") return "Unavailable";
-    return row.lastSignInAt ? formatDate(row.lastSignInAt) : "Never";
+    return row.lastSignInAt ? formatDateTime(row.lastSignInAt) : "Never";
   }
 
   function rowActionIcon(row: AccessListRow, isOpen: boolean) {
@@ -4690,24 +4673,8 @@ function UserDirectory({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-b border-[#e5e9e4] px-4 py-3 sm:flex sm:flex-wrap">
-        {filters.map((item) => (
-          <button
-            key={item.value}
-            className={`chip-button min-w-0 justify-center whitespace-normal text-center text-sm leading-tight ${filter === item.value ? "chip-button-active" : ""}`}
-            onClick={() => {
-              setFilter(item.value);
-              setSelectedRequestId("");
-              onEditUser("");
-            }}
-          >
-            {item.label} ({item.count})
-          </button>
-        ))}
-      </div>
-
       <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
-        {filteredRows.map((row) => {
+        {rows.map((row) => {
           const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
           const isMuted = row.status === "deactivated" || row.status === "rejected";
 
@@ -4760,7 +4727,7 @@ function UserDirectory({
             </article>
           );
         })}
-        {filteredRows.length === 0 && <p className="mobile-empty">No matching access records.</p>}
+        {rows.length === 0 && <p className="mobile-empty">No access records.</p>}
       </div>
 
       <div className="hidden overflow-x-auto md:block">
@@ -4778,7 +4745,7 @@ function UserDirectory({
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((row) => {
+            {rows.map((row) => {
               const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
               const isMuted = row.status === "deactivated" || row.status === "rejected";
 
@@ -4845,7 +4812,7 @@ function UserDirectory({
             })}
           </tbody>
         </table>
-        {filteredRows.length === 0 && <p className="p-4 text-sm text-[#617169]">No matching access records.</p>}
+        {rows.length === 0 && <p className="p-4 text-sm text-[#617169]">No access records.</p>}
       </div>
     </section>
   );
