@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -9,7 +9,9 @@ import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
+import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
+import { validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
 import { buildDepositStructure, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { formatGbp, parseGbpInput } from "@/lib/sales/currency";
@@ -27,6 +29,7 @@ import {
   pcConfirmationError,
 } from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { notificationVariantForMessage, type NotificationVariant } from "@/lib/notifications";
 import {
   type AppRole,
   type Area,
@@ -1382,6 +1385,8 @@ export function ProductionPortalApp() {
         <SalesReservationWorkflow
           user={user}
           profile={profile}
+          profiles={profiles}
+          organisations={organisations}
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
@@ -1472,6 +1477,7 @@ function Shell({
     ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
+  const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
@@ -1554,12 +1560,12 @@ function Shell({
       </header>
       {notice && (
         <div
-          className={`fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-sm font-medium shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6 ${positiveNotice(notice) ? "border-[#bcdcc7] bg-[#f0f8f3] text-[#0F3D2E]" : "border-[#e2c8a6] bg-[#fff8ec] text-[#735327]"}`}
-          role="status"
-          aria-live="polite"
+          className={`fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-sm font-medium shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6 ${notificationVariantClasses(noticeVariant)}`}
+          role={noticeVariant === "error" ? "alert" : "status"}
+          aria-live={noticeVariant === "error" ? "assertive" : "polite"}
         >
           <span className="flex items-center gap-2">
-            {positiveNotice(notice) && <CheckCircle2 size={16} aria-hidden />}
+            <NotificationIcon variant={noticeVariant} />
             {notice}
           </span>
         </div>
@@ -1628,10 +1634,18 @@ function Shell({
   );
 }
 
-function positiveNotice(notice: string) {
-  const lower = notice.toLowerCase();
-  if (/(cannot|could not|error|failed|invalid|missing|unable)/.test(lower)) return false;
-  return /(added|approved|closed|completed|created|deleted|marked|reactivated|reconciled|reset|resolved|saved|sent|submitted|updated|uploaded|welcome)/.test(lower);
+function notificationVariantClasses(variant: NotificationVariant) {
+  if (variant === "success") return "border-[#bcdcc7] bg-[#f0f8f3] text-[#0F3D2E]";
+  if (variant === "warning") return "border-[#e6c98c] bg-[#fff8e8] text-[#735327]";
+  if (variant === "error") return "border-[#f1b8b2] bg-[#fff4f2] text-[#7a271a]";
+  return "border-[#cbd8dd] bg-[#f3f7f8] text-[#34413a]";
+}
+
+function NotificationIcon({ variant }: { variant: NotificationVariant }) {
+  if (variant === "success") return <CheckCircle2 size={16} aria-hidden />;
+  if (variant === "warning") return <AlertTriangle size={16} aria-hidden />;
+  if (variant === "error") return <AlertCircle size={16} aria-hidden />;
+  return <Info size={16} aria-hidden />;
 }
 
 function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
@@ -3607,6 +3621,8 @@ function BuildingSalesSetup({
   const [isSaving, setIsSaving] = useState(false);
   const [buildCost, setBuildCost] = useState("");
   const [agentFeePercent, setAgentFeePercent] = useState("");
+  const [exchangeAgentFeePercent, setExchangeAgentFeePercent] = useState("");
+  const [completionAgentFeePercent, setCompletionAgentFeePercent] = useState("");
   const [reservationFee, setReservationFee] = useState("");
   const [reservationFeeHolder, setReservationFeeHolder] = useState("sales_agent");
   const [exchangeDepositPercent, setExchangeDepositPercent] = useState("10");
@@ -3619,6 +3635,11 @@ function BuildingSalesSetup({
     secondDepositEnabled,
     secondDepositPercent: moneyInputToNumber(secondDepositPercent) ?? 0,
     secondDepositMonthsAfterExchange: moneyInputToNumber(secondDepositMonths) ?? null,
+  });
+  const agentFeeStructure = validateAgentFeeStructure({
+    totalFeePercent: moneyInputToNumber(agentFeePercent),
+    exchangeFeePercent: moneyInputToNumber(exchangeAgentFeePercent),
+    completionFeePercent: moneyInputToNumber(completionAgentFeePercent),
   });
 
   useEffect(() => {
@@ -3636,6 +3657,8 @@ function BuildingSalesSetup({
         if (cancelled) return;
         setBuildCost(data?.build_cost?.toString() ?? "");
         setAgentFeePercent(data?.default_agent_fee_percent?.toString() ?? "");
+        setExchangeAgentFeePercent(data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "");
+        setCompletionAgentFeePercent(data?.default_completion_agent_fee_percent?.toString() ?? "0");
         setReservationFee(data?.reservation_fee?.toString() ?? "");
         setReservationFeeHolder(data?.reservation_fee_holder_default ?? "sales_agent");
         setExchangeDepositPercent(data?.exchange_deposit_percent?.toString() ?? "10");
@@ -3659,6 +3682,10 @@ function BuildingSalesSetup({
       onNotice(depositStructure.error ?? "Payment schedule is invalid.");
       return;
     }
+    if (!agentFeeStructure.isValid) {
+      onNotice(agentFeeStructure.error ?? "Agent fee structure is invalid.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -3667,6 +3694,8 @@ function BuildingSalesSetup({
         buildingId: building.id,
         buildCost,
         agentFeePercent: moneyInputToNumber(agentFeePercent),
+        exchangeAgentFeePercent: moneyInputToNumber(exchangeAgentFeePercent),
+        completionAgentFeePercent: moneyInputToNumber(completionAgentFeePercent),
         reservationFee,
         reservationFeeHolder,
         depositStructure,
@@ -3791,6 +3820,8 @@ function BuildingSalesSetup({
       reservation_fee: defaultsPayload.reservation_fee,
       reservation_fee_holder: defaultsPayload.reservation_fee_holder_default,
       agent_fee_percent: defaultsPayload.default_agent_fee_percent,
+      exchange_agent_fee_percent: defaultsPayload.default_exchange_agent_fee_percent,
+      completion_agent_fee_percent: defaultsPayload.default_completion_agent_fee_percent,
       vat_rate: defaultsPayload.default_vat_rate,
       solicitor_fee: defaultsPayload.default_sales_solicitor_fee,
       exchange_deposit_percent: defaultsPayload.exchange_deposit_percent,
@@ -3868,7 +3899,9 @@ function BuildingSalesSetup({
             {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="field-label">Default agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Total sales agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Exchange fee %<input className="field" inputMode="decimal" value={exchangeAgentFeePercent} onChange={(event) => setExchangeAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} /></label>
             <label className="field-label">Default reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} aria-label="Default reservation fee" /></label>
             <label className="field-label">
               Default reservation fee holder
@@ -3891,6 +3924,13 @@ function BuildingSalesSetup({
               </>
             )}
           </div>
+          <div className={`mt-4 rounded-md border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+            <div className="flex justify-between gap-4">
+              <span>Agent fee split</span>
+              <strong className="numeric-value">{exchangeAgentFeePercent || "0"}% + {completionAgentFeePercent || "0"}%</strong>
+            </div>
+            <p className="mt-1 text-xs">{agentFeeStructure.error ?? "The milestone fees match the total sales agent fee."}</p>
+          </div>
           <div className={`mt-4 rounded-md border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Completion balance</span>
@@ -3899,7 +3939,7 @@ function BuildingSalesSetup({
             <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>
           </div>
           <div className="mt-4 flex justify-end">
-            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid}>
+            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>
               Save sales setup
             </button>
           </div>
@@ -4125,6 +4165,7 @@ function DeveloperSnagging({
   uploadSnagMedia,
   onClose,
   onDirtyChange,
+  onRequestActivePanel,
 }: {
   user: User;
   buildings: Building[];
@@ -4139,12 +4180,12 @@ function DeveloperSnagging({
   uploadSnagMedia: UploadSnagMedia;
   onClose: () => void;
   onDirtyChange: (hasUnsavedChanges: boolean) => void;
+  onRequestActivePanel: (request?: ActivePanelRequest) => void;
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingResponsibleOrganisation, setIsChangingResponsibleOrganisation] = useState(false);
   const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
-  const formRef = useRef<HTMLDivElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
@@ -4207,18 +4248,6 @@ function DeveloperSnagging({
     return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId, source.responsibleOrganisationId].join("|");
   }
 
-  function focusTitleWithoutJump(formTopBefore: number | null) {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        if (formRef.current && formTopBefore !== null) {
-          const formTopAfter = formRef.current.getBoundingClientRect().top;
-          window.scrollBy(0, formTopAfter - formTopBefore);
-        }
-        titleInputRef.current?.focus({ preventScroll: true });
-      });
-    });
-  }
-
   function resetAndClose() {
     setCleanContextSignature(contextSignature(emptySnagDraft));
     setDraft(emptySnagDraft);
@@ -4246,7 +4275,6 @@ function DeveloperSnagging({
 
     setIsSaving(true);
     const savedDraft = { ...draft, responsibleOrganisationId: resolvedResponsibleOrganisationId };
-    const formTopBefore = formRef.current?.getBoundingClientRect().top ?? null;
     const supabase = createSupabaseBrowserClient();
     try {
       const mediaUploads = await uploadSnagMedia({ imageDataUrl: savedDraft.photoDataUrl, videoFile: savedDraft.videoFile }, "snags");
@@ -4302,7 +4330,7 @@ function DeveloperSnagging({
       if (closeAfterSave) {
         onClose();
       } else {
-        focusTitleWithoutJump(formTopBefore);
+        onRequestActivePanel({ focus: () => titleInputRef.current });
       }
     } catch (error) {
       onNotice(`Unable to add snag. ${readableError(error)}`);
@@ -4312,7 +4340,7 @@ function DeveloperSnagging({
   }
 
   return (
-    <div ref={formRef} className="max-w-xl">
+    <div className="max-w-xl">
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
           <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
@@ -6059,6 +6087,7 @@ function SnagWorkflow({
   const [addSnagHasUnsavedChanges, setAddSnagHasUnsavedChanges] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
   const [isViewingSnagDetails, setIsViewingSnagDetails] = useState(false);
+  const { panelRef: addSnagPanelRef, requestActivePanel: requestAddSnagPanel } = useActivePanel<HTMLDivElement>();
 
   function closeAddSnagForm() {
     if (addSnagHasUnsavedChanges && !window.confirm("Discard this unsaved snag?")) return;
@@ -6073,6 +6102,7 @@ function SnagWorkflow({
     }
     setAddSnagHasUnsavedChanges(false);
     setShowAddSnag(true);
+    requestAddSnagPanel();
   }
 
   return (
@@ -6095,24 +6125,27 @@ function SnagWorkflow({
         </div>
       </section>
       {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
-        <DeveloperSnagging
-          user={user}
-          buildings={buildings}
-          buildingFloors={buildingFloors}
-          units={units}
-          areas={areas}
-          trades={trades}
-          organisations={organisations}
-          buildingOrganisations={buildingOrganisations}
-          onNotice={onNotice}
-          reload={reload}
-          uploadSnagMedia={uploadSnagMedia}
-          onClose={() => {
-            setAddSnagHasUnsavedChanges(false);
-            setShowAddSnag(false);
-          }}
-          onDirtyChange={setAddSnagHasUnsavedChanges}
-        />
+        <div ref={addSnagPanelRef} className="active-panel-target">
+          <DeveloperSnagging
+            user={user}
+            buildings={buildings}
+            buildingFloors={buildingFloors}
+            units={units}
+            areas={areas}
+            trades={trades}
+            organisations={organisations}
+            buildingOrganisations={buildingOrganisations}
+            onNotice={onNotice}
+            reload={reload}
+            uploadSnagMedia={uploadSnagMedia}
+            onClose={() => {
+              setAddSnagHasUnsavedChanges(false);
+              setShowAddSnag(false);
+            }}
+            onDirtyChange={setAddSnagHasUnsavedChanges}
+            onRequestActivePanel={requestAddSnagPanel}
+          />
+        </div>
       )}
       {!isViewingSnagDetails && showPrintReport && canPrintReport && (
         <ReportsPanel

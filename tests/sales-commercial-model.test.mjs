@@ -48,7 +48,7 @@ test("commercial model saves use the dedicated action name from setup and sales 
 test("commercial model API uses the transactional RPC and avoids reservation progression side effects", () => {
   const body = functionBody(routeSource, "saveCommercialModel");
 
-  assert.match(body, /\.rpc\("save_unit_commercial_model"/);
+  assert.match(body, /\.rpc\("save_unit_commercial_model_with_agent_fees"/);
   assert.doesNotMatch(body, /insertEvent\(/);
   assert.doesNotMatch(body, /workflow_status:\s*"awaiting_commercial_approval"/);
   assert.doesNotMatch(body, /from\("unit_sale_invoices"\)/);
@@ -100,8 +100,9 @@ test("blank commercial model percentage input does not override saved agent fee"
   assert.match(workflowSource, /function normaliseNumberInput\(value: string\) \{\s+if \(value\.trim\(\) === ""\) return null;/);
 });
 
-test("sale file includes buyer view and advanced deal setup friction", () => {
-  assert.match(workflowSource, />Buyer view</);
+test("sale file includes the Buyer commercial section and advanced deal setup friction", () => {
+  assert.match(workflowSource, />Buyer</);
+  assert.match(workflowSource, /activeUnitSection === "commercial"/);
   assert.match(workflowSource, /Payment schedule and buyer-facing contributions/);
   assert.match(workflowSource, /<span>Contract price<\/span>/);
   assert.match(workflowSource, /Net cost to buyer/);
@@ -175,7 +176,9 @@ test("reservation UI keeps document and activity history visible", () => {
   assert.match(workflowSource, /DocumentVersionHistory/);
   assert.match(workflowSource, /unit_sale_document_versions"\)\s+\.select\("\*"\)\s+\.in\("document_id", documentIds\)\s+\.order\("version_number"/);
   assert.match(workflowSource, /unit_sale_workflow_events/);
-  assert.match(workflowSource, /Activity \{activeWorkflowEvents\.length\}/);
+  assert.match(workflowSource, /recorded \{events\.length === 1 \? "update" : "updates"\}/);
+  assert.match(workflowSource, />Show history</);
+  assert.doesNotMatch(workflowSource, /Activity \{activeWorkflowEvents\.length\}/);
 });
 
 test("buyer identity migration backfills legacy buyer name without concatenating fields", () => {
