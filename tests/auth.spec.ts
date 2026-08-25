@@ -35,8 +35,9 @@ test("admin can sign in and see admin navigation", async ({ page }) => {
   const navigation = desktopNavigation(page);
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Snags", exact: true })).toBeVisible();
-  await expect(navigation.getByRole("button", { name: "Units", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Sales", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Setup", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Units", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Admin", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Users", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Audit", exact: true })).toHaveCount(0);

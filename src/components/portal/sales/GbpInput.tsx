@@ -27,7 +27,7 @@ export function GbpInput({ value, onChange, disabled, placeholder, className = "
   const displayValue = formatGbpInputValue(value);
 
   return (
-    <div className={`gbp-input ${className}`} data-disabled={disabled ? "true" : "false"}>
+    <div className={`gbp-input numeric-value ${className}`} data-disabled={disabled ? "true" : "false"}>
       <span className="gbp-input-prefix">{"\u00a3"}</span>
       <input
         ref={inputRef}

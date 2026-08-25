@@ -5,6 +5,7 @@ import { canPerformSalesAction, canViewSalesBuilding, isSalesInternalRole } from
 import { buildFailedReservationRedactionPatch } from "@/lib/sales/reservation-redaction";
 import { buildDepositStructure, buildPaymentScheduleRows, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { parseGbpInput } from "@/lib/sales/currency";
+import { calculateMilestoneFee, validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { createSupabaseServiceRoleClient, requiredEnv } from "@/lib/supabase/admin";
 
 const SALE_DOCUMENTS_BUCKET = "sale-documents";
@@ -27,8 +28,11 @@ type ReservationPayload = {
     | "save_commercial_model"
     | "save_commercial_package"
     | "approve_commercial_package"
+    | "approve_agent_invoice"
+    | "reject_agent_invoice"
     | "record_exchange"
-    | "record_invoice_reconciliation"
+    | "record_agent_fee_payment"
+    | "void_agent_fee_payment"
     | "approve_completion_documents"
     | "query_completion_documents"
     | "record_completion";
@@ -55,6 +59,8 @@ type ReservationPayload = {
   parkingLocationDetails?: string | null;
   additionalSpecialConditions?: string[] | null;
   agentFeePercent?: string | number | null;
+  exchangeAgentFeePercent?: string | number | null;
+  completionAgentFeePercent?: string | number | null;
   solicitorFee?: string | number | null;
   exchangeDepositPercent?: string | number | null;
   secondDepositEnabled?: boolean | null;
@@ -67,17 +73,21 @@ type ReservationPayload = {
   invoiceNetAmount?: string | number | null;
   invoiceVatAmount?: string | number | null;
   invoiceGrossAmount?: string | number | null;
+  invoiceMilestone?: "exchange" | "completion" | null;
   exchangeDate?: string | null;
-  solicitorPaymentAmount?: string | number | null;
-  solicitorPaymentDate?: string | null;
-  developerShortfallAmount?: string | number | null;
-  developerShortfallDate?: string | null;
-  reconciliationNotes?: string | null;
+  exchangeDepositConfirmed?: boolean | null;
+  invoiceId?: string | null;
+  paymentAmount?: string | number | null;
+  paymentDate?: string | null;
+  paymentClientReference?: string | null;
+  paymentId?: string | null;
+  paymentVoidReason?: string | null;
   completionDocumentType?: "completion_statement" | "statement_of_account";
   completionQueryNote?: string | null;
   completionDate?: string | null;
   reservationFormPath?: string | null;
   rejectionReason?: string | null;
+  invoiceRejectionReason?: string | null;
   queryNote?: string | null;
   failReason?: string | null;
 };
@@ -89,6 +99,7 @@ function normaliseText(value?: string | null) {
 
 function normaliseMoney(value?: string | number | null) {
   if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "string" && value.includes("-")) return null;
   const numeric = parseGbpInput(value);
   return numeric !== null && Number.isFinite(numeric) && numeric >= 0 ? numeric : null;
 }
@@ -157,18 +168,19 @@ function calculateAgentInvoiceValues(input: {
   reservationFeeHolder?: string | null;
   agentContribution?: number | null;
 }) {
-  const feeBase = input.contractPrice ?? 0;
-  const netAmount = feeBase * ((input.agentFeePercent ?? 0) / 100);
-  const vatAmount = netAmount * ((input.vatRate ?? 20) / 100);
-  const grossAmount = netAmount + vatAmount;
+  const { netAmount, vatAmount, grossAmount } = calculateMilestoneFee({
+    salePrice: input.contractPrice,
+    feePercent: input.agentFeePercent,
+    vatRate: input.vatRate,
+  });
   const reservationFeeDeduction = input.reservationFeeHolder === "sales_agent" ? input.reservationFee ?? 0 : 0;
   const agentContributionDeduction = input.agentContribution ?? 0;
   const expectedPayableAmount = Math.max(0, grossAmount - reservationFeeDeduction - agentContributionDeduction);
 
   return {
-    netAmount: Math.round(netAmount * 100) / 100,
-    vatAmount: Math.round(vatAmount * 100) / 100,
-    grossAmount: Math.round(grossAmount * 100) / 100,
+    netAmount,
+    vatAmount,
+    grossAmount,
     reservationFeeDeduction: Math.round(reservationFeeDeduction * 100) / 100,
     agentContributionDeduction: Math.round(agentContributionDeduction * 100) / 100,
     expectedPayableAmount: Math.round(expectedPayableAmount * 100) / 100,
@@ -390,6 +402,21 @@ function termsSnapshotFromDefaults(input: {
   });
 
   if (!depositStructure.isValid) throw new Error(depositStructure.error ?? "Payment schedule is invalid.");
+  const totalAgentFeePercent = usePayloadCommercials && hasPayloadValue("agentFeePercent")
+    ? normalisePercent(payload?.agentFeePercent)
+    : Number(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent ?? 0);
+  const exchangeAgentFeePercent = usePayloadCommercials && hasPayloadValue("exchangeAgentFeePercent")
+    ? normalisePercent(payload?.exchangeAgentFeePercent)
+    : Number(currentTerms?.exchange_agent_fee_percent ?? defaults?.default_exchange_agent_fee_percent ?? totalAgentFeePercent ?? 0);
+  const completionAgentFeePercent = usePayloadCommercials && hasPayloadValue("completionAgentFeePercent")
+    ? normalisePercent(payload?.completionAgentFeePercent)
+    : Number(currentTerms?.completion_agent_fee_percent ?? defaults?.default_completion_agent_fee_percent ?? 0);
+  const feeStructure = validateAgentFeeStructure({
+    totalFeePercent: totalAgentFeePercent,
+    exchangeFeePercent: exchangeAgentFeePercent,
+    completionFeePercent: completionAgentFeePercent,
+  });
+  if (!feeStructure.isValid) throw new Error(feeStructure.error ?? "Agent fee structure is invalid.");
 
   return {
     list_price_at_offer: usePayloadCommercials
@@ -412,9 +439,9 @@ function termsSnapshotFromDefaults(input: {
     reservation_fee_holder: usePayloadCommercials
       ? normaliseText(payload?.reservationFeeHolder) ?? currentTerms?.reservation_fee_holder ?? defaults?.reservation_fee_holder_default ?? "sales_agent"
       : currentTerms?.reservation_fee_holder ?? defaults?.reservation_fee_holder_default ?? "sales_agent",
-    agent_fee_percent: usePayloadCommercials
-      ? hasPayloadValue("agentFeePercent") ? normalisePercent(payload?.agentFeePercent) : toNullableNumber(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent)
-      : toNullableNumber(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent),
+    agent_fee_percent: totalAgentFeePercent,
+    exchange_agent_fee_percent: exchangeAgentFeePercent,
+    completion_agent_fee_percent: completionAgentFeePercent,
     vat_rate: Number(currentTerms?.vat_rate ?? defaults?.default_vat_rate ?? 20),
     solicitor_fee: usePayloadCommercials
       ? hasPayloadValue("solicitorFee") ? normaliseMoney(payload?.solicitorFee) : Number(currentTerms?.solicitor_fee ?? defaults?.default_sales_solicitor_fee ?? 882)
@@ -610,11 +637,13 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   documentTitle?: string;
   requiredAction?: "submit_reservation" | "submit_agent_invoice" | "submit_completion_documents";
   storagePrefix?: string;
+  feeMilestone?: "exchange" | "completion";
 }) {
   const documentType = config?.documentType ?? "reservation_form";
   const documentTitle = config?.documentTitle ?? "Reservation form";
   const requiredAction = config?.requiredAction ?? "submit_reservation";
   const storagePrefix = config?.storagePrefix ?? "reservation-form";
+  const feeMilestone = config?.feeMilestone ?? null;
 
   if (!canPerformSalesAction(requester.role, requiredAction)) throw new Error("You cannot upload this sale document.");
   const saleAttemptId = formData.get("saleAttemptId")?.toString();
@@ -626,13 +655,14 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   const attempt = await loadSaleAttempt(adminClient, saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
 
-  const documentResult = await adminClient
+  let documentQuery = adminClient
     .from("unit_sale_documents")
     .select("*")
     .eq("sale_attempt_id", saleAttemptId)
     .eq("document_type", documentType)
-    .is("superseded_at", null)
-    .maybeSingle();
+    .is("superseded_at", null);
+  documentQuery = feeMilestone ? documentQuery.eq("fee_milestone", feeMilestone) : documentQuery.is("fee_milestone", null);
+  const documentResult = await documentQuery.maybeSingle();
   let document = documentResult.data;
   const documentError = documentResult.error;
 
@@ -663,6 +693,7 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
     const { data, error } = await adminClient.from("unit_sale_documents").insert({
       sale_attempt_id: saleAttemptId,
       document_type: documentType,
+      fee_milestone: feeMilestone,
       title: documentTitle,
       status: "uploaded",
       visibility: "shared_sale_file",
@@ -719,7 +750,7 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   await insertEvent(adminClient, attempt, requester, {
     type: isReplacement ? `${documentType}_replaced` : `${documentType}_uploaded`,
     summary: `${documentTitle} ${isReplacement ? "replaced" : "uploaded"}.`,
-    metadata: { fileName: safeFileName, versionNumber },
+    metadata: { fileName: safeFileName, versionNumber, feeMilestone },
   });
 
   return { saleAttemptId, documentId: document.id };
@@ -730,44 +761,100 @@ async function uploadReservationForm(adminClient: SupabaseClient, requester: Req
 }
 
 async function uploadAgentInvoice(adminClient: SupabaseClient, requester: Requester, formData: FormData) {
-  const result = await uploadSaleDocument(adminClient, requester, formData, {
-    documentType: "agent_invoice",
-    documentTitle: "Agent invoice",
-    requiredAction: "submit_agent_invoice",
-    storagePrefix: "agent-invoice",
-  });
+  if (!canPerformSalesAction(requester.role, "submit_agent_invoice")) throw new Error("You cannot upload this sale document.");
+  const saleAttemptId = formData.get("saleAttemptId")?.toString();
+  if (!saleAttemptId) throw new Error("Sale attempt is required.");
+  const feeMilestone = formData.get("feeMilestone")?.toString();
+  if (feeMilestone !== "exchange" && feeMilestone !== "completion") {
+    throw new Error("Choose whether this is the Exchange or Completion invoice.");
+  }
+  const attempt = await loadSaleAttempt(adminClient, saleAttemptId);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
+  const allowedStatuses = feeMilestone === "exchange"
+    ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"]
+    : ["exchanged", "completion_pending", "completed"];
+  if (!allowedStatuses.includes(attempt.workflow_status)) {
+    throw new Error(feeMilestone === "exchange"
+      ? "Approve the reservation before uploading the Exchange agent invoice."
+      : "Record Exchange before uploading the Completion agent invoice.");
+  }
 
-  const attempt = await loadSaleAttempt(adminClient, result.saleAttemptId);
+  const invoiceReference = normaliseText(formData.get("invoiceReference")?.toString());
+  const invoiceDate = normaliseDate(formData.get("invoiceDate")?.toString());
+  const invoiceGrossAmount = normaliseMoney(formData.get("invoiceGrossAmount")?.toString());
+  if (!invoiceReference || !invoiceDate || invoiceGrossAmount === null || invoiceGrossAmount <= 0) {
+    throw new Error("Invoice reference, invoice date and total are required.");
+  }
+  if (isFutureDate(invoiceDate)) throw new Error("Invoice date cannot be in the future.");
+
   const currentTerms = await currentTermsForAttempt(adminClient, attempt.id);
-  const expected = calculateAgentInvoiceValues({
-    contractPrice: currentTerms?.contract_price as number | null,
-    agentFeePercent: currentTerms?.agent_fee_percent as number | null,
-    vatRate: currentTerms?.vat_rate as number | null,
-    reservationFee: currentTerms?.reservation_fee as number | null,
-    reservationFeeHolder: currentTerms?.reservation_fee_holder as string | null,
-    agentContribution: currentTerms?.agent_contribution as number | null,
-  });
-
   const existingInvoice = await adminClient
     .from("unit_sale_invoices")
-    .select("id")
+    .select("id,status")
     .eq("sale_attempt_id", attempt.id)
     .eq("invoice_type", "sales_agent")
+    .eq("fee_milestone", feeMilestone)
     .maybeSingle();
   if (existingInvoice.error) throw existingInvoice.error;
+  if (existingInvoice.data && existingInvoice.data.status !== "query_raised") {
+    throw new Error(`An active ${feeMilestone === "completion" ? "Completion" : "Exchange"} invoice already exists.`);
+  }
+
+  const milestoneFeePercent = feeMilestone === "completion"
+    ? currentTerms?.completion_agent_fee_percent
+    : currentTerms?.exchange_agent_fee_percent ?? currentTerms?.agent_fee_percent;
+  if (Number(milestoneFeePercent ?? 0) <= 0) {
+    throw new Error(`No ${feeMilestone === "completion" ? "Completion" : "Exchange"} agent fee is configured for this sale.`);
+  }
+  const milestoneFee = calculateMilestoneFee({
+    salePrice: currentTerms?.contract_price as number | null,
+    feePercent: milestoneFeePercent as number | null,
+    vatRate: currentTerms?.vat_rate as number | null,
+  });
+  const expected = feeMilestone === "exchange"
+    ? calculateAgentInvoiceValues({
+      contractPrice: currentTerms?.contract_price as number | null,
+      agentFeePercent: milestoneFeePercent as number | null,
+      vatRate: currentTerms?.vat_rate as number | null,
+      reservationFee: currentTerms?.reservation_fee as number | null,
+      reservationFeeHolder: currentTerms?.reservation_fee_holder as string | null,
+      agentContribution: currentTerms?.agent_contribution as number | null,
+    })
+    : {
+      ...milestoneFee,
+      reservationFeeDeduction: 0,
+      agentContributionDeduction: 0,
+      expectedPayableAmount: milestoneFee.grossAmount,
+    };
+
+  const milestoneLabel = feeMilestone === "completion" ? "Completion" : "Exchange";
+  const result = await uploadSaleDocument(adminClient, requester, formData, {
+    documentType: "agent_invoice",
+    documentTitle: `${milestoneLabel} agent invoice`,
+    requiredAction: "submit_agent_invoice",
+    storagePrefix: `${feeMilestone}-agent-invoice`,
+    feeMilestone,
+  });
 
   const invoicePayload = {
     sale_attempt_id: attempt.id,
     document_id: result.documentId,
     invoice_type: "sales_agent",
+    fee_milestone: feeMilestone,
+    fee_percentage: milestoneFeePercent as number | null,
     supplier_organisation_id: attempt.sales_agent_organisation_id,
+    invoice_reference: invoiceReference,
+    invoice_date: invoiceDate,
     net_amount: expected.netAmount,
     vat_amount: expected.vatAmount,
-    gross_amount: expected.grossAmount,
+    gross_amount: invoiceGrossAmount,
+    expected_gross_amount: expected.grossAmount,
     reservation_fee_deduction: expected.reservationFeeDeduction,
     agent_contribution_deduction: expected.agentContributionDeduction,
     expected_payable_amount: expected.expectedPayableAmount,
     status: "uploaded",
+    approved_by_user_id: null,
+    approved_at: null,
     updated_by_user_id: requester.id,
     updated_at: new Date().toISOString(),
   };
@@ -795,7 +882,7 @@ async function uploadCompletionDocument(adminClient: SupabaseClient, requester: 
   const saleAttemptId = formData.get("saleAttemptId")?.toString();
   if (!saleAttemptId) throw new Error("Sale attempt is required.");
   const attempt = await loadSaleAttempt(adminClient, saleAttemptId);
-  if (!["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status)) {
+  if (attempt.workflow_status !== "exchanged") {
     throw new Error("Exchange must be recorded before completion documents are uploaded.");
   }
 
@@ -1085,7 +1172,7 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
     secondDepositMonthsAfterExchange: normaliseInteger(termsPatch.second_deposit_months_after_exchange as string | number | null | undefined),
   });
 
-  const { data, error } = await adminClient.rpc("save_unit_commercial_model", {
+  const { data, error } = await adminClient.rpc("save_unit_commercial_model_with_agent_fees", {
     p_unit_id: unitId,
     p_requester_id: requester.id,
     p_list_price_at_offer: termsPatch.list_price_at_offer,
@@ -1096,6 +1183,8 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
     p_reservation_fee: termsPatch.reservation_fee,
     p_reservation_fee_holder: termsPatch.reservation_fee_holder,
     p_agent_fee_percent: termsPatch.agent_fee_percent,
+    p_exchange_agent_fee_percent: termsPatch.exchange_agent_fee_percent,
+    p_completion_agent_fee_percent: termsPatch.completion_agent_fee_percent,
     p_vat_rate: termsPatch.vat_rate,
     p_solicitor_fee: termsPatch.solicitor_fee,
     p_exchange_deposit_percent: termsPatch.exchange_deposit_percent,
@@ -1120,6 +1209,74 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
   return { saleAttemptId: result?.sale_attempt_id ?? attempt?.id };
 }
 
+type MilestoneInvoiceRecord = {
+  id: string;
+  document_id: string | null;
+  status: string;
+};
+
+async function loadMilestoneInvoice(adminClient: SupabaseClient, saleAttemptId: string, feeMilestone: "exchange" | "completion") {
+  const { data, error } = await adminClient
+    .from("unit_sale_invoices")
+    .select("id,document_id,status")
+    .eq("sale_attempt_id", saleAttemptId)
+    .eq("invoice_type", "sales_agent")
+    .eq("fee_milestone", feeMilestone)
+    .maybeSingle();
+  if (error) throw error;
+  return data as MilestoneInvoiceRecord | null;
+}
+
+async function requireCurrentInvoiceVersion(adminClient: SupabaseClient, invoice: MilestoneInvoiceRecord, milestoneLabel: string) {
+  if (!invoice.document_id) throw new Error(`Upload the ${milestoneLabel} agent invoice first.`);
+  const { data, error } = await adminClient
+    .from("unit_sale_document_versions")
+    .select("id")
+    .eq("document_id", invoice.document_id)
+    .eq("is_current", true)
+    .is("redacted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error(`Upload the ${milestoneLabel} agent invoice first.`);
+}
+
+async function markMilestoneInvoiceApproved(adminClient: SupabaseClient, requester: Requester, invoice: MilestoneInvoiceRecord, now: string) {
+  if (!invoice.document_id) throw new Error("Agent invoice document is missing.");
+  const approvalPatch = {
+    status: "approved",
+    approved_by_user_id: requester.id,
+    approved_at: now,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  };
+  const { error: documentError } = await adminClient.from("unit_sale_documents").update(approvalPatch).eq("id", invoice.document_id);
+  if (documentError) throw documentError;
+  const { error: invoiceError } = await adminClient.from("unit_sale_invoices").update(approvalPatch).eq("id", invoice.id);
+  if (invoiceError) throw invoiceError;
+}
+
+async function markMilestoneInvoiceRejected(adminClient: SupabaseClient, requester: Requester, invoice: MilestoneInvoiceRecord, rejectionReason: string, now: string) {
+  if (!invoice.document_id) throw new Error("Agent invoice document is missing.");
+  const { error: documentError } = await adminClient.from("unit_sale_documents").update({
+    status: "query_raised",
+    query_note: rejectionReason,
+    approved_by_user_id: null,
+    approved_at: null,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("id", invoice.document_id);
+  if (documentError) throw documentError;
+
+  const { error: invoiceError } = await adminClient.from("unit_sale_invoices").update({
+    status: "query_raised",
+    approved_by_user_id: null,
+    approved_at: null,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  }).eq("id", invoice.id);
+  if (invoiceError) throw invoiceError;
+}
+
 async function approveCommercialPackage(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "approve_commercial_package")) throw new Error("Only developers can approve the commercial package.");
   if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
@@ -1132,25 +1289,6 @@ async function approveCommercialPackage(adminClient: SupabaseClient, requester: 
 
   const currentTerms = await currentTermsForAttempt(adminClient, attempt.id);
   if (!currentTerms?.contract_price) throw new Error("Contract price is required before commercial approval.");
-
-  const { data: invoice, error: invoiceError } = await adminClient
-    .from("unit_sale_invoices")
-    .select("id,document_id,status")
-    .eq("sale_attempt_id", attempt.id)
-    .eq("invoice_type", "sales_agent")
-    .maybeSingle();
-  if (invoiceError) throw invoiceError;
-  if (!invoice?.document_id) throw new Error("Upload the sales agent invoice before commercial approval.");
-
-  const { data: invoiceVersion, error: invoiceVersionError } = await adminClient
-    .from("unit_sale_document_versions")
-    .select("id")
-    .eq("document_id", invoice.document_id)
-    .eq("is_current", true)
-    .is("redacted_at", null)
-    .maybeSingle();
-  if (invoiceVersionError) throw invoiceVersionError;
-  if (!invoiceVersion) throw new Error("Upload the sales agent invoice before commercial approval.");
 
   const now = new Date().toISOString();
   const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
@@ -1170,22 +1308,6 @@ async function approveCommercialPackage(adminClient: SupabaseClient, requester: 
     updated_at: now,
   }).eq("id", currentTerms.id);
 
-  await adminClient.from("unit_sale_documents").update({
-    status: "approved",
-    approved_by_user_id: requester.id,
-    approved_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", invoice.document_id);
-
-  await adminClient.from("unit_sale_invoices").update({
-    status: "approved",
-    approved_by_user_id: requester.id,
-    approved_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", invoice.id);
-
   await insertEvent(adminClient, attempt, requester, {
     type: "commercial_package_approved",
     toStatus: "ready_for_exchange",
@@ -1195,12 +1317,85 @@ async function approveCommercialPackage(adminClient: SupabaseClient, requester: 
   return { saleAttemptId: updatedAttempt.id };
 }
 
+async function approveAgentInvoice(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "approve_agent_invoice")) throw new Error("Only developers can approve agent invoices.");
+  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
+  const feeMilestone = payload.invoiceMilestone;
+  if (feeMilestone !== "exchange" && feeMilestone !== "completion") throw new Error("Choose a valid invoice milestone.");
+  const milestoneLabel = feeMilestone === "completion" ? "Completion" : "Exchange";
+
+  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
+  const allowedStatuses = feeMilestone === "exchange"
+    ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"]
+    : ["exchanged", "completion_pending", "completed"];
+  if (!allowedStatuses.includes(attempt.workflow_status)) {
+    throw new Error(feeMilestone === "completion" ? "Record Exchange before approving the Completion agent invoice." : "Approve the reservation before approving the Exchange agent invoice.");
+  }
+
+  const invoice = await loadMilestoneInvoice(adminClient, attempt.id, feeMilestone);
+  if (!invoice) throw new Error(`Upload the ${milestoneLabel} agent invoice before approving it.`);
+  if (invoice.status === "query_raised") throw new Error(`Upload a corrected ${milestoneLabel} agent invoice before approving it.`);
+  if (["approved", "part_paid", "paid", "reconciled"].includes(invoice.status)) return { saleAttemptId: attempt.id, invoiceId: invoice.id };
+  await requireCurrentInvoiceVersion(adminClient, invoice, milestoneLabel);
+
+  const now = new Date().toISOString();
+  await markMilestoneInvoiceApproved(adminClient, requester, invoice, now);
+  await insertEvent(adminClient, attempt, requester, {
+    type: feeMilestone === "completion" ? "completion_agent_invoice_approved" : "agent_invoice_approved",
+    toStatus: attempt.workflow_status,
+    summary: `${milestoneLabel} agent invoice approved.`,
+    metadata: { invoiceId: invoice.id, feeMilestone },
+  });
+
+  return { saleAttemptId: attempt.id, invoiceId: invoice.id };
+}
+
+async function rejectAgentInvoice(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "reject_agent_invoice")) throw new Error("Only developers can reject the sales agent invoice.");
+  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
+  const feeMilestone = payload.invoiceMilestone ?? "exchange";
+  if (feeMilestone !== "exchange" && feeMilestone !== "completion") throw new Error("Choose a valid invoice milestone.");
+  const milestoneLabel = feeMilestone === "completion" ? "Completion" : "Exchange";
+  const rejectionReason = normaliseText(payload.invoiceRejectionReason);
+  if (!rejectionReason) throw new Error("Add a reason for rejecting the sales agent invoice.");
+
+  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
+  const allowedStatuses = feeMilestone === "exchange"
+    ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"]
+    : ["exchanged", "completion_pending", "completed"];
+  if (!allowedStatuses.includes(attempt.workflow_status)) {
+    throw new Error(`${milestoneLabel} agent invoice review is not available at this sale stage.`);
+  }
+
+  const invoice = await loadMilestoneInvoice(adminClient, attempt.id, feeMilestone);
+  if (!invoice?.document_id) throw new Error("Upload the sales agent invoice before rejecting it.");
+  if (invoice.status === "query_raised") throw new Error("A corrected sales agent invoice has already been requested.");
+  if (["approved", "part_paid", "paid", "reconciled"].includes(invoice.status)) {
+    throw new Error(`An approved ${milestoneLabel} agent invoice cannot be rejected.`);
+  }
+
+  const now = new Date().toISOString();
+  await markMilestoneInvoiceRejected(adminClient, requester, invoice, rejectionReason, now);
+
+  await insertEvent(adminClient, attempt, requester, {
+    type: feeMilestone === "completion" ? "completion_agent_invoice_rejected" : "agent_invoice_rejected",
+    toStatus: attempt.workflow_status,
+    summary: `${milestoneLabel} agent invoice rejected. Correction requested.`,
+    metadata: { rejectionReason, invoiceId: invoice.id, feeMilestone },
+  });
+
+  return { saleAttemptId: attempt.id };
+}
+
 async function recordExchange(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "record_exchange")) throw new Error("Only developers or conveyancers can record exchange.");
   if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
 
   const exchangeDate = normaliseDate(payload.exchangeDate);
   if (!exchangeDate) throw new Error("Enter a valid exchange date.");
+  if (payload.exchangeDepositConfirmed !== true) throw new Error("Confirm that the exchange deposit has been received.");
   const today = new Date().toISOString().slice(0, 10);
   if (exchangeDate > today) throw new Error("Exchange date cannot be in the future.");
 
@@ -1227,150 +1422,130 @@ async function recordExchange(adminClient: SupabaseClient, requester: Requester,
     type: "exchange_recorded",
     toStatus: "exchanged",
     summary: "Exchange recorded. Unit marked Exchanged.",
-    metadata: { exchangeDate },
+    metadata: { exchangeDate, exchangeDepositConfirmed: true },
   });
 
   return { saleAttemptId: updatedAttempt.id };
 }
 
-async function upsertInvoicePayment(
-  adminClient: SupabaseClient,
-  input: {
-    invoiceId: string;
-    saleAttemptId: string;
-    paymentSource: "solicitor_deposit" | "developer_shortfall";
-    amount: number | null;
-    paidAt: string | null;
-    requester: Requester;
-    notes: string | null;
-  },
-) {
-  const { data: existing, error: existingError } = await adminClient
-    .from("unit_sale_invoice_payments")
-    .select("id")
-    .eq("invoice_id", input.invoiceId)
-    .eq("payment_source", input.paymentSource)
-    .maybeSingle();
-  if (existingError) throw existingError;
-
-  if (input.amount === null) return;
-
-  const paymentPayload = {
-    amount: input.amount,
-    paid_at: input.paidAt,
-    recorded_by_user_id: input.requester.id,
-    notes: input.notes,
-  };
-
-  if (existing?.id) {
-    const { error } = await adminClient.from("unit_sale_invoice_payments").update(paymentPayload).eq("id", existing.id);
-    if (error) throw error;
-    return;
+async function recordAgentFeePayment(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "record_agent_fee_payment")) {
+    throw new Error("Only developers or admins can record agent fee payments.");
   }
+  const invoiceId = normaliseText(payload.invoiceId);
+  const amount = normaliseMoney(payload.paymentAmount);
+  const paymentDate = normaliseDate(payload.paymentDate);
+  const clientReference = normaliseText(payload.paymentClientReference);
 
-  const { error } = await adminClient.from("unit_sale_invoice_payments").insert({
-    invoice_id: input.invoiceId,
-    sale_attempt_id: input.saleAttemptId,
-    payment_source: input.paymentSource,
-    ...paymentPayload,
-  });
-  if (error) throw error;
-}
-
-async function recordInvoiceReconciliation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
-
-  const solicitorPaymentAmount = normaliseMoney(payload.solicitorPaymentAmount);
-  const solicitorPaymentDate = normaliseDate(payload.solicitorPaymentDate);
-  const developerShortfallAmount = normaliseMoney(payload.developerShortfallAmount);
-  const developerShortfallDate = normaliseDate(payload.developerShortfallDate);
-  const notes = normaliseText(payload.reconciliationNotes);
-
-  if (solicitorPaymentAmount !== null && !canPerformSalesAction(requester.role, "record_solicitor_payment")) {
-    throw new Error("Only developers or conveyancers can record solicitor invoice payments.");
-  }
-  if (developerShortfallAmount !== null && !canPerformSalesAction(requester.role, "record_developer_shortfall")) {
-    throw new Error("Only developers can record developer shortfall payments.");
-  }
-  if (solicitorPaymentAmount === null && developerShortfallAmount === null) {
-    throw new Error("Enter a solicitor payment or developer shortfall payment before saving reconciliation.");
-  }
-  if (solicitorPaymentAmount !== null && !solicitorPaymentDate) throw new Error("Enter a valid solicitor payment date.");
-  if (developerShortfallAmount !== null && !developerShortfallDate) throw new Error("Enter a valid developer shortfall payment date.");
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (solicitorPaymentDate && solicitorPaymentDate > today) throw new Error("Solicitor payment date cannot be in the future.");
-  if (developerShortfallDate && developerShortfallDate > today) throw new Error("Developer shortfall payment date cannot be in the future.");
-
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status)) {
-    throw new Error("Exchange must be recorded before invoice reconciliation.");
+  if (!invoiceId) throw new Error("Sales agent invoice is required.");
+  if (amount === null || amount <= 0) throw new Error("Payment amount must be greater than zero.");
+  if (!paymentDate || isFutureDate(paymentDate)) throw new Error("Enter a valid payment date that is not in the future.");
+  if (!clientReference || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientReference)) {
+    throw new Error("Payment reference is invalid.");
   }
 
   const { data: invoice, error: invoiceError } = await adminClient
     .from("unit_sale_invoices")
-    .select("*")
-    .eq("sale_attempt_id", attempt.id)
-    .eq("invoice_type", "sales_agent")
+    .select("id,sale_attempt_id,invoice_type,fee_milestone")
+    .eq("id", invoiceId)
     .maybeSingle();
   if (invoiceError) throw invoiceError;
-  if (!invoice) throw new Error("Sales agent invoice is required before reconciliation.");
+  if (!invoice || invoice.invoice_type !== "sales_agent") throw new Error("Sales agent invoice not found.");
 
-  await upsertInvoicePayment(adminClient, {
-    invoiceId: invoice.id,
-    saleAttemptId: attempt.id,
-    paymentSource: "solicitor_deposit",
-    amount: solicitorPaymentAmount,
-    paidAt: solicitorPaymentDate,
-    requester,
-    notes,
-  });
-  await upsertInvoicePayment(adminClient, {
-    invoiceId: invoice.id,
-    saleAttemptId: attempt.id,
-    paymentSource: "developer_shortfall",
-    amount: developerShortfallAmount,
-    paidAt: developerShortfallDate,
-    requester,
-    notes,
-  });
+  const attempt = await loadSaleAttempt(adminClient, invoice.sale_attempt_id);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
 
-  const { data: paymentRows, error: paymentsError } = await adminClient
+  const { data, error } = await adminClient.rpc("record_unit_sale_invoice_payment", {
+    p_invoice_id: invoice.id,
+    p_payer_type: "other",
+    p_amount: amount,
+    p_payment_date: paymentDate,
+    p_note: null,
+    p_client_reference: clientReference,
+    p_requester_id: requester.id,
+  });
+  if (error) throw error;
+
+  const result = Array.isArray(data) ? data[0] : data;
+  if (result?.created) {
+    await insertEvent(adminClient, attempt, requester, {
+      type: "agent_fee_payment_recorded",
+      toStatus: attempt.workflow_status,
+      summary: `${invoice.fee_milestone === "completion" ? "Completion" : "Exchange"} agent fee payment recorded.`,
+      metadata: {
+        invoiceId: invoice.id,
+        paymentId: result.payment_id,
+        recordedByUserId: requester.id,
+        recordedByName: requester.name,
+        recordedByOrganisationId: requester.organisation_id,
+        amount,
+        paymentDate,
+        outstandingBalance: result.outstanding_balance,
+        paymentStatus: result.payment_status,
+      },
+    });
+    if (result.payment_status === "paid") {
+      await insertEvent(adminClient, attempt, requester, {
+        type: "agent_fee_invoice_paid",
+        toStatus: attempt.workflow_status,
+        summary: `${invoice.fee_milestone === "completion" ? "Completion" : "Exchange"} agent fee invoice fully paid.`,
+        metadata: { invoiceId: invoice.id, feeMilestone: invoice.fee_milestone },
+      });
+    }
+  }
+
+  return {
+    saleAttemptId: attempt.id,
+    paymentId: result?.payment_id,
+    created: Boolean(result?.created),
+    outstandingBalance: result?.outstanding_balance,
+    paymentStatus: result?.payment_status,
+  };
+}
+
+async function voidAgentFeePayment(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "void_agent_fee_payment")) {
+    throw new Error("Only developers or admins can void agent fee payments.");
+  }
+  const paymentId = normaliseText(payload.paymentId);
+  const voidReason = normaliseText(payload.paymentVoidReason);
+  if (!paymentId) throw new Error("Agent fee payment is required.");
+  if (!voidReason) throw new Error("Add a reason for voiding the payment.");
+
+  const { data: payment, error: paymentError } = await adminClient
     .from("unit_sale_invoice_payments")
-    .select("amount,payment_source")
-    .eq("invoice_id", invoice.id);
-  if (paymentsError) throw paymentsError;
+    .select("id,invoice_id,sale_attempt_id,payment_source,payer_type,amount,paid_at,voided_at")
+    .eq("id", paymentId)
+    .maybeSingle();
+  if (paymentError) throw paymentError;
+  if (!payment) throw new Error("Agent fee payment not found.");
 
-  const paidAgainstInvoice = (paymentRows ?? []).reduce((total, row) => total + Number(row.amount ?? 0), 0);
-  const expectedPayable = Number(invoice.expected_payable_amount ?? invoice.gross_amount ?? 0);
-  const reservationFeeDeduction = Number(invoice.reservation_fee_deduction ?? 0);
-  const totalReceivedByAgent = paidAgainstInvoice + reservationFeeDeduction;
-  const outstandingDeveloperBalance = Math.max(0, expectedPayable - paidAgainstInvoice);
-  const status = outstandingDeveloperBalance <= 0 ? "reconciled" : paidAgainstInvoice > 0 ? "part_paid" : invoice.status;
+  const { data: invoice, error: invoiceError } = await adminClient
+    .from("unit_sale_invoices")
+    .select("id,sale_attempt_id,invoice_type,fee_milestone")
+    .eq("id", payment.invoice_id)
+    .maybeSingle();
+  if (invoiceError) throw invoiceError;
+  if (!invoice || invoice.invoice_type !== "sales_agent") throw new Error("Sales agent invoice not found.");
 
-  const now = new Date().toISOString();
-  const { error: invoiceUpdateError } = await adminClient.from("unit_sale_invoices").update({
-    status,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", invoice.id);
-  if (invoiceUpdateError) throw invoiceUpdateError;
+  const attempt = await loadSaleAttempt(adminClient, invoice.sale_attempt_id);
+  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: status === "reconciled" ? "invoice_reconciled" : "invoice_payment_recorded",
-    toStatus: attempt.workflow_status,
-    summary: status === "reconciled" ? "Sales agent invoice reconciled." : "Sales agent invoice payment recorded.",
-    metadata: {
-      paidAgainstInvoice,
-      reservationFeeDeduction,
-      totalReceivedByAgent,
-      outstandingDeveloperBalance,
-      status,
-    },
+  const { data, error } = await adminClient.rpc("void_unit_sale_invoice_payment", {
+    p_payment_id: payment.id,
+    p_reason: voidReason,
+    p_requester_id: requester.id,
   });
+  if (error) throw error;
 
-  return { saleAttemptId: attempt.id };
+  const result = Array.isArray(data) ? data[0] : data;
+  return {
+    saleAttemptId: attempt.id,
+    paymentId: payment.id,
+    voided: Boolean(result?.voided),
+    outstandingBalance: result?.outstanding_balance,
+    paymentStatus: result?.payment_status,
+  };
 }
 
 async function loadCompletionDocuments(adminClient: SupabaseClient, saleAttemptId: string) {
@@ -1402,13 +1577,17 @@ async function approveCompletionDocuments(adminClient: SupabaseClient, requester
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status)) {
+  if (attempt.workflow_status === "completed") return { saleAttemptId: attempt.id, alreadyApproved: true };
+  if (!["exchanged", "completion_pending"].includes(attempt.workflow_status)) {
     throw new Error("Exchange must be recorded before completion documents can be approved.");
   }
 
   const completionDocuments = await loadCompletionDocuments(adminClient, attempt.id);
   const completionStatement = completionDocuments.find((document) => document.document_type === "completion_statement");
   const statementOfAccount = completionDocuments.find((document) => document.document_type === "statement_of_account");
+  if (completionStatement?.status === "approved" && statementOfAccount?.status === "approved") {
+    return { saleAttemptId: attempt.id, alreadyApproved: true };
+  }
   if (!completionStatement || !(await currentDocumentVersionExists(adminClient, completionStatement.id))) {
     throw new Error("Upload the completion statement before approval.");
   }
@@ -1452,7 +1631,7 @@ async function queryCompletionDocuments(adminClient: SupabaseClient, requester: 
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status)) {
+  if (attempt.workflow_status !== "exchanged") {
     throw new Error("Exchange must be recorded before completion documents can be queried.");
   }
 
@@ -1499,7 +1678,8 @@ async function recordCompletion(adminClient: SupabaseClient, requester: Requeste
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["completion_pending", "completed"].includes(attempt.workflow_status)) {
+  if (attempt.workflow_status === "completed") return { saleAttemptId: attempt.id, alreadyCompleted: true };
+  if (attempt.workflow_status !== "completion_pending") {
     throw new Error("Completion documents must be approved before recording completion.");
   }
 
@@ -1599,8 +1779,11 @@ export async function POST(request: Request) {
     if (action === "fail_reservation") return NextResponse.json(await failReservation(adminClient, requester, payload));
     if (action === "save_commercial_model" || action === "save_commercial_package") return NextResponse.json(await saveCommercialModel(adminClient, requester, payload));
     if (action === "approve_commercial_package") return NextResponse.json(await approveCommercialPackage(adminClient, requester, payload));
+    if (action === "approve_agent_invoice") return NextResponse.json(await approveAgentInvoice(adminClient, requester, payload));
+    if (action === "reject_agent_invoice") return NextResponse.json(await rejectAgentInvoice(adminClient, requester, payload));
     if (action === "record_exchange") return NextResponse.json(await recordExchange(adminClient, requester, payload));
-    if (action === "record_invoice_reconciliation") return NextResponse.json(await recordInvoiceReconciliation(adminClient, requester, payload));
+    if (action === "record_agent_fee_payment") return NextResponse.json(await recordAgentFeePayment(adminClient, requester, payload));
+    if (action === "void_agent_fee_payment") return NextResponse.json(await voidAgentFeePayment(adminClient, requester, payload));
     if (action === "approve_completion_documents") return NextResponse.json(await approveCompletionDocuments(adminClient, requester, payload));
     if (action === "query_completion_documents") return NextResponse.json(await queryCompletionDocuments(adminClient, requester, payload));
     if (action === "record_completion") return NextResponse.json(await recordCompletion(adminClient, requester, payload));

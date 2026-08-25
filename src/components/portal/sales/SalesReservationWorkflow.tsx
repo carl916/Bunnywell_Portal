@@ -1,20 +1,29 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, UploadCloud, X } from "lucide-react";
+import type { ReactNode } from "react";
+import { CheckCircle2, ChevronDown, FileText, UploadCloud, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
-import type { AppRole, Building, BuildingFloor, Unit } from "@/lib/data/production";
+import type { AppRole, Building, BuildingFloor, Organisation, Unit } from "@/lib/data/production";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { calculateAgentInvoicePreview as invoicePreview, calculateDeveloperNet } from "@/lib/sales/commercial-model";
 import { buildDepositStructure, describeReservationFeeHolder, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { formatGbp, formatGbpDeduction, parseGbpInput } from "@/lib/sales/currency";
 import { canPerformSalesAction } from "@/lib/sales/permissions";
+import { calculateMilestoneFee, deriveAgentFeeSummary, deriveInvoicePaymentPosition, isActiveAgentFeePayment, normalisePayerType, validateAgentFeeStructure, type AgentFeeMilestone } from "@/lib/sales/agent-fees";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { SalesForecastingModule } from "@/components/portal/sales/SalesForecastingModule";
+import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio";
+import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
+import { useActivePanel } from "@/hooks/useActivePanel";
 
 type Profile = {
   id: string;
   role: AppRole;
+  email?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  organisation_id?: string | null;
 };
 
 type SaleAttempt = {
@@ -76,6 +85,8 @@ type SaleTerms = {
   reservation_fee: number | null;
   reservation_fee_holder: string | null;
   agent_fee_percent: number | null;
+  exchange_agent_fee_percent: number | null;
+  completion_agent_fee_percent: number | null;
   vat_rate: number;
   solicitor_fee: number | null;
   exchange_deposit_percent: number | null;
@@ -97,6 +108,8 @@ type BuildingSaleDefault = {
   second_deposit_percent: number | null;
   second_deposit_months_after_exchange: number | null;
   default_agent_fee_percent: number | null;
+  default_exchange_agent_fee_percent: number | null;
+  default_completion_agent_fee_percent: number | null;
   default_vat_rate: number | null;
   default_sales_solicitor_fee: number | null;
 };
@@ -120,9 +133,12 @@ type SaleDocument = {
   id: string;
   sale_attempt_id: string;
   document_type: string;
+  fee_milestone: "exchange" | "completion" | null;
   title: string;
   status: string;
   query_note: string | null;
+  approved_by_user_id: string | null;
+  approved_at: string | null;
   redacted_at: string | null;
 };
 
@@ -153,11 +169,15 @@ type SaleInvoice = {
   id: string;
   sale_attempt_id: string;
   document_id: string | null;
+  invoice_type: string;
+  fee_milestone: "exchange" | "completion" | null;
+  fee_percentage: number | null;
   invoice_reference: string | null;
   invoice_date: string | null;
   net_amount: number | null;
   vat_amount: number | null;
   gross_amount: number | null;
+  expected_gross_amount: number | null;
   reservation_fee_deduction: number;
   agent_contribution_deduction: number;
   expected_payable_amount: number | null;
@@ -171,13 +191,24 @@ type SaleInvoicePayment = {
   invoice_id: string;
   sale_attempt_id: string;
   payment_source: string;
+  payer_type: "solicitor" | "developer" | "other" | null;
   amount: number;
   paid_at: string | null;
   notes: string | null;
+  recorded_by_user_id: string | null;
+  recorded_by_name: string | null;
+  recorded_by_email: string | null;
+  recorded_by_organisation_name: string | null;
+  created_at: string;
+  voided_at: string | null;
+  voided_by_user_id: string | null;
+  void_reason: string | null;
 };
 
 type SalesStageFilter = Unit["sale_status"] | "all";
 type SaleWorkflowStage = "reservation" | "exchange" | "completion" | "handover";
+type SalesView = "pipeline" | "agent_fees";
+type UnitSaleSection = SaleFileWorkspace;
 
 const SALES_PAGE_SIZE = 12;
 const SALES_STAGE_FILTERS: Array<{ value: SalesStageFilter; label: string }> = [
@@ -187,6 +218,23 @@ const SALES_STAGE_FILTERS: Array<{ value: SalesStageFilter; label: string }> = [
   { value: "completed", label: "Completed" },
   { value: "all", label: "All sales" },
 ];
+
+function SalesViewTabs({
+  activeView,
+  canViewAgentFees,
+  onChange,
+}: {
+  activeView: SalesView;
+  canViewAgentFees: boolean;
+  onChange: (view: SalesView) => void;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2 border-t border-[#eef0eb] pt-4" role="tablist" aria-label="Sales views">
+      <button className={activeView === "pipeline" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "pipeline"} onClick={() => onChange("pipeline")}>Sales overview</button>
+      {canViewAgentFees && <button className={activeView === "agent_fees" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "agent_fees"} onClick={() => onChange("agent_fees")}>Agent Fees</button>}
+    </div>
+  );
+}
 
 function money(value: number | string | null | undefined) {
   return formatGbp(value);
@@ -204,6 +252,40 @@ function formatDate(value?: string | null) {
 function formatDateTime(value?: string | null) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+function formatNarrativeDateTime(value?: string | null) {
+  if (!value) return "an unrecorded date";
+  const date = new Date(value);
+  const calendarDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(date);
+  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(date);
+  return `${calendarDate} at ${time}`;
+}
+
+function paymentRecorderLabel(payment: SaleInvoicePayment, profiles: Profile[], organisations: Organisation[]) {
+  const profile = payment.recorded_by_user_id
+    ? profiles.find((candidate) => candidate.id === payment.recorded_by_user_id)
+    : undefined;
+  const organisationName = payment.recorded_by_organisation_name
+    ?? organisations.find((organisation) => organisation.id === profile?.organisation_id)?.name
+    ?? null;
+  const actorName = payment.recorded_by_name
+    ?? profile?.full_name
+    ?? profile?.name
+    ?? payment.recorded_by_email
+    ?? profile?.email
+    ?? null;
+
+  if (actorName) return organisationName ? `${actorName} (${organisationName})` : actorName;
+  return statusLabel(normalisePayerType(payment));
+}
+
+function scrollToPortalSection(id: string) {
+  if (typeof window === "undefined") return;
+  const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+    document.getElementById(id)?.scrollIntoView({ behavior, block: "start" });
+  }));
 }
 
 function daysSince(value?: string | null) {
@@ -227,6 +309,7 @@ function saleStatusDate(unit: Unit, attempt?: SaleAttempt) {
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
     draft: "Draft",
+    uploaded: "Awaiting approval",
     awaiting_approval: "Awaiting developer approval",
     approved: "Approved",
     rejected: "Rejected",
@@ -238,6 +321,7 @@ function statusLabel(status: string) {
     completion_pending: "Completion pending",
     completed: "Completed",
     fallen_through: "Failed",
+    query_raised: "Correction requested",
     superseded: "Superseded",
   };
   return labels[status] ?? status.replace(/_/g, " ");
@@ -252,6 +336,38 @@ function saleStatusLabel(status: Unit["sale_status"]) {
     handed_over: "Handed Over",
   };
   return labels[status] ?? status;
+}
+
+const SALE_STATUS_TONES: Record<Unit["sale_status"], { badge: string; dot: string; row: string }> = {
+  for_sale: {
+    badge: "border-[#d8ddd7] bg-[#f2f4f0] text-[#52645b]",
+    dot: "bg-[#829188]",
+    row: "bg-white hover:bg-[#fafbf9]",
+  },
+  reserved: {
+    badge: "border-[#ead8a7] bg-[#fff8e8] text-[#765a18]",
+    dot: "bg-[#d6a23a]",
+    row: "bg-[#fffdf8] hover:bg-[#fff9eb]",
+  },
+  exchanged: {
+    badge: "border-[#bfd8df] bg-[#eef8fa] text-[#315f6a]",
+    dot: "bg-[#5f9eae]",
+    row: "bg-[#f9fcfd] hover:bg-[#eff8fa]",
+  },
+  completed: {
+    badge: "border-[#bedacb] bg-[#edf8f1] text-[#286348]",
+    dot: "bg-[#4f9b73]",
+    row: "bg-[#f9fcfa] hover:bg-[#f0f8f3]",
+  },
+  handed_over: {
+    badge: "border-[#d6cae5] bg-[#f6f1fb] text-[#66507b]",
+    dot: "bg-[#9277ad]",
+    row: "bg-[#fcfafd] hover:bg-[#f6f1fa]",
+  },
+};
+
+function saleStatusTone(status: Unit["sale_status"]) {
+  return SALE_STATUS_TONES[status];
 }
 
 function fileSizeLabel(bytes?: number | null) {
@@ -331,8 +447,143 @@ function FieldValue({ label, value }: { label: string; value: string | number | 
   return (
     <div className="rounded-md border border-[#eef0eb] bg-white p-3">
       <span className="block text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">{label}</span>
-      <strong className="mt-1 block whitespace-pre-line text-sm text-[#0F3D2E]">{value || "-"}</strong>
+      <strong className="numeric-value mt-1 block whitespace-pre-line text-sm text-[#0F3D2E]">{value || "-"}</strong>
     </div>
+  );
+}
+
+function KeyValueList({ items }: { items: Array<{ label: string; value: ReactNode; nowrap?: boolean }> }) {
+  return (
+    <dl className="divide-y divide-[#eef0eb] text-sm text-[#34413a]">
+      {items.map((item) => (
+        <div key={item.label} className="grid gap-1 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)] sm:gap-4">
+          <dt className={`text-[#617169] ${item.nowrap ? "whitespace-nowrap" : ""}`}>{item.label}</dt>
+          <dd className="numeric-value min-w-0 break-words whitespace-pre-line font-bold text-[#0F3D2E] sm:text-right">{item.value || "-"}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function SaleMetadataStrip({ items }: { items: Array<{ label: string; value: ReactNode }> }) {
+  return (
+    <dl className="mt-3 flex flex-wrap items-start gap-x-5 gap-y-2.5 border-t border-[#eef0eb] pt-3">
+      {items.map((item, index) => (
+        <div key={item.label} className={`min-w-0 sm:pr-5 ${index > 0 ? "sm:border-l sm:border-[#e2ded3] sm:pl-5" : ""}`}>
+          <dd className="numeric-value whitespace-pre-line text-[15px] font-semibold leading-snug text-[#0F3D2E] sm:text-base">{item.value || "-"}</dd>
+          <dt className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-[#728078]">{item.label}</dt>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function SaleActivity({ events, actorName }: { events: SaleWorkflowEvent[]; actorName: (userId?: string | null) => string }) {
+  if (events.length === 0) return null;
+  return (
+    <details className="group mt-6 rounded-md border border-[#e2ded3] bg-white">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-md p-3 transition hover:bg-[#fbfcfa]">
+        <div className="min-w-0">
+          <h5 className="text-sm font-bold text-[#0F3D2E]">Activity</h5>
+          <p className="mt-0.5 text-xs text-[#617169]">{events.length} recorded {events.length === 1 ? "update" : "updates"}</p>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#617169]">
+          <span className="group-open:hidden">Show history</span>
+          <span className="hidden group-open:inline">Hide history</span>
+          <ChevronDown className="transition-transform group-open:rotate-180" size={16} aria-hidden />
+        </span>
+      </summary>
+      <div className="grid gap-2 border-t border-[#eef0eb] p-3">
+        {events.slice(0, 8).map((event) => (
+          <div key={event.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
+            <div className="flex flex-wrap justify-between gap-3">
+              <strong>{event.summary}</strong>
+              <span className="text-right text-[#617169]">
+                <span className="block font-semibold text-[#34413a]">{actorName(event.created_by_user_id)}</span>
+                <span className="block text-xs">{formatDateTime(event.created_at)}</span>
+              </span>
+            </div>
+            {typeof event.metadata?.rejectionReason === "string" && <p className="mt-1 text-[#7a271a]">{event.metadata.rejectionReason}</p>}
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function CompletedActionSummary({
+  title,
+  description,
+  items,
+}: {
+  title: string;
+  description: string;
+  items: Array<{ label: string; value: ReactNode }>;
+}) {
+  return (
+    <div className="h-full rounded-lg border border-[#bedacb] bg-[#f7fbf8] p-4">
+      <div className="flex items-start gap-3">
+        <span className="rounded-full bg-[#e1f1e7] p-2 text-[#286348]"><CheckCircle2 size={18} aria-hidden /></span>
+        <div>
+          <h5 className="font-bold text-[#0F3D2E]">{title}</h5>
+          <p className="mt-1 text-sm text-[#617169]">{description}</p>
+        </div>
+      </div>
+      <div className="mt-4 rounded-md border border-[#dbe9df] bg-white p-3">
+        <KeyValueList items={items} />
+      </div>
+    </div>
+  );
+}
+
+function StageWorkspace({
+  id,
+  title,
+  description,
+  status,
+  statusTone,
+  taskLabel = "Current task",
+  currentTask,
+  taskNavigation,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  statusTone: "done" | "current" | "locked" | "attention";
+  taskLabel?: string;
+  currentTask: string;
+  taskNavigation?: ReactNode;
+  children: ReactNode;
+}) {
+  const statusClasses = {
+    done: "border-[#bedacb] bg-[#eaf6ee] text-[#286348]",
+    current: "border-[#ead8a7] bg-[#fff1cc] text-[#765a18]",
+    locked: "border-[#d9ded6] bg-[#ebece9] text-[#727d77]",
+    attention: "border-[#e5c4be] bg-[#fbeeea] text-[#8d382d]",
+  }[statusTone];
+
+  return (
+    <section id={id} className="mt-6 scroll-mt-6 rounded-xl bg-[#f3f5f1] px-4 py-6 sm:px-6 sm:py-7">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#d9ded6] pb-5">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#617169]">Selected sales stage</p>
+          <h3 className="mt-1 text-2xl font-bold uppercase tracking-[0.04em] text-[#0F3D2E] sm:text-3xl">{title}</h3>
+          <p className="mt-2 text-sm text-[#617169] sm:text-base">{description}</p>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${statusClasses}`}>{status}</span>
+      </div>
+
+      {taskNavigation}
+
+      <div className="mt-7">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#617169]">{taskLabel}</p>
+        <h4 className="mt-1 text-xl font-bold text-[#0F3D2E]">{currentTask}</h4>
+      </div>
+
+      <div className="mt-5">{children}</div>
+    </section>
   );
 }
 
@@ -466,6 +717,195 @@ function DocumentVersionHistory({
   );
 }
 
+function AgentInvoiceSubmissionForm({
+  milestone,
+  feePercent,
+  expectedNetAmount,
+  expectedVatAmount,
+  expectedGrossAmount,
+  isReplacement,
+  reference,
+  invoiceDate,
+  grossAmount,
+  file,
+  canSubmit,
+  isSaving,
+  todayDate,
+  onReference,
+  onInvoiceDate,
+  onGrossAmount,
+  onFile,
+  onSubmit,
+}: {
+  milestone: AgentFeeMilestone;
+  feePercent: number;
+  expectedNetAmount: number;
+  expectedVatAmount: number;
+  expectedGrossAmount: number;
+  isReplacement: boolean;
+  reference: string;
+  invoiceDate: string;
+  grossAmount: string;
+  file: File | null;
+  canSubmit: boolean;
+  isSaving: boolean;
+  todayDate: string;
+  onReference: (value: string) => void;
+  onInvoiceDate: (value: string) => void;
+  onGrossAmount: (value: string) => void;
+  onFile: (file: File | null) => void;
+  onSubmit: () => void;
+}) {
+  const label = milestone === "completion" ? "Completion" : "Exchange";
+  return (
+    <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4">
+      <h5 className="font-bold text-[#0F3D2E]">{isReplacement ? `Replace ${label} invoice` : `Submit ${label} invoice`}</h5>
+      <div className="mt-3 grid gap-2 rounded-md bg-[#F7F5EF] p-3 text-sm text-[#34413a] sm:grid-cols-4">
+        <FieldValue label={`${label} fee`} value={formatPercentValue(feePercent)} />
+        <FieldValue label="Expected net fee" value={money(expectedNetAmount)} />
+        <FieldValue label="Expected VAT" value={money(expectedVatAmount)} />
+        <FieldValue label="Expected invoice total" value={money(expectedGrossAmount)} />
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <label className="field-label">Invoice reference<input className="field" value={reference} onChange={(event) => onReference(event.target.value)} disabled={!canSubmit || isSaving} /></label>
+        <label className="field-label">Invoice date<input className="field" type="date" max={todayDate} value={invoiceDate} onChange={(event) => onInvoiceDate(event.target.value)} disabled={!canSubmit || isSaving} /></label>
+        <label className="field-label">Invoice total<GbpInput value={grossAmount} onChange={onGrossAmount} disabled={!canSubmit || isSaving} aria-label={`${label} invoice total`} /></label>
+        <div className="md:col-span-3">
+          <PdfUploadBox id={`${milestone}-agent-invoice-upload`} label={`Upload ${isReplacement ? "corrected " : ""}${label} invoice PDF`} file={file} disabled={!canSubmit || isSaving} onFile={onFile} onClear={() => onFile(null)} />
+        </div>
+      </div>
+      <div className="mt-4 flex justify-end">
+        {canSubmit
+          ? <button className="primary" type="button" onClick={onSubmit} disabled={isSaving || !file || !reference.trim() || !invoiceDate || (parseGbpInput(grossAmount) ?? 0) <= 0}>{isSaving ? "Submitting…" : "Submit invoice"}</button>
+          : <p className="text-sm text-[#617169]">Waiting for the sales agent to submit the invoice.</p>}
+      </div>
+    </div>
+  );
+}
+
+function AgentInvoicePaymentSection({
+  position,
+  payments,
+  profiles,
+  organisations,
+  canRecord,
+  canVoid,
+  isSaving,
+  amount,
+  paymentDate,
+  todayDate,
+  onAmount,
+  onPaymentDate,
+  onRecord,
+  onRequestVoid,
+}: {
+  position: ReturnType<typeof deriveInvoicePaymentPosition>;
+  payments: SaleInvoicePayment[];
+  profiles: Profile[];
+  organisations: Organisation[];
+  canRecord: boolean;
+  canVoid: boolean;
+  isSaving: boolean;
+  amount: string;
+  paymentDate: string;
+  todayDate: string;
+  onAmount: (value: string) => void;
+  onPaymentDate: (value: string) => void;
+  onRecord: () => Promise<boolean>;
+  onRequestVoid: (payment: SaleInvoicePayment) => void;
+}) {
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const cashPayments = payments.filter((payment) => payment.payment_source !== "reservation_fee");
+  const sortedPayments = [...cashPayments].sort((a, b) => `${b.paid_at ?? ""}${b.created_at}`.localeCompare(`${a.paid_at ?? ""}${a.created_at}`));
+  const activeCashPayments = cashPayments.filter(isActiveAgentFeePayment);
+  const voidedPayments = cashPayments.filter((payment) => !isActiveAgentFeePayment(payment));
+  const receivedAmount = activeCashPayments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
+
+  async function submitPayment() {
+    if (await onRecord()) setShowPaymentForm(false);
+  }
+
+  return (
+    <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="rounded-md border border-[#e2ded3] bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h5 className="font-bold text-[#0F3D2E]">Payment position</h5>
+            <p className="numeric-value mt-1 text-xs text-[#617169]">
+              {position.reservationFeeHeld > 0
+                ? `Cash amount due already reflects the ${money(position.reservationFeeHeld)} reservation fee held.`
+                : "Cash amount due reflects all invoice credits."}
+            </p>
+          </div>
+          <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-2.5 py-1 text-xs font-bold text-[#617169]">{position.paymentStatus}</span>
+        </div>
+        <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
+          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Cash amount due</span><strong className="numeric-value">{money(position.cashAmountPayable)}</strong></div>
+          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payments received</span><strong className="numeric-value">{money(position.cashReceived)}</strong></div>
+          <div className="flex items-baseline justify-between gap-4 pt-1 font-bold text-[#0F3D2E]"><span>Outstanding</span><strong className="numeric-value text-lg">{money(position.outstandingBalance)}</strong></div>
+        </div>
+      </div>
+
+      <section className="rounded-md border border-[#e2ded3] bg-white p-4" aria-labelledby="agent-fee-payments-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h5 id="agent-fee-payments-heading" className="font-bold text-[#0F3D2E]">Payments</h5>
+            <p className="mt-1 text-xs text-[#617169]">
+              {activeCashPayments.length} {activeCashPayments.length === 1 ? "payment" : "payments"} · {money(receivedAmount)} received
+              {voidedPayments.length > 0 && <span className="text-[#7a271a]"> · {voidedPayments.length} voided</span>}
+            </p>
+          </div>
+          {canRecord && position.paymentStatus !== "Paid" && !showPaymentForm && (
+            <button className="secondary min-h-9 px-3 text-sm" type="button" onClick={() => setShowPaymentForm(true)} disabled={isSaving}>Record payment</button>
+          )}
+        </div>
+
+        {canRecord && position.paymentStatus !== "Paid" && showPaymentForm && (
+          <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3">
+            <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+              <label className="field-label">Amount<GbpInput value={amount} onChange={onAmount} disabled={isSaving} aria-label="Agent fee payment amount" /></label>
+              <label className="field-label">Payment date<input className="field" type="date" max={todayDate} value={paymentDate} onChange={(event) => onPaymentDate(event.target.value)} disabled={isSaving} /></label>
+              <div className="flex flex-wrap justify-end gap-2">
+                <button className="secondary min-h-10 px-3" type="button" onClick={() => setShowPaymentForm(false)} disabled={isSaving}>Cancel</button>
+                <button className="primary min-h-10 px-3" type="button" onClick={() => void submitPayment()} disabled={isSaving || (parseGbpInput(amount) ?? 0) <= 0 || !paymentDate || (parseGbpInput(amount) ?? 0) > position.outstandingBalance}>{isSaving ? "Recording…" : "Save payment"}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {sortedPayments.length > 0 ? (
+          <div className="mt-4 divide-y divide-[#eef0eb] border-t border-[#eef0eb]">
+            {sortedPayments.map((payment) => (
+              <div key={payment.id} className={`py-2.5 text-sm ${payment.voided_at ? "text-[#617169]" : "text-[#34413a]"}`}>
+                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                  <span className="min-w-0">{formatDate(payment.paid_at)} · {paymentRecorderLabel(payment, profiles, organisations)}</span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    {payment.voided_at && <span className="text-xs font-bold uppercase tracking-[0.06em] text-[#7a271a]">Voided</span>}
+                    <strong className={`numeric-value ${payment.voided_at ? "line-through" : ""}`}>{money(payment.amount)}</strong>
+                  </span>
+                </div>
+                {payment.notes && <p className="mt-1 text-xs text-[#617169]">{payment.notes}</p>}
+                {payment.voided_at && (
+                  <div className="mt-2 border-t border-[#d9ded6] pt-2 text-xs text-[#617169]">
+                    <p><strong>Reason:</strong> {payment.void_reason ?? "No reason recorded"}</p>
+                    <p className="mt-1">Voided {formatDateTime(payment.voided_at)}</p>
+                  </div>
+                )}
+                {canVoid && !payment.voided_at && payment.payment_source !== "reservation_fee" && (
+                  <div className="mt-1 flex justify-end">
+                    <button className="min-h-8 px-1 text-xs font-semibold text-[#9f3027] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9f3027]" type="button" onClick={() => onRequestVoid(payment)} disabled={isSaving}>Void payment</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : <p className="mt-3 text-sm text-[#617169]">No cash payments recorded yet.</p>}
+
+      </section>
+    </div>
+  );
+}
+
 function AdditionalConditionsEditor({
   conditions,
   onChange,
@@ -535,6 +975,8 @@ function AdditionalConditionsEditor({
 export function SalesReservationWorkflow({
   user,
   profile,
+  profiles,
+  organisations,
   buildings,
   buildingFloors,
   units,
@@ -543,6 +985,8 @@ export function SalesReservationWorkflow({
 }: {
   user: User;
   profile: Profile | null;
+  profiles: Profile[];
+  organisations: Organisation[];
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
@@ -550,7 +994,11 @@ export function SalesReservationWorkflow({
   reloadPortalData: () => Promise<void>;
 }) {
   const commercialModelControlRef = useRef<HTMLDivElement | null>(null);
-  const stayOnReservationStageRef = useRef(false);
+  const manuallySelectedWorkflowStageRef = useRef<SaleWorkflowStage | null>(null);
+  const pendingAgentFeesScrollRef = useRef<AgentFeeMilestone | null>(null);
+  const pendingWorkflowStageScrollRef = useRef<SaleWorkflowStage | null>(null);
+  const completionReviewSubmissionInFlightRef = useRef(false);
+  const completionRecordSubmissionInFlightRef = useRef(false);
   const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
   const buildingUnits = useMemo(
     () => sortUnitsByFloorOrder(
@@ -594,6 +1042,8 @@ export function SalesReservationWorkflow({
   const [parkingLocationDetails, setParkingLocationDetails] = useState("");
   const [additionalSpecialConditions, setAdditionalSpecialConditions] = useState<string[]>([""]);
   const [agentFeePercent, setAgentFeePercent] = useState("");
+  const [exchangeAgentFeePercent, setExchangeAgentFeePercent] = useState("");
+  const [completionAgentFeePercent, setCompletionAgentFeePercent] = useState("");
   const [solicitorFee, setSolicitorFee] = useState("");
   const [exchangeDepositPercent, setExchangeDepositPercent] = useState("10");
   const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
@@ -607,26 +1057,49 @@ export function SalesReservationWorkflow({
   const [invoiceVatAmount, setInvoiceVatAmount] = useState("");
   const [invoiceGrossAmount, setInvoiceGrossAmount] = useState("");
   const [agentInvoiceFile, setAgentInvoiceFile] = useState<File | null>(null);
+  const [completionInvoiceReference, setCompletionInvoiceReference] = useState("");
+  const [completionInvoiceDate, setCompletionInvoiceDate] = useState("");
+  const [completionInvoiceGrossAmount, setCompletionInvoiceGrossAmount] = useState("");
+  const [completionAgentInvoiceFile, setCompletionAgentInvoiceFile] = useState<File | null>(null);
   const [exchangeDate, setExchangeDate] = useState("");
+  const [exchangeDepositConfirmed, setExchangeDepositConfirmed] = useState(false);
   const [solicitorPaymentAmount, setSolicitorPaymentAmount] = useState("");
   const [solicitorPaymentDate, setSolicitorPaymentDate] = useState("");
-  const [developerShortfallAmount, setDeveloperShortfallAmount] = useState("");
-  const [developerShortfallDate, setDeveloperShortfallDate] = useState("");
-  const [reconciliationNotes, setReconciliationNotes] = useState("");
+  const paymentSubmissionInFlightRef = useRef(false);
+  const paymentClientReferenceRef = useRef<string | null>(null);
+  const [completionPaymentAmount, setCompletionPaymentAmount] = useState("");
+  const [completionPaymentDate, setCompletionPaymentDate] = useState("");
+  const completionPaymentSubmissionInFlightRef = useRef(false);
+  const completionPaymentClientReferenceRef = useRef<string | null>(null);
+  const [paymentToVoid, setPaymentToVoid] = useState<SaleInvoicePayment | null>(null);
+  const [paymentVoidReason, setPaymentVoidReason] = useState("");
+  const voidPaymentSubmissionInFlightRef = useRef(false);
   const [completionStatementFile, setCompletionStatementFile] = useState<File | null>(null);
   const [statementOfAccountFile, setStatementOfAccountFile] = useState<File | null>(null);
   const [completionQueryNote, setCompletionQueryNote] = useState("");
   const [completionDate, setCompletionDate] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [invoiceRejectionReason, setInvoiceRejectionReason] = useState("");
+  const [completionInvoiceRejectionReason, setCompletionInvoiceRejectionReason] = useState("");
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState("");
   const [salesStageFilter, setSalesStageFilter] = useState<SalesStageFilter>("all");
   const [salesSearch, setSalesSearch] = useState("");
   const [salesPage, setSalesPage] = useState(1);
   const [activeWorkflowStage, setActiveWorkflowStage] = useState<SaleWorkflowStage>("reservation");
+  const [activeSalesView, setActiveSalesView] = useState<SalesView>("pipeline");
+  const [activeUnitSection, setActiveUnitSection] = useState<UnitSaleSection>("progression");
   const [showCommercialModel, setShowCommercialModel] = useState(false);
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
   const [showForecasting, setShowForecasting] = useState(false);
   const [showRejectReservationConfirm, setShowRejectReservationConfirm] = useState(false);
+  const [showRejectInvoiceConfirm, setShowRejectInvoiceConfirm] = useState(false);
+  const [showRejectCompletionInvoiceConfirm, setShowRejectCompletionInvoiceConfirm] = useState(false);
+  const invoiceRejectionInputRef = useRef<HTMLInputElement | null>(null);
+  const { panelRef: invoiceRejectionPanelRef, requestActivePanel: requestInvoiceRejectionPanel } = useActivePanel<HTMLDivElement>();
+  const completionInvoiceRejectionInputRef = useRef<HTMLInputElement | null>(null);
+  const { panelRef: completionInvoiceRejectionPanelRef, requestActivePanel: requestCompletionInvoiceRejectionPanel } = useActivePanel<HTMLDivElement>();
+  const paymentVoidReasonInputRef = useRef<HTMLInputElement | null>(null);
+  const { panelRef: paymentVoidPanelRef, requestActivePanel: requestPaymentVoidPanel } = useActivePanel<HTMLDivElement>();
   const [hasReadSalesUrl, setHasReadSalesUrl] = useState(false);
 
   const role = profile?.role ?? "user";
@@ -635,9 +1108,12 @@ export function SalesReservationWorkflow({
   const canSubmitAgentInvoice = canPerformSalesAction(role, "submit_agent_invoice");
   const canManageCommercialTerms = canPerformSalesAction(role, "manage_commercial_terms");
   const canApproveCommercialPackage = canPerformSalesAction(role, "approve_commercial_package");
+  const canApproveAgentInvoice = canPerformSalesAction(role, "approve_agent_invoice");
+  const canRejectAgentInvoice = canPerformSalesAction(role, "reject_agent_invoice");
   const canRecordExchange = canPerformSalesAction(role, "record_exchange");
-  const canRecordSolicitorPayment = canPerformSalesAction(role, "record_solicitor_payment");
-  const canRecordDeveloperShortfall = canPerformSalesAction(role, "record_developer_shortfall");
+  const canRecordAgentFeePayment = canPerformSalesAction(role, "record_agent_fee_payment");
+  const canVoidAgentFeePayment = canPerformSalesAction(role, "void_agent_fee_payment");
+  const canViewAgentFeesPortfolio = canPerformSalesAction(role, "view_agent_fees_portfolio");
   const canSubmitCompletionDocuments = canPerformSalesAction(role, "submit_completion_documents");
   const canApproveCompletionDocuments = canPerformSalesAction(role, "approve_completion_documents");
   const canRecordCompletion = canPerformSalesAction(role, "record_completion");
@@ -656,26 +1132,57 @@ export function SalesReservationWorkflow({
   const reservationVersion = reservationVersions.find((item) => item.is_current) ?? reservationVersions[0] ?? null;
   const visibleReservationVersion = reservationDocumentRemoved ? null : reservationVersion;
   const showReservationDocumentHistory = reservationDocumentHistoryUnlocked || reservationVersions.some((version) => !version.is_current);
-  const agentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice") : null;
+  const agentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice" && (item.fee_milestone === "exchange" || item.fee_milestone === null)) : null;
   const agentInvoiceVersion = agentInvoiceDocument ? versions.find((item) => item.document_id === agentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
+  const completionAgentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice" && item.fee_milestone === "completion") : null;
+  const completionAgentInvoiceVersion = completionAgentInvoiceDocument ? versions.find((item) => item.document_id === completionAgentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
   const completionStatementDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "completion_statement") : null;
   const completionStatementVersion = completionStatementDocument ? versions.find((item) => item.document_id === completionStatementDocument.id && item.is_current && !item.redacted_at) : null;
   const statementOfAccountDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "statement_of_account") : null;
   const statementOfAccountVersion = statementOfAccountDocument ? versions.find((item) => item.document_id === statementOfAccountDocument.id && item.is_current && !item.redacted_at) : null;
-  const activeInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id) : null;
+  const activeInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id && item.invoice_type === "sales_agent" && (item.fee_milestone === "exchange" || item.fee_milestone === null)) : null;
+  const completionAgentInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id && item.invoice_type === "sales_agent" && item.fee_milestone === "completion") : null;
   const activeInvoicePayments = activeInvoice ? invoicePayments.filter((item) => item.invoice_id === activeInvoice.id) : [];
-  const solicitorPayment = activeInvoicePayments.find((item) => item.payment_source === "solicitor_deposit");
-  const developerShortfallPayment = activeInvoicePayments.find((item) => item.payment_source === "developer_shortfall");
+  const completionInvoicePayments = completionAgentInvoice ? invoicePayments.filter((item) => item.invoice_id === completionAgentInvoice.id) : [];
+  const exchangeAgentInvoiceVersions = agentInvoiceDocument
+    ? versions.filter((item) => item.document_id === agentInvoiceDocument.id && !item.redacted_at).sort((a, b) => b.version_number - a.version_number)
+    : [];
+  const completionAgentInvoiceVersions = completionAgentInvoiceDocument
+    ? versions.filter((item) => item.document_id === completionAgentInvoiceDocument.id && !item.redacted_at).sort((a, b) => b.version_number - a.version_number)
+    : [];
   const activePaymentSchedule = activeAttempt ? paymentSchedule.filter((item) => item.sale_attempt_id === activeAttempt.id).sort((a, b) => a.sequence_no - b.sequence_no) : [];
   const activeWorkflowEvents = activeAttempt ? workflowEvents.filter((event) => event.sale_attempt_id === activeAttempt.id) : [];
+  const commercialApprovalEvent = activeWorkflowEvents.find((event) => event.event_type === "commercial_package_approved");
+  const exchangeRecordedEvent = activeWorkflowEvents.find((event) => event.event_type === "exchange_recorded");
+  const completionApprovalEvent = activeWorkflowEvents.find((event) => event.event_type === "completion_documents_approved");
+  const completionRecordedEvent = activeWorkflowEvents.find((event) => event.event_type === "completion_recorded");
   const reservationApproved = activeAttempt ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
   const commercialApproved = activeAttempt?.workflow_status === "ready_for_exchange" || Boolean(activeAttempt?.commercial_approved_at);
-  const readyForExchange = activeAttempt ? ["ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
   const exchangeRecorded = activeAttempt ? ["exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) || Boolean(activeAttempt.exchanged_at) : false;
   const completionDocumentsApproved = completionStatementDocument?.status === "approved" && statementOfAccountDocument?.status === "approved";
   const completionReady = activeAttempt ? ["completion_pending", "completed"].includes(activeAttempt.workflow_status) || completionDocumentsApproved : false;
   const completionRecorded = activeAttempt ? activeAttempt.workflow_status === "completed" || Boolean(activeAttempt.completed_at) : false;
+
+  function actorName(userId?: string | null) {
+    if (!userId) return "Not recorded";
+    const actor = profiles.find((item) => item.id === userId);
+    return actor?.full_name || actor?.name || actor?.email || "Unknown user";
+  }
+
+  const commercialApprovedBy = actorName(commercialApprovalEvent?.created_by_user_id ?? activeAttempt?.commercial_approved_by_user_id);
+  const exchangeRecordedBy = actorName(exchangeRecordedEvent?.created_by_user_id);
+  const completionDocumentsApprovedBy = actorName(
+    completionApprovalEvent?.created_by_user_id
+      ?? completionStatementDocument?.approved_by_user_id
+      ?? statementOfAccountDocument?.approved_by_user_id,
+  );
+  const completionDocumentsApprovedAt = completionApprovalEvent?.created_at
+    ?? completionStatementDocument?.approved_at
+    ?? statementOfAccountDocument?.approved_at;
+  const completionRecordedBy = actorName(completionRecordedEvent?.created_by_user_id);
   const displayAgentFeePercent = activeTerms?.agent_fee_percent ?? selectedBuildingDefault?.default_agent_fee_percent ?? 0;
+  const displayExchangeAgentFeePercent = activeTerms?.exchange_agent_fee_percent ?? selectedBuildingDefault?.default_exchange_agent_fee_percent ?? displayAgentFeePercent;
+  const displayCompletionAgentFeePercent = activeTerms?.completion_agent_fee_percent ?? selectedBuildingDefault?.default_completion_agent_fee_percent ?? 0;
   const displayVatRate = activeTerms?.vat_rate ?? selectedBuildingDefault?.default_vat_rate ?? 20;
   const displayReservationFee = activeTerms?.reservation_fee ?? selectedBuildingDefault?.reservation_fee ?? 0;
   const displayReservationFeeHolder = activeTerms?.reservation_fee_holder ?? selectedBuildingDefault?.reservation_fee_holder_default ?? "sales_agent";
@@ -694,6 +1201,13 @@ export function SalesReservationWorkflow({
   });
   const previewContractPrice = parseGbpInput(contractPrice) ?? activeTerms?.contract_price ?? 0;
   const previewAgentFeePercent = normaliseNumberInput(agentFeePercent) ?? displayAgentFeePercent;
+  const previewExchangeAgentFeePercent = normaliseNumberInput(exchangeAgentFeePercent) ?? displayExchangeAgentFeePercent;
+  const previewCompletionAgentFeePercent = normaliseNumberInput(completionAgentFeePercent) ?? displayCompletionAgentFeePercent;
+  const previewAgentFeeStructure = validateAgentFeeStructure({
+    totalFeePercent: previewAgentFeePercent,
+    exchangeFeePercent: previewExchangeAgentFeePercent,
+    completionFeePercent: previewCompletionAgentFeePercent,
+  });
   const previewReservationFee = parseGbpInput(reservationFee) ?? displayReservationFee;
   const previewDeveloperContributionValue = parseGbpInput(developerContribution) ?? activeTerms?.developer_contribution_value ?? activeTerms?.developer_contribution ?? 0;
   const previewDeveloperContributionType = developerContributionValueType;
@@ -701,7 +1215,6 @@ export function SalesReservationWorkflow({
   const previewAgentContributionValue = parseGbpInput(agentContribution) ?? activeTerms?.agent_contribution_value ?? activeTerms?.agent_contribution ?? 0;
   const previewAgentContributionType = agentContributionValueType;
   const previewAgentContribution = contributionAmount(previewAgentContributionValue, previewAgentContributionType, previewContractPrice);
-  const previewParkingContribution = parseGbpInput(parkingContributionValue) ?? activeTerms?.parking_contribution_value ?? 0;
   const previewDepositStructure = buildDepositStructure({
     exchangeDepositPercent: normaliseNumberInput(exchangeDepositPercent) ?? displayDepositStructure.exchangeDepositPercent,
     secondDepositEnabled,
@@ -710,27 +1223,72 @@ export function SalesReservationWorkflow({
   });
   const previewInvoice = invoicePreview({
     contractPrice: previewContractPrice,
-    agentFeePercent: previewAgentFeePercent,
+    agentFeePercent: previewExchangeAgentFeePercent,
     vatRate: displayVatRate,
     reservationFee: previewReservationFee,
     reservationFeeHolder,
     agentContribution: previewAgentContribution,
   });
+  const completionInvoicePreview = calculateMilestoneFee({ salePrice: previewContractPrice, feePercent: previewCompletionAgentFeePercent, vatRate: displayVatRate });
   const uploadedInvoiceGross = activeInvoice?.gross_amount ?? parseGbpInput(invoiceGrossAmount);
-  const invoiceVariance = uploadedInvoiceGross === null || uploadedInvoiceGross === undefined ? null : uploadedInvoiceGross - previewInvoice.expectedPayableAmount;
+  const invoiceVariance = uploadedInvoiceGross === null || uploadedInvoiceGross === undefined ? null : uploadedInvoiceGross - previewInvoice.grossAmount;
   const permittedRelease = activePaymentSchedule
     .filter((row) => row.payment_stage === "exchange")
     .reduce((total, row) => total + scheduleAmount(row, activeTerms?.contract_price), 0);
-  const recordedSolicitorPayment = parseGbpInput(solicitorPaymentAmount) ?? solicitorPayment?.amount ?? 0;
-  const recordedDeveloperShortfall = parseGbpInput(developerShortfallAmount) ?? developerShortfallPayment?.amount ?? 0;
-  const otherInvoicePayments = activeInvoicePayments
-    .filter((payment) => payment.payment_source !== "solicitor_deposit" && payment.payment_source !== "developer_shortfall")
-    .reduce((total, payment) => total + Number(payment.amount ?? 0), 0);
-  const previewPaidAgainstInvoice = otherInvoicePayments + recordedSolicitorPayment + recordedDeveloperShortfall;
-  const totalReceivedByAgent = previewInvoice.reservationFeeDeduction + previewPaidAgainstInvoice;
   const expectedPayableAmount = activeInvoice?.expected_payable_amount ?? previewInvoice.expectedPayableAmount;
-  const outstandingDeveloperBalance = Math.max(0, expectedPayableAmount - previewPaidAgainstInvoice);
-  const invoiceReconciled = activeInvoice?.status === "reconciled";
+  const invoicePaymentPosition = deriveInvoicePaymentPosition({
+    cashAmountPayable: expectedPayableAmount,
+    reservationFeeHeld: activeInvoice?.reservation_fee_deduction ?? previewInvoice.reservationFeeDeduction,
+    payments: activeInvoicePayments,
+  });
+  const completionExpectedPayableAmount = completionAgentInvoice?.expected_payable_amount ?? completionInvoicePreview.grossAmount;
+  const completionInvoicePaymentPosition = deriveInvoicePaymentPosition({
+    cashAmountPayable: completionExpectedPayableAmount,
+    reservationFeeHeld: 0,
+    payments: completionInvoicePayments,
+  });
+  const completionInvoiceVariance = completionAgentInvoice?.gross_amount === null || completionAgentInvoice?.gross_amount === undefined
+    ? null
+    : completionAgentInvoice.gross_amount - completionInvoicePreview.grossAmount;
+  const agentFeeSummary = deriveAgentFeeSummary({
+    milestones: [
+      {
+        expectedNetAmount: previewInvoice.netAmount,
+        expectedVatAmount: previewInvoice.vatAmount,
+        expectedGrossAmount: previewInvoice.grossAmount,
+        invoice: activeInvoice,
+        payments: activeInvoicePayments,
+      },
+      {
+        expectedNetAmount: completionInvoicePreview.netAmount,
+        expectedVatAmount: completionInvoicePreview.vatAmount,
+        expectedGrossAmount: completionInvoicePreview.grossAmount,
+        invoice: completionAgentInvoice,
+        payments: completionInvoicePayments,
+      },
+    ],
+  });
+  const agentInvoiceNeedsCorrection = agentInvoiceDocument?.status === "query_raised" || activeInvoice?.status === "query_raised";
+  const completionInvoiceNeedsCorrection = completionAgentInvoiceDocument?.status === "query_raised" || completionAgentInvoice?.status === "query_raised";
+  const exchangeInvoiceApproved = activeInvoice?.status === "approved" || Boolean(activeInvoice?.approved_at);
+  const completionInvoiceApproved = completionAgentInvoice?.status === "approved" || Boolean(completionAgentInvoice?.approved_at);
+  const completionInvoiceSubmissionAvailable = exchangeRecorded && previewCompletionAgentFeePercent > 0;
+  const exchangeAgentFeeStatus = !activeInvoice
+      ? "Invoice required"
+      : agentInvoiceNeedsCorrection
+        ? "Correction requested"
+      : !exchangeInvoiceApproved
+        ? "Awaiting approval"
+        : invoicePaymentPosition.paymentStatus;
+  const completionAgentFeeStatus = previewCompletionAgentFeePercent <= 0
+    ? "Not applicable"
+    : !completionAgentInvoice
+      ? completionInvoiceSubmissionAvailable ? "Invoice required" : "Available after Exchange"
+      : completionInvoiceNeedsCorrection
+        ? "Correction requested"
+        : !completionInvoiceApproved
+          ? "Awaiting approval"
+          : completionInvoicePaymentPosition.paymentStatus;
   const activeAttemptByUnit = useMemo(
     () => new Map(attempts.filter((attempt) => attempt.is_active).map((attempt) => [attempt.unit_id, attempt])),
     [attempts],
@@ -747,14 +1305,6 @@ export function SalesReservationWorkflow({
     const term = currentTermForUnit(unit);
     return term?.contract_price ?? term?.list_price_at_offer ?? 0;
   };
-  const agentInvoiceForTerms = (saleTerms?: SaleTerms | null) => invoicePreview({
-    contractPrice: saleTerms?.contract_price ?? saleTerms?.list_price_at_offer ?? 0,
-    agentFeePercent: saleTerms?.agent_fee_percent ?? 0,
-    vatRate: saleTerms?.vat_rate ?? 20,
-    reservationFee: saleTerms?.reservation_fee ?? 0,
-    reservationFeeHolder: saleTerms?.reservation_fee_holder ?? "sales_agent",
-    agentContribution: saleTerms?.agent_contribution ?? 0,
-  });
   const developerNetForTerms = (saleTerms?: SaleTerms | null) => {
     if (!saleTerms) return 0;
     return calculateDeveloperNet({
@@ -769,6 +1319,14 @@ export function SalesReservationWorkflow({
   const selectedAgentInvoice = invoicePreview({
     contractPrice: selectedContractValue,
     agentFeePercent: displayAgentFeePercent,
+    vatRate: displayVatRate,
+    reservationFee: displayReservationFee,
+    reservationFeeHolder: displayReservationFeeHolder,
+    agentContribution: activeTerms?.agent_contribution ?? 0,
+  });
+  const selectedExchangeInvoice = invoicePreview({
+    contractPrice: selectedContractValue,
+    agentFeePercent: displayExchangeAgentFeePercent,
     vatRate: displayVatRate,
     reservationFee: displayReservationFee,
     reservationFeeHolder: displayReservationFeeHolder,
@@ -791,6 +1349,7 @@ export function SalesReservationWorkflow({
     agentFeePercent: previewAgentFeePercent,
   });
   const selectedExchangeDeposit = selectedContractValue * (displayDepositStructure.exchangeDepositPercent / 100);
+  const exchangeDepositDue = permittedRelease || selectedExchangeDeposit;
   const selectedSecondDeposit = displayDepositStructure.secondDepositEnabled
     ? selectedContractValue * (displayDepositStructure.secondDepositPercent / 100)
     : 0;
@@ -829,6 +1388,8 @@ export function SalesReservationWorkflow({
     && selectedBuildingDefault
     && (
       (activeTerms?.agent_fee_percent ?? null) !== (selectedBuildingDefault.default_agent_fee_percent ?? null)
+      || (activeTerms?.exchange_agent_fee_percent ?? null) !== (selectedBuildingDefault.default_exchange_agent_fee_percent ?? selectedBuildingDefault.default_agent_fee_percent ?? null)
+      || (activeTerms?.completion_agent_fee_percent ?? null) !== (selectedBuildingDefault.default_completion_agent_fee_percent ?? 0)
       || (activeTerms?.reservation_fee ?? null) !== (selectedBuildingDefault.reservation_fee ?? null)
       || (activeTerms?.reservation_fee_holder ?? null) !== (selectedBuildingDefault.reservation_fee_holder_default ?? null)
       || (activeTerms?.exchange_deposit_percent ?? null) !== (selectedBuildingDefault.exchange_deposit_percent ?? null)
@@ -858,32 +1419,26 @@ export function SalesReservationWorkflow({
     {
       key: "reservation" as const,
       label: "Reservation",
-      owner: "Sales agent / Developer",
       status: reservationApproved ? "Approved" : ["awaiting_approval", "reservation_submitted"].includes(activeAttempt?.workflow_status ?? "") ? "Awaiting developer approval" : ["rejected", "reservation_query_raised"].includes(activeAttempt?.workflow_status ?? "") ? "Rejected" : activeAttempt ? "Draft" : "Not started",
-      summary: "Buyer details, reservation fee, reservation form and developer approval.",
     },
     {
       key: "exchange" as const,
       label: "Exchange",
-      owner: "Developer / Conveyancer",
       status: exchangeRecorded ? "Exchanged" : commercialApproved ? "Ready" : reservationApproved ? "Commercial approval" : "Locked",
-      summary: "Commercial approval, agent invoice, exchange date and post-exchange payments.",
     },
     {
       key: "completion" as const,
       label: "Completion",
-      owner: "Conveyancer / Developer",
       status: completionRecorded ? "Completed" : exchangeRecorded ? "Documents required" : "Locked",
-      summary: "Completion statement, statement of account, approval and completion date.",
     },
     {
       key: "handover" as const,
       label: "Handover",
-      owner: "Developer / Resident",
       status: completionRecorded ? "Available" : "Locked",
-      summary: "Existing handover workflow becomes available after completion.",
     },
   ];
+  const currentLegalStage = workflowStages[currentWorkflowIndex] ?? workflowStages[0];
+  const currentLegalStageDate = selectedUnit ? saleStatusDate(selectedUnit, activeAttempt) : null;
   const reservationState: "not_started" | "awaiting_approval" | "rejected" | "approved" | "failed" = (() => {
     if (activeAttempt?.workflow_status === "fallen_through") return "failed";
     if (reservationApproved) return "approved";
@@ -989,7 +1544,7 @@ export function SalesReservationWorkflow({
     return "Review sale file";
   }
 
-  function writeSalesUrl(next: { building?: string; unit?: string | null; filter?: SalesStageFilter | null }) {
+  function writeSalesUrl(next: { building?: string; unit?: string | null; filter?: SalesStageFilter | null; view?: SalesView | null; section?: UnitSaleSection | null; hash?: string | null }) {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     params.set("screen", "sales");
@@ -998,26 +1553,51 @@ export function SalesReservationWorkflow({
     if (next.unit) params.set("salesUnitId", next.unit);
     if (next.filter === null) params.delete("salesFilter");
     if (next.filter) params.set("salesFilter", next.filter);
-    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+    if (next.view === null || next.view === "pipeline") params.delete("salesView");
+    if (next.view === "agent_fees") params.set("salesView", next.view);
+    if (next.section === null || next.section === "progression") params.delete("section");
+    if (next.section === "financials" || next.section === "commercial") params.set("section", next.section);
+    const hash = next.hash ? `#${next.hash}` : "";
+    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}${hash}`);
   }
 
-  function openSaleFile(nextUnitId: string) {
-    stayOnReservationStageRef.current = false;
+  function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
+    manuallySelectedWorkflowStageRef.current = null;
+    pendingAgentFeesScrollRef.current = focusAgentFees ? "exchange" : null;
+    setBuildingId(nextBuildingId);
     setUnitId(nextUnitId);
     setSelectedSaleUnitId(nextUnitId);
+    setActiveSalesView("pipeline");
+    setActiveUnitSection(focusAgentFees ? "financials" : "progression");
     setShowCommercialModel(false);
     const nextUnit = units.find((unit) => unit.id === nextUnitId);
     setActiveWorkflowStage(nextUnit ? workflowStageForUnit(nextUnit) : "reservation");
-    writeSalesUrl({ building: buildingId, unit: nextUnitId, filter: salesStageFilter });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    writeSalesUrl({ building: nextBuildingId, unit: nextUnitId, filter: salesStageFilter, view: "pipeline", section: focusAgentFees ? "financials" : "progression", hash: focusAgentFees ? "exchange-fee" : null });
+    if (!focusAgentFees) window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function backToSalesOverview() {
-    stayOnReservationStageRef.current = false;
+    manuallySelectedWorkflowStageRef.current = null;
     setSelectedSaleUnitId("");
+    setActiveSalesView("pipeline");
+    setActiveUnitSection("progression");
     setShowCommercialModel(false);
-    writeSalesUrl({ building: buildingId, unit: null, filter: salesStageFilter });
+    writeSalesUrl({ building: buildingId, unit: null, filter: salesStageFilter, view: "pipeline", section: null });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changeSalesView(view: SalesView) {
+    setActiveSalesView(view);
+    setSelectedSaleUnitId("");
+    setActiveUnitSection("progression");
+    writeSalesUrl({ building: view === "pipeline" ? buildingId : undefined, unit: null, filter: view === "pipeline" ? salesStageFilter : null, view, section: null });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changeUnitSection(section: UnitSaleSection) {
+    pendingAgentFeesScrollRef.current = null;
+    setActiveUnitSection(section);
+    writeSalesUrl({ building: buildingId, unit: selectedSaleUnitId, view: "pipeline", section });
   }
 
   function setReservationFormPdf(file: File | null) {
@@ -1037,6 +1617,8 @@ export function SalesReservationWorkflow({
     const urlBuildingId = params.get("salesBuildingId");
     const urlUnitId = params.get("salesUnitId");
     const urlFilter = params.get("salesFilter") as SalesStageFilter | null;
+    const urlView = params.get("salesView");
+    const urlSection = params.get("section") as UnitSaleSection | null;
 
     if (urlBuildingId && buildings.some((building) => building.id === urlBuildingId)) {
       setBuildingId(urlBuildingId);
@@ -1050,14 +1632,49 @@ export function SalesReservationWorkflow({
         setBuildingId(urlUnit.building_id);
         setActiveWorkflowStage(workflowStageForUnit(urlUnit));
       }
+      if (urlSection === "financials" || urlSection === "commercial") {
+        setActiveUnitSection(urlSection);
+        if (urlSection === "financials" && (window.location.hash === "#exchange-fee" || window.location.hash === "#completion-fee")) {
+          pendingAgentFeesScrollRef.current = window.location.hash === "#completion-fee" ? "completion" : "exchange";
+        }
+      }
     }
 
     if (urlFilter && SALES_STAGE_FILTERS.some((filter) => filter.value === urlFilter)) {
       setSalesStageFilter(urlFilter);
     }
 
+    if (urlView === "agent_fees" && canViewAgentFeesPortfolio) {
+      setActiveSalesView("agent_fees");
+      setSelectedSaleUnitId("");
+    }
+
     setHasReadSalesUrl(true);
-  }, [buildings, hasReadSalesUrl, units]);
+  }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, units]);
+
+  useEffect(() => {
+    if (!pendingAgentFeesScrollRef.current || !activeAttempt || activeUnitSection !== "financials") return;
+    const milestone = pendingAgentFeesScrollRef.current;
+    pendingAgentFeesScrollRef.current = null;
+    if (!reservationApproved) return;
+    scrollToPortalSection(`${milestone}-fee`);
+  }, [activeAttempt, activeUnitSection, reservationApproved]);
+
+  useEffect(() => {
+    if (!pendingWorkflowStageScrollRef.current || activeUnitSection !== "progression") return;
+    const stage = pendingWorkflowStageScrollRef.current;
+    pendingWorkflowStageScrollRef.current = null;
+    scrollToPortalSection(`sales-stage-${stage}`);
+  }, [activeUnitSection, activeWorkflowStage]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const section = new URLSearchParams(window.location.search).get("section");
+      setActiveUnitSection(section === "financials" || section === "commercial" ? section : "progression");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     setSalesPage(1);
@@ -1065,7 +1682,7 @@ export function SalesReservationWorkflow({
 
   useEffect(() => {
     if (!selectedSaleUnitId || !selectedUnit) return;
-    if (stayOnReservationStageRef.current && activeWorkflowStage === "reservation" && selectedWorkflowStage !== "reservation") return;
+    if (manuallySelectedWorkflowStageRef.current === activeWorkflowStage) return;
     setActiveWorkflowStage(selectedWorkflowStage);
   }, [activeWorkflowStage, selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
 
@@ -1103,6 +1720,8 @@ export function SalesReservationWorkflow({
       setParkingLocationDetails("");
       setAdditionalSpecialConditions([""]);
       setAgentFeePercent(selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+      setExchangeAgentFeePercent(selectedBuildingDefault?.default_exchange_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+      setCompletionAgentFeePercent(selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
       setSolicitorFee(selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
       setExchangeDepositPercent(selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
       setSecondDepositEnabled(Boolean(selectedBuildingDefault?.second_deposit_enabled));
@@ -1121,18 +1740,30 @@ export function SalesReservationWorkflow({
       setInvoiceVatAmount("");
       setInvoiceGrossAmount("");
       setAgentInvoiceFile(null);
+      setCompletionInvoiceReference("");
+      setCompletionInvoiceDate("");
+      setCompletionInvoiceGrossAmount("");
+      setCompletionAgentInvoiceFile(null);
       setExchangeDate("");
+      setExchangeDepositConfirmed(false);
       setSolicitorPaymentAmount("");
       setSolicitorPaymentDate("");
-      setDeveloperShortfallAmount("");
-      setDeveloperShortfallDate("");
-      setReconciliationNotes("");
+      paymentClientReferenceRef.current = null;
+      setCompletionPaymentAmount("");
+      setCompletionPaymentDate("");
+      completionPaymentClientReferenceRef.current = null;
+      setPaymentToVoid(null);
+      setPaymentVoidReason("");
       setCompletionStatementFile(null);
       setStatementOfAccountFile(null);
       setCompletionQueryNote("");
       setCompletionDate("");
       setRejectionReason("");
+      setInvoiceRejectionReason("");
+      setCompletionInvoiceRejectionReason("");
       setShowRejectReservationConfirm(false);
+      setShowRejectInvoiceConfirm(false);
+      setShowRejectCompletionInvoiceConfirm(false);
       setShowAdvancedDealSetup(false);
       return;
     }
@@ -1164,6 +1795,8 @@ export function SalesReservationWorkflow({
     ];
     setAdditionalSpecialConditions(combinedAdditionalConditions.length ? combinedAdditionalConditions : [""]);
     setAgentFeePercent(activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+    setExchangeAgentFeePercent(activeTerms?.exchange_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_exchange_agent_fee_percent?.toString() ?? activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+    setCompletionAgentFeePercent(activeTerms?.completion_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
     setSolicitorFee(activeTerms?.solicitor_fee?.toString() ?? selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
     setExchangeDepositPercent(activeTerms?.exchange_deposit_percent?.toString() ?? selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
     setSecondDepositEnabled(Boolean(activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled));
@@ -1181,24 +1814,36 @@ export function SalesReservationWorkflow({
     setInvoiceNetAmount(activeInvoice?.net_amount?.toString() ?? "");
     setInvoiceVatAmount(activeInvoice?.vat_amount?.toString() ?? "");
     setInvoiceGrossAmount(activeInvoice?.gross_amount?.toString() ?? "");
+    setCompletionInvoiceReference(completionAgentInvoice?.invoice_reference ?? "");
+    setCompletionInvoiceDate(completionAgentInvoice?.invoice_date ?? "");
+    setCompletionInvoiceGrossAmount(completionAgentInvoice?.gross_amount?.toString() ?? "");
     setReservationFormFile(null);
     setReservationDocumentRemoved(false);
     setReservationDocumentHistoryUnlocked(false);
     setAgentInvoiceFile(null);
+    setCompletionAgentInvoiceFile(null);
     setExchangeDate(activeAttempt.exchanged_at ?? "");
-    setSolicitorPaymentAmount(solicitorPayment?.amount?.toString() ?? "");
-    setSolicitorPaymentDate(solicitorPayment?.paid_at ?? "");
-    setDeveloperShortfallAmount(developerShortfallPayment?.amount?.toString() ?? "");
-    setDeveloperShortfallDate(developerShortfallPayment?.paid_at ?? "");
-    setReconciliationNotes(solicitorPayment?.notes ?? developerShortfallPayment?.notes ?? "");
+    setExchangeDepositConfirmed(Boolean(activeAttempt.exchanged_at));
+    setSolicitorPaymentAmount("");
+    setSolicitorPaymentDate("");
+    paymentClientReferenceRef.current = null;
+    setCompletionPaymentAmount("");
+    setCompletionPaymentDate("");
+    completionPaymentClientReferenceRef.current = null;
+    setPaymentToVoid(null);
+    setPaymentVoidReason("");
     setCompletionStatementFile(null);
     setStatementOfAccountFile(null);
     setCompletionQueryNote(completionStatementDocument?.query_note ?? statementOfAccountDocument?.query_note ?? "");
     setCompletionDate(activeAttempt.completed_at ?? "");
     setRejectionReason("");
+    setInvoiceRejectionReason("");
+    setCompletionInvoiceRejectionReason("");
     setShowRejectReservationConfirm(false);
+    setShowRejectInvoiceConfirm(false);
+    setShowRejectCompletionInvoiceConfirm(false);
     setShowAdvancedDealSetup(false);
-  }, [activeAttempt, activeInvoice, activeTerms, completionStatementDocument, developerShortfallPayment, reservationDocument, selectedBuildingDefault, solicitorPayment, statementOfAccountDocument]);
+  }, [activeAttempt, activeInvoice, activeTerms, completionAgentInvoice, completionStatementDocument, reservationDocument, selectedBuildingDefault, statementOfAccountDocument]);
 
   async function loadSalesData() {
     const supabase = createSupabaseBrowserClient();
@@ -1315,6 +1960,8 @@ export function SalesReservationWorkflow({
     setParkingLocationDetails("");
     setAdditionalSpecialConditions(combinedAdditionalConditions);
     setAgentFeePercent(activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+    setExchangeAgentFeePercent(activeTerms?.exchange_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_exchange_agent_fee_percent?.toString() ?? activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
+    setCompletionAgentFeePercent(activeTerms?.completion_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
     setSolicitorFee(activeTerms?.solicitor_fee?.toString() ?? selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
     setExchangeDepositPercent(activeTerms?.exchange_deposit_percent?.toString() ?? selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
     setSecondDepositEnabled(Boolean(activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled));
@@ -1385,7 +2032,7 @@ export function SalesReservationWorkflow({
     const fallback = action === "save_commercial_model" || action === "save_commercial_package"
       ? "Commercial model could not be saved."
       : "Reservation could not be completed.";
-    const payload = await readApiPayload<{ error?: string; saleAttemptId?: string }>(response, fallback);
+    const payload = await readApiPayload<{ error?: string; saleAttemptId?: string; voided?: boolean; paymentStatus?: string }>(response, fallback);
     if (!response.ok) throw new Error(payload.error ?? fallback);
     return payload;
   }
@@ -1479,7 +2126,7 @@ export function SalesReservationWorkflow({
     setIsSaving(true);
     try {
       await postReservationJson({ action: "approve_reservation", saleAttemptId: activeAttempt.id, reservationDate: formalReservationDate });
-      stayOnReservationStageRef.current = true;
+      manuallySelectedWorkflowStageRef.current = "reservation";
       setActiveWorkflowStage("reservation");
       onNotice(`Reservation approved. Unit ${selectedUnit.unit_number} marked Reserved.`);
       await Promise.all([loadSalesData(), reloadPortalData()]);
@@ -1511,13 +2158,22 @@ export function SalesReservationWorkflow({
     }
   }
 
-  async function uploadAgentInvoice() {
+  async function uploadAgentInvoice(milestone: AgentFeeMilestone = "exchange") {
     if (!activeAttempt) {
       onNotice("Create and approve a reservation before uploading the sales agent invoice.");
       return;
     }
-    if (!agentInvoiceFile) {
-      onNotice("Choose the sales agent invoice PDF before uploading.");
+    const milestoneLabel = milestone === "completion" ? "Completion" : "Exchange";
+    const file = milestone === "completion" ? completionAgentInvoiceFile : agentInvoiceFile;
+    const reference = milestone === "completion" ? completionInvoiceReference : invoiceReference;
+    const date = milestone === "completion" ? completionInvoiceDate : invoiceDate;
+    const grossAmount = milestone === "completion" ? completionInvoiceGrossAmount : invoiceGrossAmount;
+    if (!file) {
+      onNotice(`Choose the ${milestoneLabel} agent invoice PDF before submitting.`);
+      return;
+    }
+    if (!reference.trim() || !date || (parseGbpInput(grossAmount) ?? 0) <= 0) {
+      onNotice("Enter the invoice reference, invoice date and total before uploading.");
       return;
     }
 
@@ -1526,7 +2182,11 @@ export function SalesReservationWorkflow({
       const formData = new FormData();
       formData.set("action", "upload_agent_invoice");
       formData.set("saleAttemptId", activeAttempt.id);
-      formData.set("file", agentInvoiceFile);
+      formData.set("feeMilestone", milestone);
+      formData.set("file", file);
+      formData.set("invoiceReference", reference.trim());
+      formData.set("invoiceDate", date);
+      formData.set("invoiceGrossAmount", grossAmount);
       const response = await fetch("/api/sales/reservations", {
         method: "POST",
         headers: await authHeaders(),
@@ -1534,7 +2194,9 @@ export function SalesReservationWorkflow({
       });
       const payload = await readApiPayload<{ error?: string }>(response, "Sales agent invoice upload failed.");
       if (!response.ok) throw new Error(payload.error ?? "Sales agent invoice upload failed.");
-      onNotice("Sales agent invoice uploaded.");
+      onNotice(`${milestoneLabel} agent invoice submitted.`);
+      if (milestone === "completion") setCompletionAgentInvoiceFile(null);
+      else setAgentInvoiceFile(null);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Sales agent invoice could not be uploaded.");
@@ -1547,6 +2209,10 @@ export function SalesReservationWorkflow({
     if (!selectedUnit) return;
     if (!previewDepositStructure.isValid) {
       onNotice(previewDepositStructure.error ?? "Payment schedule is invalid.");
+      return;
+    }
+    if (!previewAgentFeeStructure.isValid) {
+      onNotice(previewAgentFeeStructure.error ?? "Agent fee structure is invalid.");
       return;
     }
     setIsSaving(true);
@@ -1576,6 +2242,8 @@ export function SalesReservationWorkflow({
           reservationFee,
           reservationFeeHolder,
           agentFeePercent,
+          exchangeAgentFeePercent,
+          completionAgentFeePercent,
           solicitorFee,
           exchangeDepositPercent,
           secondDepositEnabled,
@@ -1610,16 +2278,65 @@ export function SalesReservationWorkflow({
     }
   }
 
+  async function approveAgentInvoice(milestone: AgentFeeMilestone) {
+    if (!activeAttempt || !selectedUnit) return;
+    const milestoneLabel = milestone === "completion" ? "Completion" : "Exchange";
+    setIsSaving(true);
+    try {
+      await postReservationJson({ action: "approve_agent_invoice", saleAttemptId: activeAttempt.id, invoiceMilestone: milestone });
+      onNotice(`${milestoneLabel} agent invoice approved for Unit ${selectedUnit.unit_number}.`);
+      await Promise.all([loadSalesData(), reloadPortalData()]);
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : `${milestoneLabel} agent invoice could not be approved.`);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function rejectAgentInvoice(milestone: AgentFeeMilestone = "exchange") {
+    const reason = milestone === "completion" ? completionInvoiceRejectionReason : invoiceRejectionReason;
+    if (!activeAttempt || !selectedUnit || !reason.trim()) return;
+    const milestoneLabel = milestone === "completion" ? "Completion" : "Exchange";
+    setIsSaving(true);
+    try {
+      await postReservationJson({
+        action: "reject_agent_invoice",
+        saleAttemptId: activeAttempt.id,
+        invoiceMilestone: milestone,
+        invoiceRejectionReason: reason.trim(),
+      });
+      onNotice(`${milestoneLabel} agent invoice rejected for Unit ${selectedUnit.unit_number}. A corrected invoice is required.`);
+      if (milestone === "completion") {
+        setShowRejectCompletionInvoiceConfirm(false);
+        setCompletionInvoiceRejectionReason("");
+      } else {
+        setShowRejectInvoiceConfirm(false);
+        setInvoiceRejectionReason("");
+      }
+      await Promise.all([loadSalesData(), reloadPortalData()]);
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Sales agent invoice could not be rejected.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function recordExchange() {
     if (!activeAttempt || !selectedUnit) return;
     if (!exchangeDate) {
       onNotice("Enter the actual exchange date.");
       return;
     }
+    if (!exchangeDepositConfirmed) {
+      onNotice("Confirm that the exchange deposit has been received.");
+      return;
+    }
 
     setIsSaving(true);
     try {
-      await postReservationJson({ action: "record_exchange", saleAttemptId: activeAttempt.id, exchangeDate });
+      await postReservationJson({ action: "record_exchange", saleAttemptId: activeAttempt.id, exchangeDate, exchangeDepositConfirmed });
+      manuallySelectedWorkflowStageRef.current = "exchange";
+      setActiveWorkflowStage("exchange");
       onNotice(`Exchange recorded. Unit ${selectedUnit.unit_number} marked Exchanged.`);
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
@@ -1629,24 +2346,92 @@ export function SalesReservationWorkflow({
     }
   }
 
-  async function saveInvoiceReconciliation() {
-    if (!activeAttempt || !selectedUnit) return;
+  async function recordAgentFeePayment(milestone: AgentFeeMilestone = "exchange") {
+    const invoice = milestone === "completion" ? completionAgentInvoice : activeInvoice;
+    const amountValue = milestone === "completion" ? completionPaymentAmount : solicitorPaymentAmount;
+    const dateValue = milestone === "completion" ? completionPaymentDate : solicitorPaymentDate;
+    const position = milestone === "completion" ? completionInvoicePaymentPosition : invoicePaymentPosition;
+    const submissionRef = milestone === "completion" ? completionPaymentSubmissionInFlightRef : paymentSubmissionInFlightRef;
+    const clientReferenceRef = milestone === "completion" ? completionPaymentClientReferenceRef : paymentClientReferenceRef;
+    if (!activeAttempt || !invoice || !selectedUnit || submissionRef.current) return false;
+    const paymentAmount = parseGbpInput(amountValue);
+    if (paymentAmount === null || paymentAmount <= 0 || !dateValue) {
+      onNotice("Enter the amount paid and payment date.");
+      return false;
+    }
+    if (dateValue > todayDate) {
+      onNotice("Payment date cannot be in the future.");
+      return false;
+    }
+    if (paymentAmount > position.outstandingBalance) {
+      onNotice(`Payment cannot exceed the ${money(position.outstandingBalance)} outstanding balance.`);
+      return false;
+    }
+    submissionRef.current = true;
+    clientReferenceRef.current ??= crypto.randomUUID();
     setIsSaving(true);
     try {
       await postReservationJson({
-        action: "record_invoice_reconciliation",
-        saleAttemptId: activeAttempt.id,
-        solicitorPaymentAmount: canRecordSolicitorPayment ? solicitorPaymentAmount : null,
-        solicitorPaymentDate: canRecordSolicitorPayment ? solicitorPaymentDate : null,
-        developerShortfallAmount: canRecordDeveloperShortfall ? developerShortfallAmount : null,
-        developerShortfallDate: canRecordDeveloperShortfall ? developerShortfallDate : null,
-        reconciliationNotes,
+        action: "record_agent_fee_payment",
+        invoiceId: invoice.id,
+        paymentAmount: amountValue,
+        paymentDate: dateValue,
+        paymentClientReference: clientReferenceRef.current,
       });
-      onNotice(`Invoice reconciliation saved for Unit ${selectedUnit.unit_number}.`);
+      onNotice(`${milestone === "completion" ? "Completion" : "Exchange"} invoice payment recorded for Unit ${selectedUnit.unit_number}.`);
+      if (milestone === "completion") {
+        setCompletionPaymentAmount("");
+        setCompletionPaymentDate("");
+      } else {
+        setSolicitorPaymentAmount("");
+        setSolicitorPaymentDate("");
+      }
+      clientReferenceRef.current = null;
+      await Promise.all([loadSalesData(), reloadPortalData()]);
+      return true;
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "Invoice payment could not be saved.");
+      return false;
+    } finally {
+      submissionRef.current = false;
+      setIsSaving(false);
+    }
+  }
+
+  function requestVoidAgentFeePayment(payment: SaleInvoicePayment) {
+    if (!canVoidAgentFeePayment || payment.voided_at || payment.payment_source === "reservation_fee") return;
+    setPaymentToVoid(payment);
+    setPaymentVoidReason("");
+    requestPaymentVoidPanel({ focus: () => paymentVoidReasonInputRef.current });
+  }
+
+  async function voidAgentFeePayment() {
+    if (!paymentToVoid || voidPaymentSubmissionInFlightRef.current) return;
+    const reason = paymentVoidReason.trim();
+    if (!reason) {
+      onNotice("Add a reason for voiding the payment.");
+      paymentVoidReasonInputRef.current?.focus();
+      return;
+    }
+
+    voidPaymentSubmissionInFlightRef.current = true;
+    setIsSaving(true);
+    try {
+      const result = await postReservationJson({
+        action: "void_agent_fee_payment",
+        paymentId: paymentToVoid.id,
+        paymentVoidReason: reason,
+      });
+      onNotice(result.voided
+        ? `${money(paymentToVoid.amount)} payment voided. Record the corrected payment when ready.`
+        : "This payment was already voided. The latest invoice position has been loaded.");
+      setPaymentToVoid(null);
+      setPaymentVoidReason("");
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Invoice reconciliation could not be saved.");
+      onNotice(error instanceof Error ? error.message : "Payment could not be voided.");
     } finally {
+      voidPaymentSubmissionInFlightRef.current = false;
       setIsSaving(false);
     }
   }
@@ -1683,7 +2468,8 @@ export function SalesReservationWorkflow({
   }
 
   async function approveCompletionDocuments() {
-    if (!activeAttempt) return;
+    if (!activeAttempt || completionDocumentsApproved || completionReviewSubmissionInFlightRef.current) return;
+    completionReviewSubmissionInFlightRef.current = true;
     setIsSaving(true);
     try {
       await postReservationJson({ action: "approve_completion_documents", saleAttemptId: activeAttempt.id });
@@ -1692,6 +2478,7 @@ export function SalesReservationWorkflow({
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Completion documents could not be approved.");
     } finally {
+      completionReviewSubmissionInFlightRef.current = false;
       setIsSaving(false);
     }
   }
@@ -1711,12 +2498,13 @@ export function SalesReservationWorkflow({
   }
 
   async function recordCompletion() {
-    if (!activeAttempt || !selectedUnit) return;
+    if (!activeAttempt || !selectedUnit || completionRecorded || completionRecordSubmissionInFlightRef.current) return;
     if (!completionDate) {
       onNotice("Enter the actual completion date.");
       return;
     }
 
+    completionRecordSubmissionInFlightRef.current = true;
     setIsSaving(true);
     try {
       await postReservationJson({ action: "record_completion", saleAttemptId: activeAttempt.id, completionDate });
@@ -1725,11 +2513,25 @@ export function SalesReservationWorkflow({
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Completion could not be recorded.");
     } finally {
+      completionRecordSubmissionInFlightRef.current = false;
       setIsSaving(false);
     }
   }
 
   if (!selectedSaleUnitId) {
+    if (activeSalesView === "agent_fees" && canViewAgentFeesPortfolio) {
+      return (
+        <div className="grid gap-5">
+          <section className="panel">
+            <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
+            <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
+            <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
+          </section>
+          <AgentFeesPortfolio requesterId={profile?.id ?? user.id} onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)} />
+        </div>
+      );
+    }
+
     return (
       <div className="grid gap-5">
         <section className="panel">
@@ -1762,6 +2564,7 @@ export function SalesReservationWorkflow({
               </select>
             </label>
           </div>
+          <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
 
         <section className="panel">
@@ -1871,15 +2674,19 @@ export function SalesReservationWorkflow({
                   </tr>
                 ) : pagedSalesUnits.map((unit) => {
                   const attempt = activeAttemptByUnit.get(unit.id);
+                  const stageTone = saleStatusTone(unit.sale_status);
                   return (
                     <tr
                       key={unit.id}
-                      className="cursor-pointer bg-white hover:bg-[#fbfcfa]"
+                      className={`cursor-pointer transition-colors ${stageTone.row}`}
                       onClick={() => openSaleFile(unit.id)}
                     >
                       <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]">Unit {unit.unit_number}</td>
                       <td className="border-b border-[#eef0eb] px-4 py-3">
-                        <span className="rounded-full bg-[#F0EEE7] px-2 py-1 text-xs font-bold text-[#617169]">{saleStatusLabel(unit.sale_status)}</span>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${stageTone.badge}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${stageTone.dot}`} aria-hidden="true" />
+                          {saleStatusLabel(unit.sale_status)}
+                        </span>
                       </td>
                       <td className="numeric-value border-b border-[#eef0eb] px-4 py-3 text-right">{money(unitSaleValue(unit))}</td>
                       <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{nextActionForUnit(unit)}</td>
@@ -1972,17 +2779,28 @@ export function SalesReservationWorkflow({
               <p className="text-sm text-[#617169]">{selectedBuilding?.name ?? "Building"} / {selectedUnit.floor ?? "No floor"}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-xs font-bold text-[#617169]">{saleStatusLabel(selectedUnit.sale_status)}</span>
-              {activeAttempt && <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-xs font-bold text-[#0F3D2E]">Reservation {statusLabel(activeAttempt.workflow_status)}</span>}
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${saleStatusTone(selectedUnit.sale_status).badge}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${saleStatusTone(selectedUnit.sale_status).dot}`} aria-hidden="true" />
+                {saleStatusLabel(selectedUnit.sale_status)}
+              </span>
             </div>
           </div>
+          <SaleMetadataStrip items={[
+            { label: "Contract price", value: money(selectedContractValue) },
+            { label: "Buyer", value: buyerDisplay(activeAttempt) },
+            { label: "Current stage", value: <>{currentLegalStage.label}{currentLegalStageDate ? ` · ${formatDate(currentLegalStageDate)}` : ""}</> },
+          ]} />
           {buildingDefaultsDifferFromSnapshot && (
-            <p className="mt-3 text-xs text-[#617169]">This sale uses the deal setup agreed at reservation. Building defaults may have changed since.</p>
+            <p className="mt-2 text-xs text-[#617169]">This sale uses the deal setup agreed at reservation. Building defaults may have changed since.</p>
           )}
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-3">
+          <SaleFileWorkspaceTabs activeWorkspace={activeUnitSection} onChange={changeUnitSection} />
+
+          {activeUnitSection === "commercial" && (
+          <div id="unit-sale-commercial" role="tabpanel" aria-labelledby="sale-file-tab-commercial" className="min-w-0 rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-5">
+          <div className="grid gap-4 xl:grid-cols-3">
             <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <h4 className="font-bold text-[#0F3D2E]">Developer view</h4>
+              <h4 className="font-bold text-[#0F3D2E]">Developer</h4>
               <p className="mt-1 text-sm text-[#617169]">Sale value, development-side deductions and net proceeds.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>List price</span><strong className="numeric-value text-right">{money(activeTerms?.list_price_at_offer ?? selectedContractValue)}</strong></div>
@@ -1995,20 +2813,19 @@ export function SalesReservationWorkflow({
               </div>
             </div>
             <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <h4 className="font-bold text-[#0F3D2E]">Agent view</h4>
+              <h4 className="font-bold text-[#0F3D2E]">Agent</h4>
               <p className="mt-1 text-sm text-[#617169]">Forecast agent invoice after deductions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent fee %</span><strong className="numeric-value text-right">{formatPercentValue(displayAgentFeePercent)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total agent fee</span><strong className="numeric-value text-right">{formatPercentValue(displayAgentFeePercent)}</strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee base</span><strong className="numeric-value text-right">{money(selectedContractValue)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Net agent fee</span><strong className="numeric-value text-right">{money(selectedAgentInvoice.netAmount)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>VAT</span><strong className="numeric-value text-right">{money(selectedAgentInvoice.vatAmount)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee deduction</span><strong className="numeric-value text-right">{moneyDeduction(selectedAgentInvoice.reservationFeeDeduction)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionDeductionLabel}</strong></div>
-                <div className="flex justify-between gap-4"><span>Forecast invoice</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(selectedAgentInvoice.expectedPayableAmount)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total net agent fee</span><strong className="numeric-value text-right">{money(selectedAgentInvoice.netAmount)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange tranche</span><strong className="numeric-value text-right">{formatPercentValue(displayExchangeAgentFeePercent)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion tranche</span><strong className="numeric-value text-right">{formatPercentValue(displayCompletionAgentFeePercent)}</strong></div>
+                <div className="flex justify-between gap-4"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionDeductionLabel}</strong></div>
               </div>
             </div>
             <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <h4 className="font-bold text-[#0F3D2E]">Buyer view</h4>
+              <h4 className="font-bold text-[#0F3D2E]">Buyer</h4>
               <p className="mt-1 text-sm text-[#617169]">Payment schedule and buyer-facing contributions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value text-right">{money(selectedContractValue)}</strong></div>
@@ -2105,7 +2922,9 @@ export function SalesReservationWorkflow({
                     {!showAdvancedDealSetup ? (
                       <div className="rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
                         <div className="grid gap-2">
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Agent fee %</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value">{formatPercentValue(previewExchangeAgentFeePercent)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value">{formatPercentValue(previewCompletionAgentFeePercent)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(previewReservationFee)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
                           {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Second deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
@@ -2114,7 +2933,12 @@ export function SalesReservationWorkflow({
                       </div>
                     ) : (
                       <>
-                        <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                        <label className="field-label">Total agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                        <label className="field-label">Exchange fee %<input className="field" inputMode="decimal" value={exchangeAgentFeePercent} onChange={(event) => setExchangeAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                        <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                        <div className={`rounded-md border p-3 text-sm ${previewAgentFeeStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+                          <p>{previewAgentFeeStructure.error ?? "Exchange and Completion fees match the total agent fee."}</p>
+                        </div>
                         <label className="field-label">Reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} disabled={!commercialModelEditable} aria-label="Reservation fee" /></label>
                         <label className="field-label">
                           Reservation fee holder
@@ -2150,9 +2974,9 @@ export function SalesReservationWorkflow({
                     <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net before</span><strong className="numeric-value text-right">{money(selectedDeveloperNet)}</strong></div>
                     <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net after</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(modelDeveloperNet)}</strong></div>
                     <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer difference</span><strong className="numeric-value text-right">{money(modelDeveloperNet - selectedDeveloperNet)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent invoice before</span><strong className="numeric-value text-right">{money(selectedAgentInvoice.expectedPayableAmount)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent invoice after</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(previewInvoice.expectedPayableAmount)}</strong></div>
-                    <div className="flex justify-between gap-4"><span>Agent difference</span><strong className="numeric-value text-right">{money(previewInvoice.expectedPayableAmount - selectedAgentInvoice.expectedPayableAmount)}</strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice before</span><strong className="numeric-value text-right">{money(selectedExchangeInvoice.expectedPayableAmount)}</strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice after</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(previewInvoice.expectedPayableAmount)}</strong></div>
+                    <div className="flex justify-between gap-4"><span>Exchange invoice difference</span><strong className="numeric-value text-right">{money(previewInvoice.expectedPayableAmount - selectedExchangeInvoice.expectedPayableAmount)}</strong></div>
                   </div>
                 </div>
                 <div className="rounded-lg border border-[#e2ded3] bg-white p-4">
@@ -2172,82 +2996,77 @@ export function SalesReservationWorkflow({
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button className="secondary" onClick={cancelCommercialModel}>Cancel</button>
-                <button className="primary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !commercialModelEditable || !previewDepositStructure.isValid}>
+                <button className="primary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !commercialModelEditable || !previewDepositStructure.isValid || !previewAgentFeeStructure.isValid}>
                   Save commercial model
                 </button>
               </div>
             </div>
           )}
+          </div>
+          )}
 
-          <div className="mt-6 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h4 className="text-lg font-bold text-[#0F3D2E]">Sales timeline</h4>
-                <p className="text-sm text-[#617169]">Follow the handoff from agent to developer to conveyancer.</p>
-              </div>
-              <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                Activity {activeWorkflowEvents.length}
-              </span>
+          {activeUnitSection === "progression" && (
+          <div id="unit-sale-progression" role="tabpanel" aria-labelledby="sale-file-tab-progression" className="rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-3 sm:p-4">
+            <div>
+              <h4 className="text-lg font-bold text-[#0F3D2E]">Sales stages</h4>
+              <p className="text-sm text-[#617169]">Track the legal sale lifecycle and select a stage to view its workspace.</p>
             </div>
-            <div className="mt-4 grid gap-3 lg:grid-cols-4">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {workflowStages.map((stage, index) => {
                 const isLocked = index > currentWorkflowIndex;
+                const isDone = index < currentWorkflowIndex;
                 const isSelected = activeWorkflowStage === stage.key;
+                const needsAttention = stage.status === "Rejected";
+                const cardTone = needsAttention
+                  ? "border-[#e5c4be] bg-[#fff9f7] hover:border-[#a94b3d]"
+                  : isDone
+                    ? "border-[#c8ddcf] bg-[#f7fbf8] hover:border-[#4f8d68]"
+                    : isLocked
+                      ? "cursor-not-allowed border-[#d9ded6] bg-[#f5f6f4]"
+                      : "border-[#ead8a7] bg-[#fffaf0] hover:border-[#d6a23a]";
+                const statusTone = needsAttention
+                  ? "border-[#e5c4be] bg-[#fbeeea] text-[#8d382d]"
+                  : isDone
+                    ? "border-[#bedacb] bg-[#eaf6ee] text-[#286348]"
+                    : isLocked
+                      ? "border-[#d9ded6] bg-[#ebece9] text-[#727d77]"
+                      : "border-[#ead8a7] bg-[#fff1cc] text-[#765a18]";
                 return (
                   <button
                     key={stage.key}
-                    className={`flex h-full min-h-36 flex-col items-stretch rounded-lg border p-4 text-left transition ${isSelected ? "border-[#0F3D2E] bg-white shadow-sm" : "border-[#d9ded6] bg-white"} ${isLocked ? "cursor-not-allowed opacity-55" : "hover:border-[#0F3D2E]"}`}
+                    className={`flex min-h-24 min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-lg border p-4 text-left transition sm:p-5 ${cardTone} ${isSelected ? "ring-1 ring-[#0F3D2E] shadow-sm" : ""}`}
                     onClick={() => {
                       if (!isLocked) {
-                        stayOnReservationStageRef.current = false;
+                        manuallySelectedWorkflowStageRef.current = stage.key;
+                        pendingWorkflowStageScrollRef.current = stage.key;
                         setActiveWorkflowStage(stage.key);
                       }
                     }}
                     disabled={isLocked}
+                    aria-current={isSelected ? "step" : undefined}
                   >
-                    <div className="flex min-h-8 items-start justify-between gap-3">
-                      <span className="font-bold text-[#0F3D2E]">{index + 1}. {stage.label}</span>
-                      <span className="shrink-0 rounded-full bg-[#F0EEE7] px-2 py-1 text-xs font-bold text-[#617169]">{stage.status}</span>
+                    <div className="min-w-0">
+                      <span className="block break-words text-lg font-bold leading-tight text-[#0F3D2E]">{stage.label}</span>
+                      {isSelected && <span className="mt-2 block text-xs font-bold uppercase tracking-[0.08em] text-[#D6A23A]">Selected</span>}
                     </div>
-                    <p className="mt-2 text-xs font-semibold uppercase text-[#617169]">Owner: {stage.owner}</p>
-                    <p className="mt-2 text-sm text-[#617169]">{stage.summary}</p>
-                    <p className={`mt-auto pt-3 text-xs font-bold uppercase ${isSelected ? "text-[#D6A23A]" : "invisible"}`}>Selected</p>
+                    <span className={`max-w-full shrink-0 whitespace-normal break-words rounded-full border px-2.5 py-1 text-center text-xs font-bold leading-tight ${statusTone}`}>{stage.status}</span>
                   </button>
                 );
               })}
             </div>
-            {activeWorkflowEvents.length > 0 && (
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-3">
-                <h5 className="text-sm font-bold text-[#0F3D2E]">Activity</h5>
-                <div className="mt-2 grid gap-2">
-                  {activeWorkflowEvents.slice(0, 8).map((event) => (
-                    <div key={event.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
-                      <div className="flex flex-wrap justify-between gap-3">
-                        <strong>{event.summary}</strong>
-                        <span className="text-[#617169]">{formatDateTime(event.created_at)}</span>
-                      </div>
-                      {typeof event.metadata?.rejectionReason === "string" && (
-                        <p className="mt-1 text-[#7a271a]">{event.metadata.rejectionReason}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+          )}
 
-          {activeWorkflowStage === "reservation" && (
-            <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#617169]">Selected workflow step</p>
-                  <h4 className="mt-1 text-lg font-bold text-[#0F3D2E]">1. Reservation</h4>
-                  <p className="text-sm text-[#617169]">Agent submits buyer details and reservation form; developer approves before the unit becomes Reserved.</p>
-                </div>
-                <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                  {reservationStateLabel[reservationState]}
-                </span>
-              </div>
+          {activeUnitSection === "progression" && activeWorkflowStage === "reservation" && (
+            <StageWorkspace
+              id="sales-stage-reservation"
+              title="Reservation"
+              description="Review the reservation record, buyer details and agreed commercial terms."
+              status={reservationStateLabel[reservationState]}
+              statusTone={reservationState === "approved" ? "done" : reservationState === "rejected" || reservationState === "failed" ? "attention" : "current"}
+              taskLabel={reservationState === "approved" ? "Stage outcome" : "Current task"}
+              currentTask={reservationState === "approved" ? "Approval record" : reservationState === "awaiting_approval" ? "Developer review" : reservationState === "rejected" ? "Update and resubmit reservation" : reservationState === "failed" ? "Reservation ended" : "Prepare reservation"}
+            >
 
               {reservationCanBeEdited && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
@@ -2398,361 +3217,465 @@ export function SalesReservationWorkflow({
               )}
 
               {reservationState === "approved" && (
-                <div className="mt-4 rounded-lg border border-[#d9ded6] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Reservation approved</h5>
-                  <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <FieldValue label="Buyer" value={buyerDisplay(activeAttempt)} />
-                    <FieldValue label="Reservation date" value={activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing"} />
-                    <FieldValue label="Submitted date and time" value={formatDateTime(activeAttempt?.reservation_submitted_at)} />
-                    <FieldValue label="Submitted by" value={submittedByName} />
-                    <FieldValue label="Approved date and time" value={formatDateTime(activeAttempt?.reservation_approved_at)} />
-                    <FieldValue label="Approved by" value={approvedByName} />
-                    <FieldValue label="Contract price" value={money(selectedContractValue)} />
-                    <FieldValue label="Reservation fee" value={money(displayReservationFee)} />
-                    <FieldValue label="Uploaded reservation form" value={reservationVersion?.file_name ?? "-"} />
-                    <FieldValue label="Fee holder" value={describeReservationFeeHolder(displayReservationFeeHolder)} />
-                    <FieldValue label="Payment schedule" value={displayedPaymentSchedule.map((row) => row.label).join(", ")} />
-                  </div>
-                  {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
-                </div>
-              )}
-
-              {failedAttempts.length > 0 && (
-                <div className="mt-4 rounded-lg border border-[#d9ded6] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Failed reservation history</h5>
-                  <div className="mt-3 grid gap-2">
-                    {failedAttempts.map((attempt) => (
-                      <div key={attempt.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
-                        <div className="flex flex-wrap justify-between gap-3">
-                          <strong>Attempt {attempt.attempt_number}</strong>
-                          <span>{formatDate(attempt.fallen_through_at)}</span>
-                        </div>
-                        <p className="mt-1 text-[#617169]">{attempt.fall_through_reason ?? "Reservation failed."}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase text-[#617169]">Buyer data and active reservation documents redacted.</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeWorkflowStage === "exchange" && (
-            <>
-              <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-base font-bold text-[#0F3D2E]">Commercial approval</h4>
-                    <p className="text-sm text-[#617169]">Review the approved reservation, invoice and commercial terms before the sale becomes Ready for Exchange.</p>
-                  </div>
-                  <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                    {commercialApproved ? "Ready for Exchange" : reservationApproved ? "Approval required" : "Reservation required"}
-                  </span>
-                </div>
-
-            {!reservationApproved ? (
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
-                Approve the reservation pack before preparing the commercial approval package.
-              </div>
-            ) : (
-              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
-                <div className="grid gap-4">
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Commercial snapshot</h5>
-                    <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Buyer</span><strong className="whitespace-pre-line text-right">{buyerDisplay(activeAttempt)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Buyer email</span><strong>{activeAttempt?.buyer_email ?? "-"}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Buyer solicitor</span><strong>{activeAttempt?.buyer_solicitor_name ?? "-"}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value">{money(previewContractPrice)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value">{money(parseGbpInput(parkingValue) ?? activeTerms?.parking_value ?? 0)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer contribution</span><strong className="numeric-value">{moneyDeduction(previewDeveloperContributionAmount)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution</span><strong className="numeric-value">{moneyDeduction(previewAgentContribution)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking contribution</span><strong className="numeric-value">{money(previewParkingContribution)}</strong></div>
-                      <div className="flex justify-between gap-4"><span>Reservation fee</span><strong className="numeric-value">{money(previewReservationFee)}</strong></div>
+                <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
+                  <section className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+                    <h5 className="font-bold text-[#0F3D2E]">Reservation</h5>
+                    <div className="mt-4">
+                      <KeyValueList items={[
+                        { label: "Buyer", value: buyerDisplay(activeAttempt) },
+                        { label: "Reservation date", value: activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing" },
+                        { label: "Contract price", value: money(selectedContractValue) },
+                        { label: "Reservation fee", value: money(displayReservationFee) },
+                        { label: "Fee holder", value: describeReservationFeeHolder(displayReservationFeeHolder) },
+                        { label: "Payment schedule", value: displayedPaymentSchedule.map((row) => row.label).join(", ") },
+                        { label: "Uploaded reservation form", value: reservationVersion ? <button className="font-bold underline underline-offset-2" type="button" onClick={() => void openDocumentVersion(reservationVersion)}>{reservationVersion.file_name}</button> : "-" },
+                      ]} />
                     </div>
-                  </div>
-
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Deposit / payment schedule</h5>
-                    <label className="field-label mt-3">
-                      Deposit summary
-                      <textarea
-                        className="field min-h-20"
-                        value={depositSummary}
-                        onChange={(event) => setDepositSummary(event.target.value)}
-                        disabled={!commercialModelEditable}
-                        placeholder="Example: 10% on exchange, balance on completion"
-                      />
-                    </label>
-                    {activePaymentSchedule.length > 0 ? (
-                      <div className="mt-3 grid gap-2">
-                        {activePaymentSchedule.map((row) => (
-                          <div key={row.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm">
-                            <div className="flex justify-between gap-4">
-                              <strong className="text-[#0F3D2E]">{row.label}</strong>
-                              <span className="numeric-value">{row.expected_amount ? money(row.expected_amount) : row.percent_of_contract_price ? `${row.percent_of_contract_price}%` : money(row.fixed_amount)}</span>
-                            </div>
-                            <p className="mt-1 text-xs font-semibold uppercase text-[#617169]">{row.payment_stage.replace(/_/g, " ")} - {row.status.replace(/_/g, " ")}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm text-[#617169]">{depositSummary || "No detailed payment schedule has been recorded yet."}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid gap-4">
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Commercial terms</h5>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!commercialModelEditable} aria-label="Parking value" /></label>
-                      <label className="field-label">
-                        Developer contribution
-                        <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
-                          {developerContributionValueType === "percent"
-                            ? <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!commercialModelEditable} />
-                            : <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!commercialModelEditable} aria-label="Developer contribution amount" />}
-                          <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable}>
-                            <option value="amount">GBP amount</option>
-                            <option value="percent">% of price</option>
-                          </select>
-                        </div>
-                      </label>
-                      <label className="field-label">
-                        Agent contribution
-                        <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
-                          {agentContributionValueType === "percent"
-                            ? <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!commercialModelEditable} />
-                            : <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!commercialModelEditable} aria-label="Agent contribution amount" />}
-                          <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable}>
-                            <option value="amount">GBP amount</option>
-                            <option value="percent">% of price</option>
-                          </select>
-                        </div>
-                      </label>
-                      <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!commercialModelEditable} aria-label="Parking contribution" /></label>
-                      <label className="field-label">Agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
-                      <label className="field-label">Solicitor fee<GbpInput value={solicitorFee} onChange={setSolicitorFee} disabled={!commercialModelEditable} aria-label="Solicitor fee" /></label>
-                      <label className="field-label">Invoice reference<input className="field" value={invoiceReference} onChange={(event) => setInvoiceReference(event.target.value)} disabled={!commercialModelEditable} /></label>
-                      <label className="field-label">Invoice date<input className="field" type="date" value={invoiceDate} onChange={(event) => setInvoiceDate(event.target.value)} disabled={!commercialModelEditable} /></label>
-                      <label className="field-label">Uploaded invoice amount<GbpInput value={invoiceGrossAmount} onChange={setInvoiceGrossAmount} disabled={!commercialModelEditable} aria-label="Uploaded invoice amount" /></label>
-                      <label className="field-label md:col-span-2">Commercial summary<textarea className="field min-h-20" value={commercialSummary} onChange={(event) => setCommercialSummary(event.target.value)} disabled={!commercialModelEditable} /></label>
-                      <div className="md:col-span-2">
-                        <AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h5 className="font-bold text-[#0F3D2E]">Sales agent invoice</h5>
-                        <p className="text-sm text-[#617169]">Required before commercial approval.</p>
-                      </div>
-                      <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-2 py-1 text-xs font-bold text-[#617169]">{agentInvoiceVersion ? "Uploaded" : "Not uploaded"}</span>
-                    </div>
-
-                    {agentInvoiceVersion ? (
-                      <p className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#617169]">
-                        {agentInvoiceVersion.file_name} {fileSizeLabel(agentInvoiceVersion.file_size_bytes)}
-                      </p>
-                    ) : null}
-
-                    <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                      <label className="field-label">
-                        Agent invoice PDF
-                        <input className="field" type="file" accept="application/pdf" onChange={(event) => setAgentInvoiceFile(event.target.files?.[0] ?? null)} disabled={!canSubmitAgentInvoice || commercialApproved} />
-                      </label>
-                      {canSubmitAgentInvoice && <button className="secondary" onClick={() => void uploadAgentInvoice()} disabled={isSaving || !agentInvoiceFile || commercialApproved}>Upload invoice</button>}
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Invoice reconciliation</h5>
-                    <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Net agent fee</span><strong className="numeric-value">{money(previewInvoice.netAmount)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>VAT</span><strong className="numeric-value">{money(previewInvoice.vatAmount)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee deduction</span><strong className="numeric-value">{moneyDeduction(previewInvoice.reservationFeeDeduction)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution deduction</span><strong className="numeric-value">{moneyDeduction(previewInvoice.agentContributionDeduction)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected payable amount</span><strong className="numeric-value text-[#0F3D2E]">{money(previewInvoice.expectedPayableAmount)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice amount</span><strong className="numeric-value">{money(uploadedInvoiceGross)}</strong></div>
-                      <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value">{money(invoiceVariance)}</strong></div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {canManageCommercialTerms && <button className="secondary" onClick={() => void saveCommercialPackage()} disabled={isSaving || !activeAttempt || !commercialModelEditable}>Save commercial package</button>}
-                    {canApproveCommercialPackage && (
-                      <button
-                        className="primary"
-                        onClick={() => void approveCommercialPackage()}
-                        disabled={isSaving || !activeAttempt || commercialApproved || !agentInvoiceVersion || !previewContractPrice}
-                        title={!agentInvoiceVersion ? "Upload the sales agent invoice before approving." : undefined}
-                      >
-                        Approve commercial package
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-              <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h4 className="text-base font-bold text-[#0F3D2E]">Exchange</h4>
-                <p className="text-sm text-[#617169]">Conveyancer records the actual exchange date once exchange has happened outside the portal.</p>
-              </div>
-              <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                {exchangeRecorded ? "Exchanged" : readyForExchange ? "Ready" : "Locked"}
-              </span>
-            </div>
-
-            {!readyForExchange ? (
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
-                Commercial approval is required before exchange can be recorded.
-              </div>
-            ) : (
-              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
-                <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Approved commercial snapshot</h5>
-                  <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Buyer</span><strong className="whitespace-pre-line text-right">{buyerDisplay(activeAttempt)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value">{money(activeTerms?.contract_price)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value">{money(activeTerms?.parking_value ?? 0)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer contribution</span><strong className="numeric-value">{activeDeveloperContributionLabel}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution</span><strong className="numeric-value">{activeAgentContributionLabel}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking contribution</span><strong className="numeric-value">{money(activeTerms?.parking_contribution_value ?? 0)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(activeTerms?.reservation_fee)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Deposit / payment</span><strong>{activeTerms?.deposit_summary ?? "-"}</strong></div>
-                    <div className="flex justify-between gap-4"><span>Commercial approved</span><strong>{formatDate(activeAttempt?.commercial_approved_at)}</strong></div>
-                  </div>
-                </div>
-
-                <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Record exchange</h5>
-                  <p className="mt-1 text-sm text-[#617169]">Payment recording is not required before exchange in this version.</p>
-                  <label className="field-label mt-3">
-                    Actual exchange date
-                    <input
-                      className="field"
-                      type="date"
-                      max={new Date().toISOString().slice(0, 10)}
-                      value={exchangeDate}
-                      onChange={(event) => setExchangeDate(event.target.value)}
-                      disabled={!canRecordExchange || exchangeRecorded}
-                    />
-                  </label>
-                  {activeAttempt?.exchanged_at && (
-                    <p className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#617169]">
-                      Exchange recorded for {formatDate(activeAttempt.exchanged_at)}.
+                    {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
+                  </section>
+                  <section className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+                    <h5 className="font-bold text-[#0F3D2E]">Approval</h5>
+                    <p className="mt-3 text-sm leading-7 text-[#52645b] sm:text-base">
+                      Reservation submitted on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_submitted_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{submittedByName}</strong> and approved on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_approved_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{approvedByName}</strong>.
                     </p>
-                  )}
-                  <div className="mt-4 flex justify-end">
-                    {canRecordExchange && (
-                      <button className="primary" onClick={() => void recordExchange()} disabled={isSaving || !exchangeDate || exchangeRecorded}>
-                        Mark unit Exchanged
-                      </button>
-                    )}
+                  </section>
                   </div>
-                </div>
-              </div>
-            )}
-          </div>
-              <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h4 className="text-base font-bold text-[#0F3D2E]">Invoice reconciliation</h4>
-                <p className="text-sm text-[#617169]">Record post-exchange payments against the sales agent invoice and settle any developer shortfall.</p>
-              </div>
-              <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                {invoiceReconciled ? "Reconciled" : exchangeRecorded ? "Post-exchange" : "Locked"}
-              </span>
-            </div>
+              )}
 
-            {!exchangeRecorded ? (
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
-                Record exchange before reconciling the sales agent invoice.
-              </div>
-            ) : !activeInvoice ? (
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
-                A sales agent invoice is required before reconciliation.
-              </div>
-            ) : (
-              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
-                <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Reconciliation summary</h5>
-                  <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Permitted release from payment schedule</span><strong className="numeric-value">{money(permittedRelease)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected payable amount</span><strong className="numeric-value">{money(expectedPayableAmount)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee already held</span><strong className="numeric-value">{money(previewInvoice.reservationFeeDeduction)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Solicitor payment recorded</span><strong className="numeric-value">{money(recordedSolicitorPayment)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer shortfall recorded</span><strong className="numeric-value">{money(recordedDeveloperShortfall)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total received by agent</span><strong className="numeric-value text-[#0F3D2E]">{money(totalReceivedByAgent)}</strong></div>
-                    <div className="flex justify-between gap-4"><span>Outstanding developer balance</span><strong className="numeric-value text-[#0F3D2E]">{money(outstandingDeveloperBalance)}</strong></div>
-                  </div>
-                  <p className="mt-3 text-xs text-[#617169]">Payment recording happens after exchange and does not block the exchange date being recorded.</p>
-                </div>
-
-                <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                  <h5 className="font-bold text-[#0F3D2E]">Record payments</h5>
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <label className="field-label">
-                      Solicitor payment amount
-                      <GbpInput value={solicitorPaymentAmount} onChange={setSolicitorPaymentAmount} disabled={!canRecordSolicitorPayment || invoiceReconciled} aria-label="Solicitor payment amount" />
-                    </label>
-                    <label className="field-label">
-                      Solicitor payment date
-                      <input className="field" type="date" max={new Date().toISOString().slice(0, 10)} value={solicitorPaymentDate} onChange={(event) => setSolicitorPaymentDate(event.target.value)} disabled={!canRecordSolicitorPayment || invoiceReconciled} />
-                    </label>
-                    <label className="field-label">
-                      Developer shortfall payment
-                      <GbpInput value={developerShortfallAmount} onChange={setDeveloperShortfallAmount} disabled={!canRecordDeveloperShortfall || invoiceReconciled} aria-label="Developer shortfall payment" />
-                    </label>
-                    <label className="field-label">
-                      Shortfall payment date
-                      <input className="field" type="date" max={new Date().toISOString().slice(0, 10)} value={developerShortfallDate} onChange={(event) => setDeveloperShortfallDate(event.target.value)} disabled={!canRecordDeveloperShortfall || invoiceReconciled} />
-                    </label>
-                    <label className="field-label md:col-span-2">
-                      Notes
-                      <textarea className="field min-h-20" value={reconciliationNotes} onChange={(event) => setReconciliationNotes(event.target.value)} disabled={invoiceReconciled || (!canRecordSolicitorPayment && !canRecordDeveloperShortfall)} />
-                    </label>
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    {(canRecordSolicitorPayment || canRecordDeveloperShortfall) && (
-                      <button className="primary" onClick={() => void saveInvoiceReconciliation()} disabled={isSaving || invoiceReconciled}>
-                        Save reconciliation
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-              </div>
-            </>
+            </StageWorkspace>
           )}
 
-          {activeWorkflowStage === "completion" && (
-            <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h4 className="text-base font-bold text-[#0F3D2E]">Completion</h4>
-                <p className="text-sm text-[#617169]">Upload completion documents, developer approves them, then completion can be recorded.</p>
+          {activeUnitSection === "financials" && activeAttempt && reservationApproved && (
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="min-w-0 scroll-mt-4 rounded-b-xl border border-t-0 border-[#d9ded6] bg-white px-4 py-6 sm:px-6 sm:py-7">
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e2ded3] pb-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#617169]">Sale workspace</p>
+                  <h3 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Agent fees</h3>
+                  <p className="mt-2 text-sm text-[#617169]">Sales-agent invoicing and payments are tracked independently from the legal sale lifecycle.</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs font-bold">
+                  <span className="rounded-full border border-[#d9ded6] bg-[#f2f4f0] px-3 py-1 text-[#617169]">Exchange: {exchangeAgentFeeStatus}</span>
+                  <span className="rounded-full border border-[#d9ded6] bg-[#f2f4f0] px-3 py-1 text-[#617169]">Completion: {completionAgentFeeStatus}</span>
+                </div>
               </div>
-              <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                {completionRecorded ? "Completed" : completionReady ? "Approved" : exchangeRecorded ? "Documents required" : "Locked"}
-              </span>
-            </div>
+
+              <div className="mt-5 rounded-lg bg-[#F7F5EF] p-4">
+                <h4 className="font-bold text-[#0F3D2E]">Agent fee summary</h4>
+                <p className="mt-1 text-xs text-[#617169]">Expected totals sum the independently penny-rounded Exchange and Completion tranches.</p>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <section className="rounded-md bg-white p-4">
+                    <h5 className="font-bold text-[#0F3D2E]">Fee agreement</h5>
+                    <div className="mt-3">
+                      <KeyValueList items={[
+                        { label: "Sale price", value: money(activeTerms?.contract_price) },
+                        { label: "Total agent fee", value: formatPercentValue(displayAgentFeePercent) },
+                        { label: "Exchange tranche", value: `${formatPercentValue(displayExchangeAgentFeePercent)} · ${money(previewInvoice.netAmount)} net` },
+                        { label: "Completion tranche", value: `${formatPercentValue(displayCompletionAgentFeePercent)} · ${money(completionInvoicePreview.netAmount)} net` },
+                        { label: "Expected fee net", value: money(agentFeeSummary.expectedNetAmount) },
+                        { label: "Expected fee gross", value: money(agentFeeSummary.expectedGrossAmount) },
+                      ]} />
+                    </div>
+                  </section>
+                  <section className="rounded-md bg-white p-4">
+                    <h5 className="font-bold text-[#0F3D2E]">Current position</h5>
+                    <div className="mt-3">
+                      <KeyValueList items={[
+                        { label: "Total invoiced", value: money(agentFeeSummary.invoicedGrossAmount) },
+                        { label: "Reservation fee credits held", value: money(agentFeeSummary.reservationCredits) },
+                        { label: "Agent contribution credits", value: money(agentFeeSummary.agentContributionCredits) },
+                        { label: "Cash payments recorded", value: money(agentFeeSummary.cashPayments) },
+                        { label: "Total paid / credited", value: money(agentFeeSummary.totalPaidOrCredited) },
+                        { label: "Outstanding submitted invoices", value: money(agentFeeSummary.submittedInvoiceOutstanding), nowrap: true },
+                        { label: "Remaining uninvoiced fee", value: money(agentFeeSummary.uninvoicedNetAmount) },
+                      ]} />
+                    </div>
+                  </section>
+                </div>
+                {saleUsesProtectedSnapshot && <p className="mt-3 text-xs text-[#617169]">This sale uses its own agreed fee snapshot; later building-default changes do not alter these amounts.</p>}
+              </div>
+
+              <div className="mt-5 grid gap-5">
+                <article id="exchange-fee" className="scroll-mt-6 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#617169]">Exchange milestone</p>
+                      <h4 className="mt-1 text-lg font-bold text-[#0F3D2E]">Exchange fee</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-bold text-[#617169]">{activeInvoice ? statusLabel(activeInvoice.status) : "Invoice not received"}</span>
+                      {activeInvoice && <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-bold text-[#617169]">{invoicePaymentPosition.paymentStatus}</span>}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                    <div className="rounded-md bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Expected Exchange invoice</h5>
+                      <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value">{formatPercentValue(displayExchangeAgentFeePercent)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value">{money(previewInvoice.netAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value">{money(previewInvoice.vatAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected gross fee</span><strong className="numeric-value">{money(activeInvoice?.expected_gross_amount ?? previewInvoice.grossAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee credit already held</span><strong className="numeric-value">{moneyDeduction(activeInvoice?.reservation_fee_deduction ?? previewInvoice.reservationFeeDeduction)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution deduction</span><strong className="numeric-value">{moneyDeduction(activeInvoice?.agent_contribution_deduction ?? previewInvoice.agentContributionDeduction)}</strong></div>
+                        <div className="flex justify-between gap-4"><span>Expected cash amount payable</span><strong className="numeric-value text-[#0F3D2E]">{money(expectedPayableAmount)}</strong></div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Invoice</h5>
+                      {agentInvoiceVersion ? (
+                        <>
+                          <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong>{activeInvoice?.invoice_reference ?? "-"}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong>{formatDate(activeInvoice?.invoice_date)}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value">{money(activeInvoice?.gross_amount)}</strong></div>
+                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value">{money(invoiceVariance)}</strong></div>
+                          </div>
+                          <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(agentInvoiceVersion)}>Open invoice PDF</button>
+                          {exchangeAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={exchangeAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
+                          {agentInvoiceNeedsCorrection && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{agentInvoiceDocument?.query_note ?? "A corrected invoice has been requested."}</p>}
+                        </>
+                      ) : <p className="mt-3 text-sm text-[#617169]">Invoice not yet received.</p>}
+                    </div>
+                  </div>
+
+                  {(!agentInvoiceVersion || agentInvoiceNeedsCorrection) && (
+                    <AgentInvoiceSubmissionForm
+                      milestone="exchange"
+                      feePercent={previewExchangeAgentFeePercent}
+                      expectedNetAmount={previewInvoice.netAmount}
+                      expectedVatAmount={previewInvoice.vatAmount}
+                      expectedGrossAmount={previewInvoice.grossAmount}
+                      isReplacement={agentInvoiceNeedsCorrection}
+                      reference={invoiceReference}
+                      invoiceDate={invoiceDate}
+                      grossAmount={invoiceGrossAmount}
+                      file={agentInvoiceFile}
+                      canSubmit={canSubmitAgentInvoice}
+                      isSaving={isSaving}
+                      todayDate={todayDate}
+                      onReference={setInvoiceReference}
+                      onInvoiceDate={setInvoiceDate}
+                      onGrossAmount={setInvoiceGrossAmount}
+                      onFile={setAgentInvoiceFile}
+                      onSubmit={() => void uploadAgentInvoice("exchange")}
+                    />
+                  )}
+
+                  {agentInvoiceVersion && !exchangeInvoiceApproved && !agentInvoiceNeedsCorrection && (
+                    <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Developer approval</h5>
+                      <p className="mt-1 text-sm text-[#617169]">Review this invoice independently. Approval or rejection does not change the legal sale stage.</p>
+                      {showRejectInvoiceConfirm && canRejectAgentInvoice && (
+                        <div ref={invoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-4">
+                          <label className="field-label">Reason for rejecting the invoice<input ref={invoiceRejectionInputRef} className="field" value={invoiceRejectionReason} onChange={(event) => setInvoiceRejectionReason(event.target.value)} /></label>
+                          <div className="mt-3 flex flex-wrap justify-end gap-2">
+                            <button className="secondary" onClick={() => { setShowRejectInvoiceConfirm(false); setInvoiceRejectionReason(""); }}>Cancel</button>
+                            <button className="danger-button" onClick={() => void rejectAgentInvoice()} disabled={isSaving || !invoiceRejectionReason.trim()}>Confirm rejection</button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-4 flex flex-wrap justify-end gap-2">
+                        {canRejectAgentInvoice && <button className="danger-button" onClick={() => { setShowRejectInvoiceConfirm(true); requestInvoiceRejectionPanel({ focus: () => invoiceRejectionInputRef.current }); }} disabled={isSaving}>Reject invoice</button>}
+                        {canApproveAgentInvoice && <button className="primary" type="button" onClick={() => void approveAgentInvoice("exchange")} disabled={isSaving}>Approve invoice</button>}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeInvoice && exchangeInvoiceApproved && (
+                    <AgentInvoicePaymentSection
+                      position={invoicePaymentPosition}
+                      payments={activeInvoicePayments}
+                      profiles={profiles}
+                      organisations={organisations}
+                      canRecord={canRecordAgentFeePayment}
+                      canVoid={canVoidAgentFeePayment}
+                      isSaving={isSaving}
+                      amount={solicitorPaymentAmount}
+                      paymentDate={solicitorPaymentDate}
+                      todayDate={todayDate}
+                      onAmount={setSolicitorPaymentAmount}
+                      onPaymentDate={setSolicitorPaymentDate}
+                      onRecord={() => recordAgentFeePayment("exchange")}
+                      onRequestVoid={requestVoidAgentFeePayment}
+                    />
+                  )}
+                </article>
+
+                <article id="completion-fee" className="scroll-mt-6 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div><p className="text-xs font-bold uppercase tracking-[0.1em] text-[#617169]">Completion milestone</p><h4 className="mt-1 text-lg font-bold text-[#0F3D2E]">Completion fee</h4></div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-bold text-[#617169]">{completionAgentInvoice ? statusLabel(completionAgentInvoice.status) : "Invoice not received"}</span>
+                      {completionAgentInvoice && <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-bold text-[#617169]">{completionInvoicePaymentPosition.paymentStatus}</span>}
+                    </div>
+                  </div>
+
+                  <p className="mt-2 text-sm text-[#617169]">Available after legal Exchange and before or after legal Completion. Its submission, approval and payment do not block Completion.</p>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                    <div className="rounded-md bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Expected Completion invoice</h5>
+                      <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value">{formatPercentValue(displayCompletionAgentFeePercent)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value">{money(completionInvoicePreview.netAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value">{money(completionInvoicePreview.vatAmount)}</strong></div>
+                        <div className="flex justify-between gap-4"><span>Expected gross fee</span><strong className="numeric-value text-[#0F3D2E]">{money(completionAgentInvoice?.expected_gross_amount ?? completionInvoicePreview.grossAmount)}</strong></div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Invoice</h5>
+                      {completionAgentInvoiceVersion ? (
+                        <>
+                          <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong>{completionAgentInvoice?.invoice_reference ?? "-"}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong>{formatDate(completionAgentInvoice?.invoice_date)}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value">{money(completionAgentInvoice?.gross_amount)}</strong></div>
+                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value">{money(completionInvoiceVariance)}</strong></div>
+                          </div>
+                          <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(completionAgentInvoiceVersion)}>Open Completion invoice PDF</button>
+                          {completionAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={completionAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
+                          {completionInvoiceNeedsCorrection && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{completionAgentInvoiceDocument?.query_note ?? "A corrected Completion invoice has been requested."}</p>}
+                        </>
+                      ) : <p className="mt-3 text-sm text-[#617169]">Invoice not yet received.</p>}
+                    </div>
+                  </div>
+
+                  {previewCompletionAgentFeePercent <= 0 ? (
+                    <p className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">No Completion fee tranche is configured for this sale.</p>
+                  ) : !completionInvoiceSubmissionAvailable && !completionAgentInvoiceVersion ? (
+                    <p className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">Completion invoice submission becomes available after legal Exchange. It is not required before legal Completion.</p>
+                  ) : (!completionAgentInvoiceVersion || completionInvoiceNeedsCorrection) && (
+                    <AgentInvoiceSubmissionForm
+                      milestone="completion"
+                      feePercent={previewCompletionAgentFeePercent}
+                      expectedNetAmount={completionInvoicePreview.netAmount}
+                      expectedVatAmount={completionInvoicePreview.vatAmount}
+                      expectedGrossAmount={completionInvoicePreview.grossAmount}
+                      isReplacement={completionInvoiceNeedsCorrection}
+                      reference={completionInvoiceReference}
+                      invoiceDate={completionInvoiceDate}
+                      grossAmount={completionInvoiceGrossAmount}
+                      file={completionAgentInvoiceFile}
+                      canSubmit={canSubmitAgentInvoice && completionInvoiceSubmissionAvailable}
+                      isSaving={isSaving}
+                      todayDate={todayDate}
+                      onReference={setCompletionInvoiceReference}
+                      onInvoiceDate={setCompletionInvoiceDate}
+                      onGrossAmount={setCompletionInvoiceGrossAmount}
+                      onFile={setCompletionAgentInvoiceFile}
+                      onSubmit={() => void uploadAgentInvoice("completion")}
+                    />
+                  )}
+
+                  {completionAgentInvoiceVersion && !completionInvoiceApproved && !completionInvoiceNeedsCorrection && (
+                    <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Developer approval</h5>
+                      <p className="mt-1 text-sm text-[#617169]">Review this invoice independently. Approval or rejection does not change the legal sale stage.</p>
+                      {showRejectCompletionInvoiceConfirm && canRejectAgentInvoice && (
+                        <div ref={completionInvoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-4">
+                          <label className="field-label">Reason for rejecting the invoice<input ref={completionInvoiceRejectionInputRef} className="field" value={completionInvoiceRejectionReason} onChange={(event) => setCompletionInvoiceRejectionReason(event.target.value)} /></label>
+                          <div className="mt-3 flex flex-wrap justify-end gap-2">
+                            <button className="secondary" type="button" onClick={() => { setShowRejectCompletionInvoiceConfirm(false); setCompletionInvoiceRejectionReason(""); }}>Cancel</button>
+                            <button className="danger-button" type="button" onClick={() => void rejectAgentInvoice("completion")} disabled={isSaving || !completionInvoiceRejectionReason.trim()}>Confirm rejection</button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                        {!canApproveAgentInvoice && !canRejectAgentInvoice && <span className="text-sm text-[#617169]">Awaiting developer review.</span>}
+                        {canRejectAgentInvoice && <button className="danger-button" type="button" onClick={() => { setShowRejectCompletionInvoiceConfirm(true); requestCompletionInvoiceRejectionPanel({ focus: () => completionInvoiceRejectionInputRef.current }); }} disabled={isSaving}>Reject invoice</button>}
+                        {canApproveAgentInvoice && <button className="primary" type="button" onClick={() => void approveAgentInvoice("completion")} disabled={isSaving}>Approve invoice</button>}
+                      </div>
+                    </div>
+                  )}
+
+                  {completionAgentInvoice && completionInvoiceApproved && (
+                    <AgentInvoicePaymentSection
+                      position={completionInvoicePaymentPosition}
+                      payments={completionInvoicePayments}
+                      profiles={profiles}
+                      organisations={organisations}
+                      canRecord={canRecordAgentFeePayment}
+                      canVoid={canVoidAgentFeePayment}
+                      isSaving={isSaving}
+                      amount={completionPaymentAmount}
+                      paymentDate={completionPaymentDate}
+                      todayDate={todayDate}
+                      onAmount={setCompletionPaymentAmount}
+                      onPaymentDate={setCompletionPaymentDate}
+                      onRecord={() => recordAgentFeePayment("completion")}
+                      onRequestVoid={requestVoidAgentFeePayment}
+                    />
+                  )}
+                </article>
+              </div>
+
+              {paymentToVoid && canVoidAgentFeePayment && (
+                <div ref={paymentVoidPanelRef} className="active-panel-target active-panel-with-context mt-5 rounded-lg border border-[#e5c4be] bg-[#fff9f7] p-4 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-bold text-[#7a271a]">Void payment</h4>
+                      <p className="mt-1 text-sm text-[#617169]">This payment will remain in the audit history but will no longer count towards the invoice balance.</p>
+                    </div>
+                    <span className="rounded-full border border-[#e5c4be] bg-white px-2.5 py-1 text-xs font-bold text-[#7a271a]">
+                      {completionAgentInvoice?.id === paymentToVoid.invoice_id ? "Completion" : "Exchange"}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-2 rounded-md bg-white p-3 text-sm text-[#34413a] sm:grid-cols-3">
+                    <FieldValue label="Recorded by" value={paymentRecorderLabel(paymentToVoid, profiles, organisations)} />
+                    <FieldValue label="Payment date" value={formatDate(paymentToVoid.paid_at)} />
+                    <FieldValue label="Original amount" value={money(paymentToVoid.amount)} />
+                  </div>
+                  <label className="field-label mt-4">
+                    Reason for correction
+                    <input ref={paymentVoidReasonInputRef} className="field" value={paymentVoidReason} onChange={(event) => setPaymentVoidReason(event.target.value)} disabled={isSaving} />
+                  </label>
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <button className="secondary" type="button" onClick={() => { setPaymentToVoid(null); setPaymentVoidReason(""); }} disabled={isSaving}>Cancel</button>
+                    <button className="danger-button" type="button" onClick={() => void voidAgentFeePayment()} disabled={isSaving || !paymentVoidReason.trim()}>{isSaving ? "Voiding…" : "Void payment"}</button>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeUnitSection === "progression" && activeWorkflowStage === "exchange" && (
+            <StageWorkspace
+              id="sales-stage-exchange"
+              title="Exchange"
+              description="Confirm the agreed legal position and record the actual exchange date."
+              status={workflowStages[1].status}
+              statusTone={currentWorkflowIndex > 1 ? "done" : currentWorkflowIndex < 1 ? "locked" : "current"}
+              taskLabel={exchangeRecorded ? "Stage outcome" : "Current task"}
+              currentTask={exchangeRecorded ? "Exchange recorded" : !reservationApproved ? "Waiting for reservation approval" : !commercialApproved ? "Confirm commercial terms" : "Record exchange"}
+              taskNavigation={reservationApproved ? (
+                <div className="mt-6">
+                  <h4 className="text-sm font-bold text-[#0F3D2E]">Exchange tasks</h4>
+                  <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <li className={`rounded-lg p-3 ${commercialApproved ? "bg-[#eaf6ee]" : "bg-[#fff1cc] ring-1 ring-[#d6a23a]"}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase text-[#617169]">Step 1</span>
+                        <span className={`text-xs font-bold ${commercialApproved ? "text-[#18794e]" : "text-[#D6A23A]"}`}>{commercialApproved ? "Complete" : "Current"}</span>
+                      </div>
+                      <p className="mt-1 font-bold text-[#0F3D2E]">Confirm commercial terms</p>
+                      {commercialApproved && <p className="mt-1 text-xs text-[#617169]">by {commercialApprovedBy}</p>}
+                    </li>
+                    <li className={`rounded-lg p-3 ${exchangeRecorded ? "bg-[#eaf6ee]" : commercialApproved ? "bg-[#fff1cc] ring-1 ring-[#d6a23a]" : "bg-[#e7eae6]"}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase text-[#617169]">Step 2</span>
+                        <span className={`text-xs font-bold ${exchangeRecorded ? "text-[#18794e]" : commercialApproved ? "text-[#D6A23A]" : "text-[#9aa59f]"}`}>{exchangeRecorded ? "Complete" : commercialApproved ? "Current" : "Waiting"}</span>
+                      </div>
+                      <p className="mt-1 font-bold text-[#0F3D2E]">Record exchange</p>
+                      {exchangeRecorded && <p className="mt-1 text-xs text-[#617169]">by {exchangeRecordedBy}</p>}
+                    </li>
+                  </ol>
+                </div>
+              ) : undefined}
+            >
+              {!reservationApproved ? (
+                <div className="rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
+                  Approve the reservation before preparing for legal Exchange.
+                </div>
+              ) : !commercialApproved ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <section className="rounded-md border border-[#e2ded3] bg-white p-4">
+                    <h5 className="font-bold text-[#0F3D2E]">Commercial terms to confirm</h5>
+                    <div className="mt-3">
+                      <KeyValueList items={[
+                        { label: "Buyer", value: buyerDisplay(activeAttempt) },
+                        { label: "Contract price", value: money(activeTerms?.contract_price) },
+                        { label: "Reservation fee", value: money(activeTerms?.reservation_fee) },
+                        { label: "Exchange deposit due", value: money(exchangeDepositDue) },
+                        { label: "Deposit / payment structure", value: activeTerms?.deposit_summary ?? paymentScheduleSummary(displayDepositStructure) },
+                      ]} />
+                    </div>
+                  </section>
+                  <section className="rounded-md border border-[#e2ded3] bg-white p-4">
+                    <h5 className="font-bold text-[#0F3D2E]">Commercial confirmation</h5>
+                    <p className="mt-1 text-sm text-[#617169]">Confirm the agreed contract and deposit position before recording Exchange.</p>
+                    <div className="mt-4 flex justify-end">
+                      {canApproveCommercialPackage ? (
+                        <button className="primary" type="button" onClick={() => void approveCommercialPackage()} disabled={isSaving || !previewContractPrice}>
+                          Confirm terms ready for Exchange
+                        </button>
+                      ) : (
+                        <p className="text-sm text-[#617169]">Awaiting developer confirmation.</p>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <section className="rounded-md border border-[#e2ded3] bg-white p-4">
+                    <h5 className="font-bold text-[#0F3D2E]">Approved commercial snapshot</h5>
+                    <div className="mt-3">
+                      <KeyValueList items={[
+                        { label: "Buyer", value: buyerDisplay(activeAttempt) },
+                        { label: "Contract price", value: money(activeTerms?.contract_price) },
+                        { label: "Reservation fee", value: money(activeTerms?.reservation_fee) },
+                        { label: "Exchange deposit due", value: money(exchangeDepositDue) },
+                        { label: "Deposit / payment structure", value: activeTerms?.deposit_summary ?? paymentScheduleSummary(displayDepositStructure) },
+                        { label: "Confirmed by", value: commercialApprovedBy },
+                        { label: "Commercial confirmed", value: formatDateTime(activeAttempt?.commercial_approved_at) },
+                      ]} />
+                    </div>
+                  </section>
+
+                  {exchangeRecorded ? (
+                    <CompletedActionSummary
+                        title="Exchange confirmed"
+                        description="The legal exchange position has been recorded and the controls are now locked."
+                        items={[
+                          { label: "Exchange deposit", value: `${money(exchangeDepositDue)} received` },
+                          { label: "Actual exchange date", value: formatDate(activeAttempt?.exchanged_at) },
+                          { label: "Recorded by", value: exchangeRecordedBy },
+                        ]}
+                    />
+                  ) : (
+                    <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
+                        <h5 className="font-bold text-[#0F3D2E]">Exchange confirmation</h5>
+                        <label className="mt-3 flex items-start gap-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm font-semibold text-[#34413a]">
+                          <input className="mt-1" type="checkbox" checked={exchangeDepositConfirmed} onChange={(event) => setExchangeDepositConfirmed(event.target.checked)} disabled={!canRecordExchange} />
+                          <span>I confirm the exchange deposit of {money(exchangeDepositDue)} has been received in line with the approved commercial terms.</span>
+                        </label>
+                        <label className="field-label mt-3">
+                          Actual exchange date
+                          <input className="field" type="date" max={todayDate} value={exchangeDate} onChange={(event) => setExchangeDate(event.target.value)} disabled={!canRecordExchange} />
+                        </label>
+                        <div className="mt-4 flex justify-end">
+                          {canRecordExchange && (
+                            <button className="primary" type="button" onClick={() => void recordExchange()} disabled={isSaving || !exchangeDate || !exchangeDepositConfirmed}>
+                              Mark unit Exchanged
+                            </button>
+                          )}
+                        </div>
+                    </section>
+                  )}
+                </div>
+              )}
+            </StageWorkspace>
+          )}
+
+          {activeUnitSection === "progression" && activeWorkflowStage === "completion" && (
+            <StageWorkspace
+              id="sales-stage-completion"
+              title="Completion"
+              description="Complete the document review and record the legal completion date."
+              status={completionRecorded ? "Completed" : completionReady ? "Approved" : exchangeRecorded ? "Documents required" : "Locked"}
+              statusTone={currentWorkflowIndex > 2 ? "done" : currentWorkflowIndex < 2 ? "locked" : "current"}
+              taskLabel={completionRecorded ? "Stage outcome" : "Current task"}
+              currentTask={completionRecorded ? "Completion recorded" : !exchangeRecorded ? "Waiting for exchange" : !completionStatementVersion || !statementOfAccountVersion ? "Upload completion documents" : !completionReady ? "Developer review" : "Record completion"}
+            >
 
             {!exchangeRecorded ? (
               <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
                 Record exchange before starting completion.
               </div>
             ) : (
-              <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1fr]">
-                <div className="grid gap-4">
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
+              <div className="mt-4">
+                <div className="grid items-stretch gap-4 lg:grid-cols-2">
+                  <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h5 className="font-bold text-[#0F3D2E]">Completion statement</h5>
@@ -2760,21 +3683,26 @@ export function SalesReservationWorkflow({
                       </div>
                       <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-2 py-1 text-xs font-bold text-[#617169]">{completionStatementDocument ? statusLabel(completionStatementDocument.status) : "Not uploaded"}</span>
                     </div>
-                    {completionStatementVersion ? (
-                      <p className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#617169]">
-                        {completionStatementVersion.file_name} {fileSizeLabel(completionStatementVersion.file_size_bytes)}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                      <label className="field-label">
-                        Completion statement PDF
-                        <input className="field" type="file" accept="application/pdf" onChange={(event) => setCompletionStatementFile(event.target.files?.[0] ?? null)} disabled={!canSubmitCompletionDocuments || completionRecorded} />
-                      </label>
-                      {canSubmitCompletionDocuments && <button className="secondary" onClick={() => void uploadCompletionDocument("completion_statement")} disabled={isSaving || !completionStatementFile || completionRecorded}>Upload</button>}
+                    <div className="mt-4">
+                      <PdfUploadBox
+                        id={`completion-statement-${selectedUnit.id}`}
+                        label="Choose completion statement PDF"
+                        file={completionStatementFile}
+                        currentVersion={completionStatementVersion}
+                        disabled={!canSubmitCompletionDocuments || completionReady || completionRecorded || isSaving}
+                        onOpen={completionStatementVersion ? () => void openDocumentVersion(completionStatementVersion) : undefined}
+                        onFile={setCompletionStatementFile}
+                        onClear={() => setCompletionStatementFile(null)}
+                      />
+                      {canSubmitCompletionDocuments && !completionReady && !completionRecorded && (
+                        <div className="mt-3 flex justify-end">
+                          <button className="secondary" type="button" onClick={() => void uploadCompletionDocument("completion_statement")} disabled={isSaving || !completionStatementFile}>Upload completion statement</button>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </section>
 
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
+                  <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h5 className="font-bold text-[#0F3D2E]">Statement of account</h5>
@@ -2782,94 +3710,109 @@ export function SalesReservationWorkflow({
                       </div>
                       <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-2 py-1 text-xs font-bold text-[#617169]">{statementOfAccountDocument ? statusLabel(statementOfAccountDocument.status) : "Not uploaded"}</span>
                     </div>
-                    {statementOfAccountVersion ? (
-                      <p className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#617169]">
-                        {statementOfAccountVersion.file_name} {fileSizeLabel(statementOfAccountVersion.file_size_bytes)}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                      <label className="field-label">
-                        Statement of account PDF
-                        <input className="field" type="file" accept="application/pdf" onChange={(event) => setStatementOfAccountFile(event.target.files?.[0] ?? null)} disabled={!canSubmitCompletionDocuments || completionRecorded} />
-                      </label>
-                      {canSubmitCompletionDocuments && <button className="secondary" onClick={() => void uploadCompletionDocument("statement_of_account")} disabled={isSaving || !statementOfAccountFile || completionRecorded}>Upload</button>}
+                    <div className="mt-4">
+                      <PdfUploadBox
+                        id={`statement-of-account-${selectedUnit.id}`}
+                        label="Choose statement of account PDF"
+                        file={statementOfAccountFile}
+                        currentVersion={statementOfAccountVersion}
+                        disabled={!canSubmitCompletionDocuments || completionReady || completionRecorded || isSaving}
+                        onOpen={statementOfAccountVersion ? () => void openDocumentVersion(statementOfAccountVersion) : undefined}
+                        onFile={setStatementOfAccountFile}
+                        onClear={() => setStatementOfAccountFile(null)}
+                      />
+                      {canSubmitCompletionDocuments && !completionReady && !completionRecorded && (
+                        <div className="mt-3 flex justify-end">
+                          <button className="secondary" type="button" onClick={() => void uploadCompletionDocument("statement_of_account")} disabled={isSaving || !statementOfAccountFile}>Upload statement of account</button>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  </section>
                 </div>
 
-                <div className="grid gap-4">
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
-                    <p className="mt-1 text-sm text-[#617169]">Approve or query the completion statement and statement of account before completion is recorded.</p>
-                    <label className="field-label mt-3">
-                      Query note
-                      <textarea className="field min-h-20" value={completionQueryNote} onChange={(event) => setCompletionQueryNote(event.target.value)} disabled={!canApproveCompletionDocuments || completionRecorded} />
-                    </label>
-                    <div className="mt-3 flex flex-wrap justify-end gap-2">
-                      {canApproveCompletionDocuments && (
-                        <>
-                          <button className="secondary" onClick={() => void queryCompletionDocuments()} disabled={isSaving || completionRecorded || (!completionStatementDocument && !statementOfAccountDocument)}>Query documents</button>
-                          <button className="primary" onClick={() => void approveCompletionDocuments()} disabled={isSaving || completionRecorded || !completionStatementVersion || !statementOfAccountVersion}>Approve completion documents</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-2">
+                  {completionDocumentsApproved ? (
+                    <CompletedActionSummary
+                      title="Completion documents approved"
+                      description="The completion statement and statement of account have passed developer review."
+                      items={[
+                        { label: "Approved by", value: completionDocumentsApprovedBy },
+                        { label: "Approved at", value: formatDateTime(completionDocumentsApprovedAt) },
+                      ]}
+                    />
+                  ) : (
+                    <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
+                      <p className="mt-1 text-sm text-[#617169]">Approve or query both documents before completion is recorded.</p>
+                      <label className="field-label mt-3">
+                        Query note
+                        <textarea className="field min-h-24" value={completionQueryNote} onChange={(event) => setCompletionQueryNote(event.target.value)} disabled={!canApproveCompletionDocuments} />
+                      </label>
+                      <div className="mt-3 flex flex-wrap justify-end gap-2">
+                        {canApproveCompletionDocuments && (
+                          <>
+                            <button className="secondary" type="button" onClick={() => void queryCompletionDocuments()} disabled={isSaving || (!completionStatementDocument && !statementOfAccountDocument)}>Query documents</button>
+                            <button className="primary" type="button" onClick={() => void approveCompletionDocuments()} disabled={isSaving || !completionStatementVersion || !statementOfAccountVersion}>Approve completion documents</button>
+                          </>
+                        )}
+                      </div>
+                    </section>
+                  )}
 
-                  <div className="rounded-md border border-[#e2ded3] bg-white p-4">
-                    <h5 className="font-bold text-[#0F3D2E]">Record completion</h5>
-                    <p className="mt-1 text-sm text-[#617169]">This marks the unit Completed. The existing handover workflow is unchanged.</p>
-                    <label className="field-label mt-3">
-                      Actual completion date
-                      <input
-                        className="field"
-                        type="date"
-                        max={new Date().toISOString().slice(0, 10)}
-                        value={completionDate}
-                        onChange={(event) => setCompletionDate(event.target.value)}
-                        disabled={!canRecordCompletion || !completionReady || completionRecorded}
-                      />
-                    </label>
-                    {activeAttempt?.completed_at && (
-                      <p className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#617169]">
-                        Completion recorded for {formatDate(activeAttempt.completed_at)}.
-                      </p>
-                    )}
-                    <div className="mt-4 flex justify-end">
-                      {canRecordCompletion && (
-                        <button className="primary" onClick={() => void recordCompletion()} disabled={isSaving || !completionDate || !completionReady || completionRecorded}>
-                          Mark unit Completed
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  {completionRecorded ? (
+                    <CompletedActionSummary
+                      title="Sale completed"
+                      description="The legal completion has been recorded and the handover workflow is available."
+                      items={[
+                        { label: "Actual completion date", value: formatDate(activeAttempt?.completed_at) },
+                        { label: "Completed by", value: completionRecordedBy },
+                      ]}
+                    />
+                  ) : (
+                    <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
+                      <h5 className="font-bold text-[#0F3D2E]">Record completion</h5>
+                      <p className="mt-1 text-sm text-[#617169]">This marks the unit Completed. The existing handover workflow is unchanged.</p>
+                      <label className="field-label mt-3">
+                        Actual completion date
+                        <input className="field" type="date" max={todayDate} value={completionDate} onChange={(event) => setCompletionDate(event.target.value)} disabled={!canRecordCompletion || !completionReady} />
+                      </label>
+                      <div className="mt-4 flex justify-end">
+                        {canRecordCompletion && (
+                          <button className="primary" type="button" onClick={() => void recordCompletion()} disabled={isSaving || !completionDate || !completionReady}>
+                            Mark unit Completed
+                          </button>
+                        )}
+                      </div>
+                    </section>
+                  )}
                 </div>
               </div>
             )}
-            </div>
+            </StageWorkspace>
           )}
 
-          {activeWorkflowStage === "handover" && (
-            <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h4 className="text-base font-bold text-[#0F3D2E]">Handover</h4>
-                  <p className="text-sm text-[#617169]">Completion unlocks the existing Bunnywell handover process.</p>
-                </div>
-                <span className="rounded-full border border-[#d9ded6] bg-white px-3 py-1 text-xs font-bold uppercase text-[#617169]">
-                  {completionRecorded ? "Available" : "Locked"}
-                </span>
-              </div>
-              <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#34413a]">
+          {activeUnitSection === "progression" && activeWorkflowStage === "handover" && (
+            <StageWorkspace
+              id="sales-stage-handover"
+              title="Handover"
+              description="Continue into the existing Bunnywell handover process once the sale is complete."
+              status={completionRecorded ? "Available" : "Locked"}
+              statusTone={completionRecorded ? "current" : "locked"}
+              currentTask={completionRecorded ? "Continue to handover" : "Waiting for completion"}
+            >
+              <div className="rounded-md bg-white p-4 text-sm text-[#34413a]">
                 {completionRecorded ? (
                   <p>Unit {selectedUnit.unit_number} is completed. Use the existing Handover area to manage resident and agent handover activity.</p>
                 ) : (
                   <p>Complete the sale before handover becomes available.</p>
                 )}
               </div>
-            </div>
+            </StageWorkspace>
           )}
 
-          {failedAttempts.length > 0 && (
+          {activeUnitSection === "progression" && <SaleActivity events={activeWorkflowEvents} actorName={actorName} />}
+
+          {activeUnitSection === "progression" && failedAttempts.length > 0 && (
             <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-4">
               <h4 className="text-base font-bold text-[#0F3D2E]">Reservation history</h4>
               <div className="mt-3 grid gap-2">
@@ -2882,6 +3825,12 @@ export function SalesReservationWorkflow({
                 ))}
               </div>
             </div>
+          )}
+
+          {activeUnitSection === "financials" && (!activeAttempt || !reservationApproved) && (
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-5 text-sm text-[#617169]">
+              Agent fees become available after the reservation is approved.
+            </section>
           )}
         </section>
       )}

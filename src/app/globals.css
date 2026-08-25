@@ -47,6 +47,28 @@ canvas {
   touch-action: none;
 }
 
+.numeric-value {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+.sale-file-tab-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sale-file-tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.active-panel-target {
+  scroll-margin-top: 2rem;
+}
+
+.active-panel-with-context {
+  scroll-margin-top: clamp(7rem, 18vh, 11rem);
+}
+
 .field {
   min-height: 2.875rem;
   width: 100%;
@@ -778,6 +800,11 @@ tbody tr:hover {
 }
 
 @media (max-width: 767px) {
+  .active-panel-target,
+  .active-panel-with-context {
+    scroll-margin-top: calc(6.75rem + env(safe-area-inset-top, 0px));
+  }
+
   .mobile-bottom-nav {
     display: grid;
   }

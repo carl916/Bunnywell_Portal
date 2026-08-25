@@ -23,11 +23,16 @@ export type SalesStageAction =
   | "fail_reservation"
   | "submit_agent_invoice"
   | "approve_commercial_package"
+  | "approve_agent_invoice"
+  | "reject_agent_invoice"
   | "request_exchange_approval"
   | "approve_exchange"
   | "record_exchange"
   | "record_solicitor_payment"
   | "record_developer_shortfall"
+  | "record_agent_fee_payment"
+  | "void_agent_fee_payment"
+  | "view_agent_fees_portfolio"
   | "submit_completion_documents"
   | "approve_completion_documents"
   | "record_completion"
@@ -94,6 +99,7 @@ export function canPerformSalesAction(role: SalesAccessRole, action: SalesStageA
   if (action === "manage_building_defaults") return canManageBuildingSaleDefaults(role);
   if (action === "manage_commercial_terms") return canManageCommercialTerms(role);
   if (action === "view_forecasting") return canViewSalesForecasting(role);
+  if (action === "record_agent_fee_payment" || action === "void_agent_fee_payment" || action === "view_agent_fees_portfolio") return isSalesInternalRole(role);
 
   if (action === "submit_reservation" || action === "submit_agent_invoice") {
     return isSalesInternalRole(role) || normalisedRole === "sales_agent";

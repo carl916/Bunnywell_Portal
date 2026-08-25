@@ -24,9 +24,14 @@ test("developer roles can see and manage the full sales pipeline", () => {
     assert.equal(canPerformSalesAction(role, "manage_commercial_terms"), true);
     assert.equal(canPerformSalesAction(role, "approve_reservation"), true);
     assert.equal(canPerformSalesAction(role, "approve_commercial_package"), true);
+    assert.equal(canPerformSalesAction(role, "approve_agent_invoice"), true);
+    assert.equal(canPerformSalesAction(role, "reject_agent_invoice"), true);
     assert.equal(canPerformSalesAction(role, "approve_exchange"), true);
     assert.equal(canPerformSalesAction(role, "approve_completion_documents"), true);
     assert.equal(canPerformSalesAction(role, "record_developer_shortfall"), true);
+    assert.equal(canPerformSalesAction(role, "record_agent_fee_payment"), true);
+    assert.equal(canPerformSalesAction(role, "void_agent_fee_payment"), true);
+    assert.equal(canPerformSalesAction(role, "view_agent_fees_portfolio"), true);
   }
 });
 
@@ -42,9 +47,14 @@ test("sales agents are building scoped and limited to reservation and invoice su
   assert.equal(canPerformSalesAction(role, "submit_reservation"), true);
   assert.equal(canPerformSalesAction(role, "submit_agent_invoice"), true);
   assert.equal(canPerformSalesAction(role, "approve_commercial_package"), false);
+  assert.equal(canPerformSalesAction(role, "approve_agent_invoice"), false);
+  assert.equal(canPerformSalesAction(role, "reject_agent_invoice"), false);
   assert.equal(canPerformSalesAction(role, "record_exchange"), false);
   assert.equal(canPerformSalesAction(role, "approve_exchange"), false);
   assert.equal(canPerformSalesAction(role, "record_developer_shortfall"), false);
+  assert.equal(canPerformSalesAction(role, "record_agent_fee_payment"), false);
+  assert.equal(canPerformSalesAction(role, "void_agent_fee_payment"), false);
+  assert.equal(canPerformSalesAction(role, "view_agent_fees_portfolio"), false);
   assert.equal(canPerformSalesAction(role, "record_completion"), false);
 });
 
@@ -60,8 +70,13 @@ test("conveyancers are building scoped and limited to exchange/completion record
   assert.equal(canPerformSalesAction(role, "submit_reservation"), false);
   assert.equal(canPerformSalesAction(role, "request_exchange_approval"), true);
   assert.equal(canPerformSalesAction(role, "approve_commercial_package"), false);
+  assert.equal(canPerformSalesAction(role, "approve_agent_invoice"), false);
+  assert.equal(canPerformSalesAction(role, "reject_agent_invoice"), false);
   assert.equal(canPerformSalesAction(role, "record_exchange"), true);
   assert.equal(canPerformSalesAction(role, "record_solicitor_payment"), true);
+  assert.equal(canPerformSalesAction(role, "record_agent_fee_payment"), false);
+  assert.equal(canPerformSalesAction(role, "void_agent_fee_payment"), false);
+  assert.equal(canPerformSalesAction(role, "view_agent_fees_portfolio"), false);
   assert.equal(canPerformSalesAction(role, "record_developer_shortfall"), false);
   assert.equal(canPerformSalesAction(role, "submit_completion_documents"), true);
   assert.equal(canPerformSalesAction(role, "record_completion"), true);
@@ -77,6 +92,7 @@ test("residents and contractors are blocked from sales pipeline data and actions
     assert.equal(canViewSalesForecasting(role), false);
     assert.equal(canPerformSalesAction(role, "submit_reservation"), false);
     assert.equal(canPerformSalesAction(role, "approve_commercial_package"), false);
+    assert.equal(canPerformSalesAction(role, "approve_agent_invoice"), false);
     assert.equal(canPerformSalesAction(role, "record_exchange"), false);
     assert.equal(canPerformSalesAction(role, "record_completion"), false);
   }

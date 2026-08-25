@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
@@ -9,7 +9,9 @@ import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
+import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
+import { validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
 import { buildDepositStructure, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { formatGbp, parseGbpInput } from "@/lib/sales/currency";
@@ -27,6 +29,7 @@ import {
   pcConfirmationError,
 } from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { notificationVariantForMessage, type NotificationVariant } from "@/lib/notifications";
 import {
   type AppRole,
   type Area,
@@ -329,6 +332,8 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
   },
 };
 
+const hiddenScreens = new Set<Tab>(["units"]);
+
 const legacyScreenAliases: Record<string, Tab> = {
   admin: "setup_buildings",
   buildings: "setup_buildings",
@@ -441,7 +446,7 @@ function clearScreenFromUrl() {
 }
 
 function canAccessScreen(role: AppRole, tab: Tab) {
-  return portalScreens[tab].roles.includes(role);
+  return !hiddenScreens.has(tab) && portalScreens[tab].roles.includes(role);
 }
 
 function roleTabs(role: AppRole): Tab[] {
@@ -1380,6 +1385,8 @@ export function ProductionPortalApp() {
         <SalesReservationWorkflow
           user={user}
           profile={profile}
+          profiles={profiles}
+          organisations={organisations}
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
@@ -1470,6 +1477,7 @@ function Shell({
     ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
+  const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
@@ -1552,12 +1560,12 @@ function Shell({
       </header>
       {notice && (
         <div
-          className={`fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-sm font-medium shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6 ${positiveNotice(notice) ? "border-[#bcdcc7] bg-[#f0f8f3] text-[#0F3D2E]" : "border-[#e2c8a6] bg-[#fff8ec] text-[#735327]"}`}
-          role="status"
-          aria-live="polite"
+          className={`fixed inset-x-4 bottom-24 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-sm font-medium shadow-[0_18px_40px_rgba(15,61,46,0.18)] md:bottom-6 ${notificationVariantClasses(noticeVariant)}`}
+          role={noticeVariant === "error" ? "alert" : "status"}
+          aria-live={noticeVariant === "error" ? "assertive" : "polite"}
         >
           <span className="flex items-center gap-2">
-            {positiveNotice(notice) && <CheckCircle2 size={16} aria-hidden />}
+            <NotificationIcon variant={noticeVariant} />
             {notice}
           </span>
         </div>
@@ -1626,10 +1634,18 @@ function Shell({
   );
 }
 
-function positiveNotice(notice: string) {
-  const lower = notice.toLowerCase();
-  if (/(cannot|could not|error|failed|invalid|missing|unable)/.test(lower)) return false;
-  return /(added|approved|closed|completed|created|deleted|marked|reactivated|reconciled|reset|resolved|saved|sent|submitted|updated|uploaded|welcome)/.test(lower);
+function notificationVariantClasses(variant: NotificationVariant) {
+  if (variant === "success") return "border-[#bcdcc7] bg-[#f0f8f3] text-[#0F3D2E]";
+  if (variant === "warning") return "border-[#e6c98c] bg-[#fff8e8] text-[#735327]";
+  if (variant === "error") return "border-[#f1b8b2] bg-[#fff4f2] text-[#7a271a]";
+  return "border-[#cbd8dd] bg-[#f3f7f8] text-[#34413a]";
+}
+
+function NotificationIcon({ variant }: { variant: NotificationVariant }) {
+  if (variant === "success") return <CheckCircle2 size={16} aria-hidden />;
+  if (variant === "warning") return <AlertTriangle size={16} aria-hidden />;
+  if (variant === "error") return <AlertCircle size={16} aria-hidden />;
+  return <Info size={16} aria-hidden />;
 }
 
 function LoginPanel({ onNotice }: { onNotice: (notice: string) => void }) {
@@ -3605,6 +3621,8 @@ function BuildingSalesSetup({
   const [isSaving, setIsSaving] = useState(false);
   const [buildCost, setBuildCost] = useState("");
   const [agentFeePercent, setAgentFeePercent] = useState("");
+  const [exchangeAgentFeePercent, setExchangeAgentFeePercent] = useState("");
+  const [completionAgentFeePercent, setCompletionAgentFeePercent] = useState("");
   const [reservationFee, setReservationFee] = useState("");
   const [reservationFeeHolder, setReservationFeeHolder] = useState("sales_agent");
   const [exchangeDepositPercent, setExchangeDepositPercent] = useState("10");
@@ -3617,6 +3635,11 @@ function BuildingSalesSetup({
     secondDepositEnabled,
     secondDepositPercent: moneyInputToNumber(secondDepositPercent) ?? 0,
     secondDepositMonthsAfterExchange: moneyInputToNumber(secondDepositMonths) ?? null,
+  });
+  const agentFeeStructure = validateAgentFeeStructure({
+    totalFeePercent: moneyInputToNumber(agentFeePercent),
+    exchangeFeePercent: moneyInputToNumber(exchangeAgentFeePercent),
+    completionFeePercent: moneyInputToNumber(completionAgentFeePercent),
   });
 
   useEffect(() => {
@@ -3634,6 +3657,8 @@ function BuildingSalesSetup({
         if (cancelled) return;
         setBuildCost(data?.build_cost?.toString() ?? "");
         setAgentFeePercent(data?.default_agent_fee_percent?.toString() ?? "");
+        setExchangeAgentFeePercent(data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "");
+        setCompletionAgentFeePercent(data?.default_completion_agent_fee_percent?.toString() ?? "0");
         setReservationFee(data?.reservation_fee?.toString() ?? "");
         setReservationFeeHolder(data?.reservation_fee_holder_default ?? "sales_agent");
         setExchangeDepositPercent(data?.exchange_deposit_percent?.toString() ?? "10");
@@ -3657,6 +3682,10 @@ function BuildingSalesSetup({
       onNotice(depositStructure.error ?? "Payment schedule is invalid.");
       return;
     }
+    if (!agentFeeStructure.isValid) {
+      onNotice(agentFeeStructure.error ?? "Agent fee structure is invalid.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -3665,6 +3694,8 @@ function BuildingSalesSetup({
         buildingId: building.id,
         buildCost,
         agentFeePercent: moneyInputToNumber(agentFeePercent),
+        exchangeAgentFeePercent: moneyInputToNumber(exchangeAgentFeePercent),
+        completionAgentFeePercent: moneyInputToNumber(completionAgentFeePercent),
         reservationFee,
         reservationFeeHolder,
         depositStructure,
@@ -3789,6 +3820,8 @@ function BuildingSalesSetup({
       reservation_fee: defaultsPayload.reservation_fee,
       reservation_fee_holder: defaultsPayload.reservation_fee_holder_default,
       agent_fee_percent: defaultsPayload.default_agent_fee_percent,
+      exchange_agent_fee_percent: defaultsPayload.default_exchange_agent_fee_percent,
+      completion_agent_fee_percent: defaultsPayload.default_completion_agent_fee_percent,
       vat_rate: defaultsPayload.default_vat_rate,
       solicitor_fee: defaultsPayload.default_sales_solicitor_fee,
       exchange_deposit_percent: defaultsPayload.exchange_deposit_percent,
@@ -3866,7 +3899,9 @@ function BuildingSalesSetup({
             {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <label className="field-label">Default agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Total sales agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Exchange fee %<input className="field" inputMode="decimal" value={exchangeAgentFeePercent} onChange={(event) => setExchangeAgentFeePercent(event.target.value)} /></label>
+            <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} /></label>
             <label className="field-label">Default reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} aria-label="Default reservation fee" /></label>
             <label className="field-label">
               Default reservation fee holder
@@ -3889,6 +3924,13 @@ function BuildingSalesSetup({
               </>
             )}
           </div>
+          <div className={`mt-4 rounded-md border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+            <div className="flex justify-between gap-4">
+              <span>Agent fee split</span>
+              <strong className="numeric-value">{exchangeAgentFeePercent || "0"}% + {completionAgentFeePercent || "0"}%</strong>
+            </div>
+            <p className="mt-1 text-xs">{agentFeeStructure.error ?? "The milestone fees match the total sales agent fee."}</p>
+          </div>
           <div className={`mt-4 rounded-md border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Completion balance</span>
@@ -3897,7 +3939,7 @@ function BuildingSalesSetup({
             <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>
           </div>
           <div className="mt-4 flex justify-end">
-            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid}>
+            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>
               Save sales setup
             </button>
           </div>
@@ -4123,6 +4165,7 @@ function DeveloperSnagging({
   uploadSnagMedia,
   onClose,
   onDirtyChange,
+  onRequestActivePanel,
 }: {
   user: User;
   buildings: Building[];
@@ -4137,12 +4180,12 @@ function DeveloperSnagging({
   uploadSnagMedia: UploadSnagMedia;
   onClose: () => void;
   onDirtyChange: (hasUnsavedChanges: boolean) => void;
+  onRequestActivePanel: (request?: ActivePanelRequest) => void;
 }) {
   const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingResponsibleOrganisation, setIsChangingResponsibleOrganisation] = useState(false);
   const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
-  const formRef = useRef<HTMLDivElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
@@ -4205,18 +4248,6 @@ function DeveloperSnagging({
     return [source.buildingId, source.floor, source.locationType, source.unitId, source.areaId, source.responsibleOrganisationId].join("|");
   }
 
-  function focusTitleWithoutJump(formTopBefore: number | null) {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        if (formRef.current && formTopBefore !== null) {
-          const formTopAfter = formRef.current.getBoundingClientRect().top;
-          window.scrollBy(0, formTopAfter - formTopBefore);
-        }
-        titleInputRef.current?.focus({ preventScroll: true });
-      });
-    });
-  }
-
   function resetAndClose() {
     setCleanContextSignature(contextSignature(emptySnagDraft));
     setDraft(emptySnagDraft);
@@ -4244,7 +4275,6 @@ function DeveloperSnagging({
 
     setIsSaving(true);
     const savedDraft = { ...draft, responsibleOrganisationId: resolvedResponsibleOrganisationId };
-    const formTopBefore = formRef.current?.getBoundingClientRect().top ?? null;
     const supabase = createSupabaseBrowserClient();
     try {
       const mediaUploads = await uploadSnagMedia({ imageDataUrl: savedDraft.photoDataUrl, videoFile: savedDraft.videoFile }, "snags");
@@ -4300,7 +4330,7 @@ function DeveloperSnagging({
       if (closeAfterSave) {
         onClose();
       } else {
-        focusTitleWithoutJump(formTopBefore);
+        onRequestActivePanel({ focus: () => titleInputRef.current });
       }
     } catch (error) {
       onNotice(`Unable to add snag. ${readableError(error)}`);
@@ -4310,7 +4340,7 @@ function DeveloperSnagging({
   }
 
   return (
-    <div ref={formRef} className="max-w-xl">
+    <div className="max-w-xl">
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
           <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
@@ -4369,7 +4399,7 @@ function DeveloperSnagging({
             )}
             {draft.buildingId && !mainContractorId && <p className="mt-1 text-xs text-[#8a5a12]">No main contractor is set for this building yet.</p>}
           </div>
-          <div className="developer-snag-media grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
+          <div className="developer-snag-media grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
             <PhotoInput value={draft.photoDataUrl} onChange={(photoDataUrl) => setDraft({ ...draft, photoDataUrl })} disabled={isSaving || !draft.buildingId} />
             <VideoInput value={draft.videoFile} onChange={(videoFile) => setDraft({ ...draft, videoFile })} disabled={isSaving || !draft.buildingId} compactLabel />
           </div>
@@ -4457,20 +4487,18 @@ function requestUnitsLabel(request: ResidentAccessRequest) {
     .join(", ");
 }
 
-type AccessListFilter = "all" | "pending_requests" | "active_users" | "deactivated_users" | "rejected_requests";
-
 type AccessListRow = {
   id: string;
   key: string;
   kind: "profile" | "request";
   name: string;
   email: string;
-  typeLabel: string;
   status: "active" | "deactivated" | "pending" | "approved" | "rejected";
   roleLabel: string;
   phone: string;
   allocation: string;
   createdAt: string | null;
+  lastSignInAt: string | null;
   sortRank: number;
   profile?: Profile;
   request?: ResidentAccessRequest;
@@ -4507,8 +4535,40 @@ function UserDirectory({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  const [filter, setFilter] = useState<AccessListFilter>("all");
   const [selectedRequestId, setSelectedRequestId] = useState("");
+  const [lastSignInsByUserId, setLastSignInsByUserId] = useState<Record<string, string | null>>({});
+  const [lastSignInsStatus, setLastSignInsStatus] = useState<"loading" | "loaded" | "error">("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLastSignIns() {
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/users", {
+        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      });
+      const payload = (await response.json()) as {
+        users?: { id: string; lastSignInAt: string | null }[];
+        error?: string;
+      };
+
+      if (cancelled) return;
+
+      if (!response.ok || !payload.users) {
+        setLastSignInsStatus("error");
+        return;
+      }
+
+      setLastSignInsByUserId(Object.fromEntries(payload.users.map((user) => [user.id, user.lastSignInAt])));
+      setLastSignInsStatus("loaded");
+    }
+
+    void loadLastSignIns().catch(() => {
+      if (!cancelled) setLastSignInsStatus("error");
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   function userStatus(profile: Profile) {
     return profile.active === false ? "deactivated" : "active";
@@ -4547,12 +4607,12 @@ function UserDirectory({
         kind: "profile",
         name: profile.full_name || profile.name || "No name",
         email: profile.email,
-        typeLabel: "User",
         status,
         roleLabel: profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : statusLabel(profile.role),
         phone: profile.phone || "",
         allocation: allocationLabel(profile),
         createdAt: profile.created_at ?? null,
+        lastSignInAt: lastSignInsByUserId[profile.id] ?? null,
         sortRank: status === "active" ? 1 : 2,
         profile,
       };
@@ -4566,12 +4626,12 @@ function UserDirectory({
       kind: "request",
       name: request.full_name,
       email: request.email,
-      typeLabel: "Access request",
       status: request.status,
       roleLabel: statusLabel(request.resident_type),
       phone: request.phone,
       allocation: requestUnitsLabel(request),
       createdAt: request.created_at,
+      lastSignInAt: null,
       sortRank: request.status === "pending" ? 0 : request.status === "approved" ? 3 : 4,
       request,
     }));
@@ -4580,22 +4640,6 @@ function UserDirectory({
       a.sortRank - b.sortRank || new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
     ));
   })();
-
-  const filteredRows = rows.filter((row) => {
-    if (filter === "pending_requests") return row.kind === "request" && row.status === "pending";
-    if (filter === "active_users") return row.kind === "profile" && row.status === "active";
-    if (filter === "deactivated_users") return row.kind === "profile" && row.status === "deactivated";
-    if (filter === "rejected_requests") return row.kind === "request" && row.status === "rejected";
-    return true;
-  });
-
-  const filters: { value: AccessListFilter; label: string; count: number }[] = [
-    { value: "all", label: "All", count: rows.length },
-    { value: "pending_requests", label: "Pending requests", count: rows.filter((row) => row.kind === "request" && row.status === "pending").length },
-    { value: "active_users", label: "Active users", count: profiles.filter((profile) => profile.active !== false).length },
-    { value: "deactivated_users", label: "Deactivated users", count: profiles.filter((profile) => profile.active === false).length },
-    { value: "rejected_requests", label: "Rejected requests", count: rows.filter((row) => row.kind === "request" && row.status === "rejected").length },
-  ];
 
   function toggleProfile(profileId: string) {
     setSelectedRequestId("");
@@ -4611,6 +4655,13 @@ function UserDirectory({
     if (row.kind === "profile") return editingUserId === row.id ? "Close" : "Edit";
     if (row.status === "pending") return selectedRequestId === row.id ? "Close" : "Review";
     return selectedRequestId === row.id ? "Close" : "View";
+  }
+
+  function lastSignInLabel(row: AccessListRow) {
+    if (row.kind === "request") return "—";
+    if (lastSignInsStatus === "loading") return "Loading…";
+    if (lastSignInsStatus === "error") return "Unavailable";
+    return row.lastSignInAt ? formatDateTime(row.lastSignInAt) : "Never";
   }
 
   function rowActionIcon(row: AccessListRow, isOpen: boolean) {
@@ -4650,24 +4701,8 @@ function UserDirectory({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-b border-[#e5e9e4] px-4 py-3 sm:flex sm:flex-wrap">
-        {filters.map((item) => (
-          <button
-            key={item.value}
-            className={`chip-button min-w-0 justify-center whitespace-normal text-center text-sm leading-tight ${filter === item.value ? "chip-button-active" : ""}`}
-            onClick={() => {
-              setFilter(item.value);
-              setSelectedRequestId("");
-              onEditUser("");
-            }}
-          >
-            {item.label} ({item.count})
-          </button>
-        ))}
-      </div>
-
       <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
-        {filteredRows.map((row) => {
+        {rows.map((row) => {
           const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
           const isMuted = row.status === "deactivated" || row.status === "rejected";
 
@@ -4678,16 +4713,14 @@ function UserDirectory({
                   <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
                   <p className="mt-0.5 truncate text-sm text-[#66736B]">{row.email}</p>
                 </div>
-                <div className="flex max-w-[8.5rem] flex-col items-end gap-1">
-                  <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
-                  <span className="rounded-md bg-white px-2 py-1 text-right text-xs font-semibold leading-tight text-[#617169]">{row.typeLabel}</span>
-                </div>
+                <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created/submitted</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last login</span><span className="min-w-0 text-right font-medium">{lastSignInLabel(row)}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -4722,7 +4755,7 @@ function UserDirectory({
             </article>
           );
         })}
-        {filteredRows.length === 0 && <p className="mobile-empty">No matching access records.</p>}
+        {rows.length === 0 && <p className="mobile-empty">No access records.</p>}
       </div>
 
       <div className="hidden overflow-x-auto md:block">
@@ -4730,17 +4763,17 @@ function UserDirectory({
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Status</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Role or resident type</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation / requested flats</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Created / submitted</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Last login</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((row) => {
+            {rows.map((row) => {
               const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
               const isMuted = row.status === "deactivated" || row.status === "rejected";
 
@@ -4751,7 +4784,6 @@ function UserDirectory({
                       <p className="font-medium">{row.name}</p>
                       <p className="text-xs text-[#617169]">{row.email}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.typeLabel}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
                     </td>
@@ -4761,6 +4793,7 @@ function UserDirectory({
                       <p className="max-w-md truncate">{row.allocation}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastSignInLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
@@ -4807,7 +4840,7 @@ function UserDirectory({
             })}
           </tbody>
         </table>
-        {filteredRows.length === 0 && <p className="p-4 text-sm text-[#617169]">No matching access records.</p>}
+        {rows.length === 0 && <p className="p-4 text-sm text-[#617169]">No access records.</p>}
       </div>
     </section>
   );
@@ -6054,6 +6087,7 @@ function SnagWorkflow({
   const [addSnagHasUnsavedChanges, setAddSnagHasUnsavedChanges] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
   const [isViewingSnagDetails, setIsViewingSnagDetails] = useState(false);
+  const { panelRef: addSnagPanelRef, requestActivePanel: requestAddSnagPanel } = useActivePanel<HTMLDivElement>();
 
   function closeAddSnagForm() {
     if (addSnagHasUnsavedChanges && !window.confirm("Discard this unsaved snag?")) return;
@@ -6068,6 +6102,7 @@ function SnagWorkflow({
     }
     setAddSnagHasUnsavedChanges(false);
     setShowAddSnag(true);
+    requestAddSnagPanel();
   }
 
   return (
@@ -6090,24 +6125,27 @@ function SnagWorkflow({
         </div>
       </section>
       {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
-        <DeveloperSnagging
-          user={user}
-          buildings={buildings}
-          buildingFloors={buildingFloors}
-          units={units}
-          areas={areas}
-          trades={trades}
-          organisations={organisations}
-          buildingOrganisations={buildingOrganisations}
-          onNotice={onNotice}
-          reload={reload}
-          uploadSnagMedia={uploadSnagMedia}
-          onClose={() => {
-            setAddSnagHasUnsavedChanges(false);
-            setShowAddSnag(false);
-          }}
-          onDirtyChange={setAddSnagHasUnsavedChanges}
-        />
+        <div ref={addSnagPanelRef} className="active-panel-target">
+          <DeveloperSnagging
+            user={user}
+            buildings={buildings}
+            buildingFloors={buildingFloors}
+            units={units}
+            areas={areas}
+            trades={trades}
+            organisations={organisations}
+            buildingOrganisations={buildingOrganisations}
+            onNotice={onNotice}
+            reload={reload}
+            uploadSnagMedia={uploadSnagMedia}
+            onClose={() => {
+              setAddSnagHasUnsavedChanges(false);
+              setShowAddSnag(false);
+            }}
+            onDirtyChange={setAddSnagHasUnsavedChanges}
+            onRequestActivePanel={requestAddSnagPanel}
+          />
+        </div>
       )}
       {!isViewingSnagDetails && showPrintReport && canPrintReport && (
         <ReportsPanel
