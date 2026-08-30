@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { historicalActorLabel } from "../src/lib/sales/actor-identity.ts";
 
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const workspaceTabsSource = readFileSync("src/components/portal/sales/SaleFileWorkspaceTabs.tsx", "utf8");
@@ -153,6 +154,17 @@ test("approved Reservation uses a concise narrative audit summary", () => {
   assert.match(approvedPanel, /formatNarrativeDateTime\(activeAttempt\?\.reservation_submitted_at\)/);
   assert.match(approvedPanel, /formatNarrativeDateTime\(activeAttempt\?\.reservation_approved_at\)/);
   assert.doesNotMatch(approvedPanel, /Submitted date and time|Approved date and time/);
+});
+
+test("legacy reservation actor IDs resolve to profile names and never render as UUIDs", () => {
+  const userId = "c2b72e82-b43f-48a7-b5f9-57e16b80c245";
+  const profiles = [{ id: userId, full_name: "Carl Gilbert", email: "carl@example.com" }];
+
+  assert.equal(historicalActorLabel({ userId, profiles }), "Carl Gilbert");
+  assert.equal(historicalActorLabel({ snapshotName: userId, userId, profiles }), "Carl Gilbert");
+  assert.equal(historicalActorLabel({ snapshotName: userId, userId, profiles: [] }), "Not recorded");
+  assert.doesNotMatch(workflowSource, /reservation_approved_by_user_id \?\? "-"/);
+  assert.match(workflowSource, /const approvedByName = historicalActorLabel/);
 });
 
 test("completion uses styled PDF pickers and replaces completed controls with summaries", () => {

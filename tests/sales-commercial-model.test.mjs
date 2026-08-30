@@ -41,14 +41,16 @@ function loadCommercialModelModule() {
 }
 
 test("commercial model saves use the dedicated action name from setup and sales UI", () => {
-  assert.match(setupSource, /action:\s*"save_commercial_model"/);
+  assert.match(setupSource, /action:\s*"save_setup_unit_price"/);
   assert.match(workflowSource, /action:\s*"save_commercial_model"/);
 });
 
 test("commercial model API uses the transactional RPC and avoids reservation progression side effects", () => {
   const body = functionBody(routeSource, "saveCommercialModel");
 
+  assert.match(body, /prepare_unit_baseline_sale_record/);
   assert.match(body, /\.rpc\("save_unit_commercial_model_with_agent_fees"/);
+  assert.match(body, /mark_sale_attempt_substantive/);
   assert.doesNotMatch(body, /insertEvent\(/);
   assert.doesNotMatch(body, /workflow_status:\s*"awaiting_commercial_approval"/);
   assert.doesNotMatch(body, /from\("unit_sale_invoices"\)/);
@@ -141,7 +143,7 @@ test("reservation submission requires checked terms and split buyer identity", (
   assert.match(body, /buyerCompanyName/);
   assert.match(body, /reservationDate/);
   assert.match(body, /workflow_status:\s*"awaiting_approval"/);
-  assert.match(body, /sale_status:\s*"for_sale"/);
+  assert.match(body, /rpc: "sales_workflow_mark_unit_for_sale"/);
   assert.match(body, /reservationTermsChecked !== true/);
   assert.match(body, /reservation_submitted_by_name: requester\.name/);
   assert.match(body, /reservation_submitted_by_email: requester\.email/);
@@ -163,7 +165,8 @@ test("reservation approval uses the form date and developer reject action", () =
   assert.match(approveBody, /workflow_status:\s*"approved"/);
   assert.match(approveBody, /reservation_date:\s*reservationDate/);
   assert.match(approveBody, /reservationDateTimestamp\(reservationDate\)/);
-  assert.match(approveBody, /sale_status:\s*"reserved", reservation_date:\s*reservationDate/);
+  assert.match(approveBody, /rpc: "sales_workflow_mark_unit_reserved"/);
+  assert.match(approveBody, /update\(\{ reservation_date: reservationDate \}\)/);
   assert.match(rejectBody, /workflow_status:\s*"rejected"/);
   assert.match(rejectBody, /reservation_rejection_reason:\s*rejectionReason/);
   assert.match(workflowSource, /Reject reservation/);

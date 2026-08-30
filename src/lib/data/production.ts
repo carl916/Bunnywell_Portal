@@ -1,8 +1,11 @@
 export type AppRole = "admin" | "developer" | "developer_representative" | "sales_agent" | "conveyancer" | "contractor" | "resident" | "user";
 export type ResidentType = "leaseholder" | "tenant" | "letting_agent" | "managing_agent";
+export type UnitSaleStatus = "not_released" | "not_for_sale" | "for_sale" | "reserved" | "exchanged" | "completed" | "handed_over";
+export type RentalPortfolioStatus = "not_in_portfolio" | "active" | "exited";
 
 export type Building = {
   id: string;
+  created_at?: string | null;
   name: string;
   address_line_1: string | null;
   address_line_2: string | null;
@@ -33,7 +36,7 @@ export type Organisation = {
   phone: string | null;
 };
 
-export type BuildingOrganisationRole = "main_contractor" | "developer_representative" | "supporting_trade" | "sales_agent" | "conveyancer";
+export type BuildingOrganisationRole = "main_contractor" | "developer_representative" | "supporting_trade" | "sales_agent" | "conveyancer" | "letting_agent" | "managing_agent";
 
 export type BuildingOrganisation = {
   id: string;
@@ -62,7 +65,8 @@ export type Unit = {
   floor: string | null;
   unit_type: string | null;
   size_sqm: number | null;
-  sale_status: "for_sale" | "reserved" | "exchanged" | "completed" | "handed_over";
+  sale_status: UnitSaleStatus;
+  rental_portfolio_status: RentalPortfolioStatus;
   reservation_date: string | null;
   completion_date: string | null;
   handover_date: string | null;

@@ -7,6 +7,8 @@ import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
+import { UnitAllocationWorkspace } from "@/components/portal/UnitAllocationWorkspace";
+import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
@@ -151,8 +153,8 @@ type AuditEvent = {
   created_at: string;
 };
 
-type Tab = "dashboard" | "snags" | "units" | "sales" | "setup_buildings" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
-type PrimaryNavKey = "dashboard" | "snags" | "units" | "sales" | "setup" | "resident_home" | "resident_snags" | "resident_help";
+type Tab = "dashboard" | "snags" | "units" | "sales" | "rentals" | "setup_buildings" | "setup_allocation" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
+type PrimaryNavKey = "dashboard" | "snags" | "units" | "sales" | "rentals" | "setup" | "resident_home" | "resident_snags" | "resident_help";
 
 type PortalScreenDefinition = {
   label: string;
@@ -245,15 +247,6 @@ const SNAG_VIDEO_CAPTURE_FPS = 30;
 const SNAG_VIDEO_BITRATE = 2_500_000;
 const SNAG_VIDEO_AUDIO_BITRATE = 128_000;
 
-const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
-  { value: "for_sale", label: "For Sale" },
-  { value: "reserved", label: "Reserved" },
-  { value: "exchanged", label: "Exchanged" },
-  { value: "completed", label: "Completed" },
-  { value: "handed_over", label: "Handed Over" },
-];
-const adminEditableUnitSaleStatuses = unitSaleStatuses.filter((status) => status.value !== "handed_over");
-
 const appRoles: Array<{ value: AppRole; label: string }> = [
   { value: "admin", label: "Admin" },
   { value: "developer", label: "Developer" },
@@ -277,6 +270,8 @@ const organisationTypes = [
   { value: "sales_agent", label: "Sales agent" },
   { value: "conveyancer", label: "Conveyancer" },
   { value: "supporting_trade", label: "Supporting trade" },
+  { value: "letting_agent", label: "Letting agent" },
+  { value: "managing_agent", label: "Managing agent" },
 ];
 
 const portalScreens: Record<Tab, PortalScreenDefinition> = {
@@ -300,8 +295,18 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
     roles: ["admin", "developer", "sales_agent", "conveyancer"],
     section: "internal",
   },
+  rentals: {
+    label: "Rentals",
+    roles: ["admin", "developer"],
+    section: "internal",
+  },
   setup_buildings: {
     label: "Buildings",
+    roles: ["admin", "developer"],
+    section: "setup",
+  },
+  setup_allocation: {
+    label: "Unit allocation",
     roles: ["admin", "developer"],
     section: "setup",
   },
@@ -337,6 +342,8 @@ const hiddenScreens = new Set<Tab>(["units"]);
 const legacyScreenAliases: Record<string, Tab> = {
   admin: "setup_buildings",
   buildings: "setup_buildings",
+  allocation: "setup_allocation",
+  unit_allocation: "setup_allocation",
   setup: "setup_buildings",
   users: "setup_people",
   people: "setup_people",
@@ -480,11 +487,15 @@ function statusLabel(status: string) {
     assigned_to_contractor: "Assigned to contractor",
     in_progress: "In progress",
     resolved: "Resolved",
-    for_sale: "For Sale",
+    not_released: "Not released",
+    not_for_sale: "Retained / not for sale",
+    for_sale: "For sale",
     reserved: "Reserved",
     exchanged: "Exchanged",
     completed: "Completed",
-    handed_over: "Handed Over",
+    handed_over: "Handed over",
+    not_in_portfolio: "Not in rental portfolio",
+    exited: "Exited rental portfolio",
     admin: "Admin",
     developer: "Developer",
     developer_representative: "Developer Representative",
@@ -1394,6 +1405,25 @@ export function ProductionPortalApp() {
           reloadPortalData={() => loadAll()}
         />
       )}
+      {activeTab === "rentals" && (
+        <RentalsWorkspace
+          role={role}
+          buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
+          units={scopedUnits}
+          organisations={organisations}
+          onNotice={setNotice}
+          onOpenSaleFile={(unit) => {
+            const params = new URLSearchParams(window.location.search);
+            params.set("screen", "sales");
+            params.set("salesBuildingId", unit.building_id);
+            params.set("salesUnitId", unit.id);
+            params.delete("rentalUnitId");
+            window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            setTab("sales");
+          }}
+        />
+      )}
       {(activeTab === "resident_home" || activeTab === "resident_snags") && (
         <LeaseholderDefects
           user={user}
@@ -1434,6 +1464,7 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
   if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("sales")) items.push({ key: "sales", label: "Sales", tab: "sales", activeTabs: ["sales"], icon: <ClipboardCheck size={17} aria-hidden /> });
+  if (tabs.includes("rentals")) items.push({ key: "rentals", label: "Rentals", tab: "rentals", activeTabs: ["rentals"], icon: <Building2 size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1839,15 +1870,17 @@ function SetupSection({
 }) {
   return (
     <div className="grid gap-5">
-      <section className="panel">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHeader title="Setup" subtitle="Building setup, people access and portal activity controls." />
-          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap" role="tablist" aria-label="Setup sections">
+      <section className="panel py-4">
+        <div className="grid gap-3">
+          <SectionHeader title="Setup" subtitle="Building setup, unit allocation, people access and portal activity controls." />
+          <div className="flex w-full gap-1 overflow-x-auto border-b border-[#d9ded6]" role="tablist" aria-label="Setup sections">
             {availableTabs.map((item) => (
               <button
                 key={item}
-                className={`secondary min-h-9 w-full min-w-0 px-3 py-1.5 text-center text-sm leading-tight ${activeTab === item ? "nav-pill-active" : ""}`}
+                className={`shrink-0 border-b-2 px-3 py-2 text-sm font-semibold transition ${activeTab === item ? "border-[#D6A23A] text-[#0F3D2E]" : "border-transparent text-[#617169] hover:text-[#0F3D2E]"}`}
                 onClick={() => setTab(item)}
+                aria-selected={activeTab === item}
+                role="tab"
                 type="button"
               >
                 {tabLabel(item)}
@@ -1867,6 +1900,37 @@ function SetupSection({
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
           recordAudit={recordAudit}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+      {activeTab === "setup_allocation" && (
+        <UnitAllocationWorkspace
+          buildings={buildings}
+          buildingFloors={buildingFloors}
+          units={units}
+          onOpenSaleFile={(unit) => {
+            if (typeof window !== "undefined") {
+              const params = new URLSearchParams(window.location.search);
+              params.set("screen", "sales");
+              params.set("salesBuildingId", unit.building_id);
+              params.set("salesUnitId", unit.id);
+              params.delete("salesView");
+              params.delete("section");
+              window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            }
+            setTab("sales");
+          }}
+          onOpenRentalFile={(unit) => {
+            if (typeof window !== "undefined") {
+              const params = new URLSearchParams(window.location.search);
+              params.set("screen", "rentals");
+              params.set("rentalsBuildingId", unit.building_id);
+              params.set("rentalUnitId", unit.id);
+              window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            }
+            setTab("rentals");
+          }}
           onNotice={onNotice}
           reload={reload}
         />
@@ -2278,7 +2342,7 @@ function BuildingStructureView({
         Authorization: `Bearer ${data.session?.access_token ?? ""}`,
       },
       body: JSON.stringify({
-        action: "save_commercial_model",
+        action: "save_setup_unit_price",
         unitId: unit.id,
         saleAttemptId,
         listPriceAtOffer: price,
@@ -2516,7 +2580,8 @@ function FloorBlock({
       unit_type: unitTypes.find((type) => type.id === unitTypeId)?.name ?? null,
       size_sqm: Number(unitSizeSqm),
       parking_bays: parseParkingBays(unitParkingBays),
-      sale_status: "for_sale",
+      sale_status: "not_released",
+      rental_portfolio_status: "not_in_portfolio",
     }).select("id,building_id").single();
     if (error) {
       onNotice(error.code === "23505" ? `Unit ${unitNumber.trim()} already exists in this building.` : error.message);
@@ -2622,7 +2687,8 @@ function FloorBlock({
         <>
           <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
             <h4 className="font-semibold text-[#0F3D2E]">Units</h4>
-            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {units.length > 0 && <div className="mt-3 hidden grid-cols-[10rem_9rem_6rem_6rem_minmax(12rem,1fr)_auto] gap-3 border-b border-[#e5e9e4] px-3 pb-2 text-xs font-bold uppercase tracking-[0.05em] text-[#617169] lg:grid"><span>Unit</span><span>Type</span><span>Area</span><span>Parking</span><span>Sale status</span><span className="text-right">Actions</span></div>}
+            <div className="grid gap-1">
               {units.map((unit) => {
                 const unitType = unitTypes.find((type) => type.id === unit.unit_type_id)?.name ?? unit.unit_type ?? "No type";
 
@@ -2642,7 +2708,7 @@ function FloorBlock({
                   />
                 );
               })}
-              {units.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
+              {units.length === 0 && <p className="mt-3 rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
             </div>
             {!warning && (
               <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
@@ -2821,7 +2887,6 @@ function UnitStructureCard({
   const [editUnitPrice, setEditUnitPrice] = useState(unitPrice?.toString() ?? "");
   const [editParkingBays, setEditParkingBays] = useState(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
   const [editUnitTypeId, setEditUnitTypeId] = useState(unit.unit_type_id ?? "");
-  const [editSaleStatus, setEditSaleStatus] = useState<Unit["sale_status"]>(unit.sale_status);
   const [areasToRemove, setAreasToRemove] = useState<string[]>([]);
   const [pendingRooms, setPendingRooms] = useState<string[]>([]);
   const [pendingAmenity, setPendingAmenity] = useState(false);
@@ -2844,12 +2909,11 @@ function UnitStructureCard({
     setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
-    setEditSaleStatus(unit.sale_status);
     setAreasToRemove([]);
     setPendingRooms([]);
     setPendingAmenity(false);
     setDeleteWarning("");
-  }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id, unitPrice]);
+  }, [unit.floor, unit.parking_bays, unit.size_sqm, unit.unit_number, unit.unit_type_id, unitPrice]);
 
   function stageRoom() {
     const trimmed = roomName.trim();
@@ -2878,10 +2942,6 @@ function UnitStructureCard({
       onNotice("Enter a valid unit price.");
       return;
     }
-    if (editSaleStatus === "handed_over" && unit.sale_status !== "handed_over") {
-      onNotice("Handed Over can only be set by completing the handover workflow.");
-      return;
-    }
     const supabase = createSupabaseBrowserClient();
     if (areasToRemove.length > 0) {
       const { data: linkedSnags, error: linkedSnagsError } = await supabase
@@ -2903,15 +2963,23 @@ function UnitStructureCard({
       }
     }
 
-    const { error } = await supabase.from("units").update({
-      unit_number: editNumber,
-      floor: editFloor,
-      size_sqm: Number(editSizeSqm),
-      parking_bays: parseParkingBays(editParkingBays),
-      unit_type_id: editUnitTypeId,
-      unit_type: unitTypes.find((type) => type.id === editUnitTypeId)?.name ?? null,
-      sale_status: editSaleStatus,
-    }).eq("id", unit.id);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(`/api/buildings/units/${encodeURIComponent(unit.id)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({
+        unit_number: editNumber,
+        floor: editFloor,
+        size_sqm: Number(editSizeSqm),
+        parking_bays: parseParkingBays(editParkingBays),
+        unit_type_id: editUnitTypeId,
+      }),
+    });
+    const responsePayload = await response.json().catch(() => ({})) as { error?: string };
+    const error = response.ok ? null : new Error(responsePayload.error ?? "Unit structure could not be updated.");
     if (error) onNotice(error.message);
     else {
       if (nextUnitPrice !== null) {
@@ -2967,7 +3035,6 @@ function UnitStructureCard({
     setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
-    setEditSaleStatus(unit.sale_status);
     setAreasToRemove([]);
     setPendingRooms([]);
     setPendingAmenity(false);
@@ -3004,7 +3071,7 @@ function UnitStructureCard({
   }
 
   return (
-    <article className="rounded-md border border-[#d9ded6] bg-white p-3">
+    <article className="border-b border-[#eef0eb] bg-white px-3 py-2 last:border-b-0" data-unit-id={unit.id}>
               {editing ? (
                 <div className="grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -3024,17 +3091,6 @@ function UnitStructureCard({
                       <option value="">Unit type</option>
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {unit.sale_status === "handed_over" ? (
-                      <select className="field" value="handed_over" disabled title="Handed Over is controlled by the handover workflow">
-                        <option value="handed_over">Handed Over</option>
-                      </select>
-                    ) : (
-                      <select className="field" value={editSaleStatus} onChange={(event) => setEditSaleStatus(event.target.value as Unit["sale_status"])}>
-                        {adminEditableUnitSaleStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
-                      </select>
-                    )}
                   </div>
                   <div className="rounded-md border border-[#d9ded6] bg-white p-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
@@ -3101,16 +3157,13 @@ function UnitStructureCard({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-semibold">Unit {unit.unit_number}</h4>
-                    <p className="text-sm text-[#617169]">{unitType}{unit.size_sqm ? ` / ${unit.size_sqm} sqm` : ""}</p>
-                    <p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>Unit price: {unitPrice === null ? "Not set" : formatGbp(unitPrice)}</p>
-                    <p className="text-xs text-[#617169]">Parking: {formatParkingBays(unit.parking_bays)}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>
-                    <div className="flex gap-2">
+                <div className="grid gap-2 lg:grid-cols-[10rem_9rem_6rem_6rem_minmax(12rem,1fr)_auto] lg:items-center lg:gap-3">
+                  <div><h4 className="font-semibold text-[#0F3D2E]">Unit {unit.unit_number}</h4><p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>{unitPrice === null ? "Price not set" : formatGbp(unitPrice)}</p></div>
+                  <p className="text-sm text-[#34413a]">{unitType}</p>
+                  <p className="text-sm text-[#617169]">{unit.size_sqm ? `${unit.size_sqm} sqm` : "—"}</p>
+                  <p className="text-sm text-[#617169]">{formatParkingBays(unit.parking_bays)}</p>
+                  <div className="flex flex-wrap gap-1"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>{unit.rental_portfolio_status === "active" && <span className="rounded-md bg-[#eef8fa] px-2 py-1 text-xs font-semibold text-[#315f6a]">Rental</span>}</div>
+                  <div className="flex gap-2 lg:justify-end">
                       <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
                         <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
@@ -3122,34 +3175,10 @@ function UnitStructureCard({
                       >
                         <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                       </button>
-                    </div>
                   </div>
                 </div>
               )}
               {!editing && deleteWarning && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
-              {!editing && (
-                <>
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)}
-                      {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf0ec] pt-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {amenities.length > 0 ? (
-                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)
-                        ) : (
-                          <span className="text-sm text-[#617169]">None</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </article>
   );
 }
@@ -3258,6 +3287,7 @@ function AdminSetup({
   const [editConfirmedPcBuildingIds, setEditConfirmedPcBuildingIds] = useState<Record<string, boolean>>({});
   const [confirmEditPcBuildingId, setConfirmEditPcBuildingId] = useState<string | null>(null);
   const [showCreateBuilding, setShowCreateBuilding] = useState(false);
+  const [editingSettingsSection, setEditingSettingsSection] = useState<"lifecycle" | null>(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState(buildings[0]?.id ?? "");
   const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId) ?? buildings[0];
 
@@ -3341,6 +3371,17 @@ function AdminSetup({
       || draftAllowResidentRequests(building) !== (building.allow_resident_access_requests ?? true);
   }
 
+  function cancelBuildingSettings(building: Building) {
+    setBuildingDrafts((current) => {
+      const next = { ...current };
+      delete next[building.id];
+      return next;
+    });
+    setEditConfirmedPcBuildingIds((current) => ({ ...current, [building.id]: false }));
+    setConfirmEditPcBuildingId(null);
+    setEditingSettingsSection(null);
+  }
+
   function pcConfirmHelperText(pcDateValue: string, pcConfirmedValue: boolean) {
     if (pcConfirmedValue) return "PC confirmed. The resident portal lifecycle is calculated from this confirmed date.";
     if (!pcDateValue) return "Enter a Practical Completion date before confirming PC.";
@@ -3398,6 +3439,7 @@ function AdminSetup({
     });
     setEditConfirmedPcBuildingIds((current) => ({ ...current, [building.id]: false }));
     setConfirmEditPcBuildingId(null);
+    setEditingSettingsSection(null);
     onNotice(`Building settings saved for ${building.name}.`);
     await reload();
   }
@@ -3415,35 +3457,33 @@ function AdminSetup({
   const hasChanges = selectedBuilding ? buildingHasUnsavedChanges(selectedBuilding) : false;
 
   return (
-    <section className="panel grid gap-6">
-      <section
-        className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-4 shadow-[0_10px_24px_rgba(15,61,46,0.06)]"
-        data-testid="working-building-context"
-      >
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Working building</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "No building selected"}</h2>
-              {selectedBuilding && (
-                <>
-                  <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
-                  <span className={statusTone(portalMode === "post_dlp_readonly" ? "closed" : portalMode === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(portalMode)}</span>
-                  {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
-                </>
-              )}
-            </div>
-            <p className="mt-2 text-sm text-[#617169]">
-              Lifecycle, resident access and building structure settings below apply to this building.
-            </p>
-          </div>
-          <label className="field-label">
-            Selected building
-            <select className="field min-h-12 text-base font-semibold text-[#0F3D2E]" aria-label="Selected building" value={selectedBuilding?.id ?? ""} onChange={(event) => setSelectedBuildingId(event.target.value)}>
-              {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-            </select>
-          </label>
+    <section className="panel grid gap-5">
+      <section className="flex flex-col gap-3 border-b border-[#e5e9e4] pb-4 sm:flex-row sm:items-center sm:justify-between" data-testid="working-building-context">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="truncate text-xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "No building selected"}</h2>
+          {selectedBuilding && (
+            <>
+              <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
+              <span className={statusTone(portalMode === "post_dlp_readonly" ? "closed" : portalMode === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(portalMode)}</span>
+              {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
+            </>
+          )}
         </div>
+        <label className="relative w-fit shrink-0 text-sm font-semibold text-[#0F3D2E]">
+          <span className="sr-only">Change building</span>
+          <select
+            className="min-h-9 cursor-pointer appearance-none rounded-md border border-[#d9ded6] bg-white py-1.5 pl-3 pr-8"
+            aria-label="Change building"
+            value={selectedBuilding?.id ?? ""}
+            onChange={(event) => {
+              if (selectedBuilding) cancelBuildingSettings(selectedBuilding);
+              setSelectedBuildingId(event.target.value);
+            }}
+          >
+            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={15} aria-hidden />
+        </label>
       </section>
 
       {!selectedBuilding && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
@@ -3451,83 +3491,64 @@ function AdminSetup({
       {selectedBuilding && (
         <>
           <section className="grid gap-4" data-testid="building-overview-section">
-            <div>
-              <h3 className="text-base font-semibold text-[#0F3D2E]">Building overview</h3>
-              <p className="mt-1 text-sm text-[#617169]">Settings for {selectedBuilding.name}.</p>
-              <p className="mt-1 text-sm text-[#617169]">{lifecycleEffectSummary(portalMode)}</p>
-              {hasWarning && (
-                <div className="mt-3 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                  PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
-                </div>
-              )}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[#0F3D2E]">Building lifecycle</h3>
+                <p className="mt-1 text-sm text-[#617169]">{lifecycleEffectSummary(portalMode)}</p>
+              </div>
+              {editingSettingsSection !== "lifecycle" && <button className="snag-action-link" type="button" onClick={() => setEditingSettingsSection("lifecycle")}>Edit</button>}
             </div>
+            {hasWarning && (
+              <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
+              </div>
+            )}
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="grid gap-3">
-                <label className="field-label">
-                  {pcConfirmedValue ? "Confirmed PC date" : "Expected PC date"}
-                  <input
-                    className="field min-h-10 py-2"
-                    type="date"
-                    value={pcDateValue}
-                    disabled={pcConfirmedValue && !canEditConfirmedPc}
-                    onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_date: event.target.value || null })}
-                  />
-                </label>
-                <p className="text-xs text-[#617169]">{pcConfirmHelperText(pcDateValue, pcConfirmedValue)}</p>
-                {!pcConfirmedValue && (
-                  <label className={`option-card min-h-10 px-3 py-2 text-sm ${confirmDisabled ? "opacity-60" : ""}`}>
-                    <input
-                      checked={pcConfirmedValue}
-                      disabled={confirmDisabled}
-                      onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_confirmed: event.target.checked })}
-                      type="checkbox"
-                    />
-                    PC confirmed
-                  </label>
-                )}
-                {pcConfirmedValue && !canEditConfirmedPc && (
-                  <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>
-                    Edit confirmed PC date
-                  </button>
-                )}
-                {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
-                  <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                    <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
-                    <button
-                      className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm"
-                      type="button"
-                      onClick={() => {
-                        setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true }));
-                        setConfirmEditPcBuildingId(null);
-                      }}
-                    >
-                      Allow PC date editing
-                    </button>
+            {editingSettingsSection === "lifecycle" ? (
+              <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-3">
+                    <label className="field-label">
+                      {pcConfirmedValue ? "Confirmed PC date" : "Expected PC date"}
+                      <input className="field min-h-10 py-2" type="date" value={pcDateValue} disabled={pcConfirmedValue && !canEditConfirmedPc} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_date: event.target.value || null })} />
+                    </label>
+                    <p className="text-xs text-[#617169]">{pcConfirmHelperText(pcDateValue, pcConfirmedValue)}</p>
+                    {!pcConfirmedValue && (
+                      <label className={`option-card min-h-10 px-3 py-2 text-sm ${confirmDisabled ? "opacity-60" : ""}`}>
+                        <input checked={pcConfirmedValue} disabled={confirmDisabled} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_confirmed: event.target.checked })} type="checkbox" />
+                        PC confirmed
+                      </label>
+                    )}
+                    {pcConfirmedValue && !canEditConfirmedPc && <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>Edit confirmed PC date</button>}
+                    {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
+                      <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                        <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
+                        <button className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true })); setConfirmEditPcBuildingId(null); }}>Allow PC date editing</button>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="grid gap-3 text-sm">
+                    <InfoRow label="Defects reporting closes" value={reportingEnd ? formatDate(reportingEnd) : "Calculated once PC is confirmed"} />
+                    <InfoRow label="Closing notice starts" value={closingStart ? formatDate(closingStart) : "Calculated once PC is confirmed"} />
+                    <InfoRow label="Current portal mode" value={lifecycleLabel(portalMode)} />
+                  </div>
+                </div>
+                <div className="grid gap-2 border-t border-[#e5e9e4] pt-4">
+                  <label className="option-card min-h-10 px-3 py-2 text-sm"><input checked={allowRequestsValue} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { allow_resident_access_requests: event.target.checked })} type="checkbox" />Allow new resident access requests</label>
+                  <p className="text-xs text-[#617169]">Existing approved users can still log in. New residents cannot request access while access requests are disabled.</p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => cancelBuildingSettings(selectedBuilding)}>Cancel</button>
+                  <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveBuildingSettings(selectedBuilding)} disabled={!hasChanges}>Save changes</button>
+                </div>
               </div>
-
-              <div className="grid gap-3 text-sm">
-                <InfoRow label="Defects reporting closes" value={reportingEnd ? formatDate(reportingEnd) : "Calculated once PC is confirmed"} />
-                <InfoRow label="Closing notice starts" value={closingStart ? formatDate(closingStart) : "Calculated once PC is confirmed"} />
-                <InfoRow label="Current portal mode" value={lifecycleLabel(portalMode)} />
-              </div>
-            </div>
-
-            <div className="grid gap-2 border-t border-[#e5e9e4] pt-4">
-              <label className="option-card min-h-10 px-3 py-2 text-sm">
-                <input checked={allowRequestsValue} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { allow_resident_access_requests: event.target.checked })} type="checkbox" />
-                Allow new resident access requests
-              </label>
-              <p className="text-xs text-[#617169]">Existing approved users can still log in. New residents cannot request access while access requests are disabled.</p>
-              {!allowRequestsValue && <p className="text-xs text-[#7a5a15]">New residents cannot request access for this building. Existing approved users are not affected.</p>}
-              <div className="flex justify-end">
-                <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveBuildingSettings(selectedBuilding)} disabled={!hasChanges}>
-                  Save building changes
-                </button>
-              </div>
-            </div>
+            ) : (
+              <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{pcConfirmedValue ? "PC confirmed" : "Expected PC"}</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{pcDateValue ? formatDate(pcDateValue) : "Not set"}</dd></div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Defects reporting</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reportingEnd ? `Closes ${formatDate(reportingEnd)}` : "Awaiting PC confirmation"}</dd>{closingStart && <dd className="mt-0.5 text-xs text-[#617169]">Closing notice begins {formatDate(closingStart)}</dd>}</div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Resident portal</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{lifecycleLabel(portalMode)}</dd><dd className="mt-0.5 text-xs text-[#617169]">New access requests {allowRequestsValue ? "On" : "Off"}</dd></div>
+              </dl>
+            )}
           </section>
 
           <BuildingDeliveryTeam
@@ -3629,6 +3650,25 @@ function BuildingSalesSetup({
   const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
   const [secondDepositPercent, setSecondDepositPercent] = useState("");
   const [secondDepositMonths, setSecondDepositMonths] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedValues, setSavedValues] = useState({
+    buildCost: "", agentFeePercent: "", exchangeAgentFeePercent: "", completionAgentFeePercent: "",
+    reservationFee: "", reservationFeeHolder: "sales_agent", exchangeDepositPercent: "10",
+    secondDepositEnabled: false, secondDepositPercent: "", secondDepositMonths: "",
+  });
+
+  function applySalesValues(values: typeof savedValues) {
+    setBuildCost(values.buildCost);
+    setAgentFeePercent(values.agentFeePercent);
+    setExchangeAgentFeePercent(values.exchangeAgentFeePercent);
+    setCompletionAgentFeePercent(values.completionAgentFeePercent);
+    setReservationFee(values.reservationFee);
+    setReservationFeeHolder(values.reservationFeeHolder);
+    setExchangeDepositPercent(values.exchangeDepositPercent);
+    setSecondDepositEnabled(values.secondDepositEnabled);
+    setSecondDepositPercent(values.secondDepositPercent);
+    setSecondDepositMonths(values.secondDepositMonths);
+  }
 
   const depositStructure = buildDepositStructure({
     exchangeDepositPercent: moneyInputToNumber(exchangeDepositPercent) ?? 10,
@@ -3655,16 +3695,29 @@ function BuildingSalesSetup({
           .maybeSingle();
         if (error) throw error;
         if (cancelled) return;
-        setBuildCost(data?.build_cost?.toString() ?? "");
-        setAgentFeePercent(data?.default_agent_fee_percent?.toString() ?? "");
-        setExchangeAgentFeePercent(data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "");
-        setCompletionAgentFeePercent(data?.default_completion_agent_fee_percent?.toString() ?? "0");
-        setReservationFee(data?.reservation_fee?.toString() ?? "");
-        setReservationFeeHolder(data?.reservation_fee_holder_default ?? "sales_agent");
-        setExchangeDepositPercent(data?.exchange_deposit_percent?.toString() ?? "10");
-        setSecondDepositEnabled(Boolean(data?.second_deposit_enabled));
-        setSecondDepositPercent(data?.second_deposit_percent?.toString() ?? "");
-        setSecondDepositMonths(data?.second_deposit_months_after_exchange?.toString() ?? "");
+        const loadedValues = {
+          buildCost: data?.build_cost?.toString() ?? "",
+          agentFeePercent: data?.default_agent_fee_percent?.toString() ?? "",
+          exchangeAgentFeePercent: data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "",
+          completionAgentFeePercent: data?.default_completion_agent_fee_percent?.toString() ?? "0",
+          reservationFee: data?.reservation_fee?.toString() ?? "",
+          reservationFeeHolder: data?.reservation_fee_holder_default ?? "sales_agent",
+          exchangeDepositPercent: data?.exchange_deposit_percent?.toString() ?? "10",
+          secondDepositEnabled: Boolean(data?.second_deposit_enabled),
+          secondDepositPercent: data?.second_deposit_percent?.toString() ?? "",
+          secondDepositMonths: data?.second_deposit_months_after_exchange?.toString() ?? "",
+        };
+        setBuildCost(loadedValues.buildCost);
+        setAgentFeePercent(loadedValues.agentFeePercent);
+        setExchangeAgentFeePercent(loadedValues.exchangeAgentFeePercent);
+        setCompletionAgentFeePercent(loadedValues.completionAgentFeePercent);
+        setReservationFee(loadedValues.reservationFee);
+        setReservationFeeHolder(loadedValues.reservationFeeHolder);
+        setExchangeDepositPercent(loadedValues.exchangeDepositPercent);
+        setSecondDepositEnabled(loadedValues.secondDepositEnabled);
+        setSecondDepositPercent(loadedValues.secondDepositPercent);
+        setSecondDepositMonths(loadedValues.secondDepositMonths);
+        setSavedValues(loadedValues);
       } catch (error) {
         if (!cancelled) onNotice(error instanceof Error ? error.message : "Could not load sales setup.");
       } finally {
@@ -3754,6 +3807,8 @@ function BuildingSalesSetup({
         metadata: { building: building.name, ...defaultsPayload, deposit_summary: paymentScheduleSummary(depositStructure), cascade },
       });
       onNotice(`Sales setup saved for ${building.name}. ${defaultDealSetupCascadeSummary(cascade)}`);
+      setSavedValues({ buildCost, agentFeePercent, exchangeAgentFeePercent, completionAgentFeePercent, reservationFee, reservationFeeHolder, exchangeDepositPercent, secondDepositEnabled, secondDepositPercent, secondDepositMonths });
+      setIsEditing(false);
       await reload();
     } catch (error) {
       console.error("Sales setup save failed", { buildingId: building.id, error });
@@ -3875,11 +3930,38 @@ function BuildingSalesSetup({
     return cascade;
   }
 
+  const reservationFeeHolderLabel = reservationFeeHolder === "sales_agent" ? "Sales agent"
+    : reservationFeeHolder === "developer" ? "Developer"
+      : reservationFeeHolder === "conveyancer" ? "Conveyancer" : "Other";
+
+  if (!isEditing) {
+    return (
+      <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
+            <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
+          </div>
+          <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)} disabled={isLoading}>{isLoading ? "Loading…" : "Edit"}</button>
+        </div>
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: {buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{agentFeePercent ? `${agentFeePercent}% total` : "Not set"}</dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : "Not set"}</dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Deposits</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange / {depositStructure.completionBalancePercent}% completion</dd><dd className="mt-0.5 text-xs text-[#617169]">Second deposit: {secondDepositEnabled ? `${secondDepositPercent || "0"}% after ${secondDepositMonths || "0"} months` : "None"}</dd></div>
+        </dl>
+      </section>
+    );
+  }
+
   return (
     <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
-      <div>
-        <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
-        <p className="mt-1 text-sm text-[#617169]">Default commercial deal structure for new sale attempts in {building.name}.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
+          <p className="mt-1 text-sm text-[#617169]">Default commercial deal structure for new sale attempts in {building.name}.</p>
+        </div>
+        {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
@@ -3896,7 +3978,6 @@ function BuildingSalesSetup({
               <h4 className="font-bold text-[#0F3D2E]">Default deal setup</h4>
               <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
             </div>
-            {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="field-label">Total sales agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
@@ -3938,10 +4019,9 @@ function BuildingSalesSetup({
             </div>
             <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>
           </div>
-          <div className="mt-4 flex justify-end">
-            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>
-              Save sales setup
-            </button>
+          <div className="mt-4 flex justify-end gap-2">
+            <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { applySalesValues(savedValues); setIsEditing(false); }} disabled={isSaving}>Cancel</button>
+            <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>Save changes</button>
           </div>
         </div>
       </div>
@@ -3976,6 +4056,15 @@ function BuildingDeliveryTeam({
   const [supportingTradeId, setSupportingTradeId] = useState("");
   const [supportingTradeType, setSupportingTradeType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  function cancelEditing() {
+    setMainContractorId(mainContractorLink?.organisation_id ?? "");
+    setDeveloperRepId(developerRepLink?.organisation_id ?? "");
+    setSupportingTradeId("");
+    setSupportingTradeType("");
+    setIsEditing(false);
+  }
 
   async function replaceRole(role: "main_contractor" | "developer_representative", organisationId: string) {
     const supabase = createSupabaseBrowserClient();
@@ -4015,6 +4104,7 @@ function BuildingDeliveryTeam({
       });
       onNotice(`Delivery team saved for ${building.name}.`);
       await reload();
+      setIsEditing(false);
     } catch (error) {
       onNotice(deliveryTeamSchemaNotice(readableError(error, "Could not save delivery team.")));
     } finally {
@@ -4084,10 +4174,20 @@ function BuildingDeliveryTeam({
 
   return (
     <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
-      <div>
-        <h3 className="text-base font-semibold text-[#0F3D2E]">Delivery team</h3>
-        <p className="mt-1 text-sm text-[#617169]">Developer snags default to the main contractor. Supporting trades can be selected for exception snags.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Delivery team</h3>
+          <p className="mt-1 text-sm text-[#617169]">Developer snags default to the main contractor. Supporting trades can be selected for exception snags.</p>
+        </div>
+        {!isEditing && <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)}>Edit</button>}
       </div>
+      {!isEditing ? (
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Main contractor</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === mainContractorLink?.organisation_id)?.name ?? "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name ?? "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? "None" : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
+        </dl>
+      ) : <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">
         <label className="field-label">
           Main contractor
@@ -4103,11 +4203,6 @@ function BuildingDeliveryTeam({
             {developerRepOptions.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name}</option>)}
           </select>
         </label>
-      </div>
-      <div className="flex justify-end">
-        <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveCoreTeam()} disabled={isSaving}>
-          Save delivery team
-        </button>
       </div>
       <div className="grid gap-3 border-t border-[#e5e9e4] pt-4">
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] lg:items-end">
@@ -4147,6 +4242,11 @@ function BuildingDeliveryTeam({
           <p className="text-sm text-[#617169]">No supporting trades are linked to this building yet.</p>
         )}
       </div>
+      <div className="flex justify-end gap-2 border-t border-[#e5e9e4] pt-4">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={cancelEditing} disabled={isSaving}>Cancel</button>
+        <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveCoreTeam()} disabled={isSaving}>Save changes</button>
+      </div>
+      </div>}
     </section>
   );
 }

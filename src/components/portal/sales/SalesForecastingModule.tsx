@@ -7,6 +7,7 @@ import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { formatGbp, formatGbpDeduction, parseGbpInput } from "@/lib/sales/currency";
 import { canViewSalesForecasting } from "@/lib/sales/permissions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isSalesRouteUnit } from "@/lib/units/commercial-allocation";
 
 type Profile = {
   id: string;
@@ -159,19 +160,21 @@ export function SalesForecastingModule({
 
   const selectedBuilding = buildings.find((building) => building.id === buildingId);
   const buildingUnits = useMemo(() => units.filter((unit) => unit.building_id === buildingId), [buildingId, units]);
+  const salesRouteUnits = useMemo(() => buildingUnits.filter(isSalesRouteUnit), [buildingUnits]);
   const currentUnitValues = useMemo(() => {
     const attemptByUnit = new Map(attempts.filter((attempt) => attempt.is_active).map((attempt) => [attempt.unit_id, attempt.id]));
     const termByAttempt = new Map(terms.filter((term) => term.is_current).map((term) => [term.sale_attempt_id, term]));
-    return buildingUnits.map((unit) => {
+    return salesRouteUnits.map((unit) => {
       const term = termByAttempt.get(attemptByUnit.get(unit.id) ?? "");
       return term?.contract_price ?? term?.list_price_at_offer ?? null;
     }).filter((value): value is number => value !== null && Number.isFinite(value));
-  }, [attempts, buildingUnits, terms]);
+  }, [attempts, salesRouteUnits, terms]);
   const derivedAverageValue = currentUnitValues.length > 0
     ? currentUnitValues.reduce((total, value) => total + value, 0) / currentUnitValues.length
     : 0;
   const fallbackAverageValue = parseGbpInput(averageSaleValue) ?? derivedAverageValue;
   const totalScenarioUnits = normaliseNumberInput(sellUnits) + normaliseNumberInput(retainUnits) + normaliseNumberInput(rentUnits) + normaliseNumberInput(refinanceUnits);
+  const salesRouteUnitOverflow = normaliseNumberInput(sellUnits) > salesRouteUnits.length;
   const currentScenario = calculateScenario({
     unitCount: buildingUnits.length,
     averageSaleValue: fallbackAverageValue,
@@ -205,7 +208,7 @@ export function SalesForecastingModule({
     setIsLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const unitIds = buildingUnits.map((unit) => unit.id);
+      const unitIds = salesRouteUnits.map((unit) => unit.id);
       const { data: scenarioRows, error: scenariosError } = await supabase
         .from("sales_forecast_scenarios")
         .select("*")
@@ -249,12 +252,12 @@ export function SalesForecastingModule({
   useEffect(() => {
     void loadForecastingData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildingId, buildingUnits.length, canViewForecasting]);
+  }, [buildingId, canViewForecasting, salesRouteUnits.length]);
 
   useEffect(() => {
-    if (!sellUnits && buildingUnits.length > 0) setSellUnits(buildingUnits.filter((unit) => unit.sale_status !== "completed" && unit.sale_status !== "handed_over").length.toString());
+    if (!sellUnits && salesRouteUnits.length > 0) setSellUnits(salesRouteUnits.filter((unit) => unit.sale_status !== "completed" && unit.sale_status !== "handed_over").length.toString());
     if (!averageSaleValue && derivedAverageValue > 0) setAverageSaleValue(Math.round(derivedAverageValue).toString());
-  }, [averageSaleValue, buildingUnits, derivedAverageValue, sellUnits]);
+  }, [averageSaleValue, derivedAverageValue, salesRouteUnits, sellUnits]);
 
   async function saveScenario() {
     if (!buildingId) return;
@@ -264,6 +267,10 @@ export function SalesForecastingModule({
     }
     if (totalScenarioUnits > buildingUnits.length) {
       onNotice("Scenario unit counts exceed the number of units in the selected building.");
+      return;
+    }
+    if (salesRouteUnitOverflow) {
+      onNotice("Sell units cannot exceed the units currently in the sales route.");
       return;
     }
 
@@ -343,7 +350,7 @@ export function SalesForecastingModule({
         <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <h3 className="font-bold text-[#0F3D2E]">Scenario inputs</h3>
           <p className="mt-1 text-sm text-[#617169]">
-            {selectedBuilding?.name ?? "Selected building"} has {buildingUnits.length} units. {currentUnitValues.length} currently have sale term values.
+            {selectedBuilding?.name ?? "Selected building"} has {salesRouteUnits.length} units in the current sales route ({buildingUnits.length} total). {currentUnitValues.length} sales-route units currently have sale term values.
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="field-label md:col-span-2">Scenario name<input className="field" value={name} onChange={(event) => setName(event.target.value)} /></label>
@@ -363,8 +370,9 @@ export function SalesForecastingModule({
             <label className="field-label md:col-span-2">Investor repayment<GbpInput value={investorRepayment} onChange={setInvestorRepayment} aria-label="Investor repayment" /></label>
           </div>
           {totalScenarioUnits > buildingUnits.length && <p className="mt-3 rounded-md border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Scenario uses {totalScenarioUnits} units, but this building has {buildingUnits.length} units.</p>}
+          {salesRouteUnitOverflow && <p className="mt-3 rounded-md border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Sell units exceed the {salesRouteUnits.length} units currently in the sales route.</p>}
           <div className="mt-4 flex justify-end">
-            <button className="primary" onClick={() => void saveScenario()} disabled={isSaving || isLoading || totalScenarioUnits > buildingUnits.length}>Save scenario</button>
+            <button className="primary" onClick={() => void saveScenario()} disabled={isSaving || isLoading || totalScenarioUnits > buildingUnits.length || salesRouteUnitOverflow}>Save scenario</button>
           </div>
         </div>
 

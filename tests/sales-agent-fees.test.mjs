@@ -29,7 +29,7 @@ function functionBody(source, name) {
 test("Exchange lifecycle completes independently of agent fee payment", () => {
   const recordExchangeBody = functionBody(routeSource, "recordExchange");
   assert.match(recordExchangeBody, /workflow_status: "exchanged"/);
-  assert.match(recordExchangeBody, /sale_status: "exchanged"/);
+  assert.match(recordExchangeBody, /sales_workflow_mark_unit_exchanged/);
   assert.doesNotMatch(recordExchangeBody, /unit_sale_invoice_payments/);
   assert.match(workflowSource, /status: completionRecorded \? "Completed" : exchangeRecorded \? "Documents required" : "Locked"/);
   assert.doesNotMatch(workflowSource, /label: "Invoice payment"/);

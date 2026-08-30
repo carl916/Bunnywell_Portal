@@ -14,7 +14,7 @@ const supabase = createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredE
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const validSaleStatuses = new Set(["for_sale", "reserved", "exchanged", "completed", "handed_over"]);
+const validSaleStatuses = new Set(["not_released", "not_for_sale", "for_sale", "reserved", "exchanged", "completed", "handed_over"]);
 const validRoles = new Set(["admin", "developer", "developer_representative", "contractor", "resident", "sales_agent", "conveyancer", "user"]);
 const validBuildingOrganisationRoles = new Set(["main_contractor", "developer_representative", "supporting_trade", "sales_agent", "conveyancer"]);
 const generatedPasswords = [];
@@ -308,13 +308,19 @@ async function importUnits(units, buildingByCode, unitTypeByName) {
       unit_type: clean(row.unit_type),
       unit_type_id: unitType.id,
       size_sqm: numberOrNull(row.size_sqm),
-      sale_status: insertStatus,
       completion_date: dateOrNull(row.completion_date),
       handover_date: null,
       parking_bays: intArrayOrNull(row.parking_bays),
       notes: clean(row.notes) || null,
     }, { onConflict: "building_id,unit_number" }).select("*").single();
     if (error) throw error;
+
+    const { error: statusError } = await supabase.rpc("initialize_imported_unit_sale_status", {
+      p_unit_id: data.id,
+      p_sale_status: insertStatus,
+      p_source: "cleanup_template_import",
+    });
+    if (statusError) throw statusError;
 
     result.set(`${clean(row.building_code)}:${clean(row.unit_number)}`, data);
 

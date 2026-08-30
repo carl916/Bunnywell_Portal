@@ -1,7 +1,4 @@
 export type ReservationRedactionPatch = {
-  buyer_name: null;
-  buyer_person_name: null;
-  buyer_company_name: null;
   buyer_email: null;
   buyer_phone: null;
   buyer_solicitor_name: null;
@@ -19,6 +16,24 @@ export type ReservationRedactionPatch = {
   updated_at: string;
 };
 
+export const PRE_EXCHANGE_RETURNABLE_STATUSES = [
+  "draft",
+  "awaiting_approval",
+  "reservation_submitted",
+  "rejected",
+  "reservation_query_raised",
+  "approved",
+  "reservation_approved",
+  "awaiting_commercial_approval",
+  "ready_for_exchange",
+] as const;
+
+const preExchangeReturnableStatuses = new Set<string>(PRE_EXCHANGE_RETURNABLE_STATUSES);
+
+export function canReturnUnitToForSale(workflowStatus?: string | null) {
+  return Boolean(workflowStatus && preExchangeReturnableStatuses.has(workflowStatus));
+}
+
 export function buildFailedReservationRedactionPatch({
   reason,
   redactedByUserId,
@@ -31,9 +46,6 @@ export function buildFailedReservationRedactionPatch({
   const cleanReason = reason.trim() || "Reservation failed.";
 
   return {
-    buyer_name: null,
-    buyer_person_name: null,
-    buyer_company_name: null,
     buyer_email: null,
     buyer_phone: null,
     buyer_solicitor_name: null,

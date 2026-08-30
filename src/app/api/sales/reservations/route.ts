@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppRole } from "@/lib/data/production";
+import { canCreateSaleAttempt } from "@/lib/units/commercial-allocation";
 import { canPerformSalesAction, canViewSalesBuilding, isSalesInternalRole } from "@/lib/sales/permissions";
-import { buildFailedReservationRedactionPatch } from "@/lib/sales/reservation-redaction";
+import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import { buildDepositStructure, buildPaymentScheduleRows, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { parseGbpInput } from "@/lib/sales/currency";
 import { calculateMilestoneFee, validateAgentFeeStructure } from "@/lib/sales/agent-fees";
@@ -25,6 +26,8 @@ type ReservationPayload = {
     | "reject_reservation"
     | "query_reservation"
     | "fail_reservation"
+    | "return_unit_for_sale"
+    | "save_setup_unit_price"
     | "save_commercial_model"
     | "save_commercial_package"
     | "approve_commercial_package"
@@ -44,6 +47,7 @@ type ReservationPayload = {
   buyerEmail?: string;
   buyerPhone?: string;
   buyerSolicitorName?: string;
+  returnReason?: string | null;
   reservationDate?: string | null;
   reservationTermsChecked?: boolean | null;
   reservationFee?: string | number | null;
@@ -271,6 +275,29 @@ async function loadUnit(adminClient: SupabaseClient, unitId: string) {
   return unit;
 }
 
+async function applyProtectedSaleStatus(
+  adminClient: SupabaseClient,
+  requester: Requester,
+  input: {
+    rpc:
+      | "sales_workflow_mark_unit_for_sale"
+      | "sales_workflow_mark_unit_reserved"
+      | "sales_workflow_mark_unit_exchanged"
+      | "sales_workflow_mark_unit_completed";
+    unitId: string;
+    saleAttemptId: string;
+    source: string;
+  },
+) {
+  const { error } = await adminClient.rpc(input.rpc, {
+    p_unit_id: input.unitId,
+    p_sale_attempt_id: input.saleAttemptId,
+    p_actor_user_id: requester.id,
+    p_source: input.source,
+  });
+  if (error) throw error;
+}
+
 async function loadSaleAttempt(adminClient: SupabaseClient, saleAttemptId: string) {
   const { data: attempt, error } = await adminClient
     .from("unit_sale_attempts")
@@ -330,9 +357,12 @@ async function loadBuildingSaleDefaults(adminClient: SupabaseClient, buildingId:
   return data;
 }
 
-async function createDraftSaleAttempt(adminClient: SupabaseClient, requester: Requester, unit: { id: string; building_id: string }) {
+async function createDraftSaleAttempt(adminClient: SupabaseClient, requester: Requester, unit: { id: string; building_id: string; unit_number: string; sale_status: string }) {
   const existing = await activeAttemptForUnit(adminClient, unit.id);
   if (existing) return existing;
+  if (!canCreateSaleAttempt(unit.sale_status)) {
+    throw new Error(`Unit ${unit.unit_number} is not currently available for a new sale file.`);
+  }
 
   const now = new Date().toISOString();
   const { data, error } = await adminClient.from("unit_sale_attempts").insert({
@@ -540,6 +570,9 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
 
   const unit = await loadUnit(adminClient, payload.unitId);
   await assertCanUseBuilding(adminClient, requester, unit.building_id);
+  if (!canCreateSaleAttempt(unit.sale_status)) {
+    throw new Error(`Unit ${unit.unit_number} is not currently available for reservation work.`);
+  }
 
   const now = new Date().toISOString();
   let attempt = await activeAttemptForUnit(adminClient, unit.id);
@@ -610,10 +643,13 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   }
   if (saleTermsId) await replacePaymentSchedule(adminClient, requester, attempt, saleTermsId, termsPayload);
 
-  await adminClient.from("units").update({
-    sale_status: "for_sale",
-    reservation_date: null,
-  }).eq("id", unit.id);
+  await applyProtectedSaleStatus(adminClient, requester, {
+    rpc: "sales_workflow_mark_unit_for_sale",
+    unitId: unit.id,
+    saleAttemptId: attempt.id,
+    source: wasRejected ? "reservation_resubmission" : "reservation_submission",
+  });
+  await adminClient.from("units").update({ reservation_date: null }).eq("id", unit.id);
 
   await adminClient.from("unit_sale_documents").update({
     status: "under_review",
@@ -668,6 +704,10 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
 
   if (documentError) throw documentError;
   if (documentType === "reservation_form") {
+    const unit = await loadUnit(adminClient, attempt.unit_id);
+    if (!canCreateSaleAttempt(unit.sale_status)) {
+      throw new Error(`Unit ${unit.unit_number} is not currently available for reservation work.`);
+    }
     let hasCurrentReservationVersion = false;
     if (document?.id) {
       const { data: currentVersion, error: currentVersionError } = await adminClient
@@ -952,7 +992,13 @@ async function approveReservation(adminClient: SupabaseClient, requester: Reques
     updated_at: now,
   }).eq("sale_attempt_id", attempt.id).eq("document_type", "reservation_form");
 
-  await adminClient.from("units").update({ sale_status: "reserved", reservation_date: reservationDate }).eq("id", attempt.unit_id);
+  await applyProtectedSaleStatus(adminClient, requester, {
+    rpc: "sales_workflow_mark_unit_reserved",
+    unitId: attempt.unit_id,
+    saleAttemptId: attempt.id,
+    source: "reservation_approval",
+  });
+  await adminClient.from("units").update({ reservation_date: reservationDate }).eq("id", attempt.unit_id);
 
   await insertEvent(adminClient, attempt, requester, {
     type: "reservation_approved",
@@ -1003,10 +1049,13 @@ async function rejectReservation(adminClient: SupabaseClient, requester: Request
     updated_at: now,
   }).eq("sale_attempt_id", attempt.id).eq("document_type", "reservation_form");
 
-  await adminClient.from("units").update({
-    sale_status: "for_sale",
-    reservation_date: null,
-  }).eq("id", attempt.unit_id);
+  await applyProtectedSaleStatus(adminClient, requester, {
+    rpc: "sales_workflow_mark_unit_for_sale",
+    unitId: attempt.unit_id,
+    saleAttemptId: attempt.id,
+    source: "reservation_rejection",
+  });
+  await adminClient.from("units").update({ reservation_date: null }).eq("id", attempt.unit_id);
 
   await adminClient.from("unit_sale_notes").insert({
     sale_attempt_id: attempt.id,
@@ -1071,92 +1120,71 @@ async function queryReservation(adminClient: SupabaseClient, requester: Requeste
   return { saleAttemptId: attempt.id };
 }
 
-async function failReservation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "fail_reservation")) throw new Error("Only developers can fail and redact reservations.");
+async function returnUnitToForSale(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  if (!canPerformSalesAction(requester.role, "fail_reservation")) throw new Error("Only administrators or developers can return units to For sale.");
   if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
-  const failReason = normaliseText(payload.failReason);
-  if (!failReason) throw new Error("Add a reason for the failed reservation.");
+  const returnReason = normaliseText(payload.returnReason ?? payload.failReason);
+  if (!returnReason) throw new Error("Add a reason for returning the unit to For sale.");
 
   const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  const now = new Date().toISOString();
-  const patch = buildFailedReservationRedactionPatch({ reason: failReason, redactedByUserId: requester.id, timestamp: now });
-
-  const { data: versions, error: versionError } = await adminClient
-    .from("unit_sale_document_versions")
-    .select("storage_bucket,storage_path,unit_sale_documents!inner(sale_attempt_id)")
-    .eq("unit_sale_documents.sale_attempt_id", attempt.id)
-    .is("redacted_at", null);
-  if (versionError) throw versionError;
-
-  const pathsByBucket = new Map<string, string[]>();
-  for (const version of versions ?? []) {
-    const bucket = version.storage_bucket as string;
-    const path = version.storage_path as string;
-    pathsByBucket.set(bucket, [...(pathsByBucket.get(bucket) ?? []), path]);
-  }
-  for (const [bucket, paths] of pathsByBucket.entries()) {
-    await adminClient.storage.from(bucket).remove(paths);
+  if (!attempt.is_active || !canReturnUnitToForSale(attempt.workflow_status)) {
+    throw new Error("Only an active sale attempt that has not exchanged can return the unit to For sale.");
   }
 
-  await adminClient.from("unit_sale_attempts").update(patch).eq("id", attempt.id);
-  await adminClient.from("unit_sale_terms").update({
-    status: "superseded",
-    is_current: false,
-    superseded_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("sale_attempt_id", attempt.id).eq("is_current", true);
-  await adminClient.from("unit_sale_documents").update({
-    status: "redacted",
-    redacted_at: now,
-    redacted_by_user_id: requester.id,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("sale_attempt_id", attempt.id);
-  const redactedStoragePaths = Array.from(pathsByBucket.values()).flat();
-  if (redactedStoragePaths.length > 0) {
-    await adminClient.from("unit_sale_document_versions").update({
-      is_current: false,
-      redacted_at: now,
-      redacted_by_user_id: requester.id,
-    }).in("storage_path", redactedStoragePaths);
-  }
-  await adminClient.from("unit_sale_invoices").update({
-    status: "redacted",
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("sale_attempt_id", attempt.id);
-  await adminClient.from("units").update({ sale_status: "for_sale" }).eq("id", attempt.unit_id);
-
-  await insertEvent(adminClient, attempt, requester, {
-    type: "reservation_failed_redacted",
-    toStatus: "fallen_through",
-    summary: "Reservation failed. Buyer details and active documents redacted.",
-    metadata: { reason: failReason },
+  const { data: unitId, error: returnError } = await adminClient.rpc("return_pre_exchange_unit_for_sale", {
+    p_sale_attempt_id: attempt.id,
+    p_actor_user_id: requester.id,
+    p_reason: returnReason,
+    p_source: "sales_workflow",
   });
+  if (returnError?.code === "PGRST202") {
+    throw new Error("Return to For sale is awaiting its database migration. Apply 20260830c_return_pre_exchange_unit_for_sale.sql and try again.");
+  }
+  if (returnError) throw returnError;
 
-  return { saleAttemptId: attempt.id };
+  return { saleAttemptId: attempt.id, unitId };
 }
 
 async function saveCommercialModel(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
+  const isSetupBaseline = payload.action === "save_setup_unit_price";
   if (!canPerformSalesAction(requester.role, "manage_commercial_terms")) throw new Error("Only developers can save commercial terms.");
   if (!payload.unitId && !payload.saleAttemptId) throw new Error("Choose a unit before saving commercial terms.");
+  if (isSetupBaseline && !["admin", "developer"].includes(requester.role)) {
+    throw new Error("Only administrators and developers can set a unit's setup price.");
+  }
 
   let unitId = payload.unitId;
   let buildingId: string;
   const existingAttempt = payload.saleAttemptId ? await loadSaleAttempt(adminClient, payload.saleAttemptId) : null;
+  const unit = await loadUnit(adminClient, existingAttempt?.unit_id ?? (unitId as string));
   if (existingAttempt) {
     unitId = existingAttempt.unit_id;
     buildingId = existingAttempt.building_id;
   } else {
-    const unit = await loadUnit(adminClient, unitId as string);
     unitId = unit.id;
     buildingId = unit.building_id;
   }
 
   await assertCanUseBuilding(adminClient, requester, buildingId);
-  const attempt = existingAttempt ?? (unitId ? await activeAttemptForUnit(adminClient, unitId) : null);
+  if (!isSetupBaseline && !canCreateSaleAttempt(unit.sale_status)) {
+    throw new Error(`Unit ${unit.unit_number} is not currently available for commercial sales work.`);
+  }
+  if (isSetupBaseline && !["not_released", "not_for_sale", "for_sale"].includes(unit.sale_status)) {
+    throw new Error(`Unit ${unit.unit_number} is controlled by the formal sales workflow.`);
+  }
+
+  let attempt = existingAttempt ?? (unitId ? await activeAttemptForUnit(adminClient, unitId) : null);
+  if (isSetupBaseline) {
+    const { data: baselineAttemptId, error: baselineError } = await adminClient.rpc("prepare_unit_baseline_sale_record", {
+      p_unit_id: unitId,
+      p_actor_user_id: requester.id,
+    });
+    if (baselineError) throw baselineError;
+    if (!baselineAttemptId) throw new Error("The unit price baseline could not be prepared.");
+    if (attempt && attempt.id !== baselineAttemptId) throw new Error("The selected sale record is no longer current.");
+    attempt = await loadSaleAttempt(adminClient, baselineAttemptId as string);
+  }
   if (attempt && !["draft", "rejected", "reservation_query_raised"].includes(attempt.workflow_status)) {
     throw new Error("This commercial package cannot be edited.");
   }
@@ -1206,7 +1234,20 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
   if (error) throw error;
 
   const result = Array.isArray(data) ? data[0] : data;
-  return { saleAttemptId: result?.sale_attempt_id ?? attempt?.id };
+  const saleAttemptId = result?.sale_attempt_id ?? attempt?.id;
+  if (!saleAttemptId) throw new Error("The commercial sale record could not be resolved.");
+
+  if (!isSetupBaseline) {
+    const { error: activityError } = await adminClient.rpc("mark_sale_attempt_substantive", {
+      p_sale_attempt_id: saleAttemptId,
+      p_actor_user_id: requester.id,
+      p_event_type: "commercial_model_saved",
+      p_summary: "Commercial sale model saved in the Sales workspace.",
+    });
+    if (activityError) throw activityError;
+  }
+
+  return { saleAttemptId };
 }
 
 type MilestoneInvoiceRecord = {
@@ -1415,8 +1456,12 @@ async function recordExchange(adminClient: SupabaseClient, requester: Requester,
   }).eq("id", attempt.id).select("*").single();
   if (attemptError) throw attemptError;
 
-  const { error: unitError } = await adminClient.from("units").update({ sale_status: "exchanged" }).eq("id", attempt.unit_id);
-  if (unitError) throw unitError;
+  await applyProtectedSaleStatus(adminClient, requester, {
+    rpc: "sales_workflow_mark_unit_exchanged",
+    unitId: attempt.unit_id,
+    saleAttemptId: attempt.id,
+    source: "exchange_recorded",
+  });
 
   await insertEvent(adminClient, attempt, requester, {
     type: "exchange_recorded",
@@ -1693,8 +1738,12 @@ async function recordCompletion(adminClient: SupabaseClient, requester: Requeste
   }).eq("id", attempt.id).select("*").single();
   if (attemptError) throw attemptError;
 
-  const { error: unitError } = await adminClient.from("units").update({ sale_status: "completed" }).eq("id", attempt.unit_id);
-  if (unitError) throw unitError;
+  await applyProtectedSaleStatus(adminClient, requester, {
+    rpc: "sales_workflow_mark_unit_completed",
+    unitId: attempt.unit_id,
+    saleAttemptId: attempt.id,
+    source: "sales_workflow_completion",
+  });
 
   await insertEvent(adminClient, attempt, requester, {
     type: "completion_recorded",
@@ -1776,8 +1825,8 @@ export async function POST(request: Request) {
     if (action === "approve_reservation") return NextResponse.json(await approveReservation(adminClient, requester, payload));
     if (action === "reject_reservation") return NextResponse.json(await rejectReservation(adminClient, requester, payload));
     if (action === "query_reservation") return NextResponse.json(await queryReservation(adminClient, requester, payload));
-    if (action === "fail_reservation") return NextResponse.json(await failReservation(adminClient, requester, payload));
-    if (action === "save_commercial_model" || action === "save_commercial_package") return NextResponse.json(await saveCommercialModel(adminClient, requester, payload));
+    if (action === "fail_reservation" || action === "return_unit_for_sale") return NextResponse.json(await returnUnitToForSale(adminClient, requester, payload));
+    if (action === "save_setup_unit_price" || action === "save_commercial_model" || action === "save_commercial_package") return NextResponse.json(await saveCommercialModel(adminClient, requester, payload));
     if (action === "approve_commercial_package") return NextResponse.json(await approveCommercialPackage(adminClient, requester, payload));
     if (action === "approve_agent_invoice") return NextResponse.json(await approveAgentInvoice(adminClient, requester, payload));
     if (action === "reject_agent_invoice") return NextResponse.json(await rejectAgentInvoice(adminClient, requester, payload));
@@ -1790,9 +1839,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Unsupported reservation action." }, { status: 400 });
   } catch (error) {
-    const fallback = action === "save_commercial_model" || action === "save_commercial_package"
+    const fallback = action === "save_setup_unit_price" || action === "save_commercial_model" || action === "save_commercial_package"
       ? "Commercial model could not be saved."
-      : action === "save_reservation" || action === "approve_reservation" || action === "reject_reservation" || action === "query_reservation" || action === "fail_reservation"
+      : action === "save_reservation" || action === "approve_reservation" || action === "reject_reservation" || action === "query_reservation" || action === "fail_reservation" || action === "return_unit_for_sale"
         ? "Reservation could not be completed."
         : "Sales action could not be completed.";
     return NextResponse.json({ error: error instanceof Error ? error.message : fallback }, { status: 400 });

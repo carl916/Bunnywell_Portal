@@ -16,6 +16,7 @@ import {
 } from "@/lib/sales/agent-fees-portfolio";
 import type { AgentFeePayment } from "@/lib/sales/agent-fees";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { buildBuildingScopeOptions } from "@/lib/sales/building-scope";
 
 type AgentFeePortfolioRpcRow = {
   sale_attempt_id: string;
@@ -119,15 +120,19 @@ async function queryAgentFeePortfolio(requesterId: string) {
 
 export function AgentFeesPortfolio({
   requesterId,
+  initialBuildingId,
+  onBuildingChange,
   onOpenSale,
 }: {
   requesterId: string;
+  initialBuildingId: string;
+  onBuildingChange: (buildingId: string) => void;
   onOpenSale: (unitId: string, buildingId: string) => void;
 }) {
   const [rows, setRows] = useState<AgentFeePortfolioRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState(initialBuildingId);
   const [agentFilter, setAgentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<AgentFeePortfolioStatusFilter>("all");
   const [milestoneFilter, setMilestoneFilter] = useState<AgentFeePortfolioMilestoneFilter>("all");
@@ -165,8 +170,7 @@ export function AgentFeesPortfolio({
     };
   }, [requesterId]);
 
-  const buildings = useMemo(() => Array.from(new Map(rows.map((row) => [row.buildingId, row.buildingName])).entries())
-    .sort((a, b) => a[1].localeCompare(b[1])), [rows]);
+  const buildings = useMemo(() => buildBuildingScopeOptions(rows.map((row) => ({ id: row.buildingId, name: row.buildingName }))), [rows]);
   const agents = useMemo(() => Array.from(new Map(rows.map((row) => [row.agentOrganisationId ?? "unassigned", row.agentName])).entries())
     .sort((a, b) => a[1].localeCompare(b[1])), [rows]);
   const filteredRows = useMemo(() => filterAgentFeePortfolioRows(rows, {
@@ -176,17 +180,19 @@ export function AgentFeesPortfolio({
     milestone: milestoneFilter,
   }), [agentFilter, buildingFilter, milestoneFilter, rows, statusFilter]);
   const summary = useMemo(() => summariseAgentFeePortfolio(filteredRows), [filteredRows]);
+  const scopeLabel = buildingFilter ? buildings.find((building) => building.id === buildingFilter)?.name ?? "Selected building" : "All buildings";
 
   return (
     <div className="grid gap-5">
       <section className="panel">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#617169]">Sales portfolio</p>
             <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Agent Fees</h2>
             <p className="mt-1 text-sm text-[#617169]">Current Exchange and Completion invoice positions across accessible unit sales.</p>
+            <p className="mt-1 text-sm font-semibold text-[#34413a]">Scope: {scopeLabel}</p>
           </div>
-          {!isLoading && !error && <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#617169]">{filteredRows.length} sales</span>}
+          <label className="field-label lg:w-[320px]">Building<select className="field" value={buildingFilter} onChange={(event) => { setBuildingFilter(event.target.value); onBuildingChange(event.target.value); }}><option value="">All buildings</option>{buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}</select></label>
         </div>
 
         {isLoading ? (
@@ -208,8 +214,7 @@ export function AgentFeesPortfolio({
               <SummaryCard label="Future completion fees" value={formatGbp(summary.futureCompletionFeesNet)} note="Net fee not yet invoiced" />
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <label className="field-label">Building<select className="field" value={buildingFilter} onChange={(event) => setBuildingFilter(event.target.value)}><option value="">All buildings</option>{buildings.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <label className="field-label">Agent<select className="field" value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)}><option value="">All agents</option>{agents.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
               <label className="field-label">Status<select className="field" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as AgentFeePortfolioStatusFilter)}>{statusFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
               <label className="field-label">Milestone<select className="field" value={milestoneFilter} onChange={(event) => setMilestoneFilter(event.target.value as AgentFeePortfolioMilestoneFilter)}>{milestoneFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
@@ -245,7 +250,7 @@ export function AgentFeesPortfolio({
                       tabIndex={0}
                       aria-label={`Open Agent Fees for unit ${row.unitNumber} at ${row.buildingName}`}
                     >
-                      <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]"><span className="inline-flex items-center gap-1">Unit {row.unitNumber}<ChevronRight size={15} aria-hidden /></span></td>
+                      <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]"><span className="inline-flex items-center gap-1">Unit {row.unitNumber}<ChevronRight size={15} aria-hidden /></span>{row.noLongerForSale && <span className="mt-1 block w-fit rounded-full border border-[#decda6] bg-[#fbf5e8] px-2 py-0.5 text-[11px] font-bold text-[#765a18]">No longer for sale</span>}</td>
                       <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{row.buildingName}</td>
                       <td className="hidden border-b border-[#eef0eb] px-4 py-3 text-[#34413a] lg:table-cell">{row.agentName}</td>
                       <td className="numeric-value hidden border-b border-[#eef0eb] px-4 py-3 text-right text-[#34413a] lg:table-cell">{formatGbp(row.salePrice)}</td>

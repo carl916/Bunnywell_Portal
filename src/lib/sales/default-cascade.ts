@@ -1,6 +1,8 @@
+import type { UnitSaleStatus } from "../data/production.ts";
+
 export type CascadeUnit = {
   id: string;
-  sale_status: "for_sale" | "reserved" | "exchanged" | "completed" | "handed_over";
+  sale_status: UnitSaleStatus;
 };
 
 export type CascadeSaleAttempt = {

@@ -36,6 +36,7 @@ test("admin can sign in and see admin navigation", async ({ page }) => {
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Snags", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Sales", exact: true })).toBeVisible();
+  await expect(navigation.getByRole("button", { name: "Rentals", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Setup", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Units", exact: true })).toHaveCount(0);
   await expect(navigation.getByRole("button", { name: "Admin", exact: true })).toHaveCount(0);
@@ -65,6 +66,149 @@ test("admin selected building updates overview and structure", async ({ page }) 
   await expect(page.getByTestId("working-building-context")).toContainText(targetBuilding);
   await expect(page.getByTestId("building-overview-section")).toContainText(targetBuilding);
   await expect(page.getByTestId("building-structure-section")).toHaveAttribute("data-building-name", targetBuilding);
+});
+
+test("admin can open the Unit allocation Setup workspace", async ({ page }) => {
+  await signIn(
+    page,
+    requiredEnv("PLAYWRIGHT_ADMIN_EMAIL"),
+    requiredEnv("PLAYWRIGHT_ADMIN_PASSWORD"),
+  );
+
+  await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
+  await page.getByRole("button", { name: "Unit allocation", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Unit allocation", exact: true })).toBeVisible();
+  await expect(page.getByText("Total units", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Sales position")).toBeVisible();
+  await expect(page.getByLabel("Rental position")).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Sale workflow", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Active sale file", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Sales action", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "draft", exact: true })).toHaveCount(0);
+  if (await page.getByLabel(/^Sales availability for unit /).count()) {
+    await expect(page.getByLabel(/^Sales availability for unit /).first()).toHaveValue(/^(not_released|not_for_sale|for_sale)$/);
+  }
+});
+
+test("Building Structure keeps sale status read-only and rejects a tampered update", async ({ page, request }) => {
+  await signIn(
+    page,
+    requiredEnv("PLAYWRIGHT_ADMIN_EMAIL"),
+    requiredEnv("PLAYWRIGHT_ADMIN_PASSWORD"),
+  );
+
+  await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
+  const structure = page.getByTestId("building-structure-section");
+  await expect(structure).toBeVisible();
+
+  for (const expandButton of await structure.getByRole("button", { name: /^Expand / }).all()) {
+    await expandButton.click();
+    if (await structure.getByRole("button", { name: /^Edit unit / }).count()) break;
+  }
+
+  const editUnit = structure.getByRole("button", { name: /^Edit unit / }).first();
+  test.skip(await editUnit.count() === 0, "A unit is required to verify the Building Structure editor.");
+
+  const unitCard = editUnit.locator("xpath=ancestor::article[1]");
+  await expect(unitCard.getByText(/^(Not released|Retained \/ not for sale|For sale|Reserved|Exchanged|Completed|Handed over)$/)).toBeVisible();
+
+  const unitId = await unitCard.getAttribute("data-unit-id");
+  if (!unitId) throw new Error("The Building Structure unit card is missing its unit identifier.");
+  const supabaseUrl = requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const anonKey = requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const authResponse = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    headers: { apikey: anonKey },
+    data: {
+      email: requiredEnv("PLAYWRIGHT_ADMIN_EMAIL"),
+      password: requiredEnv("PLAYWRIGHT_ADMIN_PASSWORD"),
+    },
+  });
+  expect(authResponse.ok()).toBe(true);
+  const authPayload = await authResponse.json() as { access_token?: string };
+  if (!authPayload.access_token) throw new Error("Supabase access token was not returned.");
+
+  const tamperResult = await page.evaluate(async ({ targetUnitId, supabaseUrl, anonKey, accessToken }) => {
+
+    const readSaleStatus = async () => {
+      const response = await fetch(`${supabaseUrl}/rest/v1/units?id=eq.${encodeURIComponent(targetUnitId)}&select=sale_status`, {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const units = await response.json() as Array<{ sale_status?: string }>;
+      if (!response.ok || !units[0]?.sale_status) throw new Error("Unit sale status could not be read.");
+      return units[0].sale_status;
+    };
+
+    const beforeSaleStatus = await readSaleStatus();
+    const tamperedResponse = await fetch(`/api/buildings/units/${encodeURIComponent(targetUnitId)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ sale_status: "completed" }),
+    });
+    const payload = await tamperedResponse.json() as { error?: string };
+    const afterApiSaleStatus = await readSaleStatus();
+    const rentalProbe = await fetch(`${supabaseUrl}/rest/v1/units?id=eq.${encodeURIComponent(targetUnitId)}&select=rental_portfolio_status`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    });
+    if (!rentalProbe.ok) {
+      return {
+        beforeStatus: { sale_status: beforeSaleStatus },
+        afterStatus: { sale_status: afterApiSaleStatus },
+        status: tamperedResponse.status,
+        error: payload.error,
+        migrationMissing: true,
+      };
+    }
+    const rentalRows = await rentalProbe.json() as Array<{ rental_portfolio_status?: string }>;
+    const beforeStatus = { sale_status: beforeSaleStatus, rental_portfolio_status: rentalRows[0]?.rental_portfolio_status };
+    const directSaleResponse = await fetch(`${supabaseUrl}/rest/v1/units?id=eq.${encodeURIComponent(targetUnitId)}`, {
+      method: "PATCH",
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ sale_status: beforeStatus.sale_status === "for_sale" ? "not_for_sale" : "for_sale" }),
+    });
+    const directRentalResponse = await fetch(`${supabaseUrl}/rest/v1/units?id=eq.${encodeURIComponent(targetUnitId)}`, {
+      method: "PATCH",
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ rental_portfolio_status: beforeStatus.rental_portfolio_status === "active" ? "exited" : "active" }),
+    });
+    const afterSaleStatus = await readSaleStatus();
+    const afterRentalResponse = await fetch(`${supabaseUrl}/rest/v1/units?id=eq.${encodeURIComponent(targetUnitId)}&select=rental_portfolio_status`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    });
+    const afterRentalRows = await afterRentalResponse.json() as Array<{ rental_portfolio_status?: string }>;
+    const afterStatus = { sale_status: afterSaleStatus, rental_portfolio_status: afterRentalRows[0]?.rental_portfolio_status };
+    return {
+      beforeStatus,
+      afterStatus,
+      status: tamperedResponse.status,
+      error: payload.error,
+      directSaleStatus: directSaleResponse.status,
+      directRentalStatus: directRentalResponse.status,
+      migrationMissing: false,
+    };
+  }, {
+    targetUnitId: unitId,
+    supabaseUrl,
+    anonKey,
+    accessToken: authPayload.access_token,
+  });
+
+  expect(tamperResult.status).toBe(400);
+  expect(tamperResult.error).toBe("Sale status can only be changed through the sales workflow.");
+  expect(tamperResult.afterStatus.sale_status).toBe(tamperResult.beforeStatus.sale_status);
+  test.skip(tamperResult.migrationMissing, "Apply 20260828_commercial_unit_allocation.sql before exercising database-level allocation protection.");
+  expect(tamperResult.directSaleStatus).toBeGreaterThanOrEqual(400);
+  expect(tamperResult.directRentalStatus).toBeGreaterThanOrEqual(400);
+  expect(tamperResult.afterStatus).toEqual(tamperResult.beforeStatus);
+
+  await editUnit.click();
+
+  await expect(unitCard.locator('option[value="not_released"], option[value="not_for_sale"], option[value="for_sale"], option[value="reserved"], option[value="exchanged"], option[value="completed"], option[value="handed_over"]')).toHaveCount(0);
 });
 
 test("contractor can sign in and see contractor navigation", async ({ page }) => {
