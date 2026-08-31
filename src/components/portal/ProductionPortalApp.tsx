@@ -9,6 +9,7 @@ import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import { UnitAllocationWorkspace } from "@/components/portal/UnitAllocationWorkspace";
 import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
+import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
@@ -32,6 +33,8 @@ import {
 } from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { notificationVariantForMessage, type NotificationVariant } from "@/lib/notifications";
+import { buildAuditInsert } from "@/lib/audit/format";
+import type { AuditEvent, NewAuditEvent } from "@/lib/audit/types";
 import {
   type AppRole,
   type Area,
@@ -140,17 +143,6 @@ type SetupUnitSaleDocument = {
   document_type: string;
   status: string | null;
   redacted_at: string | null;
-};
-
-type AuditEvent = {
-  id: string;
-  event_type: string;
-  entity_type: string;
-  entity_id: string | null;
-  summary: string;
-  metadata: Record<string, unknown>;
-  created_by_user_id: string | null;
-  created_at: string;
 };
 
 type Tab = "dashboard" | "snags" | "units" | "sales" | "rentals" | "setup_buildings" | "setup_allocation" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
@@ -316,7 +308,7 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
     section: "setup",
   },
   setup_activity: {
-    label: "Activity log",
+    label: "Audit log",
     roles: ["admin", "developer"],
     section: "setup",
   },
@@ -839,6 +831,7 @@ export function ProductionPortalApp() {
   const [photos, setPhotos] = useState<SnagPhoto[]>([]);
   const [events, setEvents] = useState<SnagEvent[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditTotalCount, setAuditTotalCount] = useState(0);
   const [handovers, setHandovers] = useState<Handover[]>([]);
   const [handoverKeyItems, setHandoverKeyItems] = useState<HandoverKeyItem[]>([]);
   const [handoverPhotos, setHandoverPhotos] = useState<HandoverPhoto[]>([]);
@@ -889,6 +882,7 @@ export function ProductionPortalApp() {
     setPhotos([]);
     setEvents([]);
     setAuditEvents([]);
+    setAuditTotalCount(0);
     setHandovers([]);
     setHandoverKeyItems([]);
     setHandoverPhotos([]);
@@ -1102,7 +1096,7 @@ export function ProductionPortalApp() {
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-      supabase.from("audit_events").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
       supabase.from("handovers").select("*").order("created_at", { ascending: false }),
       supabase.from("handover_key_items").select("*").order("sort_order"),
       supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
@@ -1145,6 +1139,7 @@ export function ProductionPortalApp() {
     setPhotos((photosResult.data ?? []) as SnagPhoto[]);
     setEvents((eventsResult.data ?? []) as SnagEvent[]);
     setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
+    setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
     setHandovers((handoversResult.data ?? []) as Handover[]);
     setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
     setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
@@ -1266,15 +1261,18 @@ export function ProductionPortalApp() {
     return uploads;
   }
 
-  async function recordAudit(event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) {
+  async function recordAudit(event: NewAuditEvent) {
     if (!user?.id) return;
     const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase.from("audit_events").insert({
-      ...event,
-      created_by_user_id: user.id,
-    }).select("*").single();
+    const structuredInsert = buildAuditInsert(event, { ...profile, id: user.id, email: profile?.email ?? user.email ?? "" });
+    let result = await supabase.from("audit_events").insert(structuredInsert).select("*").single();
+    if (result.error && /column|schema cache/i.test(result.error.message)) {
+      result = await supabase.from("audit_events").insert({ ...event, created_by_user_id: user.id }).select("*").single();
+    }
+    const { data } = result;
     if (data) {
-      setAuditEvents((current) => [data as AuditEvent, ...current.filter((item) => item.id !== data.id)].slice(0, 200));
+      setAuditEvents((current) => [data as AuditEvent, ...current.filter((item) => item.id !== data.id)].slice(0, 500));
+      setAuditTotalCount((current) => current + 1);
     }
   }
 
@@ -1340,6 +1338,7 @@ export function ProductionPortalApp() {
           userBuildingAccess={userBuildingAccess}
           userUnitAccess={userUnitAccess}
           auditEvents={auditEvents}
+          auditTotalCount={auditTotalCount}
           recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
@@ -1844,6 +1843,7 @@ function SetupSection({
   userBuildingAccess,
   userUnitAccess,
   auditEvents,
+  auditTotalCount,
   recordAudit,
   onNotice,
   reload,
@@ -1864,6 +1864,7 @@ function SetupSection({
   userBuildingAccess: UserBuildingAccess[];
   userUnitAccess: UserUnitAccess[];
   auditEvents: AuditEvent[];
+  auditTotalCount: number;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
@@ -1950,7 +1951,16 @@ function SetupSection({
           reload={reload}
         />
       )}
-      {activeTab === "setup_activity" && <AuditPanel auditEvents={auditEvents} profiles={profiles} />}
+      {activeTab === "setup_activity" && (
+        <AuditLog
+          events={auditEvents}
+          totalEvents={auditTotalCount}
+          profiles={profiles}
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+        />
+      )}
     </div>
   );
 }
@@ -3430,7 +3440,16 @@ function AdminSetup({
       entity_type: "building",
       entity_id: building.id,
       summary: `Building settings updated: ${building.name}`,
-      metadata: { building: building.name, ...payload },
+      metadata: {
+        building: building.name,
+        building_id: building.id,
+        ...payload,
+        changes: [
+          { field: "pc_date", previous: currentPcDate || null, next: payload.pc_date },
+          { field: "pc_confirmed", previous: building.pc_confirmed, next: payload.pc_confirmed },
+          { field: "allow_resident_access_requests", previous: building.allow_resident_access_requests, next: payload.allow_resident_access_requests },
+        ],
+      },
     });
     setBuildingDrafts((current) => {
       const next = { ...current };
@@ -5297,6 +5316,13 @@ function UserEditPanel({
           organisationId: needsOrganisationAndBuilding ? organisationId : null,
           buildingIds: buildingIdsForSave,
           unitIds: selectedUnitIds,
+          changes: [
+            { field: "full_name", previous: profile.full_name, next: fullName },
+            { field: "phone", previous: profile.phone, next: phone },
+            { field: "role", previous: profile.role, next: role },
+            { field: "resident_type", previous: profile.resident_type, next: isResident ? residentType : null },
+            { field: "organisation_id", previous: profile.organisation_id, next: needsOrganisationAndBuilding ? organisationId : null },
+          ],
         },
       });
       onNotice("");
@@ -5383,7 +5409,11 @@ function UserEditPanel({
         entity_type: "user",
         entity_id: profile.id,
         summary: nextActive ? `User reactivated: ${profile.email}` : `User deactivated: ${profile.email}`,
-        metadata: { email: profile.email, active: nextActive },
+        metadata: {
+          email: profile.email,
+          active: nextActive,
+          changes: [{ field: "active", previous: isActive ? "active" : "inactive", next: nextActive ? "active" : "inactive" }],
+        },
       });
       onNotice(nextActive ? `${profile.email} reactivated.` : `${profile.email} deactivated.`);
       await reload();
@@ -8238,88 +8268,6 @@ function SignaturePad({ value, onChange, disabled = false }: { value: string; on
       </div>
       <button className="secondary w-fit" onClick={clear} disabled={disabled}>Clear signature</button>
     </div>
-  );
-}
-
-function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; profiles: Profile[] }) {
-  const [entityFilter, setEntityFilter] = useState("");
-  const [eventFilter, setEventFilter] = useState("");
-  const entityTypes = Array.from(new Set(auditEvents.map((event) => event.entity_type))).sort();
-  const eventTypes = Array.from(new Set(auditEvents.map((event) => event.event_type))).sort();
-  const filtered = auditEvents
-    .filter((event) => !entityFilter || event.entity_type === entityFilter)
-    .filter((event) => !eventFilter || event.event_type === eventFilter)
-    .slice(0, 100);
-
-  function authorName(userId?: string | null) {
-    if (!userId) return "System";
-    const profile = profiles.find((item) => item.id === userId);
-    return profile?.full_name || profile?.name || profile?.email || "Unknown user";
-  }
-
-  return (
-    <section className="min-w-0 overflow-hidden rounded-md border border-[#d9ded6] bg-white">
-      <div className="border-b border-[#d9ded6] px-4 py-3">
-        <h2 className="text-lg font-semibold">Activity log</h2>
-        <p className="text-sm text-[#617169]">Recent admin, setup and report events.</p>
-        <div className="mt-3 grid gap-2 md:grid-cols-2">
-          <select className={`field ${entityFilter ? "filter-active" : ""}`} value={entityFilter} onChange={(event) => setEntityFilter(event.target.value)}>
-            <option value="">All areas</option>
-            {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{entityLabel(entityType)}</option>)}
-          </select>
-          <select className={`field ${eventFilter ? "filter-active" : ""}`} value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
-            <option value="">All events</option>
-            {eventTypes.map((eventType) => <option key={eventType} value={eventType}>{eventLabel(eventType)}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
-        {filtered.map((event) => (
-          <article key={event.id} className="mobile-card">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-              <div className="min-w-0">
-                <p className="break-words font-bold text-[#1F2A24]">{eventLabel(event.event_type)}</p>
-                <p className="mt-0.5 text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
-              </div>
-              <span className="rounded-full bg-[#EEF6F1] px-2 py-1 text-right text-xs font-semibold leading-tight text-[#0F3D2E]">
-                {entityLabel(event.entity_type)}
-              </span>
-            </div>
-            <p className="mt-3 break-words text-sm text-[#34413a]">{event.summary}</p>
-            <div className="mt-3 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 text-sm">
-              <span className="text-[#66736B]">User</span>
-              <span className="min-w-0 break-words text-right font-medium">{authorName(event.created_by_user_id)}</span>
-            </div>
-          </article>
-        ))}
-        {filtered.length === 0 && <p className="mobile-empty">No audit events to show.</p>}
-      </div>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
-              <th className="border-b border-[#d9ded6] px-3 py-2">Date</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Event</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Area</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Summary</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((event) => (
-              <tr key={event.id}>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{formatDateTime(event.created_at)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{eventLabel(event.event_type)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{entityLabel(event.entity_type)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{event.summary}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{authorName(event.created_by_user_id)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <p className="p-4 text-sm text-[#617169]">No audit events to show.</p>}
-      </div>
-    </section>
   );
 }
 

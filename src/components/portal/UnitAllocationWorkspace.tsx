@@ -375,7 +375,7 @@ export function UnitAllocationWorkspace({
                   </td>
                   <td className="border-b border-[#eef0eb] px-3 py-2.5">
                     <AllocationStatusActionCell
-                      status={<span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${rental === "active" ? "border-[#bfd8df] bg-[#eef8fa] text-[#315f6a]" : "border-[#d9ded6] bg-[#f2f4f0] text-[#617169]"}`} title={rental === "exited" ? "Previously exited; allocation history is retained in the Activity log." : undefined}>{operationalRentalStatusLabel(rental)}</span>}
+                      status={<span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${rental === "active" ? "border-[#bfd8df] bg-[#eef8fa] text-[#315f6a]" : "border-[#d9ded6] bg-[#f2f4f0] text-[#617169]"}`} title={rental === "exited" ? "Previously exited; allocation history is retained in the Audit log." : undefined}>{operationalRentalStatusLabel(rental)}</span>}
                       actions={<><AllocationAction icon={rental === "active" ? <CircleMinus size={16} aria-hidden /> : <CirclePlus size={16} aria-hidden />} disabled={!rentalAvailability.enabled} title={rentalAvailability.reason} onClick={() => prepareAction({ ...rentalAction, unitIds: [unit.id] })}>{rental === "active" ? "Remove" : "Add"}</AllocationAction>{(unit.rental_portfolio_status === "active" || unit.rental_portfolio_status === "exited") && <AllocationAction icon={<ExternalLink size={16} aria-hidden />} onClick={() => onOpenRentalFile(unit)}>Open file</AllocationAction>}</>}
                     />
                   </td>
