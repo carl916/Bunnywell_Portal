@@ -109,11 +109,6 @@ function PerformanceMetric({ label, value, detail, tone = "normal" }: { label: s
   return <div className="min-w-0 px-3 py-3 sm:px-4"><p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{label}</p><p className={`numeric-value mt-1 text-xl font-bold ${tone === "negative" ? "text-[#8d382d]" : "text-[#0F3D2E]"}`}>{value}</p>{detail && <p className="mt-1 text-xs leading-relaxed text-[#6b7770]">{detail}</p>}</div>;
 }
 
-function CoverageRow({ label, recorded, total }: { label: string; recorded: number; total: number }) {
-  const percentage = total ? Math.round(recorded / total * 100) : 0;
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2"><div><p className="text-sm font-medium text-[#34413a]">{label}</p><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#e7eae5]"><div className="h-full rounded-full bg-[#6d8d7d]" style={{ width: `${percentage}%` }} /></div></div><p className="numeric-value text-sm font-semibold text-[#34413a]">Recorded {recorded} of {total}</p></div>;
-}
-
 function TenancyForm({ tenancy, unit, lettingAgents, isAdmin, onCancel, onSaved, onNotice }: {
   tenancy?: UnitTenancy | null;
   unit: Unit;
@@ -284,11 +279,12 @@ function nextEventText(metrics: RentalUnitPerformance) {
   return "—";
 }
 
-export function RentalsWorkspace({ role, buildings, buildingFloors, units, organisations, onNotice, onOpenSaleFile }: {
+export function RentalsWorkspace({ role, buildings, buildingFloors, units, buildingContextId, organisations, onNotice, onOpenSaleFile }: {
   role: string;
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
+  buildingContextId: string;
   organisations: Organisation[];
   onNotice: (message: string) => void;
   onOpenSaleFile: (unit: Unit) => void;
@@ -296,7 +292,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
   const [tenancies, setTenancies] = useState<UnitTenancy[]>([]);
   const [saleAttemptUnitIds, setSaleAttemptUnitIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [buildingId, setBuildingId] = useState(() => typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("rentalsBuildingId") ?? "");
+  const buildingId = buildingContextId;
   const [selectedUnitId, setSelectedUnitId] = useState(() => typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("rentalUnitId") ?? "");
   const [search, setSearch] = useState("");
   const [occupancyFilter, setOccupancyFilter] = useState<"all" | "occupied" | "void">("all");
@@ -356,13 +352,14 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
     const metrics = metricsByUnitId.get(unit.id);
     if (!metrics) return false;
     const occupied = Boolean(metrics.currentTenancy);
-    return (!search.trim() || unit.unit_number.toLowerCase().includes(search.trim().toLowerCase()))
+    const buildingName = buildings.find((building) => building.id === unit.building_id)?.name ?? "";
+    return (!search.trim() || unit.unit_number.toLowerCase().includes(search.trim().toLowerCase()) || buildingName.toLowerCase().includes(search.trim().toLowerCase()))
       && (occupancyFilter === "all" || (occupancyFilter === "occupied" ? occupied : !occupied))
       && (attentionFilter === "all"
         || (attentionFilter === "current_voids" && !occupied)
         || (attentionFilter === "rent_below_first" && (metrics.currentVsFirstRent?.amount ?? 0) < 0)
         || (attentionFilter === "ending_within_90" && metrics.upcomingFixedTermDays !== null && metrics.upcomingFixedTermDays <= 90));
-  }), [attentionFilter, metricsByUnitId, occupancyFilter, scopedUnits, search]);
+  }), [attentionFilter, buildings, metricsByUnitId, occupancyFilter, scopedUnits, search]);
   const pageCount = Math.max(1, Math.ceil(filteredUnits.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pagedUnits = filteredUnits.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -370,15 +367,25 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
   const selectedBuilding = selectedUnit ? buildings.find((building) => building.id === selectedUnit.building_id) ?? null : null;
   const selectedTenancies = selectedUnit ? tenancies.filter((tenancy) => tenancy.unit_id === selectedUnit.id) : [];
 
-  function writeUrl(nextBuildingId: string, unitId?: string | null) {
+  function writeUrl(_nextBuildingId: string, unitId?: string | null) {
     const params = new URLSearchParams(window.location.search);
     params.set("screen", "rentals");
-    if (nextBuildingId) params.set("rentalsBuildingId", nextBuildingId);
-    else params.delete("rentalsBuildingId");
     if (unitId) params.set("rentalUnitId", unitId);
     else params.delete("rentalUnitId");
     window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
   }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setPage(1);
+      if (selectedUnitId && !scopedUnitIds.has(selectedUnitId)) {
+        setSelectedUnitId("");
+        setEditingTenancyId("");
+        writeUrl(buildingId, null);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [buildingId, scopedUnitIds, selectedUnitId]);
 
   if (selectedUnit && (selectedUnit.rental_portfolio_status === "active" || selectedUnit.rental_portfolio_status === "exited")) {
     return <RentalFile
@@ -405,7 +412,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
   const selectedBuildingName = buildingId ? buildings.find((building) => building.id === buildingId)?.name : null;
 
   return <div className="grid min-w-0 gap-5">
-    <section className="panel"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><h2 className="text-2xl font-bold text-[#0F3D2E]">Rentals</h2><p className="mt-1 text-sm text-[#617169]">{selectedBuildingName ?? "All buildings"} · active rental portfolio management</p></div><label className="field-label lg:w-[320px]">Building<select className="field" value={buildingId} onChange={(event) => { setBuildingId(event.target.value); setPage(1); writeUrl(event.target.value, null); }}><option value="">All buildings</option>{buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}</select></label></div></section>
+    <section className="panel"><div><h2 className="text-2xl font-bold text-[#0F3D2E]">Rentals</h2><p className="mt-1 text-sm text-[#617169]">{selectedBuildingName ?? "All buildings"} · active rental portfolio management</p></div></section>
 
     <section className="panel min-w-0">
       <SectionHeading eyebrow="Current position" title="Portfolio today" description={`Position at ${formatLongDate(reportingDate)}`} />
@@ -440,7 +447,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
         </article>
         <article className="rounded-lg border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Upcoming fixed-term dates</h4></div>
-          {attention.upcomingFixedTerms.recorded > 0 ? <dl className="mt-3 grid grid-cols-3 divide-x divide-[#e2e6e0]"><PerformanceMetric label="30 days" value={String(attention.upcomingFixedTerms.within30Days)} /><PerformanceMetric label="60 days" value={String(attention.upcomingFixedTerms.within60Days)} /><PerformanceMetric label="90 days" value={String(attention.upcomingFixedTerms.within90Days)} /></dl> : <p className="mt-3 text-sm text-[#617169]">No future fixed-term dates are recorded for current tenancies. Review Data coverage before drawing conclusions.</p>}
+          {attention.upcomingFixedTerms.recorded > 0 ? <dl className="mt-3 grid grid-cols-3 divide-x divide-[#e2e6e0]"><PerformanceMetric label="30 days" value={String(attention.upcomingFixedTerms.within30Days)} /><PerformanceMetric label="60 days" value={String(attention.upcomingFixedTerms.within60Days)} /><PerformanceMetric label="90 days" value={String(attention.upcomingFixedTerms.within90Days)} /></dl> : <p className="mt-3 text-sm text-[#617169]">No future fixed-term dates are recorded for current tenancies.</p>}
         </article>
         <article className="rounded-lg border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Current voids</h4></div>
@@ -448,11 +455,6 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, organ
         </article>
       </div>
     </section>
-
-    {(role === "admin" || role === "developer") && <section className="panel">
-      <SectionHeading eyebrow="Data coverage" title="Recorded current-tenancy information" description="Null values may be intentional; this indicates what is recorded for the current portfolio." />
-      <div className="mt-4 grid gap-x-8 md:grid-cols-2"><CoverageRow label="Current tenant name" recorded={performance.coverage.realTenantName} total={performance.coverage.total} /><CoverageRow label="Tenancy start" recorded={performance.coverage.tenancyStart} total={performance.coverage.total} /><CoverageRow label="Current rent" recorded={performance.coverage.currentRent} total={performance.coverage.total} /><CoverageRow label="Fixed-term end" recorded={performance.coverage.fixedTermEnd} total={performance.coverage.total} /><CoverageRow label="Rent due day" recorded={performance.coverage.rentDueDay} total={performance.coverage.total} /><CoverageRow label="Letting agent" recorded={performance.coverage.lettingAgent} total={performance.coverage.total} /></div>
-    </section>}
 
     <section className="panel min-w-0">
       <SectionHeading eyebrow="Rental portfolio" title="Unit performance" description={`${filteredUnits.length} units match the selected view`} />

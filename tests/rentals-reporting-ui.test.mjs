@@ -12,10 +12,11 @@ test("Rentals Overview consumes one shared reporting model", () => {
   assert.match(performance, /export function calculateUnitRentalPerformance/);
 });
 
-test("Overview separates current position, performance, attention and coverage", () => {
-  for (const label of ["Current position", "Performance", "Management attention", "Data coverage", "Rental portfolio"]) {
+test("Overview separates current position, performance, attention and the rental portfolio", () => {
+  for (const label of ["Current position", "Performance", "Management attention", "Rental portfolio"]) {
     assert.match(workspace, new RegExp(label, "i"));
   }
+  assert.doesNotMatch(workspace, /Data coverage/i);
   assert.match(workspace, /Monthly rent roll/);
   assert.match(workspace, /Annualised rent roll/);
   assert.match(workspace, /Historical occupancy/);
@@ -73,8 +74,7 @@ test("Current tenancy prioritises core information and subdues provenance", () =
   assert.doesNotMatch(workspace, /sm:grid-cols-3"><SummaryCard/);
 });
 
-test("coverage treats placeholder tenant names as unrecorded", () => {
+test("placeholder tenant names remain visually distinguishable", () => {
   assert.match(performance, /tenant\\s\+\\d\+\\s\*\\\(name not supplied\\\)/);
-  assert.match(performance, /realTenantName: isRealTenantName/);
-  assert.match(workspace, /Recorded \{recorded\} of \{total\}/);
+  assert.match(workspace, /isRealTenantName\(active\.tenant_name\)/);
 });

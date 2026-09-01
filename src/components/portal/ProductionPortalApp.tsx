@@ -13,6 +13,7 @@ import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
+import { usePortalBuildingContext } from "@/hooks/usePortalBuildingContext";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
 import { validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
@@ -302,13 +303,13 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
     roles: ["admin", "developer"],
     section: "setup",
   },
-  setup_people: {
-    label: "People & access",
+  setup_activity: {
+    label: "Audit log",
     roles: ["admin", "developer"],
     section: "setup",
   },
-  setup_activity: {
-    label: "Audit log",
+  setup_people: {
+    label: "Users & access",
     roles: ["admin", "developer"],
     section: "setup",
   },
@@ -851,6 +852,27 @@ export function ProductionPortalApp() {
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds, buildingOrganisations), [accessibleBuildingIds, accessibleUnitIds, buildingOrganisations, profile, snags]);
+  const { buildingContextId, setBuildingContextId } = usePortalBuildingContext({
+    userId: profile?.id,
+    buildings: scopedBuildings,
+    ready: !isLoading && Boolean(profile),
+  });
+  const contextBuildings = useMemo(
+    () => buildingContextId ? scopedBuildings.filter((building) => building.id === buildingContextId) : scopedBuildings,
+    [buildingContextId, scopedBuildings],
+  );
+  const contextUnits = useMemo(
+    () => buildingContextId ? scopedUnits.filter((unit) => unit.building_id === buildingContextId) : scopedUnits,
+    [buildingContextId, scopedUnits],
+  );
+  const contextAreas = useMemo(
+    () => buildingContextId ? scopedAreas.filter((area) => area.building_id === buildingContextId) : scopedAreas,
+    [buildingContextId, scopedAreas],
+  );
+  const contextSnags = useMemo(
+    () => buildingContextId ? visibleSnags.filter((snag) => snag.building_id === buildingContextId) : visibleSnags,
+    [buildingContextId, visibleSnags],
+  );
   const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
 
   function setTab(nextTab: Tab, options?: { replace?: boolean }) {
@@ -1309,15 +1331,28 @@ export function ProductionPortalApp() {
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
 
   return (
-    <Shell profile={profile} tab={activeTab} tabs={tabs} setTab={setTab} notice={notice} lastUpdatedAt={lastDataRefreshAt} onRefresh={() => loadAll()} onSignOut={signOut}>
+    <Shell
+      profile={profile}
+      tab={activeTab}
+      tabs={tabs}
+      setTab={setTab}
+      notice={notice}
+      buildings={scopedBuildings}
+      buildingContextId={buildingContextId}
+      onBuildingContextChange={setBuildingContextId}
+      lastUpdatedAt={lastDataRefreshAt}
+      onRefresh={() => loadAll()}
+      onSignOut={signOut}
+    >
       {activeTab === "dashboard" && (
         <Dashboard
-          buildings={scopedBuildings}
+          buildings={contextBuildings}
           events={events}
           profile={profile}
-          snags={visibleSnags}
+          snags={contextSnags}
           setTab={setTab}
           setSnagFilters={setSnagListFilters}
+          onSelectBuilding={setBuildingContextId}
         />
       )}
       {portalScreens[activeTab].section === "setup" && (
@@ -1325,9 +1360,9 @@ export function ProductionPortalApp() {
           activeTab={activeTab}
           setTab={setTab}
           availableTabs={setupTabsForRole(role)}
-          buildings={buildings}
-          units={units}
-          areas={areas}
+          buildings={scopedBuildings}
+          units={scopedUnits}
+          areas={scopedAreas}
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
@@ -1339,6 +1374,8 @@ export function ProductionPortalApp() {
           userUnitAccess={userUnitAccess}
           auditEvents={auditEvents}
           auditTotalCount={auditTotalCount}
+          buildingContextId={buildingContextId}
+          onBuildingContextChange={setBuildingContextId}
           recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
@@ -1348,11 +1385,12 @@ export function ProductionPortalApp() {
         <SnagWorkflow
           user={user}
           profile={profile}
-          buildings={scopedBuildings}
+          buildings={contextBuildings}
           buildingFloors={buildingFloors}
-          snags={visibleSnags}
-          units={scopedUnits}
-          areas={scopedAreas}
+          snags={contextSnags}
+          units={contextUnits}
+          areas={contextAreas}
+          buildingContextId={buildingContextId}
           trades={trades}
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
@@ -1400,6 +1438,7 @@ export function ProductionPortalApp() {
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
+          buildingContextId={buildingContextId}
           onNotice={setNotice}
           reloadPortalData={() => loadAll()}
         />
@@ -1410,12 +1449,12 @@ export function ProductionPortalApp() {
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
+          buildingContextId={buildingContextId}
           organisations={organisations}
           onNotice={setNotice}
           onOpenSaleFile={(unit) => {
             const params = new URLSearchParams(window.location.search);
             params.set("screen", "sales");
-            params.set("salesBuildingId", unit.building_id);
             params.set("salesUnitId", unit.id);
             params.delete("rentalUnitId");
             window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
@@ -1478,6 +1517,9 @@ function Shell({
   tabs,
   setTab,
   notice,
+  buildings = [],
+  buildingContextId = "",
+  onBuildingContextChange,
   lastUpdatedAt,
   onRefresh,
   onSignOut,
@@ -1488,6 +1530,9 @@ function Shell({
   tabs: Tab[];
   setTab: (tab: Tab) => void;
   notice?: string;
+  buildings?: Building[];
+  buildingContextId?: string;
+  onBuildingContextChange?: (buildingId: string) => void;
   lastUpdatedAt?: string | null;
   onRefresh?: () => void | Promise<void>;
   onSignOut?: () => Promise<void>;
@@ -1508,6 +1553,7 @@ function Shell({
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
   const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
+  const selectedBuildingName = buildings.find((building) => building.id === buildingContextId)?.name ?? "All buildings";
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
@@ -1535,9 +1581,35 @@ function Shell({
               <div>
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-[#D6A23A] sm:text-xs">Bunnywell</p>
                 <h1 className="truncate text-lg font-bold text-[#0F3D2E] sm:text-2xl">Portal</h1>
+                {profile && buildings.length > 0 && (
+                  <p className="max-w-44 truncate text-xs font-semibold text-[#66736B] md:hidden">{selectedBuildingName}</p>
+                )}
               </div>
             </div>
             <div className="hidden flex-wrap items-center gap-2 md:flex">
+              {profile && buildings.length > 0 && (
+                buildings.length === 1 ? (
+                  <span className="account-pill max-w-56" aria-label={`Building: ${buildings[0].name}`}>
+                    <Building2 size={16} aria-hidden />
+                    <span className="truncate">{buildings[0].name}</span>
+                  </span>
+                ) : (
+                  <label className="relative flex min-h-10 items-center gap-2 rounded-full border border-[#d8ded8] bg-white px-3 text-sm font-semibold text-[#0F3D2E] shadow-sm">
+                    <Building2 size={16} aria-hidden />
+                    <span className="sr-only">Current building</span>
+                    <select
+                      className="max-w-48 cursor-pointer appearance-none rounded-sm bg-transparent py-1 pr-5 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D6A23A]"
+                      value={buildingContextId}
+                      onChange={(event) => onBuildingContextChange?.(event.target.value)}
+                      aria-label="Current building"
+                    >
+                      <option value="">All buildings</option>
+                      {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2" size={14} aria-hidden />
+                  </label>
+                )
+              )}
               <span className="account-pill max-w-72">
                 <Shield size={16} aria-hidden />
                 <span className="truncate">{profile?.email ?? "Not signed in"}</span>
@@ -1641,6 +1713,30 @@ function Shell({
                 <X size={17} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
+            {buildings.length > 0 && (
+              <div className="mt-4 rounded-xl border border-[#E2DED3] bg-[#F8F7F2] p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#66736B]">Building</p>
+                {buildings.length === 1 ? (
+                  <p className="mt-1 flex items-center gap-2 font-semibold text-[#0F3D2E]">
+                    <Building2 size={16} aria-hidden />
+                    {buildings[0].name}
+                  </p>
+                ) : (
+                  <select
+                    className="mt-2 w-full"
+                    value={buildingContextId}
+                    onChange={(event) => {
+                      onBuildingContextChange?.(event.target.value);
+                      setMoreOpen(false);
+                    }}
+                    aria-label="Current building"
+                  >
+                    <option value="">All buildings</option>
+                    {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+                  </select>
+                )}
+              </div>
+            )}
             <div className="mt-4 grid gap-2">
               {[...mobileMoreItems, ...mobilePrimaryItems].map((item) => (
                 <button key={item.key} className={`menu-row ${item.activeTabs.includes(tab) ? "menu-row-active" : ""}`} onClick={() => chooseTab(item.tab)}>
@@ -1844,6 +1940,8 @@ function SetupSection({
   userUnitAccess,
   auditEvents,
   auditTotalCount,
+  buildingContextId,
+  onBuildingContextChange,
   recordAudit,
   onNotice,
   reload,
@@ -1865,6 +1963,8 @@ function SetupSection({
   userUnitAccess: UserUnitAccess[];
   auditEvents: AuditEvent[];
   auditTotalCount: number;
+  buildingContextId: string;
+  onBuildingContextChange: (buildingId: string) => void;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
@@ -1873,7 +1973,7 @@ function SetupSection({
     <div className="grid gap-5">
       <section className="panel py-4">
         <div className="grid gap-3">
-          <SectionHeader title="Setup" subtitle="Building setup, unit allocation, people access and portal activity controls." />
+          <SectionHeader title="Setup" subtitle="Building setup, unit allocation, audit history and user access controls." />
           <div className="flex w-full gap-1 overflow-x-auto border-b border-[#d9ded6]" role="tablist" aria-label="Setup sections">
             {availableTabs.map((item) => (
               <button
@@ -1893,6 +1993,8 @@ function SetupSection({
       {activeTab === "setup_buildings" && (
         <AdminSetup
           buildings={buildings}
+          buildingContextId={buildingContextId}
+          onBuildingContextChange={onBuildingContextChange}
           units={units}
           areas={areas}
           buildingFloors={buildingFloors}
@@ -1910,12 +2012,12 @@ function SetupSection({
           buildings={buildings}
           buildingFloors={buildingFloors}
           units={units}
+          buildingContextId={buildingContextId}
           onOpenSaleFile={(unit) => {
             if (typeof window !== "undefined") {
-              const params = new URLSearchParams(window.location.search);
-              params.set("screen", "sales");
-              params.set("salesBuildingId", unit.building_id);
-              params.set("salesUnitId", unit.id);
+            const params = new URLSearchParams(window.location.search);
+            params.set("screen", "sales");
+            params.set("salesUnitId", unit.id);
               params.delete("salesView");
               params.delete("section");
               window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
@@ -1926,7 +2028,6 @@ function SetupSection({
             if (typeof window !== "undefined") {
               const params = new URLSearchParams(window.location.search);
               params.set("screen", "rentals");
-              params.set("rentalsBuildingId", unit.building_id);
               params.set("rentalUnitId", unit.id);
               window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
             }
@@ -1959,6 +2060,7 @@ function SetupSection({
           buildings={buildings}
           units={units}
           organisations={organisations}
+          buildingContextId={buildingContextId}
         />
       )}
     </div>
@@ -1972,6 +2074,7 @@ function Dashboard({
   snags,
   setTab,
   setSnagFilters,
+  onSelectBuilding,
 }: {
   buildings: Building[];
   events: SnagEvent[];
@@ -1979,6 +2082,7 @@ function Dashboard({
   snags: ProductionSnag[];
   setTab: (tab: Tab) => void;
   setSnagFilters: (filters: SnagListFilters) => void;
+  onSelectBuilding: (buildingId: string) => void;
 }) {
   const model = buildDashboardModel({ buildings, events, snags });
   const actionItems = model.currentActions.filter((item) => item.value > 0);
@@ -2057,7 +2161,14 @@ function Dashboard({
         <SectionHeader title="Building workload" subtitle="Open developer snag workload by building." />
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {model.buildingWorkload.map((building) => (
-            <button key={building.id} className="dashboard-project-card" onClick={() => openSnags({ buildingId: building.id })}>
+            <button
+              key={building.id}
+              className="dashboard-project-card"
+              onClick={() => {
+                onSelectBuilding(building.id);
+                openSnags();
+              }}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[#1F2A24]">{building.name}</p>
@@ -3260,6 +3371,8 @@ function AreaChip({
 
 function AdminSetup({
   buildings,
+  buildingContextId,
+  onBuildingContextChange,
   units,
   areas,
   buildingFloors,
@@ -3272,6 +3385,8 @@ function AdminSetup({
   reload,
 }: {
   buildings: Building[];
+  buildingContextId: string;
+  onBuildingContextChange: (buildingId: string) => void;
   units: Unit[];
   areas: Area[];
   buildingFloors: BuildingFloor[];
@@ -3298,15 +3413,7 @@ function AdminSetup({
   const [confirmEditPcBuildingId, setConfirmEditPcBuildingId] = useState<string | null>(null);
   const [showCreateBuilding, setShowCreateBuilding] = useState(false);
   const [editingSettingsSection, setEditingSettingsSection] = useState<"lifecycle" | null>(null);
-  const [selectedBuildingId, setSelectedBuildingId] = useState(buildings[0]?.id ?? "");
-  const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId) ?? buildings[0];
-
-  useEffect(() => {
-    if (buildings.length === 0) return;
-    if (selectedBuildingId && buildings.some((building) => building.id === selectedBuildingId)) return;
-    const timer = window.setTimeout(() => setSelectedBuildingId(buildings[0].id), 0);
-    return () => window.clearTimeout(timer);
-  }, [buildings, selectedBuildingId]);
+  const selectedBuilding = buildings.find((building) => building.id === buildingContextId);
 
   async function createBuilding() {
     const supabase = createSupabaseBrowserClient();
@@ -3346,8 +3453,8 @@ function AdminSetup({
       setHomeUserGuideUrl("");
       setAllowResidentAccessRequests(true);
       setShowCreateBuilding(false);
-      setSelectedBuildingId(data.id);
       await reload();
+      window.setTimeout(() => onBuildingContextChange(data.id), 0);
     }
   }
 
@@ -3479,7 +3586,7 @@ function AdminSetup({
     <section className="panel grid gap-5">
       <section className="flex flex-col gap-3 border-b border-[#e5e9e4] pb-4 sm:flex-row sm:items-center sm:justify-between" data-testid="working-building-context">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="truncate text-xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "No building selected"}</h2>
+          <h2 className="truncate text-xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "Buildings"}</h2>
           {selectedBuilding && (
             <>
               <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
@@ -3487,25 +3594,53 @@ function AdminSetup({
               {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
             </>
           )}
+          {!selectedBuilding && buildings.length > 0 && <span className="rounded-full border border-[#d9ded6] bg-[#f4f5f2] px-2.5 py-1 text-xs font-semibold text-[#617169]">All buildings</span>}
         </div>
-        <label className="relative w-fit shrink-0 text-sm font-semibold text-[#0F3D2E]">
-          <span className="sr-only">Change building</span>
-          <select
-            className="min-h-9 cursor-pointer appearance-none rounded-md border border-[#d9ded6] bg-white py-1.5 pl-3 pr-8"
-            aria-label="Change building"
-            value={selectedBuilding?.id ?? ""}
-            onChange={(event) => {
-              if (selectedBuilding) cancelBuildingSettings(selectedBuilding);
-              setSelectedBuildingId(event.target.value);
-            }}
-          >
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" size={15} aria-hidden />
-        </label>
+        {!selectedBuilding && buildings.length > 0 && <p className="text-sm text-[#617169]">Choose View to set the global building context.</p>}
       </section>
 
-      {!selectedBuilding && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
+      {!selectedBuilding && buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
+
+      {!selectedBuilding && buildings.length > 0 && (
+        <section className="grid gap-3" aria-label="Building overview">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Building overview</h3>
+            <p className="mt-1 text-sm text-[#617169]">Portfolio-level setup status and commercial allocation.</p>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-[#d9ded6]">
+            <table className="min-w-[46rem] w-full text-left text-sm">
+              <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
+                <tr>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5">Building</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5">Lifecycle</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Units</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Sales route</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Rental</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {buildings.map((building) => {
+                  const overviewUnits = units.filter((unit) => unit.building_id === building.id);
+                  const lifecycle = derivedBuildingLifecycleStatus(building);
+                  const salesRouteCount = overviewUnits.filter((unit) => ["for_sale", "reserved", "exchanged", "completed"].includes(unit.sale_status)).length;
+                  const rentalCount = overviewUnits.filter((unit) => unit.rental_portfolio_status === "active").length;
+                  return (
+                    <tr key={building.id} className="bg-white">
+                      <td className="border-b border-[#eef0eb] px-3 py-3 font-semibold text-[#0F3D2E]">{building.name}</td>
+                      <td className="border-b border-[#eef0eb] px-3 py-3"><span className={statusTone(lifecycle === "post_dlp_readonly" ? "closed" : lifecycle === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(lifecycle)}</span></td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{overviewUnits.length}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{salesRouteCount}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{rentalCount}</td>
+                      <td className="border-b border-[#eef0eb] px-3 py-3 text-right"><button className="snag-action-link" type="button" onClick={() => onBuildingContextChange(building.id)}>View</button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {selectedBuilding && (
         <>
@@ -4273,6 +4408,7 @@ function BuildingDeliveryTeam({
 function DeveloperSnagging({
   user,
   buildings,
+  buildingContextId,
   buildingFloors,
   units,
   areas,
@@ -4288,6 +4424,7 @@ function DeveloperSnagging({
 }: {
   user: User;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
@@ -4301,10 +4438,11 @@ function DeveloperSnagging({
   onDirtyChange: (hasUnsavedChanges: boolean) => void;
   onRequestActivePanel: (request?: ActivePanelRequest) => void;
 }) {
-  const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
+  const initialDraft = { ...emptySnagDraft, buildingId: buildingContextId };
+  const [draft, setDraft] = useState<SnagDraft>(() => initialDraft);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingResponsibleOrganisation, setIsChangingResponsibleOrganisation] = useState(false);
-  const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
+  const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(initialDraft));
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
@@ -4368,8 +4506,8 @@ function DeveloperSnagging({
   }
 
   function resetAndClose() {
-    setCleanContextSignature(contextSignature(emptySnagDraft));
-    setDraft(emptySnagDraft);
+    setCleanContextSignature(contextSignature(initialDraft));
+    setDraft(initialDraft);
     setIsChangingResponsibleOrganisation(false);
     onDirtyChange(false);
     onClose();
@@ -4435,8 +4573,8 @@ function DeveloperSnagging({
       };
 
       if (closeAfterSave) {
-        setCleanContextSignature(contextSignature(emptySnagDraft));
-        setDraft(emptySnagDraft);
+        setCleanContextSignature(contextSignature(initialDraft));
+        setDraft(initialDraft);
         onDirtyChange(false);
         onNotice("Snag added.");
       } else {
@@ -4462,13 +4600,24 @@ function DeveloperSnagging({
     <div className="max-w-xl">
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
-          <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
-            setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" });
-            setIsChangingResponsibleOrganisation(false);
-          }} disabled={isSaving}>
-            <option value="">Select building</option>
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </select>
+          {buildingContextId ? (
+            <div className="rounded-xl border border-[#dfe5df] bg-[#f8faf7] px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#66736B]">Building</p>
+              <p className="mt-0.5 font-semibold text-[#0F3D2E]">{selectedBuilding?.name}</p>
+            </div>
+          ) : (
+            <label className="grid gap-1">
+              <span className="text-xs font-semibold text-[#66736B]">Building</span>
+              <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
+                setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" });
+                setIsChangingResponsibleOrganisation(false);
+              }} disabled={isSaving}>
+                <option value="">Select building</option>
+                {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+              </select>
+              {!draft.buildingId && <span className="text-xs text-[#66736B]">Choose a building to load its floors, units and communal areas.</span>}
+            </label>
+          )}
           <div className="developer-snag-toggle grid grid-cols-2 gap-1.5" role="group" aria-label="Location type">
             <button className={draft.locationType === "unit" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "unit"}>Unit</button>
             <button className={draft.locationType === "communal" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "communal"}>Communal</button>
@@ -4812,8 +4961,11 @@ function UserDirectory({
     <section className="panel min-w-0 overflow-hidden p-0">
       <div className="grid gap-3 border-b border-[#d9ded6] px-4 py-3 sm:flex sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-[#0F3D2E]">Access & users</h2>
-          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-bold text-[#0F3D2E]">Users &amp; access</h2>
+            <span className="rounded-full border border-[#d9ded6] bg-[#f4f5f2] px-2.5 py-1 text-xs font-semibold text-[#617169]">System-wide</span>
+          </div>
+          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status. This page is not filtered by the selected building.</p>
         </div>
         <button className="primary min-h-9 w-full px-3 py-1.5 text-sm sm:w-auto" onClick={onAddUser}>
           <Plus size={16} /> Add user
@@ -6171,6 +6323,7 @@ function SnagWorkflow({
   user,
   profile,
   buildings,
+  buildingContextId,
   buildingFloors,
   snags,
   units,
@@ -6191,6 +6344,7 @@ function SnagWorkflow({
   user: User;
   profile: Profile | null;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
@@ -6257,8 +6411,10 @@ function SnagWorkflow({
       {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
         <div ref={addSnagPanelRef} className="active-panel-target">
           <DeveloperSnagging
+            key={buildingContextId || "all-buildings"}
             user={user}
             buildings={buildings}
+            buildingContextId={buildingContextId}
             buildingFloors={buildingFloors}
             units={units}
             areas={areas}
@@ -6282,6 +6438,7 @@ function SnagWorkflow({
           user={user}
           canSendReport={canSendReport}
           buildings={buildings}
+          buildingContextId={buildingContextId}
           buildingFloors={buildingFloors}
           units={units}
           areas={areas}
@@ -6295,6 +6452,7 @@ function SnagWorkflow({
       <SnagList
         title=""
         buildings={buildings}
+        buildingContextId={buildingContextId}
         buildingFloors={buildingFloors}
         snags={snags}
         units={units}
@@ -8275,6 +8433,7 @@ function ReportsPanel({
   user,
   canSendReport,
   buildings,
+  buildingContextId,
   buildingFloors,
   units,
   areas,
@@ -8287,6 +8446,7 @@ function ReportsPanel({
   user: User;
   canSendReport: boolean;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
@@ -8296,26 +8456,21 @@ function ReportsPanel({
   onNotice: (notice: string) => void;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
 }) {
-  const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const reportUnitIds = Array.from(new Set(snags.map((snag) => snag.unit_id).filter(Boolean))) as string[];
   const reportCommunalAreaIds = Array.from(new Set(snags.filter((snag) => !snag.unit_id).map((snag) => snag.area_id).filter(Boolean))) as string[];
-  const reportBuildings = buildings.filter((building) => reportBuildingIds.includes(building.id));
-  const [buildingId, setBuildingId] = useState(reportBuildings[0]?.id ?? "");
   const [locationType, setLocationType] = useState<"unit" | "communal">("unit");
   const buildingUnits = units
-    .filter((unit) => reportUnitIds.includes(unit.id))
-    .filter((unit) => !buildingId || unit.building_id === buildingId);
-  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingId);
+    .filter((unit) => reportUnitIds.includes(unit.id));
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingContextId);
   const buildingCommunalAreas = sortAreasByFloorOrder(
     areas
       .filter((area) => reportCommunalAreaIds.includes(area.id))
-      .filter((area) => area.area_type === "communal_area")
-      .filter((area) => !buildingId || area.building_id === buildingId),
+      .filter((area) => area.area_type === "communal_area"),
     buildingFloors,
-    buildingId,
+    buildingContextId,
   );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
-  const [communalAreaId, setCommunalAreaId] = useState("");
+  const [communalAreaId, setCommunalAreaId] = useState(buildingContextId ? "" : buildingCommunalAreas[0]?.id ?? "");
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
   const [sendState, setSendState] = useState<"idle" | "loading_recipients" | "preview" | "sending" | "sent" | "failed">("idle");
@@ -8332,28 +8487,28 @@ function ReportsPanel({
     .filter((snag) => includeClosedSnags || snag.status !== "closed");
   const unit = units.find((item) => item.id === unitId);
   const communalArea = areas.find((item) => item.id === communalAreaId);
+  const buildingId = locationType === "unit"
+    ? unit?.building_id ?? buildingContextId
+    : communalArea?.building_id ?? buildingContextId;
   const building = buildings.find((item) => item.id === buildingId);
   const locationLabel = locationType === "unit"
-    ? `Unit ${unit?.unit_number ?? ""}`.trim()
+    ? `${buildingContextId ? "" : `${building?.name ?? "Building"} · `}Unit ${unit?.unit_number ?? ""}`.trim()
     : communalArea
-      ? `${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
+      ? `${buildingContextId ? "" : `${building?.name ?? "Building"} · `}${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
       : "All communal areas";
   const locationSummaryLabel = locationType === "unit" ? "this flat" : communalArea ? "this communal area" : "all communal areas";
   useEffect(() => {
-    if (!reportBuildings.some((building) => building.id === buildingId)) {
-      setBuildingId(reportBuildings[0]?.id ?? "");
-      return;
-    }
     if (locationType === "unit") {
       if (!sortedBuildingUnits.some((unit) => unit.id === unitId)) {
         if (sortedBuildingUnits[0]) setUnitId(sortedBuildingUnits[0].id);
         else if (buildingCommunalAreas.length > 0) setLocationType("communal");
       }
     }
-    if (locationType === "communal" && communalAreaId && !buildingCommunalAreas.some((area) => area.id === communalAreaId)) {
-      setCommunalAreaId("");
+    if (locationType === "communal") {
+      const selectionIsValid = communalAreaId && buildingCommunalAreas.some((area) => area.id === communalAreaId);
+      if (!selectionIsValid) setCommunalAreaId(buildingContextId ? "" : buildingCommunalAreas[0]?.id ?? "");
     }
-  }, [buildingCommunalAreas, buildingId, communalAreaId, locationType, reportBuildings, sortedBuildingUnits, unitId]);
+  }, [buildingCommunalAreas, buildingContextId, communalAreaId, locationType, sortedBuildingUnits, unitId]);
 
   function resetSendState() {
     setSendState("idle");
@@ -8830,12 +8985,6 @@ function ReportsPanel({
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
-      <select className="field" value={buildingId} onChange={(event) => {
-        setBuildingId(event.target.value);
-        resetSendState();
-      }}>
-        {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-      </select>
       <div className="grid grid-cols-2 gap-2">
         <button
           className={locationType === "unit" ? "primary" : "secondary"}
@@ -8866,17 +9015,21 @@ function ReportsPanel({
           resetSendState();
         }} disabled={sortedBuildingUnits.length === 0}>
           {sortedBuildingUnits.length === 0 && <option value="">No flat snags available</option>}
-          {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+          {sortedBuildingUnits.map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {!buildingContextId ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}{unit.unit_number}
+            </option>
+          ))}
         </select>
       ) : (
         <select className="field" value={communalAreaId} onChange={(event) => {
           setCommunalAreaId(event.target.value);
           resetSendState();
         }} disabled={buildingCommunalAreas.length === 0}>
-          <option value="">All communal areas</option>
+          {buildingContextId && <option value="">All communal areas</option>}
           {buildingCommunalAreas.map((area) => (
             <option key={area.id} value={area.id}>
-              {area.name}{area.floor ? ` / ${area.floor}` : ""}
+              {!buildingContextId ? `${buildings.find((building) => building.id === area.building_id)?.name ?? "Building"} · ` : ""}{area.name}{area.floor ? ` / ${area.floor}` : ""}
             </option>
           ))}
         </select>
@@ -8950,6 +9103,7 @@ function ReportsPanel({
 function SnagList({
   title,
   buildings,
+  buildingContextId = "",
   buildingFloors,
   snags,
   units,
@@ -8973,6 +9127,7 @@ function SnagList({
 }: {
   title: string;
   buildings: Building[];
+  buildingContextId?: string;
   buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
@@ -8994,7 +9149,6 @@ function SnagList({
   onDetailViewChange?: (isOpen: boolean) => void;
   residentMode?: boolean;
 }) {
-  const [buildingFilter, setBuildingFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState("");
@@ -9004,18 +9158,16 @@ function SnagList({
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
   const [selectedSnagId, setSelectedSnagId] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const availableBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
-  const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
-  const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
+  const contextIsAll = !buildingContextId && buildings.length > 1;
   const buildingUnits = sortUnitsByFloorOrder(
-    units.filter((unit) => unit.building_id === selectedBuildingId),
+    units,
     buildingFloors,
-    selectedBuildingId,
+    buildingContextId,
   );
   const buildingCommunalAreas = areas
-    .filter((area) => area.building_id === selectedBuildingId && area.area_type === "communal_area")
+    .filter((area) => area.area_type === "communal_area")
     .sort((a, b) => a.name.localeCompare(b.name));
-  const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
+  const buildingSnags = snags;
   const workflowStatuses = ["open", "needs_more_info", "resolved_by_contractor", "rejected_back_to_contractor", "closed"];
   const statuses = workflowStatuses.filter((status) => buildingSnags.some((snag) => snag.status === status));
   const statusFilterStillAvailable = !statusFilter || statuses.includes(statusFilter);
@@ -9050,7 +9202,6 @@ function SnagList({
   const moreInfoTodaySnagIds = statusEventSnagIds("needs_more_info");
   const buildingUnitOrder = new Map(buildingUnits.map((unit, index) => [unit.id, index]));
   const filtered = snags
-    .filter((snag) => snag.building_id === selectedBuildingId)
     .filter((snag) => {
       if (!unitFilter) return true;
       if (unitFilter === "__communal__") return !snag.unit_id;
@@ -9094,25 +9245,27 @@ function SnagList({
   const currentPage = Math.min(page, totalPages);
   const pageStart = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd = Math.min(currentPage * pageSize, filtered.length);
-  const defaultBuildingId = availableBuildings[0]?.id ?? "";
   const hasActiveResultFilters = Boolean(
-    (defaultBuildingId && selectedBuildingId !== defaultBuildingId) || unitFilter || activeStatusFilter || tradeFilter || quickFilter,
+    unitFilter || activeStatusFilter || tradeFilter || quickFilter,
   );
   const showPaginationControls = filtered.length > 0 && totalPages > 1;
   const activeFilterCount = [
-    defaultBuildingId && selectedBuildingId !== defaultBuildingId,
     unitFilter,
     activeStatusFilter,
     tradeFilter,
     quickFilter,
   ].filter(Boolean).length;
-  const selectedBuildingName = buildings.find((building) => building.id === selectedBuildingId)?.name ?? "Building";
+  const selectedBuildingName = buildings.find((building) => building.id === buildingContextId)?.name ?? "All buildings";
   const selectedLocationName = unitFilter
     ? unitFilter === "__communal__"
       ? "Communal"
       : unitFilter.startsWith("area:")
         ? buildingCommunalAreas.find((area) => area.id === unitFilter.replace("area:", ""))?.name ?? "Communal area"
-        : `Unit ${buildingUnits.find((unit) => unit.id === unitFilter)?.unit_number ?? ""}`.trim()
+        : (() => {
+          const selectedUnit = buildingUnits.find((unit) => unit.id === unitFilter);
+          const buildingName = buildings.find((building) => building.id === selectedUnit?.building_id)?.name;
+          return `${contextIsAll && buildingName ? `${buildingName} · ` : ""}Unit ${selectedUnit?.unit_number ?? ""}`.trim();
+        })()
     : "All locations";
   const selectedTradeName = residentMode
     ? ""
@@ -9132,8 +9285,9 @@ function SnagList({
   const pagedSnags = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const grouped = pagedSnags.reduce<Array<{ unitId: string; unitLabel: string; snags: ProductionSnag[] }>>((groups, snag) => {
     const unit = units.find((item) => item.id === snag.unit_id);
-    const unitId = unit?.id ?? "communal";
-    const unitLabel = unit ? `Unit ${unit.unit_number}` : "Communal";
+    const buildingName = buildings.find((building) => building.id === snag.building_id)?.name ?? "Building";
+    const unitId = `${snag.building_id}:${unit?.id ?? "communal"}`;
+    const unitLabel = `${contextIsAll ? `${buildingName} · ` : ""}${unit ? `Unit ${unit.unit_number}` : "Communal"}`;
     const group = groups.find((item) => item.unitId === unitId);
     if (group) group.snags.push(snag);
     else groups.push({ unitId, unitLabel: residentMode && unit ? `Flat ${unit.unit_number}` : unitLabel, snags: [snag] });
@@ -9141,17 +9295,11 @@ function SnagList({
   }, []);
 
   useEffect(() => {
-    if (!selectedBuildingId || buildingFilter) return;
-    setBuildingFilter(selectedBuildingId);
-  }, [buildingFilter, selectedBuildingId]);
-
-  useEffect(() => {
     setUnitFilter("");
-  }, [selectedBuildingId]);
+  }, [buildingContextId]);
 
   useEffect(() => {
     if (!requestedFilters) return;
-    if (requestedFilters.buildingId) setBuildingFilter(requestedFilters.buildingId);
     setUnitFilter(requestedFilters.unitFilter ?? "");
     setStatusFilter(requestedFilters.statusFilter ?? "");
     setTradeFilter(requestedFilters.tradeFilter ?? "");
@@ -9160,7 +9308,7 @@ function SnagList({
 
   useEffect(() => {
     setPage(1);
-  }, [selectedBuildingId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
+  }, [buildingContextId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -9260,20 +9408,17 @@ function SnagList({
           </div>
         )}
         {showFilters && (
-          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
-            <select aria-label="Building filter" className="field" value={selectedBuildingId} onChange={(event) => setBuildingFilter(event.target.value)}>
-              {availableBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-            </select>
+          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
             <select aria-label="Unit filter" className={`field ${unitFilter ? "filter-active" : ""}`} value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
               <option value="">All units</option>
               {buildingUnits.length > 0 && (
                 <optgroup label="Flats">
-                  {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+                  {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{contextIsAll ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}{unit.unit_number}</option>)}
                 </optgroup>
               )}
               <optgroup label="Communal">
                 <option value="__communal__">All communal spaces</option>
-                {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{area.name}</option>)}
+                {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{contextIsAll ? `${buildings.find((building) => building.id === area.building_id)?.name ?? "Building"} · ` : ""}{area.name}</option>)}
               </optgroup>
             </select>
             {!residentMode && (
@@ -9304,6 +9449,7 @@ function SnagList({
           {pagedSnags.map((snag) => {
             const unit = units.find((item) => item.id === snag.unit_id);
             const area = areas.find((item) => item.id === snag.area_id);
+            const building = buildings.find((item) => item.id === snag.building_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
             const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
             const rowActions = listActions?.(snag);
@@ -9316,7 +9462,7 @@ function SnagList({
                 <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold leading-tight text-[#1F2A24]">{snag.title}</p>
-                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{contextIsAll ? `${building?.name ?? "Building"} / ` : ""}{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
@@ -9358,6 +9504,7 @@ function SnagList({
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Title</th>
+              {contextIsAll && <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Building</th>}
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">{residentMode ? "Flat" : "Unit"}</th>
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Area</th>
               {!residentMode && <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Trade</th>}
@@ -9371,13 +9518,14 @@ function SnagList({
             {grouped.map((group) => (
               <Fragment key={group.unitId}>
                 <tr>
-                  <td colSpan={residentMode ? 7 : 8} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
+                  <td colSpan={(residentMode ? 7 : 8) + (contextIsAll ? 1 : 0)} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
                     {group.unitLabel} <span className="font-normal text-[#617169]">({group.snags.length})</span>
                   </td>
                 </tr>
                 {group.snags.map((snag) => {
                   const unit = units.find((item) => item.id === snag.unit_id);
                   const area = areas.find((item) => item.id === snag.area_id);
+                  const building = buildings.find((item) => item.id === snag.building_id);
                   const trade = trades.find((item) => item.id === snag.trade_id);
                   const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
                   const rowActions = listActions?.(snag);
@@ -9391,6 +9539,7 @@ function SnagList({
                         <p className="max-w-xs truncate font-medium">{snag.title}</p>
                         {snag.description && <p className="mt-0.5 max-w-xs truncate text-xs text-[#617169]">{snag.description}</p>}
                       </td>
+                      {contextIsAll && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{building?.name ?? "Building"}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{unit?.unit_number ?? "Communal"}</td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{area?.name ?? "No area"}</td>
                       {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>}

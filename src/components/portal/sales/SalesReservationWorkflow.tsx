@@ -16,7 +16,6 @@ import { SalesForecastingModule } from "@/components/portal/sales/SalesForecasti
 import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio";
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
 import { useActivePanel } from "@/hooks/useActivePanel";
-import { buildBuildingScopeOptions } from "@/lib/sales/building-scope";
 import { historicalActorLabel } from "@/lib/sales/actor-identity";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import {
@@ -988,6 +987,7 @@ export function SalesReservationWorkflow({
   buildings,
   buildingFloors,
   units,
+  buildingContextId,
   onNotice,
   reloadPortalData,
 }: {
@@ -998,6 +998,7 @@ export function SalesReservationWorkflow({
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
+  buildingContextId: string;
   onNotice: (notice: string) => void;
   reloadPortalData: () => Promise<void>;
 }) {
@@ -1007,11 +1008,10 @@ export function SalesReservationWorkflow({
   const pendingWorkflowStageScrollRef = useRef<SaleWorkflowStage | null>(null);
   const completionReviewSubmissionInFlightRef = useRef(false);
   const completionRecordSubmissionInFlightRef = useRef(false);
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
-  const buildingOptions = useMemo(() => buildBuildingScopeOptions(buildings), [buildings]);
+  const buildingId = buildingContextId;
   const buildingUnits = useMemo(
     () => sortUnitsByFloorOrder(
-      units.filter((unit) => unit.building_id === buildingId && isSalesRouteUnit(unit)),
+      units.filter((unit) => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit)),
       buildingFloors,
       buildingId,
     ),
@@ -1129,8 +1129,9 @@ export function SalesReservationWorkflow({
   const canApproveCompletionDocuments = canPerformSalesAction(role, "approve_completion_documents");
   const canRecordCompletion = canPerformSalesAction(role, "record_completion");
   const selectedUnit = units.find((unit) => unit.id === unitId);
-  const selectedBuilding = buildings.find((building) => building.id === buildingId);
-  const selectedBuildingDefault = buildingSaleDefaults.find((item) => item.building_id === buildingId) ?? null;
+  const selectedBuilding = buildings.find((building) => building.id === (selectedUnit?.building_id ?? buildingId));
+  const scopeBuilding = buildings.find((building) => building.id === buildingId);
+  const selectedBuildingDefault = buildingSaleDefaults.find((item) => item.building_id === (selectedUnit?.building_id ?? buildingId)) ?? null;
   const activeAttempt = attempts.find((attempt) => attempt.unit_id === unitId && attempt.is_active);
   const canReturnToForSale = canPerformSalesAction(role, "fail_reservation")
     && Boolean(activeAttempt?.is_active && canReturnUnitToForSale(activeAttempt.workflow_status));
@@ -1551,7 +1552,9 @@ export function SalesReservationWorkflow({
   });
   const filteredSalesUnits = buildingUnits.filter((unit) => {
     const matchesStatus = salesStageFilter === "all" || unit.sale_status === salesStageFilter;
-    const matchesSearch = unit.unit_number.toLowerCase().includes(salesSearch.trim().toLowerCase());
+    const searchValue = salesSearch.trim().toLowerCase();
+    const buildingName = buildings.find((building) => building.id === unit.building_id)?.name ?? "";
+    const matchesSearch = unit.unit_number.toLowerCase().includes(searchValue) || buildingName.toLowerCase().includes(searchValue);
     return matchesStatus && matchesSearch;
   });
   const salesPageCount = Math.max(1, Math.ceil(filteredSalesUnits.length / SALES_PAGE_SIZE));
@@ -1577,7 +1580,6 @@ export function SalesReservationWorkflow({
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     params.set("screen", "sales");
-    if (next.building) params.set("salesBuildingId", next.building);
     if (next.unit === null) params.delete("salesUnitId");
     if (next.unit) params.set("salesUnitId", next.unit);
     if (next.filter === null) params.delete("salesFilter");
@@ -1593,7 +1595,6 @@ export function SalesReservationWorkflow({
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
     manuallySelectedWorkflowStageRef.current = null;
     pendingAgentFeesScrollRef.current = focusAgentFees ? "exchange" : null;
-    setBuildingId(nextBuildingId);
     setUnitId(nextUnitId);
     setSelectedSaleUnitId(nextUnitId);
     setActiveSalesView("pipeline");
@@ -1643,22 +1644,16 @@ export function SalesReservationWorkflow({
   useEffect(() => {
     if (hasReadSalesUrl || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const urlBuildingId = params.get("salesBuildingId");
     const urlUnitId = params.get("salesUnitId");
     const urlFilter = params.get("salesFilter") as SalesStageFilter | null;
     const urlView = params.get("salesView");
     const urlSection = params.get("section") as UnitSaleSection | null;
-
-    if (urlBuildingId && buildings.some((building) => building.id === urlBuildingId)) {
-      setBuildingId(urlBuildingId);
-    }
 
     if (urlUnitId && units.some((unit) => unit.id === urlUnitId)) {
       const urlUnit = units.find((unit) => unit.id === urlUnitId);
       setUnitId(urlUnitId);
       setSelectedSaleUnitId(urlUnitId);
       if (urlUnit) {
-        setBuildingId(urlUnit.building_id);
         setActiveWorkflowStage(workflowStageForUnit(urlUnit));
       }
       if (urlSection === "financials" || urlSection === "commercial") {
@@ -1716,14 +1711,17 @@ export function SalesReservationWorkflow({
   }, [activeWorkflowStage, selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
 
   useEffect(() => {
-    if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
-    if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
-  }, [buildingId, buildings]);
-
-  useEffect(() => {
-    if (buildingUnits.length > 0 && !buildingUnits.some((unit) => unit.id === unitId)) setUnitId(buildingUnits[0].id);
-    if (buildingUnits.length === 0 && unitId) setUnitId("");
-  }, [buildingUnits, unitId]);
+    const timer = window.setTimeout(() => {
+      if (selectedSaleUnitId && !buildingUnits.some((unit) => unit.id === selectedSaleUnitId)) {
+        setSelectedSaleUnitId("");
+        setActiveUnitSection("progression");
+        writeSalesUrl({ unit: null, filter: salesStageFilter, view: activeSalesView, section: null });
+      }
+      if (buildingUnits.length > 0 && !buildingUnits.some((unit) => unit.id === unitId)) setUnitId(buildingUnits[0].id);
+      if (buildingUnits.length === 0 && unitId) setUnitId("");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeSalesView, buildingUnits, salesStageFilter, selectedSaleUnitId, unitId]);
 
   useEffect(() => {
     if (!activeAttempt) {
@@ -1878,14 +1876,11 @@ export function SalesReservationWorkflow({
 
   async function loadSalesData() {
     const supabase = createSupabaseBrowserClient();
-    if (buildingId) {
-      const { data: defaultRows, error: defaultsError } = await supabase
-        .from("building_sale_defaults")
-        .select("*")
-        .eq("building_id", buildingId);
-      if (defaultsError) onNotice(defaultsError.message);
-      else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
-    }
+    let defaultsQuery = supabase.from("building_sale_defaults").select("*");
+    if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
+    const { data: defaultRows, error: defaultsError } = await defaultsQuery;
+    if (defaultsError) onNotice(defaultsError.message);
+    else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
 
     if (buildingUnits.length === 0) {
       setAttempts([]);
@@ -2588,12 +2583,8 @@ export function SalesReservationWorkflow({
           </section>
           <AgentFeesPortfolio
             requesterId={profile?.id ?? user.id}
-            initialBuildingId={buildingId}
-            onBuildingChange={(nextBuildingId) => {
-              if (!nextBuildingId) return;
-              setBuildingId(nextBuildingId);
-              writeSalesUrl({ building: nextBuildingId, unit: null, view: "agent_fees" });
-            }}
+            buildingContextId={buildingId}
+            buildingContextName={scopeBuilding?.name ?? "Selected building"}
             onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
           />
         </div>
@@ -2603,29 +2594,15 @@ export function SalesReservationWorkflow({
     return (
       <div className="grid gap-5">
         <section className="panel">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
             <div>
               <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-[#617169]">
-                {selectedBuilding && <strong className="font-semibold text-[#34413a]">{selectedBuilding.name}</strong>}
-                {selectedBuilding && <span aria-hidden="true">·</span>}
+                <strong className="font-semibold text-[#34413a]">{scopeBuilding?.name ?? "All buildings"}</strong>
+                <span aria-hidden="true">·</span>
                 <span>{buildingUnits.length} {buildingUnits.length === 1 ? "unit" : "units"} in the sales route</span>
               </p>
             </div>
-            <label className="field-label lg:w-[320px]">
-              Building
-              <select
-                className="field"
-                value={buildingId}
-                onChange={(event) => {
-                  setBuildingId(event.target.value);
-                  setSelectedSaleUnitId("");
-                  writeSalesUrl({ building: event.target.value, unit: null, filter: salesStageFilter });
-                }}
-              >
-                {buildingOptions.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-              </select>
-            </label>
           </div>
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
@@ -2715,7 +2692,7 @@ export function SalesReservationWorkflow({
             </div>
             <label className="field-label lg:w-[320px]">
               Search
-              <input className="field" value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder="Unit number" />
+              <input className="field" value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder={buildingId ? "Unit number" : "Unit or building"} />
             </label>
           </div>
 
@@ -2724,6 +2701,7 @@ export function SalesReservationWorkflow({
               <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                 <tr>
                   <th className="border-b border-[#d9ded6] px-4 py-3">Unit</th>
+                  {!buildingId && <th className="border-b border-[#d9ded6] px-4 py-3">Building</th>}
                   <th className="border-b border-[#d9ded6] px-4 py-3">Stage</th>
                   <th className="border-b border-[#d9ded6] px-4 py-3 text-right">Price</th>
                   <th className="border-b border-[#d9ded6] px-4 py-3">Next action</th>
@@ -2733,7 +2711,7 @@ export function SalesReservationWorkflow({
               <tbody>
                 {pagedSalesUnits.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-center text-[#617169]" colSpan={5}>No units match this view.</td>
+                    <td className="px-4 py-6 text-center text-[#617169]" colSpan={buildingId ? 5 : 6}>No units match this view.</td>
                   </tr>
                 ) : pagedSalesUnits.map((unit) => {
                   const attempt = activeAttemptByUnit.get(unit.id);
@@ -2745,6 +2723,7 @@ export function SalesReservationWorkflow({
                       onClick={() => openSaleFile(unit.id)}
                     >
                       <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]">Unit {unit.unit_number}</td>
+                      {!buildingId && <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"}</td>}
                       <td className="border-b border-[#eef0eb] px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${stageTone.badge}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${stageTone.dot}`} aria-hidden="true" />
@@ -2776,11 +2755,12 @@ export function SalesReservationWorkflow({
               <h3 className="text-xl font-bold text-[#0F3D2E]">Forecasting</h3>
               <p className="mt-1 text-sm text-[#617169]">Building-level scenario modelling for sell, retain, rent and refinance assumptions.</p>
             </div>
-            <button className="secondary" onClick={() => setShowForecasting((value) => !value)}>
+            <button className="secondary" onClick={() => setShowForecasting((value) => !value)} disabled={!buildingId}>
               {showForecasting ? "Hide forecasting" : "Open forecasting"}
             </button>
           </div>
-          {showForecasting && (
+          {!buildingId && <p className="mt-3 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-3 text-sm text-[#617169]">Select a building in the app header to use building-level forecasting.</p>}
+          {showForecasting && buildingId && (
             <div className="mt-5">
               <SalesForecastingModule
                 user={user}
@@ -2826,7 +2806,7 @@ export function SalesReservationWorkflow({
                 {buildingUnits.length === 0 && <option value="">No units available</option>}
                 {buildingUnits
                   .filter((unit) => !salesSearch.trim() || unit.unit_number.toLowerCase().includes(salesSearch.trim().toLowerCase()))
-                  .map((unit) => <option key={unit.id} value={unit.id}>Unit {unit.unit_number} - {saleStatusLabel(unit.sale_status)}</option>)}
+                  .map((unit) => <option key={unit.id} value={unit.id}>{!buildingId ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}Unit {unit.unit_number} - {saleStatusLabel(unit.sale_status)}</option>)}
               </select>
             </label>
           </div>

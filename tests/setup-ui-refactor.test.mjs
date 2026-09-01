@@ -30,7 +30,9 @@ test("Buildings presents lifecycle, delivery team and sales setup as summaries w
   assert.match(buildings, /Building lifecycle/);
   assert.match(buildings, /editingSettingsSection === "lifecycle"/);
   assert.match(buildings, /cancelBuildingSettings/);
-  assert.match(buildings, /Change building/);
+  assert.match(buildings, /Building overview/);
+  assert.match(buildings, /onBuildingContextChange\(building\.id\)/);
+  assert.doesNotMatch(buildings, /aria-label="Change building"/);
   assert.doesNotMatch(buildings, />Working building</);
   assert.match(sales, /if \(!isEditing\)/);
   assert.match(sales, /applySalesValues\(savedValues\)/);
@@ -49,14 +51,16 @@ test("Building structure keeps full edit capability behind compact unit rows", (
   assert.match(unit, /lg:grid-cols-\[10rem_9rem_6rem_6rem_minmax\(12rem,1fr\)_auto\]/);
 });
 
-test("Unit allocation establishes recent building context before metrics and keeps actions beside their state", () => {
-  assert.match(allocation, /mostRecentlyCreatedBuildingId/);
-  assert.match(allocation, /created_at/);
-  assert.match(allocation, /allocationBuildingId/);
-  assert.match(allocation, /Building context[\s\S]*SummaryMetric/);
+test("Unit allocation inherits the global building context and keeps actions beside their state", () => {
+  assert.match(allocation, /buildingContextId: string/);
+  assert.match(allocation, /const buildingFilter = buildingContextId/);
+  assert.doesNotMatch(allocation, /allocationBuildingId/);
+  assert.doesNotMatch(allocation, /aria-label="Building context"/);
+  assert.match(allocation, /Current scope[\s\S]*SummaryMetric/);
   assert.match(allocation, /selectedIds\.length > 0/);
   assert.match(allocation, /Select units to make bulk changes/);
-  assert.match(allocation, /<details className="relative">/);
+  assert.match(allocation, /function SalesAvailabilityMenu/);
+  assert.match(allocation, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
   assert.match(allocation, /xl:hidden/);
   assert.doesNotMatch(allocation, />Actions<\/th>/);
   assert.doesNotMatch(allocation, /Remove from rental portfolio/);

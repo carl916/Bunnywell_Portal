@@ -16,9 +16,11 @@ test("Setup presents the mature view as Audit log while retaining the historic r
 
 test("Audit log supports the required toolbar, quick filters and responsive detail view", () => {
   assert.match(component, /\["all", "sales", "rentals", "users", "setup", "security", "reports"\]/);
-  for (const label of ["All buildings", "All events", "All users", "Any date", "Reset"]) {
+  for (const label of ["All events", "All users", "Any date", "Reset"]) {
     assert.match(component, new RegExp(label));
   }
+  assert.match(component, /buildingContextId \? rows\.filter/);
+  assert.doesNotMatch(component, /FilterSelect label="Building"/);
   for (const heading of ["Date", "Activity", "Subject", "Change", "User"]) {
     assert.match(component, new RegExp(`>${heading}<`));
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { CircleMinus, CirclePlus, ExternalLink, Pencil } from "lucide-react";
 import type { Building, BuildingFloor, RentalPortfolioStatus, Unit, UnitSaleStatus } from "@/lib/data/production";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -87,18 +87,80 @@ function AllocationStatusActionCell({ status, actions }: { status: ReactNode; ac
   );
 }
 
-function mostRecentlyCreatedBuildingId(buildings: Building[]) {
-  return [...buildings].sort((a, b) => {
-    const aTime = a.created_at ? Date.parse(a.created_at) : Number.NEGATIVE_INFINITY;
-    const bTime = b.created_at ? Date.parse(b.created_at) : Number.NEGATIVE_INFINITY;
-    return bTime - aTime;
-  })[0]?.id ?? "";
+function SalesAvailabilityMenu({
+  unit,
+  align = "left",
+  roomy = false,
+  onSelect,
+}: {
+  unit: Unit;
+  align?: "left" | "right";
+  roomy?: boolean;
+  onSelect: (status: AdminSalesTarget) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        ref={triggerRef}
+        className="allocation-action"
+        type="button"
+        aria-label={`Sales availability for unit ${unit.unit_number}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <Pencil size={16} aria-hidden />
+        <span>Change</span>
+      </button>
+      {open && <div className={`absolute z-20 mt-1 grid min-w-44 gap-1 rounded-md border border-[#d9ded6] bg-white p-1.5 shadow-lg ${align === "right" ? "right-0" : "left-0"}`} role="menu">
+        {ADMIN_SALES_AVAILABILITY_STATUSES.map((status) => <button
+          key={status}
+          className={`rounded px-2 ${roomy ? "py-2" : "py-1.5"} text-left text-xs hover:bg-[#f2f5f1] disabled:opacity-45`}
+          type="button"
+          role="menuitem"
+          disabled={status === unit.sale_status}
+          onClick={() => {
+            setOpen(false);
+            onSelect(status);
+          }}
+        >
+          {saleStatusLabel(status)}
+        </button>)}
+      </div>}
+    </div>
+  );
 }
 
 export function UnitAllocationWorkspace({
   buildings,
   buildingFloors,
   units,
+  buildingContextId,
   onOpenSaleFile,
   onOpenRentalFile,
   onNotice,
@@ -107,14 +169,14 @@ export function UnitAllocationWorkspace({
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
+  buildingContextId: string;
   onOpenSaleFile: (unit: Unit) => void;
   onOpenRentalFile: (unit: Unit) => void;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
   const [attempts, setAttempts] = useState<UnitAllocationAttempt[]>([]);
-  const [buildingFilter, setBuildingFilter] = useState("");
-  const [buildingSelectionReady, setBuildingSelectionReady] = useState(false);
+  const buildingFilter = buildingContextId;
   const [search, setSearch] = useState("");
   const [salesFilter, setSalesFilter] = useState<SalesFilter>("all");
   const [rentalFilter, setRentalFilter] = useState<RentalFilter>("all");
@@ -151,44 +213,28 @@ export function UnitAllocationWorkspace({
   }, []);
 
   useEffect(() => {
-    if (buildings.length === 0) return;
-    if (buildingSelectionReady && (buildingFilter === "" || buildings.some((building) => building.id === buildingFilter))) return;
-    const explicit = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("allocationBuildingId");
-    const nextBuildingId = explicit === "all" ? "" : explicit && buildings.some((building) => building.id === explicit)
-      ? explicit
-      : mostRecentlyCreatedBuildingId(buildings);
     const timer = window.setTimeout(() => {
-      setBuildingFilter(nextBuildingId);
-      setBuildingSelectionReady(true);
+      setSelectedIds([]);
+      setValidationError("");
+      setPage(1);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [buildingFilter, buildingSelectionReady, buildings]);
-
-  function changeBuilding(buildingId: string) {
-    setBuildingFilter(buildingId);
-    setSelectedIds([]);
-    setValidationError("");
-    setPage(1);
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      params.set("allocationBuildingId", buildingId || "all");
-      window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
-    }
-  }
+  }, [buildingContextId]);
 
   const buildingById = useMemo(() => new Map(buildings.map((building) => [building.id, building])), [buildings]);
   const attemptByUnit = useMemo(() => new Map(attempts.map((attempt) => [attempt.unit_id, attempt])), [attempts]);
   const selectedUnits = useMemo(() => units.filter((unit) => selectedIds.includes(unit.id)), [selectedIds, units]);
   const filteredUnits = useMemo(() => sortUnitsByBuildingFloorOrder(units.filter((unit) => {
     if (buildingFilter && unit.building_id !== buildingFilter) return false;
-    if (search && !unit.unit_number.toLowerCase().includes(search.trim().toLowerCase())) return false;
+    const buildingName = buildingById.get(unit.building_id)?.name ?? "";
+    if (search && !unit.unit_number.toLowerCase().includes(search.trim().toLowerCase()) && !buildingName.toLowerCase().includes(search.trim().toLowerCase())) return false;
     if (salesFilter === "sales_route" && !isSalesRouteUnit(unit)) return false;
     if (salesFilter !== "all" && salesFilter !== "sales_route" && unit.sale_status !== salesFilter) return false;
     const rental = rentalStatus(unit);
     if (rentalFilter === "sale_and_rental" && !(rental === "active" && isSalesRouteUnit(unit))) return false;
     if (rentalFilter !== "all" && rentalFilter !== "sale_and_rental" && rental !== rentalFilter) return false;
     return true;
-  }), buildingFloors, buildings), [buildingFilter, buildingFloors, buildings, rentalFilter, salesFilter, search, units]);
+  }), buildingFloors, buildings), [buildingFilter, buildingById, buildingFloors, buildings, rentalFilter, salesFilter, search, units]);
   const summary = useMemo(() => summariseUnitAllocation(filteredUnits.map((unit) => ({
     sale_status: unit.sale_status,
     rental_portfolio_status: rentalStatus(unit),
@@ -290,14 +336,11 @@ export function UnitAllocationWorkspace({
           <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Unit allocation</h2>
           <p className="mt-1 max-w-3xl text-sm text-[#617169]">Manage administrative sales availability and rental-portfolio participation. Formal sale stages stay controlled by the sale file.</p>
         </div>
-        <label className="min-w-60 text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">
-          Building context
-          <select className="field mt-1 min-h-10 py-2 text-sm normal-case tracking-normal" aria-label="Building context" value={buildingFilter} onChange={(event) => changeBuilding(event.target.value)}>
-            <option value="">All buildings</option>
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </select>
-          <span className="mt-1 block text-right text-[11px] font-normal normal-case tracking-normal">{selectedBuilding ? `${units.filter((unit) => unit.building_id === selectedBuilding.id).length} units` : `${units.length} units`}</span>
-        </label>
+        <div className="min-w-48 text-right">
+          <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Current scope</p>
+          <p className="mt-1 text-sm font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "All buildings"}</p>
+          <p className="text-[11px] text-[#617169]">{selectedBuilding ? `${units.filter((unit) => unit.building_id === selectedBuilding.id).length} units` : `${units.length} units`}</p>
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-y-3 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] py-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -370,7 +413,7 @@ export function UnitAllocationWorkspace({
                   <td className="border-b border-[#eef0eb] px-3 py-2.5">
                     <AllocationStatusActionCell
                       status={<span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${salesTone(unit.sale_status)}`}>{saleStatusLabel(unit.sale_status)}</span>}
-                      actions={availabilityEditable ? <details className="relative"><summary className="allocation-action" aria-label={`Sales availability for unit ${unit.unit_number}`}><Pencil size={16} aria-hidden /><span>Change</span></summary><div className="absolute left-0 z-20 mt-1 grid min-w-44 gap-1 rounded-md border border-[#d9ded6] bg-white p-1.5 shadow-lg">{ADMIN_SALES_AVAILABILITY_STATUSES.map((status) => <button key={status} className="rounded px-2 py-1.5 text-left text-xs hover:bg-[#f2f5f1] disabled:opacity-45" type="button" disabled={status === unit.sale_status} onClick={() => prepareAction({ kind: "sales", target: status, unitIds: [unit.id] })}>{saleStatusLabel(status)}</button>)}</div></details> : workflowBlocksAllocation ? <span className="sr-only">Managed through the sale workflow.</span> : null}
+                      actions={availabilityEditable ? <SalesAvailabilityMenu unit={unit} onSelect={(target) => prepareAction({ kind: "sales", target, unitIds: [unit.id] })} /> : workflowBlocksAllocation ? <span className="sr-only">Managed through the sale workflow.</span> : null}
                     />
                   </td>
                   <td className="border-b border-[#eef0eb] px-3 py-2.5">
@@ -411,7 +454,7 @@ export function UnitAllocationWorkspace({
                   <p className="text-[11px] font-bold uppercase text-[#617169]">Sales position</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${salesTone(unit.sale_status)}`}>{saleStatusLabel(unit.sale_status)}</span>
-                    {availabilityEditable && <details className="relative"><summary className="allocation-action" aria-label={`Sales availability for unit ${unit.unit_number}`}><Pencil size={16} aria-hidden /><span>Change</span></summary><div className="absolute right-0 z-20 mt-1 grid min-w-44 gap-1 rounded-md border border-[#d9ded6] bg-white p-1.5 shadow-lg">{ADMIN_SALES_AVAILABILITY_STATUSES.map((status) => <button key={status} className="rounded px-2 py-2 text-left text-xs hover:bg-[#f2f5f1]" type="button" disabled={status === unit.sale_status} onClick={() => prepareAction({ kind: "sales", target: status, unitIds: [unit.id] })}>{saleStatusLabel(status)}</button>)}</div></details>}
+                    {availabilityEditable && <SalesAvailabilityMenu unit={unit} align="right" roomy onSelect={(target) => prepareAction({ kind: "sales", target, unitIds: [unit.id] })} />}
                   </div>
                 </div>
                 <div>

@@ -110,9 +110,10 @@ test("allocation integration retains history while active Rentals follows portfo
   assert.match(migration, /rental_portfolio_status not in \('active', 'exited'\)/);
 });
 
-test("Agent Fees exposes and applies an explicit building scope", () => {
+test("Agent Fees applies the shared global building scope", () => {
   assert.match(fees, /Scope: \{scopeLabel\}/);
-  assert.match(fees, /<option value="">All buildings<\/option>/);
-  assert.match(fees, /initialBuildingId/);
+  assert.match(fees, /buildingContextId/);
+  assert.doesNotMatch(fees, /initialBuildingId/);
+  assert.doesNotMatch(fees, />Building<select/);
   assert.match(fees, /summariseAgentFeePortfolio\(filteredRows\)/);
 });

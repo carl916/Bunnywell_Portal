@@ -189,7 +189,7 @@ async function setStatusFilter(page: Page, status: SnagStatus | "") {
 }
 
 async function applySnagFilters(page: Page, snag: CreatedSnag, status: SnagStatus | "") {
-  await selectPreferredOption(page.getByLabel("Building filter"), ["Forum House"], "snag building filter");
+  await selectPreferredOption(page.getByLabel("Current building"), ["Forum House"], "global building context");
   await setStatusFilter(page, status);
 
   const unitFilter = page.getByLabel("Unit filter");

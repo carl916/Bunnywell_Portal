@@ -263,6 +263,19 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
     await expect(unitRow.getByText("Not released", { exact: true }).first()).toBeVisible();
     await expect(unitRow.getByText("Not started", { exact: true })).toBeVisible();
 
+    const rowAvailabilityMenu = unitRow.getByRole("button", { name: `Sales availability for unit ${unitNumber}` });
+    await rowAvailabilityMenu.click();
+    await expect(unitRow.getByRole("menu")).toBeVisible();
+    await page.getByRole("heading", { name: "Unit allocation", exact: true }).click();
+    await expect(unitRow.getByRole("menu")).toBeHidden();
+
+    await rowAvailabilityMenu.click();
+    await unitRow.getByRole("menuitem", { name: "Retained / not for sale", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Confirm allocation change" })).toBeVisible();
+    await expect(unitRow.getByRole("menu")).toBeHidden();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(unitRow.getByRole("menu")).toBeHidden();
+
     await selectTestUnit(page, unitNumber);
     await expect(page.getByRole("button", { name: "Not released", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Not released", exact: true })).toHaveAttribute("title", "Already not released.");

@@ -16,7 +16,6 @@ import {
 } from "@/lib/sales/agent-fees-portfolio";
 import type { AgentFeePayment } from "@/lib/sales/agent-fees";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { buildBuildingScopeOptions } from "@/lib/sales/building-scope";
 
 type AgentFeePortfolioRpcRow = {
   sale_attempt_id: string;
@@ -120,19 +119,18 @@ async function queryAgentFeePortfolio(requesterId: string) {
 
 export function AgentFeesPortfolio({
   requesterId,
-  initialBuildingId,
-  onBuildingChange,
+  buildingContextId,
+  buildingContextName,
   onOpenSale,
 }: {
   requesterId: string;
-  initialBuildingId: string;
-  onBuildingChange: (buildingId: string) => void;
+  buildingContextId: string;
+  buildingContextName: string;
   onOpenSale: (unitId: string, buildingId: string) => void;
 }) {
   const [rows, setRows] = useState<AgentFeePortfolioRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState(initialBuildingId);
   const [agentFilter, setAgentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<AgentFeePortfolioStatusFilter>("all");
   const [milestoneFilter, setMilestoneFilter] = useState<AgentFeePortfolioMilestoneFilter>("all");
@@ -170,29 +168,31 @@ export function AgentFeesPortfolio({
     };
   }, [requesterId]);
 
-  const buildings = useMemo(() => buildBuildingScopeOptions(rows.map((row) => ({ id: row.buildingId, name: row.buildingName }))), [rows]);
-  const agents = useMemo(() => Array.from(new Map(rows.map((row) => [row.agentOrganisationId ?? "unassigned", row.agentName])).entries())
-    .sort((a, b) => a[1].localeCompare(b[1])), [rows]);
-  const filteredRows = useMemo(() => filterAgentFeePortfolioRows(rows, {
-    buildingId: buildingFilter,
+  const contextRows = useMemo(
+    () => buildingContextId ? rows.filter((row) => row.buildingId === buildingContextId) : rows,
+    [buildingContextId, rows],
+  );
+  const agents = useMemo(() => Array.from(new Map(contextRows.map((row) => [row.agentOrganisationId ?? "unassigned", row.agentName])).entries())
+    .sort((a, b) => a[1].localeCompare(b[1])), [contextRows]);
+  const filteredRows = useMemo(() => filterAgentFeePortfolioRows(contextRows, {
+    buildingId: "",
     agentOrganisationId: agentFilter,
     status: statusFilter,
     milestone: milestoneFilter,
-  }), [agentFilter, buildingFilter, milestoneFilter, rows, statusFilter]);
+  }), [agentFilter, contextRows, milestoneFilter, statusFilter]);
   const summary = useMemo(() => summariseAgentFeePortfolio(filteredRows), [filteredRows]);
-  const scopeLabel = buildingFilter ? buildings.find((building) => building.id === buildingFilter)?.name ?? "Selected building" : "All buildings";
+  const scopeLabel = buildingContextId ? buildingContextName : "All buildings";
 
   return (
     <div className="grid gap-5">
       <section className="panel">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#617169]">Sales portfolio</p>
             <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Agent Fees</h2>
             <p className="mt-1 text-sm text-[#617169]">Current Exchange and Completion invoice positions across accessible unit sales.</p>
             <p className="mt-1 text-sm font-semibold text-[#34413a]">Scope: {scopeLabel}</p>
           </div>
-          <label className="field-label lg:w-[320px]">Building<select className="field" value={buildingFilter} onChange={(event) => { setBuildingFilter(event.target.value); onBuildingChange(event.target.value); }}><option value="">All buildings</option>{buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}</select></label>
         </div>
 
         {isLoading ? (
@@ -203,8 +203,8 @@ export function AgentFeesPortfolio({
             <p className="mt-1 text-sm text-[#617169]">{error}</p>
             <button className="secondary mt-4" type="button" onClick={() => void loadPortfolio()}>Try again</button>
           </div>
-        ) : rows.length === 0 ? (
-          <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]">No active unit sales are available in your accessible buildings.</div>
+        ) : contextRows.length === 0 ? (
+          <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]">No active unit sales are available for {scopeLabel.toLowerCase()}.</div>
         ) : (
           <>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

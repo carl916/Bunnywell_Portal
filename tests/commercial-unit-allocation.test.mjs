@@ -276,6 +276,10 @@ test("Unit allocation is a gated Setup workspace with filters, summaries, select
   assert.match(allocationUi, /unitAllocationActionAvailability/);
   assert.match(allocationUi, /title=\{availability\.reason\}/);
   assert.match(allocationUi, /setValidationError\(""\)/);
+  assert.match(allocationUi, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
+  assert.match(allocationUi, /event\.key !== "Escape"/);
+  assert.match(allocationUi, /setOpen\(false\);[\s\S]*onSelect\(status\)/);
+  assert.doesNotMatch(allocationUi, /<details className="relative"/);
   assert.match(allocationUi, /sortUnitsByBuildingFloorOrder/);
   assert.doesNotMatch(allocationUi, /Active sale file/);
   assert.doesNotMatch(allocationUi, />Sales action</);
@@ -347,7 +351,7 @@ test("one shared sales-route definition scopes results, counts and forecast valu
   for (const status of ["for_sale", "reserved", "exchanged", "completed", "handed_over"]) assert.equal(isSalesRouteStatus(status), true);
   assert.equal(isSalesRouteStatus("not_released"), false);
   assert.equal(isSalesRouteStatus("not_for_sale"), false);
-  assert.match(salesUi, /units\.filter\(\(unit\) => unit\.building_id === buildingId && isSalesRouteUnit\(unit\)\)/);
+  assert.match(salesUi, /units\.filter\(\(unit\) => \(!buildingId \|\| unit\.building_id === buildingId\) && isSalesRouteUnit\(unit\)\)/);
   assert.match(salesUi, /const pipelineSummary = SALES_ROUTE_STATUSES\.map/);
   assert.match(salesUi, /in the sales route/);
   assert.match(salesUi, /Units with sale values/);

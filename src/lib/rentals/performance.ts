@@ -49,14 +49,6 @@ export type RentalUnitPerformance = {
     estimatedLoss: number | null;
   } | null;
   upcomingFixedTermDays: number | null;
-  coverage: {
-    realTenantName: boolean;
-    tenancyStart: boolean;
-    currentRent: boolean;
-    fixedTermEnd: boolean;
-    rentDueDay: boolean;
-    lettingAgent: boolean;
-  };
 };
 
 export type RentalPortfolioPerformance = {
@@ -87,15 +79,6 @@ export type RentalPortfolioPerformance = {
     largestRentReduction: { unit: RentalUnitInput; firstRent: number; currentRent: number; movement: RentMovement } | null;
     upcomingFixedTerms: { within30Days: number; within60Days: number; within90Days: number; recorded: number };
     currentVoids: Array<{ unit: RentalUnitInput; details: NonNullable<RentalUnitPerformance["currentVoid"]>; nextTenancy: RentalTenancyInput | null }>;
-  };
-  coverage: {
-    total: number;
-    realTenantName: number;
-    tenancyStart: number;
-    currentRent: number;
-    fixedTermEnd: number;
-    rentDueDay: number;
-    lettingAgent: number;
   };
 };
 
@@ -274,14 +257,6 @@ export function calculateUnitRentalPerformance(
     latestTenancyRentMovement,
     currentVoid,
     upcomingFixedTermDays,
-    coverage: {
-      realTenantName: isRealTenantName(currentTenancy?.tenant_name),
-      tenancyStart: Boolean(currentTenancy?.tenancy_start_date),
-      currentRent: currentRent !== null,
-      fixedTermEnd: Boolean(currentTenancy?.fixed_term_end_date),
-      rentDueDay: currentTenancy?.rent_due_day !== null && currentTenancy?.rent_due_day !== undefined,
-      lettingAgent: Boolean(currentTenancy?.letting_agent_organisation_id),
-    },
   };
 }
 
@@ -356,15 +331,6 @@ export function calculateRentalPerformance(
         recorded: upcoming.length,
       },
       currentVoids: unitResults.filter((result) => result.currentVoid).map((result) => ({ unit: result.unit, details: result.currentVoid as NonNullable<RentalUnitPerformance["currentVoid"]>, nextTenancy: result.nextTenancy })),
-    },
-    coverage: {
-      total: unitResults.length,
-      realTenantName: unitResults.filter((result) => result.coverage.realTenantName).length,
-      tenancyStart: unitResults.filter((result) => result.coverage.tenancyStart).length,
-      currentRent: unitResults.filter((result) => result.coverage.currentRent).length,
-      fixedTermEnd: unitResults.filter((result) => result.coverage.fixedTermEnd).length,
-      rentDueDay: unitResults.filter((result) => result.coverage.rentDueDay).length,
-      lettingAgent: unitResults.filter((result) => result.coverage.lettingAgent).length,
     },
   };
 }

@@ -33,6 +33,7 @@ import type {
 type AuditLogProps = AuditContext & {
   events: AuditEvent[];
   totalEvents: number;
+  buildingContextId: string;
 };
 
 type DateRange = "" | "today" | "7" | "30" | "90";
@@ -80,11 +81,10 @@ function inDateRange(createdAt: string, range: DateRange) {
   return date.valueOf() >= now.valueOf() - Number(range) * 86_400_000;
 }
 
-export function AuditLog({ events, totalEvents, profiles, buildings, units, organisations }: AuditLogProps) {
+export function AuditLog({ events, totalEvents, buildingContextId, profiles, buildings, units, organisations }: AuditLogProps) {
   const context = useMemo(() => ({ profiles, buildings, units, organisations }), [buildings, organisations, profiles, units]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<AuditCategory | "all">("all");
-  const [buildingId, setBuildingId] = useState("");
   const [eventType, setEventType] = useState("");
   const [userId, setUserId] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>("");
@@ -98,11 +98,14 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
     const changes = getAuditChanges(event);
     return { event, subject, actor, changes, category: getAuditCategory(event), change: auditChangeSummary(event, changes) };
   }), [context, events]);
+  const contextRows = useMemo(
+    () => buildingContextId ? rows.filter((row) => row.subject.buildingId === buildingContextId) : rows,
+    [buildingContextId, rows],
+  );
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return rows.filter((row) => {
+    return contextRows.filter((row) => {
       if (category !== "all" && row.category !== category) return false;
-      if (buildingId && row.subject.buildingId !== buildingId) return false;
       if (eventType && row.event.event_type !== eventType) return false;
       if (userId === "system" && row.event.created_by_user_id) return false;
       if (userId && userId !== "system" && row.event.created_by_user_id !== userId) return false;
@@ -111,12 +114,12 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
       return [row.subject.primary, row.subject.secondary, row.actor.name, row.change, row.event.summary, formatAuditEventType(row.event.event_type)]
         .filter(Boolean).join(" ").toLowerCase().includes(query);
     });
-  }, [buildingId, category, dateRange, eventType, rows, search, userId]);
+  }, [category, contextRows, dateRange, eventType, search, userId]);
 
-  const lastThirtyDays = rows.filter((row) => inDateRange(row.event.created_at, "30")).length;
-  const activeUsers = new Set(rows.filter((row) => inDateRange(row.event.created_at, "30") && row.event.created_by_user_id).map((row) => row.event.created_by_user_id)).size;
-  const latest = rows[0]?.event.created_at;
-  const hasFilters = Boolean(search || buildingId || eventType || userId || dateRange || category !== "all");
+  const lastThirtyDays = contextRows.filter((row) => inDateRange(row.event.created_at, "30")).length;
+  const activeUsers = new Set(contextRows.filter((row) => inDateRange(row.event.created_at, "30") && row.event.created_by_user_id).map((row) => row.event.created_by_user_id)).size;
+  const latest = contextRows[0]?.event.created_at;
+  const hasFilters = Boolean(search || eventType || userId || dateRange || category !== "all");
 
   useEffect(() => {
     if (!selectedEvent) return;
@@ -130,7 +133,6 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
   function resetFilters() {
     setSearch("");
     setCategory("all");
-    setBuildingId("");
     setEventType("");
     setUserId("");
     setDateRange("");
@@ -143,7 +145,7 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
         <p className="mt-0.5 text-sm text-[#617169]">A searchable history of important changes across the portal.</p>
 
         <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#e5e9e4] overflow-hidden rounded-md border border-[#e1e5df] bg-[#FAFBF9] text-sm lg:grid-cols-4 lg:divide-y-0">
-          <Summary label="Total events" value={String(totalEvents || events.length)} />
+          <Summary label="Total events" value={String(buildingContextId ? contextRows.length : totalEvents || events.length)} />
           <Summary label="Last 30 days" value={String(lastThirtyDays)} />
           <Summary label="Active users" value={String(activeUsers)} />
           <Summary label="Latest event" value={latest ? `${eventDate(latest)} · ${eventTime(latest)}` : "No events"} />
@@ -162,16 +164,12 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
           ))}
         </div>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(4,minmax(9rem,1fr))_auto]">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(3,minmax(9rem,1fr))_auto]">
           <label className="relative min-w-0">
             <span className="sr-only">Search audit log</span>
             <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-[#77847d]" />
             <input className={`field w-full pl-9 ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search subject, change or user" />
           </label>
-          <FilterSelect label="Building" value={buildingId} onChange={setBuildingId} active={Boolean(buildingId)}>
-            <option value="">All buildings</option>
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </FilterSelect>
           <FilterSelect label="Event" value={eventType} onChange={setEventType} active={Boolean(eventType)}>
             <option value="">All events</option>
             {eventTypes.map((type) => <option key={type} value={type}>{formatAuditEventType(type)}</option>)}
@@ -190,7 +188,7 @@ export function AuditLog({ events, totalEvents, profiles, buildings, units, orga
           </FilterSelect>
           <button type="button" className="secondary min-h-10 whitespace-nowrap px-3 disabled:opacity-40" onClick={resetFilters} disabled={!hasFilters}>Reset</button>
         </div>
-        <p className="mt-2 text-xs text-[#6A7770]">{filtered.length} of {events.length} loaded events shown{totalEvents > events.length ? ` · ${totalEvents} total retained` : ""}</p>
+        <p className="mt-2 text-xs text-[#6A7770]">{filtered.length} of {contextRows.length} loaded events shown{!buildingContextId && totalEvents > events.length ? ` · ${totalEvents} total retained` : ""}</p>
       </div>
 
       <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">

@@ -219,21 +219,7 @@ test("attention metrics find the longest void, largest reduction, current voids 
   assert.deepEqual(result.attention.upcomingFixedTerms, { within30Days: 1, within60Days: 2, within90Days: 3, recorded: 3 });
 });
 
-test("coverage counts real names and current-tenancy fields within active building scope", () => {
+test("placeholder tenant names are not treated as real names", () => {
   assert.equal(isRealTenantName("Tenant 1 (name not supplied)"), false);
   assert.equal(isRealTenantName("A Smith"), true);
-  const units = [unit("u-1"), unit("u-2"), unit("u-3", { rental_portfolio_status: "exited" })];
-  const tenancies = [
-    tenancy("a", { unit_id: "u-1" }),
-    tenancy("b", { unit_id: "u-2", tenant_name: "Tenant 2 (name not supplied)", fixed_term_end_date: null, rent_due_day: null, letting_agent_organisation_id: null }),
-    tenancy("c", { unit_id: "u-3" }),
-  ];
-  const result = calculateRentalPerformance(units, tenancies, { reportingDate: REPORTING_DATE });
-  assert.equal(result.coverage.total, 2);
-  assert.equal(result.coverage.realTenantName, 1);
-  assert.equal(result.coverage.tenancyStart, 2);
-  assert.equal(result.coverage.currentRent, 2);
-  assert.equal(result.coverage.fixedTermEnd, 0);
-  assert.equal(result.coverage.rentDueDay, 1);
-  assert.equal(result.coverage.lettingAgent, 1);
 });
