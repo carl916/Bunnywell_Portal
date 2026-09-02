@@ -84,6 +84,15 @@ export function totalHistoricalVoidDays(tenancies: UnitTenancy[]) {
   return tenancyHistoryMetrics(tenancies).reduce((total, item) => total + (item.voidDaysBefore ?? 0), 0);
 }
 
+export function adjacentRentalUnits<T extends Pick<Unit, "id">>(units: T[], selectedUnitId: string) {
+  const selectedIndex = units.findIndex((unit) => unit.id === selectedUnitId);
+  if (selectedIndex < 0) return { previousUnit: null, nextUnit: null };
+  return {
+    previousUnit: selectedIndex > 0 ? units[selectedIndex - 1] : null,
+    nextUnit: selectedIndex < units.length - 1 ? units[selectedIndex + 1] : null,
+  };
+}
+
 export function rentalOccupancy(unit: Pick<Unit, "rental_portfolio_status">, tenancies: UnitTenancy[], today = todayDate()) {
   if (unit.rental_portfolio_status !== "active") return "not_in_portfolio" as const;
   return activeTenancy(tenancies, today) ? "occupied" as const : "void" as const;

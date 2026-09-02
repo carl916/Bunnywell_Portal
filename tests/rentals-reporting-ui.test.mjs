@@ -63,6 +63,15 @@ test("Rental File is compact and History displays lifetime performance", () => {
   }
 });
 
+test("Rental File restores the portfolio position and offers discreet adjacent-unit navigation", () => {
+  assert.match(workspace, /rentalListScrollYRef\.current = window\.scrollY/);
+  assert.match(workspace, /window\.scrollTo\(\{ top: savedScrollY, behavior: "auto" \}\)/);
+  assert.match(workspace, /getElementById\("rental-unit-list"\).*scrollIntoView/);
+  assert.match(workspace, /previousUnit && <button[^>]+aria-label=\{`Previous rental unit/);
+  assert.match(workspace, /nextUnit && <button[^>]+aria-label=\{`Next rental unit/);
+  assert.match(workspace, /adjacentRentalUnits\(filteredUnits, selectedUnitId\)/);
+});
+
 test("Current tenancy prioritises core information and subdues provenance", () => {
   assert.match(workspace, />Tenant<\/dt>/);
   assert.match(workspace, />Tenancy<\/dt>/);

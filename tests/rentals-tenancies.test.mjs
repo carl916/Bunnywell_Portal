@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import {
-  activeTenancy,
+  adjacentRentalUnits,
   currentVoidDays,
   rentChange,
   rentalOccupancy,
@@ -71,6 +71,14 @@ test("rent changes support increases, reductions and no prior tenancy", () => {
   assert.deepEqual(rentChange(1200, 1000), { amount: 200, percentage: 0.2 });
   assert.deepEqual(rentChange(1100, 1225), { amount: -125, percentage: -125 / 1225 });
   assert.equal(rentChange(1200, null), null);
+});
+
+test("rental file navigation follows the visible unit order and stops at each edge", () => {
+  const units = [unit({ id: "u-1" }), unit({ id: "u-2" }), unit({ id: "u-3" })];
+  assert.deepEqual(adjacentRentalUnits(units, "u-1"), { previousUnit: null, nextUnit: units[1] });
+  assert.deepEqual(adjacentRentalUnits(units, "u-2"), { previousUnit: units[0], nextUnit: units[2] });
+  assert.deepEqual(adjacentRentalUnits(units, "u-3"), { previousUnit: units[1], nextUnit: null });
+  assert.deepEqual(adjacentRentalUnits(units, "missing"), { previousUnit: null, nextUnit: null });
 });
 
 test("rent roll includes only active tenancies and annualises monthly rent", () => {

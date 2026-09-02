@@ -48,3 +48,6 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Sensitive rental source workbooks must remain outside Git.
+**/*Rent_Arrears_Import*.xlsx

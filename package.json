@@ -14,8 +14,9 @@
     "docs:pdf": "node scripts/generate-system-guide-pdf.mjs",
     "seed:staging": "node scripts/seed-staging.mjs",
     "import:trinity-tenancies": "node scripts/one-off-trinity-point-tenancies.mjs",
+    "import:trinity-rent-risk": "node scripts/import-trinity-point-rent-risk.mjs",
     "test:sales-permissions": "node --test tests/sales-permissions.test.mjs",
-    "test:rentals": "node --test tests/rentals-tenancies.test.mjs tests/rentals-performance.test.mjs tests/rentals-reporting-ui.test.mjs",
+    "test:rentals": "node --test tests/rentals-tenancies.test.mjs tests/rentals-performance.test.mjs tests/rentals-reporting-ui.test.mjs tests/rentals-rent-risk.test.mjs tests/rentals-rent-risk-contract.test.mjs",
     "test:sales": "node --test tests/sales-permissions.test.mjs tests/sales-reservation-redaction.test.mjs tests/sales-deal-structure.test.mjs tests/sales-currency.test.mjs tests/sales-commercial-model.test.mjs tests/sales-default-cascade.test.mjs tests/sales-exchange-sequence.test.mjs tests/sales-agent-fees.test.mjs tests/sales-payment-corrections.test.mjs tests/sales-agent-fees-portfolio.test.mjs tests/sales-unit-detail-sections.test.mjs tests/building-structure-unit-safety.test.mjs tests/commercial-unit-allocation.test.mjs tests/setup-ui-refactor.test.mjs tests/notifications.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -42,6 +43,7 @@
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "exceljs": "^4.4.0"
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1"
   }
 }
