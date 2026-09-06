@@ -16,6 +16,14 @@ import { SalesForecastingModule } from "@/components/portal/sales/SalesForecasti
 import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio";
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
 import { useActivePanel } from "@/hooks/useActivePanel";
+import { historicalActorLabel } from "@/lib/sales/actor-identity";
+import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
+import styles from "./SalesReservationWorkflow.module.css";
+import {
+  SALES_ROUTE_STATUSES,
+  isSalesRouteUnit,
+  saleStatusLabel,
+} from "@/lib/units/commercial-allocation";
 
 type Profile = {
   id: string;
@@ -205,17 +213,25 @@ type SaleInvoicePayment = {
   void_reason: string | null;
 };
 
-type SalesStageFilter = Unit["sale_status"] | "all";
+type SalesStageFilter = (typeof SALES_ROUTE_STATUSES)[number] | "all";
 type SaleWorkflowStage = "reservation" | "exchange" | "completion" | "handover";
 type SalesView = "pipeline" | "agent_fees";
 type UnitSaleSection = SaleFileWorkspace;
 
+type ApprovalHistoryEvent = {
+  id: string;
+  label: string;
+  occurredAt: string | null;
+  actor: string;
+};
+
 const SALES_PAGE_SIZE = 12;
 const SALES_STAGE_FILTERS: Array<{ value: SalesStageFilter; label: string }> = [
-  { value: "for_sale", label: "For Sale" },
+  { value: "for_sale", label: "For sale" },
   { value: "reserved", label: "Reserved" },
   { value: "exchanged", label: "Exchanged" },
   { value: "completed", label: "Completed" },
+  { value: "handed_over", label: "Handed over" },
   { value: "all", label: "All sales" },
 ];
 
@@ -252,14 +268,6 @@ function formatDate(value?: string | null) {
 function formatDateTime(value?: string | null) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
-}
-
-function formatNarrativeDateTime(value?: string | null) {
-  if (!value) return "an unrecorded date";
-  const date = new Date(value);
-  const calendarDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(date);
-  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(date);
-  return `${calendarDate} at ${time}`;
 }
 
 function paymentRecorderLabel(payment: SaleInvoicePayment, profiles: Profile[], organisations: Organisation[]) {
@@ -327,18 +335,17 @@ function statusLabel(status: string) {
   return labels[status] ?? status.replace(/_/g, " ");
 }
 
-function saleStatusLabel(status: Unit["sale_status"]) {
-  const labels: Record<Unit["sale_status"], string> = {
-    for_sale: "For Sale",
-    reserved: "Reserved",
-    exchanged: "Exchanged",
-    completed: "Completed",
-    handed_over: "Handed Over",
-  };
-  return labels[status] ?? status;
-}
-
 const SALE_STATUS_TONES: Record<Unit["sale_status"], { badge: string; dot: string; row: string }> = {
+  not_released: {
+    badge: "border-[#d8ddd7] bg-[#f2f4f0] text-[#617169]",
+    dot: "bg-[#829188]",
+    row: "bg-white hover:bg-[#fafbf9]",
+  },
+  not_for_sale: {
+    badge: "border-[#decda6] bg-[#fbf5e8] text-[#765a18]",
+    dot: "bg-[#d6a23a]",
+    row: "bg-white hover:bg-[#fafbf9]",
+  },
   for_sale: {
     badge: "border-[#d8ddd7] bg-[#f2f4f0] text-[#52645b]",
     dot: "bg-[#829188]",
@@ -475,6 +482,20 @@ function SaleMetadataStrip({ items }: { items: Array<{ label: string; value: Rea
         </div>
       ))}
     </dl>
+  );
+}
+
+function ApprovalEventHistory({ events }: { events: ApprovalHistoryEvent[] }) {
+  return (
+    <ol className="mt-3 divide-y divide-[#eef0eb] text-sm" aria-label="Reservation approval history">
+      {events.map((event) => (
+        <li key={event.id} className={`grid min-w-0 gap-y-1 py-3 first:pt-0 last:pb-0 ${styles.approvalEventRow}`}>
+          <strong className={`min-w-0 break-words font-semibold text-[#34413a] ${styles.approvalEventName}`}>{event.label}</strong>
+          <time className="numeric-value whitespace-nowrap text-[#617169]" dateTime={event.occurredAt ?? undefined}>{formatDateTime(event.occurredAt)}</time>
+          <span className="min-w-0 break-words text-[#617169]"><span className={`mr-1 ${styles.approvalEventSeparator}`} aria-hidden="true">·</span>{event.actor}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -980,6 +1001,7 @@ export function SalesReservationWorkflow({
   buildings,
   buildingFloors,
   units,
+  buildingContextId,
   onNotice,
   reloadPortalData,
 }: {
@@ -990,6 +1012,7 @@ export function SalesReservationWorkflow({
   buildings: Building[];
   buildingFloors: BuildingFloor[];
   units: Unit[];
+  buildingContextId: string;
   onNotice: (notice: string) => void;
   reloadPortalData: () => Promise<void>;
 }) {
@@ -999,10 +1022,10 @@ export function SalesReservationWorkflow({
   const pendingWorkflowStageScrollRef = useRef<SaleWorkflowStage | null>(null);
   const completionReviewSubmissionInFlightRef = useRef(false);
   const completionRecordSubmissionInFlightRef = useRef(false);
-  const [buildingId, setBuildingId] = useState(buildings[0]?.id ?? "");
+  const buildingId = buildingContextId;
   const buildingUnits = useMemo(
     () => sortUnitsByFloorOrder(
-      units.filter((unit) => unit.building_id === buildingId),
+      units.filter((unit) => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit)),
       buildingFloors,
       buildingId,
     ),
@@ -1079,6 +1102,7 @@ export function SalesReservationWorkflow({
   const [completionQueryNote, setCompletionQueryNote] = useState("");
   const [completionDate, setCompletionDate] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [returnToForSaleReason, setReturnToForSaleReason] = useState("");
   const [invoiceRejectionReason, setInvoiceRejectionReason] = useState("");
   const [completionInvoiceRejectionReason, setCompletionInvoiceRejectionReason] = useState("");
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState("");
@@ -1092,6 +1116,7 @@ export function SalesReservationWorkflow({
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
   const [showForecasting, setShowForecasting] = useState(false);
   const [showRejectReservationConfirm, setShowRejectReservationConfirm] = useState(false);
+  const [showReturnToForSaleConfirm, setShowReturnToForSaleConfirm] = useState(false);
   const [showRejectInvoiceConfirm, setShowRejectInvoiceConfirm] = useState(false);
   const [showRejectCompletionInvoiceConfirm, setShowRejectCompletionInvoiceConfirm] = useState(false);
   const invoiceRejectionInputRef = useRef<HTMLInputElement | null>(null);
@@ -1118,9 +1143,12 @@ export function SalesReservationWorkflow({
   const canApproveCompletionDocuments = canPerformSalesAction(role, "approve_completion_documents");
   const canRecordCompletion = canPerformSalesAction(role, "record_completion");
   const selectedUnit = units.find((unit) => unit.id === unitId);
-  const selectedBuilding = buildings.find((building) => building.id === buildingId);
-  const selectedBuildingDefault = buildingSaleDefaults.find((item) => item.building_id === buildingId) ?? null;
+  const selectedBuilding = buildings.find((building) => building.id === (selectedUnit?.building_id ?? buildingId));
+  const scopeBuilding = buildings.find((building) => building.id === buildingId);
+  const selectedBuildingDefault = buildingSaleDefaults.find((item) => item.building_id === (selectedUnit?.building_id ?? buildingId)) ?? null;
   const activeAttempt = attempts.find((attempt) => attempt.unit_id === unitId && attempt.is_active);
+  const canReturnToForSale = canPerformSalesAction(role, "fail_reservation")
+    && Boolean(activeAttempt?.is_active && canReturnUnitToForSale(activeAttempt.workflow_status));
   const failedAttempts = attempts.filter((attempt) => attempt.unit_id === unitId && attempt.workflow_status === "fallen_through");
   const activeTerms = activeAttempt ? terms.find((item) => item.sale_attempt_id === activeAttempt.id && item.is_current) : null;
   const reservationDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "reservation_form") : null;
@@ -1164,9 +1192,7 @@ export function SalesReservationWorkflow({
   const completionRecorded = activeAttempt ? activeAttempt.workflow_status === "completed" || Boolean(activeAttempt.completed_at) : false;
 
   function actorName(userId?: string | null) {
-    if (!userId) return "Not recorded";
-    const actor = profiles.find((item) => item.id === userId);
-    return actor?.full_name || actor?.name || actor?.email || "Unknown user";
+    return historicalActorLabel({ userId, profiles, fallback: userId ? "Unknown user" : "Not recorded" });
   }
 
   const commercialApprovedBy = actorName(commercialApprovalEvent?.created_by_user_id ?? activeAttempt?.commercial_approved_by_user_id);
@@ -1371,9 +1397,41 @@ export function SalesReservationWorkflow({
   const todayDate = new Date().toISOString().slice(0, 10);
   const buyerIdentityEntered = Boolean(buyerPersonName.trim() || buyerCompanyName.trim());
   const buyerDetailsComplete = buyerIdentityEntered && Boolean(buyerEmail.trim()) && Boolean(buyerPhone.trim()) && Boolean(buyerSolicitorName.trim());
-  const submittedByName = activeAttempt?.reservation_submitted_by_name ?? "-";
-  const approvedByName = activeAttempt?.reservation_approved_by_name ?? activeAttempt?.reservation_approved_by_email ?? activeAttempt?.reservation_approved_by_user_id ?? "-";
-  const rejectionByName = activeAttempt?.reservation_rejected_by_name ?? activeAttempt?.reservation_rejected_by_email ?? activeAttempt?.reservation_rejected_by_user_id ?? "-";
+  const submittedByName = historicalActorLabel({
+    snapshotName: activeAttempt?.reservation_submitted_by_name,
+    snapshotEmail: activeAttempt?.reservation_submitted_by_email,
+    userId: activeAttempt?.reservation_submitted_by_user_id,
+    profiles,
+    fallback: "-",
+  });
+  const approvedByName = historicalActorLabel({
+    snapshotName: activeAttempt?.reservation_approved_by_name,
+    snapshotEmail: activeAttempt?.reservation_approved_by_email,
+    userId: activeAttempt?.reservation_approved_by_user_id,
+    profiles,
+    fallback: "-",
+  });
+  const approvalHistoryEvents: ApprovalHistoryEvent[] = activeAttempt ? [
+    {
+      id: `${activeAttempt.id}-reservation-submitted`,
+      label: "Reservation submitted",
+      occurredAt: activeAttempt.reservation_submitted_at,
+      actor: submittedByName,
+    },
+    {
+      id: `${activeAttempt.id}-reservation-approved`,
+      label: "Approved",
+      occurredAt: activeAttempt.reservation_approved_at,
+      actor: approvedByName,
+    },
+  ] : [];
+  const rejectionByName = historicalActorLabel({
+    snapshotName: activeAttempt?.reservation_rejected_by_name,
+    snapshotEmail: activeAttempt?.reservation_rejected_by_email,
+    userId: activeAttempt?.reservation_rejected_by_user_id,
+    profiles,
+    fallback: "-",
+  });
   const formalReservationDate = activeAttempt?.reservation_date ?? reservationDate;
   const reservationDateMissing = !formalReservationDate;
   const reservationDateIsFuture = Boolean(formalReservationDate && formalReservationDate > todayDate);
@@ -1511,7 +1569,7 @@ export function SalesReservationWorkflow({
   const forecastRevenue = buildingUnits.reduce((total, unit) => total + unitSaleValue(unit), 0);
   const netSalesProceeds = buildingUnits.reduce((total, unit) => total + developerNetForTerms(currentTermForUnit(unit)), 0);
   const saleValuesCount = buildingUnits.filter((unit) => unitSaleValue(unit) > 0).length;
-  const pipelineSummary = (["for_sale", "reserved", "exchanged", "completed"] as const).map((status) => {
+  const pipelineSummary = SALES_ROUTE_STATUSES.map((status) => {
     const stageUnits = buildingUnits.filter((unit) => unit.sale_status === status);
     return {
       status,
@@ -1522,7 +1580,9 @@ export function SalesReservationWorkflow({
   });
   const filteredSalesUnits = buildingUnits.filter((unit) => {
     const matchesStatus = salesStageFilter === "all" || unit.sale_status === salesStageFilter;
-    const matchesSearch = unit.unit_number.toLowerCase().includes(salesSearch.trim().toLowerCase());
+    const searchValue = salesSearch.trim().toLowerCase();
+    const buildingName = buildings.find((building) => building.id === unit.building_id)?.name ?? "";
+    const matchesSearch = unit.unit_number.toLowerCase().includes(searchValue) || buildingName.toLowerCase().includes(searchValue);
     return matchesStatus && matchesSearch;
   });
   const salesPageCount = Math.max(1, Math.ceil(filteredSalesUnits.length / SALES_PAGE_SIZE));
@@ -1548,7 +1608,6 @@ export function SalesReservationWorkflow({
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     params.set("screen", "sales");
-    if (next.building) params.set("salesBuildingId", next.building);
     if (next.unit === null) params.delete("salesUnitId");
     if (next.unit) params.set("salesUnitId", next.unit);
     if (next.filter === null) params.delete("salesFilter");
@@ -1564,7 +1623,6 @@ export function SalesReservationWorkflow({
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
     manuallySelectedWorkflowStageRef.current = null;
     pendingAgentFeesScrollRef.current = focusAgentFees ? "exchange" : null;
-    setBuildingId(nextBuildingId);
     setUnitId(nextUnitId);
     setSelectedSaleUnitId(nextUnitId);
     setActiveSalesView("pipeline");
@@ -1614,22 +1672,16 @@ export function SalesReservationWorkflow({
   useEffect(() => {
     if (hasReadSalesUrl || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const urlBuildingId = params.get("salesBuildingId");
     const urlUnitId = params.get("salesUnitId");
     const urlFilter = params.get("salesFilter") as SalesStageFilter | null;
     const urlView = params.get("salesView");
     const urlSection = params.get("section") as UnitSaleSection | null;
-
-    if (urlBuildingId && buildings.some((building) => building.id === urlBuildingId)) {
-      setBuildingId(urlBuildingId);
-    }
 
     if (urlUnitId && units.some((unit) => unit.id === urlUnitId)) {
       const urlUnit = units.find((unit) => unit.id === urlUnitId);
       setUnitId(urlUnitId);
       setSelectedSaleUnitId(urlUnitId);
       if (urlUnit) {
-        setBuildingId(urlUnit.building_id);
         setActiveWorkflowStage(workflowStageForUnit(urlUnit));
       }
       if (urlSection === "financials" || urlSection === "commercial") {
@@ -1687,14 +1739,17 @@ export function SalesReservationWorkflow({
   }, [activeWorkflowStage, selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
 
   useEffect(() => {
-    if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
-    if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
-  }, [buildingId, buildings]);
-
-  useEffect(() => {
-    if (buildingUnits.length > 0 && !buildingUnits.some((unit) => unit.id === unitId)) setUnitId(buildingUnits[0].id);
-    if (buildingUnits.length === 0 && unitId) setUnitId("");
-  }, [buildingUnits, unitId]);
+    const timer = window.setTimeout(() => {
+      if (selectedSaleUnitId && !buildingUnits.some((unit) => unit.id === selectedSaleUnitId)) {
+        setSelectedSaleUnitId("");
+        setActiveUnitSection("progression");
+        writeSalesUrl({ unit: null, filter: salesStageFilter, view: activeSalesView, section: null });
+      }
+      if (buildingUnits.length > 0 && !buildingUnits.some((unit) => unit.id === unitId)) setUnitId(buildingUnits[0].id);
+      if (buildingUnits.length === 0 && unitId) setUnitId("");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeSalesView, buildingUnits, salesStageFilter, selectedSaleUnitId, unitId]);
 
   useEffect(() => {
     if (!activeAttempt) {
@@ -1837,9 +1892,11 @@ export function SalesReservationWorkflow({
     setCompletionQueryNote(completionStatementDocument?.query_note ?? statementOfAccountDocument?.query_note ?? "");
     setCompletionDate(activeAttempt.completed_at ?? "");
     setRejectionReason("");
+    setReturnToForSaleReason("");
     setInvoiceRejectionReason("");
     setCompletionInvoiceRejectionReason("");
     setShowRejectReservationConfirm(false);
+    setShowReturnToForSaleConfirm(false);
     setShowRejectInvoiceConfirm(false);
     setShowRejectCompletionInvoiceConfirm(false);
     setShowAdvancedDealSetup(false);
@@ -1847,14 +1904,11 @@ export function SalesReservationWorkflow({
 
   async function loadSalesData() {
     const supabase = createSupabaseBrowserClient();
-    if (buildingId) {
-      const { data: defaultRows, error: defaultsError } = await supabase
-        .from("building_sale_defaults")
-        .select("*")
-        .eq("building_id", buildingId);
-      if (defaultsError) onNotice(defaultsError.message);
-      else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
-    }
+    let defaultsQuery = supabase.from("building_sale_defaults").select("*");
+    if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
+    const { data: defaultRows, error: defaultsError } = await defaultsQuery;
+    if (defaultsError) onNotice(defaultsError.message);
+    else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
 
     if (buildingUnits.length === 0) {
       setAttempts([]);
@@ -2031,6 +2085,8 @@ export function SalesReservationWorkflow({
     const action = typeof body.action === "string" ? body.action : "";
     const fallback = action === "save_commercial_model" || action === "save_commercial_package"
       ? "Commercial model could not be saved."
+      : action === "return_unit_for_sale"
+        ? "The reservation attempt could not be cancelled."
       : "Reservation could not be completed.";
     const payload = await readApiPayload<{ error?: string; saleAttemptId?: string; voided?: boolean; paymentStatus?: string }>(response, fallback);
     if (!response.ok) throw new Error(payload.error ?? fallback);
@@ -2273,6 +2329,32 @@ export function SalesReservationWorkflow({
       await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Commercial package could not be approved.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function returnUnitToForSale() {
+    if (!activeAttempt || !selectedUnit || !canReturnToForSale) return;
+    if (!returnToForSaleReason.trim()) {
+      onNotice("Add a reason for cancelling the reservation attempt.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await postReservationJson({
+        action: "return_unit_for_sale",
+        saleAttemptId: activeAttempt.id,
+        returnReason: returnToForSaleReason,
+      });
+      onNotice(`Reservation attempt cancelled. Unit ${selectedUnit.unit_number} returned to For sale, with the previous attempt retained in Reservation history.`);
+      setShowReturnToForSaleConfirm(false);
+      setReturnToForSaleReason("");
+      manuallySelectedWorkflowStageRef.current = "reservation";
+      setActiveWorkflowStage("reservation");
+      await Promise.all([loadSalesData(), reloadPortalData()]);
+    } catch (error) {
+      onNotice(error instanceof Error ? error.message : "The reservation attempt could not be cancelled.");
     } finally {
       setIsSaving(false);
     }
@@ -2527,7 +2609,12 @@ export function SalesReservationWorkflow({
             <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
             <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
           </section>
-          <AgentFeesPortfolio requesterId={profile?.id ?? user.id} onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)} />
+          <AgentFeesPortfolio
+            requesterId={profile?.id ?? user.id}
+            buildingContextId={buildingId}
+            buildingContextName={scopeBuilding?.name ?? "Selected building"}
+            onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
+          />
         </div>
       );
     }
@@ -2535,54 +2622,35 @@ export function SalesReservationWorkflow({
     return (
       <div className="grid gap-5">
         <section className="panel">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <div>
               <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
-              {selectedBuilding && (
-                <>
-                  <span className="hidden h-6 border-l border-[#d9ded6] sm:block" />
-                  <span className="text-base font-semibold text-[#34413a]">{selectedBuilding.name}</span>
-                </>
-              )}
-              <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#617169]">
-                {buildingUnits.length} total units
-              </span>
-              <span className="text-sm text-[#617169]">Updated from current portal data</span>
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-[#617169]">
+                <strong className="font-semibold text-[#34413a]">{scopeBuilding?.name ?? "All buildings"}</strong>
+                <span aria-hidden="true">·</span>
+                <span>{buildingUnits.length} {buildingUnits.length === 1 ? "unit" : "units"} in the sales route</span>
+              </p>
             </div>
-            <label className="field-label lg:w-[320px]">
-              Building
-              <select
-                className="field"
-                value={buildingId}
-                onChange={(event) => {
-                  setBuildingId(event.target.value);
-                  setSelectedSaleUnitId("");
-                  writeSalesUrl({ building: event.target.value, unit: null, filter: salesStageFilter });
-                }}
-              >
-                {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-              </select>
-            </label>
           </div>
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
 
-        <section className="panel">
+        <section className={`panel ${styles.financialOverview}`}>
           <div>
             <h3 className="text-xl font-bold text-[#0F3D2E]">Financial overview</h3>
-            <p className="mt-1 text-sm text-[#617169]">Forecast sales position for the selected building.</p>
+            <p className="mt-1 text-sm text-[#617169]">Forecast sales position for units currently in the sales route.</p>
           </div>
-          <div className="mt-5 grid gap-4 xl:grid-cols-3">
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <div className={`mt-5 grid gap-4 ${styles.financialOverviewGrid}`}>
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Revenue view</h4>
-              <p className="mt-1 text-sm text-[#617169]">List-price baseline compared with current sales forecast.</p>
+              <p className="mt-1 text-sm text-[#617169]">Sales-route list-price baseline compared with the current forecast.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Baseline GDV</span><strong className="numeric-value text-right">{money(baselineGdv)}</strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast revenue</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(forecastRevenue)}</strong></div>
                 <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value text-right">{money(forecastRevenue - baselineGdv)}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Cost / debt view</h4>
               <p className="mt-1 text-sm text-[#617169]">Core assumptions will be set in forecasting.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2591,14 +2659,14 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Net sales proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(netSalesProceeds)}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard} ${styles.profitCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Profit view</h4>
-              <p className="mt-1 text-sm text-[#617169]">Forecast return once scheme cost and debt assumptions exist.</p>
+              <p className="mt-1 text-sm text-[#617169]">Profitability will appear once scheme costs and debt have been added.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast profit</span><strong className="numeric-value text-right">-</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Profit margin</span><strong className="numeric-value text-right">-</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Return on cost</span><strong className="numeric-value text-right">-</strong></div>
-                <div className="flex justify-between gap-4"><span>Valued sale records</span><strong className="numeric-value text-right">{saleValuesCount} of {buildingUnits.length}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast profit</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Profit margin</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Return on cost</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
+                <div className="flex justify-between gap-4"><span>Units with sale values</span><strong className="numeric-value text-right">{saleValuesCount} of {buildingUnits.length}</strong></div>
               </div>
             </div>
           </div>
@@ -2609,7 +2677,7 @@ export function SalesReservationWorkflow({
             <h3 className="text-xl font-bold text-[#0F3D2E]">Sales pipeline</h3>
             <p className="mt-1 text-sm text-[#617169]">Click a stage to filter the sales table.</p>
           </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {pipelineSummary.map((stage) => (
               <button
                 key={stage.status}
@@ -2652,7 +2720,7 @@ export function SalesReservationWorkflow({
             </div>
             <label className="field-label lg:w-[320px]">
               Search
-              <input className="field" value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder="Unit number" />
+              <input className="field" value={salesSearch} onChange={(event) => setSalesSearch(event.target.value)} placeholder={buildingId ? "Unit number" : "Unit or building"} />
             </label>
           </div>
 
@@ -2661,6 +2729,7 @@ export function SalesReservationWorkflow({
               <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                 <tr>
                   <th className="border-b border-[#d9ded6] px-4 py-3">Unit</th>
+                  {!buildingId && <th className="border-b border-[#d9ded6] px-4 py-3">Building</th>}
                   <th className="border-b border-[#d9ded6] px-4 py-3">Stage</th>
                   <th className="border-b border-[#d9ded6] px-4 py-3 text-right">Price</th>
                   <th className="border-b border-[#d9ded6] px-4 py-3">Next action</th>
@@ -2670,7 +2739,7 @@ export function SalesReservationWorkflow({
               <tbody>
                 {pagedSalesUnits.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-center text-[#617169]" colSpan={5}>No units match this view.</td>
+                    <td className="px-4 py-6 text-center text-[#617169]" colSpan={buildingId ? 5 : 6}>No units match this view.</td>
                   </tr>
                 ) : pagedSalesUnits.map((unit) => {
                   const attempt = activeAttemptByUnit.get(unit.id);
@@ -2682,6 +2751,7 @@ export function SalesReservationWorkflow({
                       onClick={() => openSaleFile(unit.id)}
                     >
                       <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]">Unit {unit.unit_number}</td>
+                      {!buildingId && <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"}</td>}
                       <td className="border-b border-[#eef0eb] px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${stageTone.badge}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${stageTone.dot}`} aria-hidden="true" />
@@ -2713,11 +2783,12 @@ export function SalesReservationWorkflow({
               <h3 className="text-xl font-bold text-[#0F3D2E]">Forecasting</h3>
               <p className="mt-1 text-sm text-[#617169]">Building-level scenario modelling for sell, retain, rent and refinance assumptions.</p>
             </div>
-            <button className="secondary" onClick={() => setShowForecasting((value) => !value)}>
+            <button className="secondary" onClick={() => setShowForecasting((value) => !value)} disabled={!buildingId}>
               {showForecasting ? "Hide forecasting" : "Open forecasting"}
             </button>
           </div>
-          {showForecasting && (
+          {!buildingId && <p className="mt-3 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-3 text-sm text-[#617169]">Select a building in the app header to use building-level forecasting.</p>}
+          {showForecasting && buildingId && (
             <div className="mt-5">
               <SalesForecastingModule
                 user={user}
@@ -2763,7 +2834,7 @@ export function SalesReservationWorkflow({
                 {buildingUnits.length === 0 && <option value="">No units available</option>}
                 {buildingUnits
                   .filter((unit) => !salesSearch.trim() || unit.unit_number.toLowerCase().includes(salesSearch.trim().toLowerCase()))
-                  .map((unit) => <option key={unit.id} value={unit.id}>Unit {unit.unit_number} - {saleStatusLabel(unit.sale_status)}</option>)}
+                  .map((unit) => <option key={unit.id} value={unit.id}>{!buildingId ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}Unit {unit.unit_number} - {saleStatusLabel(unit.sale_status)}</option>)}
               </select>
             </label>
           </div>
@@ -3233,13 +3304,47 @@ export function SalesReservationWorkflow({
                     </div>
                     {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                   </section>
-                  <section className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+                  <section className={`rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5 ${styles.approvalHistoryCard}`}>
                     <h5 className="font-bold text-[#0F3D2E]">Approval</h5>
-                    <p className="mt-3 text-sm leading-7 text-[#52645b] sm:text-base">
-                      Reservation submitted on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_submitted_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{submittedByName}</strong> and approved on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_approved_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{approvedByName}</strong>.
-                    </p>
+                    <ApprovalEventHistory events={approvalHistoryEvents} />
                   </section>
                   </div>
+              )}
+
+              {canReturnToForSale && (
+                <details className="mt-6 border-t border-[#d9ded6] pt-4">
+                  <summary className="w-fit cursor-pointer text-xs font-semibold text-[#617169] underline decoration-[#aeb8b2] underline-offset-4 hover:text-[#0F3D2E]">
+                    Reservation options
+                  </summary>
+                  <div className="mt-3 max-w-2xl rounded-md border border-[#e2ded3] bg-white p-3">
+                    {!showReturnToForSaleConfirm ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-[#617169]">Use this only when the current reservation or reservation attempt will not proceed.</p>
+                        <button
+                          className="text-xs font-semibold text-[#7a271a] underline decoration-[#d9aaa2] underline-offset-4 hover:text-[#591b12]"
+                          type="button"
+                          onClick={() => setShowReturnToForSaleConfirm(true)}
+                          disabled={isSaving}
+                        >
+                          Cancel reservation attempt
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <h5 className="font-bold text-[#7a271a]">Cancel this reservation attempt?</h5>
+                        <p className="mt-1 text-sm text-[#6f514b]">This closes the current pre-exchange sale attempt and returns Unit {selectedUnit.unit_number} to For sale. Buyer contact and solicitor details will be cleared; the buyer name, reservation date, reservation form and cancellation reason remain in Reservation history.</p>
+                        <label className="field-label mt-3">
+                          Cancellation reason
+                          <textarea className="field min-h-24" value={returnToForSaleReason} onChange={(event) => setReturnToForSaleReason(event.target.value)} disabled={isSaving} placeholder="Explain why this reservation attempt has ended" />
+                        </label>
+                        <div className="mt-3 flex flex-wrap justify-end gap-2">
+                          <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { setShowReturnToForSaleConfirm(false); setReturnToForSaleReason(""); }} disabled={isSaving}>Keep reservation attempt</button>
+                          <button className="danger-button min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void returnUnitToForSale()} disabled={isSaving || !returnToForSaleReason.trim()}>{isSaving ? "Cancelling…" : "Confirm cancellation"}</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </details>
               )}
 
             </StageWorkspace>
@@ -3816,13 +3921,41 @@ export function SalesReservationWorkflow({
             <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-4">
               <h4 className="text-base font-bold text-[#0F3D2E]">Reservation history</h4>
               <div className="mt-3 grid gap-2">
-                {failedAttempts.map((attempt) => (
-                  <div key={attempt.id} className="rounded-md border border-[#e2ded3] bg-white p-3 text-sm">
-                    <p className="font-semibold text-[#34413a]">Attempt {attempt.attempt_number} failed {formatDate(attempt.fallen_through_at)}</p>
-                    <p className="mt-1 text-[#617169]">{attempt.fall_through_reason ?? "No reason recorded."}</p>
-                    <p className="mt-1 text-xs font-semibold uppercase text-[#617169]">Buyer data and active documents redacted</p>
-                  </div>
-                ))}
+                {failedAttempts.map((attempt) => {
+                  const reservationFormDocument = documents.find((document) => document.sale_attempt_id === attempt.id && document.document_type === "reservation_form" && !document.redacted_at);
+                  const reservationFormVersion = reservationFormDocument
+                    ? versions
+                      .filter((version) => version.document_id === reservationFormDocument.id && !version.redacted_at)
+                      .sort((a, b) => Number(b.is_current) - Number(a.is_current) || b.version_number - a.version_number)[0] ?? null
+                    : null;
+
+                  return (
+                    <div key={attempt.id} className="rounded-md border border-[#e2ded3] bg-white p-3 text-sm">
+                      <p className="font-semibold text-[#34413a]">Attempt {attempt.attempt_number} ended {formatDate(attempt.fallen_through_at)}</p>
+                      <p className="mt-1 text-[#617169]">{attempt.fall_through_reason ?? "No reason recorded."}</p>
+                      <dl className="mt-3 grid gap-2 border-t border-[#eef0eb] pt-3 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Buyer</dt>
+                          <dd className="mt-1 whitespace-pre-line font-semibold text-[#34413a]">{buyerDisplay(attempt)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Reservation date</dt>
+                          <dd className="mt-1 font-semibold text-[#34413a]">{attempt.reservation_date ? formatDate(attempt.reservation_date) : "Not recorded"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Reservation form</dt>
+                          <dd className="mt-1">
+                            {reservationFormVersion ? (
+                              <button className="font-semibold text-[#0F3D2E] underline underline-offset-2" type="button" onClick={() => void openDocumentVersion(reservationFormVersion)}>
+                                {reservationFormVersion.file_name}
+                              </button>
+                            ) : "Not available"}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

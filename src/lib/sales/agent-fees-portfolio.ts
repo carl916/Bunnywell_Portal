@@ -4,6 +4,7 @@ import {
   type AgentFeeMilestone,
   type AgentFeePayment,
 } from "./agent-fees.ts";
+import { isSalesRouteStatus } from "../units/commercial-allocation.ts";
 
 export type AgentFeePortfolioInvoice = {
   id: string;
@@ -79,6 +80,7 @@ export type AgentFeePortfolioRow = {
   currentOutstanding: number;
   futureCompletionFeeNet: number;
   overallStatus: AgentFeePortfolioStatus;
+  noLongerForSale: boolean;
 };
 
 const exchangeInvoiceDueStatuses = new Set([
@@ -181,6 +183,7 @@ function derivePortfolioInvoiceState(input: {
 }
 
 export function deriveAgentFeePortfolioRow(input: AgentFeePortfolioInput): AgentFeePortfolioRow {
+  const onSalesRoute = isSalesRouteStatus(input.unitSaleStatus);
   const salePrice = numeric(input.salePrice);
   const vatRate = numeric(input.vatRate ?? 20);
   const exchangeExpected = calculateMilestoneFee({ salePrice, feePercent: input.exchangeFeePercent, vatRate });
@@ -188,14 +191,14 @@ export function deriveAgentFeePortfolioRow(input: AgentFeePortfolioInput): Agent
   const exchange = derivePortfolioInvoiceState({
     milestone: "exchange",
     workflowStatus: input.workflowStatus,
-    expectedGrossAmount: exchangeExpected.grossAmount,
+    expectedGrossAmount: onSalesRoute ? exchangeExpected.grossAmount : 0,
     invoice: input.exchangeInvoice,
     payments: input.exchangePayments,
   });
   const completion = derivePortfolioInvoiceState({
     milestone: "completion",
     workflowStatus: input.workflowStatus,
-    expectedGrossAmount: completionExpected.grossAmount,
+    expectedGrossAmount: onSalesRoute ? completionExpected.grossAmount : 0,
     invoice: input.completionInvoice,
     payments: input.completionPayments,
   });
@@ -224,8 +227,9 @@ export function deriveAgentFeePortfolioRow(input: AgentFeePortfolioInput): Agent
     exchange,
     completion,
     currentOutstanding,
-    futureCompletionFeeNet: input.completionInvoice ? 0 : completionExpected.netAmount,
+    futureCompletionFeeNet: onSalesRoute && !input.completionInvoice ? completionExpected.netAmount : 0,
     overallStatus,
+    noLongerForSale: !onSalesRoute,
   };
 }
 

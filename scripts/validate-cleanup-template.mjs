@@ -15,7 +15,7 @@ const requiredSheets = [
   "Users Access",
 ];
 
-const validSaleStatuses = new Set(["for_sale", "reserved", "exchanged", "completed", "handed_over"]);
+const validSaleStatuses = new Set(["not_released", "not_for_sale", "for_sale", "reserved", "exchanged", "completed", "handed_over"]);
 const validRoles = new Set(["admin", "developer", "developer_representative", "contractor", "resident", "sales_agent", "conveyancer", "user"]);
 const validOrganisationTypes = new Set(["developer_representative", "contractor", "supporting_trade", "sales_agent", "conveyancer"]);
 const validBuildingOrganisationRoles = new Set(["main_contractor", "developer_representative", "supporting_trade", "sales_agent", "conveyancer"]);

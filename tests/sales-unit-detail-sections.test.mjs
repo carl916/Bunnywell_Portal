@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { historicalActorLabel } from "../src/lib/sales/actor-identity.ts";
 
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
+const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");
 const workspaceTabsSource = readFileSync("src/components/portal/sales/SaleFileWorkspaceTabs.tsx", "utf8");
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 
@@ -147,12 +149,31 @@ test("sale activity and legal milestone summaries identify their actors", () => 
   assert.match(workflowSource, /label: "Completed by", value: completionRecordedBy/);
 });
 
-test("approved Reservation uses a concise narrative audit summary", () => {
+test("approved Reservation uses a structured, responsive event history", () => {
   const approvedPanel = workflowSource.slice(workflowSource.indexOf('{reservationState === "approved" && ('), workflowSource.indexOf("</StageWorkspace>", workflowSource.indexOf('{reservationState === "approved" && (')));
-  assert.match(approvedPanel, /Reservation submitted/);
-  assert.match(approvedPanel, /formatNarrativeDateTime\(activeAttempt\?\.reservation_submitted_at\)/);
-  assert.match(approvedPanel, /formatNarrativeDateTime\(activeAttempt\?\.reservation_approved_at\)/);
-  assert.doesNotMatch(approvedPanel, /Submitted date and time|Approved date and time/);
+  const eventHistory = workflowSource.slice(workflowSource.indexOf("function ApprovalEventHistory"), workflowSource.indexOf("function SaleActivity"));
+  assert.match(approvedPanel, /<ApprovalEventHistory events=\{approvalHistoryEvents\}/);
+  assert.match(workflowSource, /label: "Reservation submitted"[\s\S]*label: "Approved"/);
+  assert.match(eventHistory, /<ol[\s\S]*events\.map/);
+  assert.match(eventHistory, /divide-y divide-\[#eef0eb\]/);
+  assert.match(approvedPanel, /styles\.approvalHistoryCard/);
+  assert.match(eventHistory, /styles\.approvalEventRow/);
+  assert.match(eventHistory, /styles\.approvalEventName/);
+  assert.match(eventHistory, /<time[^>]*>\{formatDateTime\(event\.occurredAt\)\}<\/time>/);
+  assert.match(eventHistory, /styles\.approvalEventSeparator[^>]*aria-hidden="true">·<\/span>\{event\.actor\}/);
+  assert.match(workflowStyles, /@container approval-history \(min-width: 30rem\)[\s\S]*grid-template-columns:\s*minmax\(8rem, 0\.9fr\) minmax\(8\.25rem, 1fr\) minmax\(0, 1\.1fr\)/);
+  assert.doesNotMatch(approvedPanel, /Reservation submitted on|approved on|formatNarrativeDateTime/);
+});
+
+test("legacy reservation actor IDs resolve to profile names and never render as UUIDs", () => {
+  const userId = "c2b72e82-b43f-48a7-b5f9-57e16b80c245";
+  const profiles = [{ id: userId, full_name: "Carl Gilbert", email: "carl@example.com" }];
+
+  assert.equal(historicalActorLabel({ userId, profiles }), "Carl Gilbert");
+  assert.equal(historicalActorLabel({ snapshotName: userId, userId, profiles }), "Carl Gilbert");
+  assert.equal(historicalActorLabel({ snapshotName: userId, userId, profiles: [] }), "Not recorded");
+  assert.doesNotMatch(workflowSource, /reservation_approved_by_user_id \?\? "-"/);
+  assert.match(workflowSource, /const approvedByName = historicalActorLabel/);
 });
 
 test("completion uses styled PDF pickers and replaces completed controls with summaries", () => {

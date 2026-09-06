@@ -188,11 +188,16 @@ async function upsertUnits(buildingId) {
         floor: unitNumber.startsWith("1") ? "First" : "Second",
         unit_type: index === 2 ? "Two bedroom" : "One bedroom",
         size_sqm: index === 2 ? 72 : 55,
-        sale_status: index === 0 ? "completed" : "for_sale",
       }, { onConflict: "building_id,unit_number" })
       .select("*")
       .single();
     if (error) throw error;
+    const { error: statusError } = await supabase.rpc("initialize_imported_unit_sale_status", {
+      p_unit_id: data.id,
+      p_sale_status: index === 0 ? "completed" : "for_sale",
+      p_source: "staging_seed",
+    });
+    if (statusError) throw statusError;
     result[unitNumber] = data;
   }
 

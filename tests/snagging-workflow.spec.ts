@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
+import { selectBuildingContext } from "./helpers/building-context";
 
 type SnagStatus = "open" | "needs_more_info" | "resolved_by_contractor" | "rejected_back_to_contractor" | "closed";
 
@@ -97,6 +98,10 @@ async function selectedOptionLabel(select: Locator) {
 }
 
 async function selectPreferredOption(select: Locator, preferredLabels: string[], context: string) {
+  await expect(select, context).toBeEnabled();
+  await expect.poll(async () => (await optionsFor(select)).filter((option) => option.value && !option.disabled).length, {
+    message: `Waiting for selectable options for ${context}`,
+  }).toBeGreaterThan(0);
   const options = (await optionsFor(select)).filter((option) => option.value && !option.disabled);
   const preferred = preferredLabels.filter(Boolean);
   const match = options.find((option) => preferred.some((label) => optionMatches(option.label, label))) ?? options[0];
@@ -189,7 +194,7 @@ async function setStatusFilter(page: Page, status: SnagStatus | "") {
 }
 
 async function applySnagFilters(page: Page, snag: CreatedSnag, status: SnagStatus | "") {
-  await selectPreferredOption(page.getByLabel("Building filter"), ["Forum House"], "snag building filter");
+  await selectBuildingContext(page, "Forum House");
   await setStatusFilter(page, status);
 
   const unitFilter = page.getByLabel("Unit filter");
@@ -236,8 +241,13 @@ async function createDeveloperSnag(page: Page, spec: SnagDraftSpec, saveAndClose
   const form = page.locator("section.panel", { hasText: "Add developer snag" }).first();
   await expect(form).toBeVisible();
 
-  const buildingSelect = form.locator("select").nth(0);
-  await selectPreferredOption(buildingSelect, ["Forum House"], "developer snag building");
+  const buildingSelect = form.getByRole("combobox", { name: "Building", exact: true });
+  if (await buildingSelect.count()) {
+    await selectPreferredOption(buildingSelect, ["Forum House"], "developer snag building");
+  } else {
+    await expect(form).toContainText("Forum House");
+  }
+  await form.getByRole("combobox", { name: "Floor", exact: true }).selectOption("");
 
   if (spec.location.type === "communal") {
     await form.getByRole("button", { name: "Communal", exact: true }).click();
@@ -250,15 +260,15 @@ async function createDeveloperSnag(page: Page, spec: SnagDraftSpec, saveAndClose
   let tradeLabel = "No trade";
 
   if (spec.location.type === "unit") {
-    unitLabel = await selectPreferredOption(form.locator("select").nth(2), spec.location.preferredUnits ?? [], "developer snag unit");
-    areaLabel = await selectPreferredOption(form.locator("select").nth(3), spec.location.preferredAreas, "developer snag unit area");
+    unitLabel = await selectPreferredOption(form.getByRole("combobox", { name: "Unit", exact: true }), spec.location.preferredUnits ?? [], "developer snag unit");
+    areaLabel = await selectPreferredOption(form.getByRole("combobox", { name: "Room or private area", exact: true }), spec.location.preferredAreas, "developer snag unit area");
     if (spec.preferredTrades?.length) {
-      tradeLabel = await selectPreferredOption(form.locator("select").nth(4), spec.preferredTrades, "developer snag trade");
+      tradeLabel = await selectPreferredOption(form.getByRole("combobox", { name: "Trade", exact: true }), spec.preferredTrades, "developer snag trade");
     }
   } else {
-    areaLabel = await selectPreferredOption(form.locator("select").nth(2), spec.location.preferredAreas, "developer snag communal area");
+    areaLabel = await selectPreferredOption(form.getByRole("combobox", { name: "Communal area", exact: true }), spec.location.preferredAreas, "developer snag communal area");
     if (spec.preferredTrades?.length) {
-      tradeLabel = await selectPreferredOption(form.locator("select").nth(3), spec.preferredTrades, "developer snag trade");
+      tradeLabel = await selectPreferredOption(form.getByRole("combobox", { name: "Trade", exact: true }), spec.preferredTrades, "developer snag trade");
     }
   }
 

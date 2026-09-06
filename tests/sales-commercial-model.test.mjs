@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
+const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
 const migrationSource = readFileSync("supabase/migrations/20260723_sales_stage_timestamp_and_commercial_model_rpc.sql", "utf8");
 const buyerIncentivesMigrationSource = readFileSync("supabase/migrations/20260725_sales_buyer_incentives_and_identity.sql", "utf8");
@@ -41,14 +42,26 @@ function loadCommercialModelModule() {
 }
 
 test("commercial model saves use the dedicated action name from setup and sales UI", () => {
-  assert.match(setupSource, /action:\s*"save_commercial_model"/);
+  assert.match(setupSource, /action:\s*"save_setup_unit_price"/);
   assert.match(workflowSource, /action:\s*"save_commercial_model"/);
+});
+
+test("financial overview uses deliberate container-width layouts", () => {
+  assert.match(workflowSource, /styles\.financialOverview/);
+  assert.match(workflowSource, /styles\.financialOverviewGrid/);
+  assert.match(workflowSource, /styles\.profitCard/);
+  assert.doesNotMatch(workflowSource, /mt-5 grid gap-4 xl:grid-cols-3/);
+  assert.match(workflowStyles, /container-type:\s*inline-size/);
+  assert.match(workflowStyles, /@container financial-overview \(min-width: 42rem\)[\s\S]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)[\s\S]*grid-column:\s*1 \/ -1/);
+  assert.match(workflowStyles, /@container financial-overview \(min-width: 64rem\)[\s\S]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)[\s\S]*grid-column:\s*auto/);
 });
 
 test("commercial model API uses the transactional RPC and avoids reservation progression side effects", () => {
   const body = functionBody(routeSource, "saveCommercialModel");
 
+  assert.match(body, /prepare_unit_baseline_sale_record/);
   assert.match(body, /\.rpc\("save_unit_commercial_model_with_agent_fees"/);
+  assert.match(body, /mark_sale_attempt_substantive/);
   assert.doesNotMatch(body, /insertEvent\(/);
   assert.doesNotMatch(body, /workflow_status:\s*"awaiting_commercial_approval"/);
   assert.doesNotMatch(body, /from\("unit_sale_invoices"\)/);
@@ -141,7 +154,7 @@ test("reservation submission requires checked terms and split buyer identity", (
   assert.match(body, /buyerCompanyName/);
   assert.match(body, /reservationDate/);
   assert.match(body, /workflow_status:\s*"awaiting_approval"/);
-  assert.match(body, /sale_status:\s*"for_sale"/);
+  assert.match(body, /rpc: "sales_workflow_mark_unit_for_sale"/);
   assert.match(body, /reservationTermsChecked !== true/);
   assert.match(body, /reservation_submitted_by_name: requester\.name/);
   assert.match(body, /reservation_submitted_by_email: requester\.email/);
@@ -163,7 +176,8 @@ test("reservation approval uses the form date and developer reject action", () =
   assert.match(approveBody, /workflow_status:\s*"approved"/);
   assert.match(approveBody, /reservation_date:\s*reservationDate/);
   assert.match(approveBody, /reservationDateTimestamp\(reservationDate\)/);
-  assert.match(approveBody, /sale_status:\s*"reserved", reservation_date:\s*reservationDate/);
+  assert.match(approveBody, /rpc: "sales_workflow_mark_unit_reserved"/);
+  assert.match(approveBody, /update\(\{ reservation_date: reservationDate \}\)/);
   assert.match(rejectBody, /workflow_status:\s*"rejected"/);
   assert.match(rejectBody, /reservation_rejection_reason:\s*rejectionReason/);
   assert.match(workflowSource, /Reject reservation/);

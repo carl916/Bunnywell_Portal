@@ -7,9 +7,13 @@ import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
+import { UnitAllocationWorkspace } from "@/components/portal/UnitAllocationWorkspace";
+import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
+import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
+import { usePortalBuildingContext } from "@/hooks/usePortalBuildingContext";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
 import { validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
@@ -30,6 +34,8 @@ import {
 } from "@/lib/building-lifecycle";
 import { createSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { notificationVariantForMessage, type NotificationVariant } from "@/lib/notifications";
+import { buildAuditInsert } from "@/lib/audit/format";
+import type { AuditEvent, NewAuditEvent } from "@/lib/audit/types";
 import {
   type AppRole,
   type Area,
@@ -63,6 +69,7 @@ type Profile = {
   organisation_id: string | null;
   active?: boolean | null;
   created_at?: string | null;
+  last_active_at?: string | null;
 };
 
 type UserBuildingAccess = {
@@ -140,19 +147,8 @@ type SetupUnitSaleDocument = {
   redacted_at: string | null;
 };
 
-type AuditEvent = {
-  id: string;
-  event_type: string;
-  entity_type: string;
-  entity_id: string | null;
-  summary: string;
-  metadata: Record<string, unknown>;
-  created_by_user_id: string | null;
-  created_at: string;
-};
-
-type Tab = "dashboard" | "snags" | "units" | "sales" | "setup_buildings" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
-type PrimaryNavKey = "dashboard" | "snags" | "units" | "sales" | "setup" | "resident_home" | "resident_snags" | "resident_help";
+type Tab = "dashboard" | "snags" | "units" | "sales" | "rentals" | "setup_buildings" | "setup_allocation" | "setup_people" | "setup_activity" | "resident_home" | "resident_snags" | "resident_help";
+type PrimaryNavKey = "dashboard" | "snags" | "units" | "sales" | "rentals" | "setup" | "resident_home" | "resident_snags" | "resident_help";
 
 type PortalScreenDefinition = {
   label: string;
@@ -245,15 +241,6 @@ const SNAG_VIDEO_CAPTURE_FPS = 30;
 const SNAG_VIDEO_BITRATE = 2_500_000;
 const SNAG_VIDEO_AUDIO_BITRATE = 128_000;
 
-const unitSaleStatuses: Array<{ value: Unit["sale_status"]; label: string }> = [
-  { value: "for_sale", label: "For Sale" },
-  { value: "reserved", label: "Reserved" },
-  { value: "exchanged", label: "Exchanged" },
-  { value: "completed", label: "Completed" },
-  { value: "handed_over", label: "Handed Over" },
-];
-const adminEditableUnitSaleStatuses = unitSaleStatuses.filter((status) => status.value !== "handed_over");
-
 const appRoles: Array<{ value: AppRole; label: string }> = [
   { value: "admin", label: "Admin" },
   { value: "developer", label: "Developer" },
@@ -277,6 +264,8 @@ const organisationTypes = [
   { value: "sales_agent", label: "Sales agent" },
   { value: "conveyancer", label: "Conveyancer" },
   { value: "supporting_trade", label: "Supporting trade" },
+  { value: "letting_agent", label: "Letting agent" },
+  { value: "managing_agent", label: "Managing agent" },
 ];
 
 const portalScreens: Record<Tab, PortalScreenDefinition> = {
@@ -300,18 +289,28 @@ const portalScreens: Record<Tab, PortalScreenDefinition> = {
     roles: ["admin", "developer", "sales_agent", "conveyancer"],
     section: "internal",
   },
+  rentals: {
+    label: "Rentals",
+    roles: ["admin", "developer"],
+    section: "internal",
+  },
   setup_buildings: {
     label: "Buildings",
     roles: ["admin", "developer"],
     section: "setup",
   },
-  setup_people: {
-    label: "People & access",
+  setup_allocation: {
+    label: "Unit allocation",
     roles: ["admin", "developer"],
     section: "setup",
   },
   setup_activity: {
-    label: "Activity log",
+    label: "Audit log",
+    roles: ["admin", "developer"],
+    section: "setup",
+  },
+  setup_people: {
+    label: "Users & access",
     roles: ["admin", "developer"],
     section: "setup",
   },
@@ -337,6 +336,8 @@ const hiddenScreens = new Set<Tab>(["units"]);
 const legacyScreenAliases: Record<string, Tab> = {
   admin: "setup_buildings",
   buildings: "setup_buildings",
+  allocation: "setup_allocation",
+  unit_allocation: "setup_allocation",
   setup: "setup_buildings",
   users: "setup_people",
   people: "setup_people",
@@ -480,11 +481,15 @@ function statusLabel(status: string) {
     assigned_to_contractor: "Assigned to contractor",
     in_progress: "In progress",
     resolved: "Resolved",
-    for_sale: "For Sale",
+    not_released: "Not released",
+    not_for_sale: "Retained / not for sale",
+    for_sale: "For sale",
     reserved: "Reserved",
     exchanged: "Exchanged",
     completed: "Completed",
-    handed_over: "Handed Over",
+    handed_over: "Handed over",
+    not_in_portfolio: "Not in rental portfolio",
+    exited: "Exited rental portfolio",
     admin: "Admin",
     developer: "Developer",
     developer_representative: "Developer Representative",
@@ -828,6 +833,7 @@ export function ProductionPortalApp() {
   const [photos, setPhotos] = useState<SnagPhoto[]>([]);
   const [events, setEvents] = useState<SnagEvent[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [auditTotalCount, setAuditTotalCount] = useState(0);
   const [handovers, setHandovers] = useState<Handover[]>([]);
   const [handoverKeyItems, setHandoverKeyItems] = useState<HandoverKeyItem[]>([]);
   const [handoverPhotos, setHandoverPhotos] = useState<HandoverPhoto[]>([]);
@@ -838,6 +844,8 @@ export function ProductionPortalApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
+  const lastActivityPingAtRef = useRef(0);
+  const lastActivityAtRef = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -847,6 +855,27 @@ export function ProductionPortalApp() {
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds, buildingOrganisations), [accessibleBuildingIds, accessibleUnitIds, buildingOrganisations, profile, snags]);
+  const { buildingContextId, setBuildingContextId } = usePortalBuildingContext({
+    userId: profile?.id,
+    buildings: scopedBuildings,
+    ready: !isLoading && Boolean(profile),
+  });
+  const contextBuildings = useMemo(
+    () => buildingContextId ? scopedBuildings.filter((building) => building.id === buildingContextId) : scopedBuildings,
+    [buildingContextId, scopedBuildings],
+  );
+  const contextUnits = useMemo(
+    () => buildingContextId ? scopedUnits.filter((unit) => unit.building_id === buildingContextId) : scopedUnits,
+    [buildingContextId, scopedUnits],
+  );
+  const contextAreas = useMemo(
+    () => buildingContextId ? scopedAreas.filter((area) => area.building_id === buildingContextId) : scopedAreas,
+    [buildingContextId, scopedAreas],
+  );
+  const contextSnags = useMemo(
+    () => buildingContextId ? visibleSnags.filter((snag) => snag.building_id === buildingContextId) : visibleSnags,
+    [buildingContextId, visibleSnags],
+  );
   const residentDefects = visibleSnags.filter((snag) => snag.source_type === "leaseholder_defect");
 
   function setTab(nextTab: Tab, options?: { replace?: boolean }) {
@@ -878,6 +907,7 @@ export function ProductionPortalApp() {
     setPhotos([]);
     setEvents([]);
     setAuditEvents([]);
+    setAuditTotalCount(0);
     setHandovers([]);
     setHandoverKeyItems([]);
     setHandoverPhotos([]);
@@ -981,6 +1011,58 @@ export function ProductionPortalApp() {
   }, [supabaseEnabled]);
 
   useEffect(() => {
+    if (!user?.id) {
+      lastActivityPingAtRef.current = 0;
+      lastActivityAtRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    const activeUserId = user.id;
+    const activityIntervalMs = 5 * 60 * 1000;
+
+    async function recordActivity() {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastActivityPingAtRef.current < activityIntervalMs) return;
+      lastActivityPingAtRef.current = now;
+
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) return;
+
+      const response = await fetch("/api/auth/activity", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as { lastActiveAt?: string };
+      if (cancelled || !payload.lastActiveAt) return;
+
+      lastActivityAtRef.current = payload.lastActiveAt;
+      setProfile((current) => current?.id === activeUserId ? { ...current, last_active_at: payload.lastActiveAt } : current);
+      setProfiles((current) => current.map((item) => item.id === activeUserId ? { ...item, last_active_at: payload.lastActiveAt } : item));
+    }
+
+    function recordActivityWhenVisible() {
+      if (document.visibilityState === "visible") void recordActivity();
+    }
+
+    void recordActivity();
+    const interval = window.setInterval(recordActivity, activityIntervalMs);
+    window.addEventListener("focus", recordActivityWhenVisible);
+    document.addEventListener("visibilitychange", recordActivityWhenVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", recordActivityWhenVisible);
+      document.removeEventListener("visibilitychange", recordActivityWhenVisible);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     function handleRouteChange() {
       setActiveTab(screenFromUrl() ?? defaultTabForRole(role));
       setNotice("");
@@ -1025,7 +1107,7 @@ export function ProductionPortalApp() {
     if (!userId) return;
 
     const supabase = createSupabaseBrowserClient();
-    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at";
+    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
     let profileResult = await supabase
       .from("profiles")
       .select(profileSelect)
@@ -1084,14 +1166,14 @@ export function ProductionPortalApp() {
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
       supabase.from("building_organisations").select("*"),
-      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
       supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("snags").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
       supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-      supabase.from("audit_events").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
       supabase.from("handovers").select("*").order("created_at", { ascending: false }),
       supabase.from("handover_key_items").select("*").order("sort_order"),
       supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
@@ -1115,7 +1197,16 @@ export function ProductionPortalApp() {
       setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
     }
 
-    setProfile(loadedProfile);
+    const recordedActivityAt = lastActivityAtRef.current;
+    const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
+      ? { ...loadedProfile, last_active_at: recordedActivityAt }
+      : loadedProfile;
+    const loadedProfiles = (profilesResult.data ?? []) as Profile[];
+    const profilesWithCurrentActivity = recordedActivityAt
+      ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
+      : loadedProfiles;
+
+    setProfile(profileWithCurrentActivity);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
     setAreas((areasResult.data ?? []) as Area[]);
@@ -1126,7 +1217,7 @@ export function ProductionPortalApp() {
     setOrganisations((orgsResult.data ?? []) as Organisation[]);
     const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
     setBuildingOrganisations(loadedBuildingOrganisations);
-    setProfiles((profilesResult.data ?? []) as Profile[]);
+    setProfiles(profilesWithCurrentActivity);
     setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
     setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
     setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
@@ -1134,6 +1225,7 @@ export function ProductionPortalApp() {
     setPhotos((photosResult.data ?? []) as SnagPhoto[]);
     setEvents((eventsResult.data ?? []) as SnagEvent[]);
     setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
+    setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
     setHandovers((handoversResult.data ?? []) as Handover[]);
     setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
     setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
@@ -1255,15 +1347,18 @@ export function ProductionPortalApp() {
     return uploads;
   }
 
-  async function recordAudit(event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) {
+  async function recordAudit(event: NewAuditEvent) {
     if (!user?.id) return;
     const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase.from("audit_events").insert({
-      ...event,
-      created_by_user_id: user.id,
-    }).select("*").single();
+    const structuredInsert = buildAuditInsert(event, { ...profile, id: user.id, email: profile?.email ?? user.email ?? "" });
+    let result = await supabase.from("audit_events").insert(structuredInsert).select("*").single();
+    if (result.error && /column|schema cache/i.test(result.error.message)) {
+      result = await supabase.from("audit_events").insert({ ...event, created_by_user_id: user.id }).select("*").single();
+    }
+    const { data } = result;
     if (data) {
-      setAuditEvents((current) => [data as AuditEvent, ...current.filter((item) => item.id !== data.id)].slice(0, 200));
+      setAuditEvents((current) => [data as AuditEvent, ...current.filter((item) => item.id !== data.id)].slice(0, 500));
+      setAuditTotalCount((current) => current + 1);
     }
   }
 
@@ -1300,15 +1395,28 @@ export function ProductionPortalApp() {
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
 
   return (
-    <Shell profile={profile} tab={activeTab} tabs={tabs} setTab={setTab} notice={notice} lastUpdatedAt={lastDataRefreshAt} onRefresh={() => loadAll()} onSignOut={signOut}>
+    <Shell
+      profile={profile}
+      tab={activeTab}
+      tabs={tabs}
+      setTab={setTab}
+      notice={notice}
+      buildings={scopedBuildings}
+      buildingContextId={buildingContextId}
+      onBuildingContextChange={setBuildingContextId}
+      lastUpdatedAt={lastDataRefreshAt}
+      onRefresh={() => loadAll()}
+      onSignOut={signOut}
+    >
       {activeTab === "dashboard" && (
         <Dashboard
-          buildings={scopedBuildings}
+          buildings={contextBuildings}
           events={events}
           profile={profile}
-          snags={visibleSnags}
+          snags={contextSnags}
           setTab={setTab}
           setSnagFilters={setSnagListFilters}
+          onSelectBuilding={setBuildingContextId}
         />
       )}
       {portalScreens[activeTab].section === "setup" && (
@@ -1316,9 +1424,9 @@ export function ProductionPortalApp() {
           activeTab={activeTab}
           setTab={setTab}
           availableTabs={setupTabsForRole(role)}
-          buildings={buildings}
-          units={units}
-          areas={areas}
+          buildings={scopedBuildings}
+          units={scopedUnits}
+          areas={scopedAreas}
           buildingFloors={buildingFloors}
           unitTypes={unitTypes}
           unitTypeAreas={unitTypeAreas}
@@ -1329,6 +1437,9 @@ export function ProductionPortalApp() {
           userBuildingAccess={userBuildingAccess}
           userUnitAccess={userUnitAccess}
           auditEvents={auditEvents}
+          auditTotalCount={auditTotalCount}
+          buildingContextId={buildingContextId}
+          onBuildingContextChange={setBuildingContextId}
           recordAudit={recordAudit}
           onNotice={setNotice}
           reload={loadAll}
@@ -1338,11 +1449,12 @@ export function ProductionPortalApp() {
         <SnagWorkflow
           user={user}
           profile={profile}
-          buildings={scopedBuildings}
+          buildings={contextBuildings}
           buildingFloors={buildingFloors}
-          snags={visibleSnags}
-          units={scopedUnits}
-          areas={scopedAreas}
+          snags={contextSnags}
+          units={contextUnits}
+          areas={contextAreas}
+          buildingContextId={buildingContextId}
           trades={trades}
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
@@ -1390,8 +1502,28 @@ export function ProductionPortalApp() {
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
           units={scopedUnits}
+          buildingContextId={buildingContextId}
           onNotice={setNotice}
           reloadPortalData={() => loadAll()}
+        />
+      )}
+      {activeTab === "rentals" && (
+        <RentalsWorkspace
+          role={role}
+          buildings={scopedBuildings}
+          buildingFloors={buildingFloors}
+          units={scopedUnits}
+          buildingContextId={buildingContextId}
+          organisations={organisations}
+          onNotice={setNotice}
+          onOpenSaleFile={(unit) => {
+            const params = new URLSearchParams(window.location.search);
+            params.set("screen", "sales");
+            params.set("salesUnitId", unit.id);
+            params.delete("rentalUnitId");
+            window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            setTab("sales");
+          }}
         />
       )}
       {(activeTab === "resident_home" || activeTab === "resident_snags") && (
@@ -1434,6 +1566,7 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
   if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("sales")) items.push({ key: "sales", label: "Sales", tab: "sales", activeTabs: ["sales"], icon: <ClipboardCheck size={17} aria-hidden /> });
+  if (tabs.includes("rentals")) items.push({ key: "rentals", label: "Rentals", tab: "rentals", activeTabs: ["rentals"], icon: <Building2 size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1448,6 +1581,9 @@ function Shell({
   tabs,
   setTab,
   notice,
+  buildings = [],
+  buildingContextId = "",
+  onBuildingContextChange,
   lastUpdatedAt,
   onRefresh,
   onSignOut,
@@ -1458,6 +1594,9 @@ function Shell({
   tabs: Tab[];
   setTab: (tab: Tab) => void;
   notice?: string;
+  buildings?: Building[];
+  buildingContextId?: string;
+  onBuildingContextChange?: (buildingId: string) => void;
   lastUpdatedAt?: string | null;
   onRefresh?: () => void | Promise<void>;
   onSignOut?: () => Promise<void>;
@@ -1478,6 +1617,7 @@ function Shell({
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
   const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
+  const selectedBuildingName = buildings.find((building) => building.id === buildingContextId)?.name ?? "All buildings";
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
@@ -1505,9 +1645,35 @@ function Shell({
               <div>
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-[#D6A23A] sm:text-xs">Bunnywell</p>
                 <h1 className="truncate text-lg font-bold text-[#0F3D2E] sm:text-2xl">Portal</h1>
+                {profile && buildings.length > 0 && (
+                  <p className="max-w-44 truncate text-xs font-semibold text-[#66736B] md:hidden">{selectedBuildingName}</p>
+                )}
               </div>
             </div>
             <div className="hidden flex-wrap items-center gap-2 md:flex">
+              {profile && buildings.length > 0 && (
+                buildings.length === 1 ? (
+                  <span className="account-pill max-w-56" aria-label={`Building: ${buildings[0].name}`}>
+                    <Building2 size={16} aria-hidden />
+                    <span className="truncate">{buildings[0].name}</span>
+                  </span>
+                ) : (
+                  <label className="relative flex min-h-10 items-center gap-2 rounded-full border border-[#d8ded8] bg-white px-3 text-sm font-semibold text-[#0F3D2E] shadow-sm">
+                    <Building2 size={16} aria-hidden />
+                    <span className="sr-only">Current building</span>
+                    <select
+                      className="max-w-48 cursor-pointer appearance-none rounded-sm bg-transparent py-1 pr-5 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D6A23A]"
+                      value={buildingContextId}
+                      onChange={(event) => onBuildingContextChange?.(event.target.value)}
+                      aria-label="Current building"
+                    >
+                      <option value="">All buildings</option>
+                      {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2" size={14} aria-hidden />
+                  </label>
+                )
+              )}
               <span className="account-pill max-w-72">
                 <Shield size={16} aria-hidden />
                 <span className="truncate">{profile?.email ?? "Not signed in"}</span>
@@ -1611,6 +1777,30 @@ function Shell({
                 <X size={17} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
+            {buildings.length > 0 && (
+              <div className="mt-4 rounded-xl border border-[#E2DED3] bg-[#F8F7F2] p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#66736B]">Building</p>
+                {buildings.length === 1 ? (
+                  <p className="mt-1 flex items-center gap-2 font-semibold text-[#0F3D2E]">
+                    <Building2 size={16} aria-hidden />
+                    {buildings[0].name}
+                  </p>
+                ) : (
+                  <select
+                    className="mt-2 w-full"
+                    value={buildingContextId}
+                    onChange={(event) => {
+                      onBuildingContextChange?.(event.target.value);
+                      setMoreOpen(false);
+                    }}
+                    aria-label="Current building"
+                  >
+                    <option value="">All buildings</option>
+                    {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+                  </select>
+                )}
+              </div>
+            )}
             <div className="mt-4 grid gap-2">
               {[...mobileMoreItems, ...mobilePrimaryItems].map((item) => (
                 <button key={item.key} className={`menu-row ${item.activeTabs.includes(tab) ? "menu-row-active" : ""}`} onClick={() => chooseTab(item.tab)}>
@@ -1813,6 +2003,9 @@ function SetupSection({
   userBuildingAccess,
   userUnitAccess,
   auditEvents,
+  auditTotalCount,
+  buildingContextId,
+  onBuildingContextChange,
   recordAudit,
   onNotice,
   reload,
@@ -1833,21 +2026,26 @@ function SetupSection({
   userBuildingAccess: UserBuildingAccess[];
   userUnitAccess: UserUnitAccess[];
   auditEvents: AuditEvent[];
+  auditTotalCount: number;
+  buildingContextId: string;
+  onBuildingContextChange: (buildingId: string) => void;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
   return (
     <div className="grid gap-5">
-      <section className="panel">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHeader title="Setup" subtitle="Building setup, people access and portal activity controls." />
-          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap" role="tablist" aria-label="Setup sections">
+      <section className="panel py-4">
+        <div className="grid gap-3">
+          <SectionHeader title="Setup" subtitle="Building setup, unit allocation, audit history and user access controls." />
+          <div className="flex w-full gap-1 overflow-x-auto border-b border-[#d9ded6]" role="tablist" aria-label="Setup sections">
             {availableTabs.map((item) => (
               <button
                 key={item}
-                className={`secondary min-h-9 w-full min-w-0 px-3 py-1.5 text-center text-sm leading-tight ${activeTab === item ? "nav-pill-active" : ""}`}
+                className={`shrink-0 border-b-2 px-3 py-2 text-sm font-semibold transition ${activeTab === item ? "border-[#D6A23A] text-[#0F3D2E]" : "border-transparent text-[#617169] hover:text-[#0F3D2E]"}`}
                 onClick={() => setTab(item)}
+                aria-selected={activeTab === item}
+                role="tab"
                 type="button"
               >
                 {tabLabel(item)}
@@ -1859,6 +2057,8 @@ function SetupSection({
       {activeTab === "setup_buildings" && (
         <AdminSetup
           buildings={buildings}
+          buildingContextId={buildingContextId}
+          onBuildingContextChange={onBuildingContextChange}
           units={units}
           areas={areas}
           buildingFloors={buildingFloors}
@@ -1867,6 +2067,36 @@ function SetupSection({
           organisations={organisations}
           buildingOrganisations={buildingOrganisations}
           recordAudit={recordAudit}
+          onNotice={onNotice}
+          reload={reload}
+        />
+      )}
+      {activeTab === "setup_allocation" && (
+        <UnitAllocationWorkspace
+          buildings={buildings}
+          buildingFloors={buildingFloors}
+          units={units}
+          buildingContextId={buildingContextId}
+          onOpenSaleFile={(unit) => {
+            if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            params.set("screen", "sales");
+            params.set("salesUnitId", unit.id);
+              params.delete("salesView");
+              params.delete("section");
+              window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            }
+            setTab("sales");
+          }}
+          onOpenRentalFile={(unit) => {
+            if (typeof window !== "undefined") {
+              const params = new URLSearchParams(window.location.search);
+              params.set("screen", "rentals");
+              params.set("rentalUnitId", unit.id);
+              window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}`);
+            }
+            setTab("rentals");
+          }}
           onNotice={onNotice}
           reload={reload}
         />
@@ -1886,7 +2116,17 @@ function SetupSection({
           reload={reload}
         />
       )}
-      {activeTab === "setup_activity" && <AuditPanel auditEvents={auditEvents} profiles={profiles} />}
+      {activeTab === "setup_activity" && (
+        <AuditLog
+          events={auditEvents}
+          totalEvents={auditTotalCount}
+          profiles={profiles}
+          buildings={buildings}
+          units={units}
+          organisations={organisations}
+          buildingContextId={buildingContextId}
+        />
+      )}
     </div>
   );
 }
@@ -1898,6 +2138,7 @@ function Dashboard({
   snags,
   setTab,
   setSnagFilters,
+  onSelectBuilding,
 }: {
   buildings: Building[];
   events: SnagEvent[];
@@ -1905,6 +2146,7 @@ function Dashboard({
   snags: ProductionSnag[];
   setTab: (tab: Tab) => void;
   setSnagFilters: (filters: SnagListFilters) => void;
+  onSelectBuilding: (buildingId: string) => void;
 }) {
   const model = buildDashboardModel({ buildings, events, snags });
   const actionItems = model.currentActions.filter((item) => item.value > 0);
@@ -1983,7 +2225,14 @@ function Dashboard({
         <SectionHeader title="Building workload" subtitle="Open developer snag workload by building." />
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {model.buildingWorkload.map((building) => (
-            <button key={building.id} className="dashboard-project-card" onClick={() => openSnags({ buildingId: building.id })}>
+            <button
+              key={building.id}
+              className="dashboard-project-card"
+              onClick={() => {
+                onSelectBuilding(building.id);
+                openSnags();
+              }}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-bold text-[#1F2A24]">{building.name}</p>
@@ -2278,7 +2527,7 @@ function BuildingStructureView({
         Authorization: `Bearer ${data.session?.access_token ?? ""}`,
       },
       body: JSON.stringify({
-        action: "save_commercial_model",
+        action: "save_setup_unit_price",
         unitId: unit.id,
         saleAttemptId,
         listPriceAtOffer: price,
@@ -2516,7 +2765,8 @@ function FloorBlock({
       unit_type: unitTypes.find((type) => type.id === unitTypeId)?.name ?? null,
       size_sqm: Number(unitSizeSqm),
       parking_bays: parseParkingBays(unitParkingBays),
-      sale_status: "for_sale",
+      sale_status: "not_released",
+      rental_portfolio_status: "not_in_portfolio",
     }).select("id,building_id").single();
     if (error) {
       onNotice(error.code === "23505" ? `Unit ${unitNumber.trim()} already exists in this building.` : error.message);
@@ -2622,7 +2872,8 @@ function FloorBlock({
         <>
           <div className="mt-4 rounded-md border border-[#d9ded6] bg-white p-3">
             <h4 className="font-semibold text-[#0F3D2E]">Units</h4>
-            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {units.length > 0 && <div className="mt-3 hidden grid-cols-[10rem_9rem_6rem_6rem_minmax(12rem,1fr)_auto] gap-3 border-b border-[#e5e9e4] px-3 pb-2 text-xs font-bold uppercase tracking-[0.05em] text-[#617169] lg:grid"><span>Unit</span><span>Type</span><span>Area</span><span>Parking</span><span>Sale status</span><span className="text-right">Actions</span></div>}
+            <div className="grid gap-1">
               {units.map((unit) => {
                 const unitType = unitTypes.find((type) => type.id === unit.unit_type_id)?.name ?? unit.unit_type ?? "No type";
 
@@ -2642,7 +2893,7 @@ function FloorBlock({
                   />
                 );
               })}
-              {units.length === 0 && <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
+              {units.length === 0 && <p className="mt-3 rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No units added to this floor yet.</p>}
             </div>
             {!warning && (
               <div className="mt-4 grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
@@ -2821,7 +3072,6 @@ function UnitStructureCard({
   const [editUnitPrice, setEditUnitPrice] = useState(unitPrice?.toString() ?? "");
   const [editParkingBays, setEditParkingBays] = useState(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
   const [editUnitTypeId, setEditUnitTypeId] = useState(unit.unit_type_id ?? "");
-  const [editSaleStatus, setEditSaleStatus] = useState<Unit["sale_status"]>(unit.sale_status);
   const [areasToRemove, setAreasToRemove] = useState<string[]>([]);
   const [pendingRooms, setPendingRooms] = useState<string[]>([]);
   const [pendingAmenity, setPendingAmenity] = useState(false);
@@ -2844,12 +3094,11 @@ function UnitStructureCard({
     setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
-    setEditSaleStatus(unit.sale_status);
     setAreasToRemove([]);
     setPendingRooms([]);
     setPendingAmenity(false);
     setDeleteWarning("");
-  }, [unit.floor, unit.parking_bays, unit.sale_status, unit.size_sqm, unit.unit_number, unit.unit_type_id, unitPrice]);
+  }, [unit.floor, unit.parking_bays, unit.size_sqm, unit.unit_number, unit.unit_type_id, unitPrice]);
 
   function stageRoom() {
     const trimmed = roomName.trim();
@@ -2878,10 +3127,6 @@ function UnitStructureCard({
       onNotice("Enter a valid unit price.");
       return;
     }
-    if (editSaleStatus === "handed_over" && unit.sale_status !== "handed_over") {
-      onNotice("Handed Over can only be set by completing the handover workflow.");
-      return;
-    }
     const supabase = createSupabaseBrowserClient();
     if (areasToRemove.length > 0) {
       const { data: linkedSnags, error: linkedSnagsError } = await supabase
@@ -2903,15 +3148,23 @@ function UnitStructureCard({
       }
     }
 
-    const { error } = await supabase.from("units").update({
-      unit_number: editNumber,
-      floor: editFloor,
-      size_sqm: Number(editSizeSqm),
-      parking_bays: parseParkingBays(editParkingBays),
-      unit_type_id: editUnitTypeId,
-      unit_type: unitTypes.find((type) => type.id === editUnitTypeId)?.name ?? null,
-      sale_status: editSaleStatus,
-    }).eq("id", unit.id);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(`/api/buildings/units/${encodeURIComponent(unit.id)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({
+        unit_number: editNumber,
+        floor: editFloor,
+        size_sqm: Number(editSizeSqm),
+        parking_bays: parseParkingBays(editParkingBays),
+        unit_type_id: editUnitTypeId,
+      }),
+    });
+    const responsePayload = await response.json().catch(() => ({})) as { error?: string };
+    const error = response.ok ? null : new Error(responsePayload.error ?? "Unit structure could not be updated.");
     if (error) onNotice(error.message);
     else {
       if (nextUnitPrice !== null) {
@@ -2967,7 +3220,6 @@ function UnitStructureCard({
     setEditUnitPrice(unitPrice?.toString() ?? "");
     setEditParkingBays(formatParkingBays(unit.parking_bays) === "None" ? "" : formatParkingBays(unit.parking_bays));
     setEditUnitTypeId(unit.unit_type_id ?? "");
-    setEditSaleStatus(unit.sale_status);
     setAreasToRemove([]);
     setPendingRooms([]);
     setPendingAmenity(false);
@@ -3004,7 +3256,7 @@ function UnitStructureCard({
   }
 
   return (
-    <article className="rounded-md border border-[#d9ded6] bg-white p-3">
+    <article className="border-b border-[#eef0eb] bg-white px-3 py-2 last:border-b-0" data-unit-id={unit.id}>
               {editing ? (
                 <div className="grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -3024,17 +3276,6 @@ function UnitStructureCard({
                       <option value="">Unit type</option>
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {unit.sale_status === "handed_over" ? (
-                      <select className="field" value="handed_over" disabled title="Handed Over is controlled by the handover workflow">
-                        <option value="handed_over">Handed Over</option>
-                      </select>
-                    ) : (
-                      <select className="field" value={editSaleStatus} onChange={(event) => setEditSaleStatus(event.target.value as Unit["sale_status"])}>
-                        {adminEditableUnitSaleStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
-                      </select>
-                    )}
                   </div>
                   <div className="rounded-md border border-[#d9ded6] bg-white p-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
@@ -3101,16 +3342,13 @@ function UnitStructureCard({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-semibold">Unit {unit.unit_number}</h4>
-                    <p className="text-sm text-[#617169]">{unitType}{unit.size_sqm ? ` / ${unit.size_sqm} sqm` : ""}</p>
-                    <p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>Unit price: {unitPrice === null ? "Not set" : formatGbp(unitPrice)}</p>
-                    <p className="text-xs text-[#617169]">Parking: {formatParkingBays(unit.parking_bays)}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>
-                    <div className="flex gap-2">
+                <div className="grid gap-2 lg:grid-cols-[10rem_9rem_6rem_6rem_minmax(12rem,1fr)_auto] lg:items-center lg:gap-3">
+                  <div><h4 className="font-semibold text-[#0F3D2E]">Unit {unit.unit_number}</h4><p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>{unitPrice === null ? "Price not set" : formatGbp(unitPrice)}</p></div>
+                  <p className="text-sm text-[#34413a]">{unitType}</p>
+                  <p className="text-sm text-[#617169]">{unit.size_sqm ? `${unit.size_sqm} sqm` : "—"}</p>
+                  <p className="text-sm text-[#617169]">{formatParkingBays(unit.parking_bays)}</p>
+                  <div className="flex flex-wrap gap-1"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>{unit.rental_portfolio_status === "active" && <span className="rounded-md bg-[#eef8fa] px-2 py-1 text-xs font-semibold text-[#315f6a]">Rental</span>}</div>
+                  <div className="flex gap-2 lg:justify-end">
                       <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
                         <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
@@ -3122,34 +3360,10 @@ function UnitStructureCard({
                       >
                         <Trash2 size={16} strokeWidth={2.25} aria-hidden />
                       </button>
-                    </div>
                   </div>
                 </div>
               )}
               {!editing && deleteWarning && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
-              {!editing && (
-                <>
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {rooms.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)}
-                      {rooms.length === 0 && <span className="text-sm text-[#a15b3d]">No rooms</span>}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#edf0ec] pt-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {amenities.length > 0 ? (
-                          amenities.map((area) => <AreaChip key={area.id} area={area} canRemove={false} showFloor={false} onNotice={onNotice} reload={reload} />)
-                        ) : (
-                          <span className="text-sm text-[#617169]">None</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </article>
   );
 }
@@ -3221,6 +3435,8 @@ function AreaChip({
 
 function AdminSetup({
   buildings,
+  buildingContextId,
+  onBuildingContextChange,
   units,
   areas,
   buildingFloors,
@@ -3233,6 +3449,8 @@ function AdminSetup({
   reload,
 }: {
   buildings: Building[];
+  buildingContextId: string;
+  onBuildingContextChange: (buildingId: string) => void;
   units: Unit[];
   areas: Area[];
   buildingFloors: BuildingFloor[];
@@ -3258,15 +3476,8 @@ function AdminSetup({
   const [editConfirmedPcBuildingIds, setEditConfirmedPcBuildingIds] = useState<Record<string, boolean>>({});
   const [confirmEditPcBuildingId, setConfirmEditPcBuildingId] = useState<string | null>(null);
   const [showCreateBuilding, setShowCreateBuilding] = useState(false);
-  const [selectedBuildingId, setSelectedBuildingId] = useState(buildings[0]?.id ?? "");
-  const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId) ?? buildings[0];
-
-  useEffect(() => {
-    if (buildings.length === 0) return;
-    if (selectedBuildingId && buildings.some((building) => building.id === selectedBuildingId)) return;
-    const timer = window.setTimeout(() => setSelectedBuildingId(buildings[0].id), 0);
-    return () => window.clearTimeout(timer);
-  }, [buildings, selectedBuildingId]);
+  const [editingSettingsSection, setEditingSettingsSection] = useState<"lifecycle" | null>(null);
+  const selectedBuilding = buildings.find((building) => building.id === buildingContextId);
 
   async function createBuilding() {
     const supabase = createSupabaseBrowserClient();
@@ -3306,8 +3517,8 @@ function AdminSetup({
       setHomeUserGuideUrl("");
       setAllowResidentAccessRequests(true);
       setShowCreateBuilding(false);
-      setSelectedBuildingId(data.id);
       await reload();
+      window.setTimeout(() => onBuildingContextChange(data.id), 0);
     }
   }
 
@@ -3339,6 +3550,17 @@ function AdminSetup({
     return draftPcDate(building) !== currentPcDate
       || draftPcConfirmed(building) !== (building.pc_confirmed ?? false)
       || draftAllowResidentRequests(building) !== (building.allow_resident_access_requests ?? true);
+  }
+
+  function cancelBuildingSettings(building: Building) {
+    setBuildingDrafts((current) => {
+      const next = { ...current };
+      delete next[building.id];
+      return next;
+    });
+    setEditConfirmedPcBuildingIds((current) => ({ ...current, [building.id]: false }));
+    setConfirmEditPcBuildingId(null);
+    setEditingSettingsSection(null);
   }
 
   function pcConfirmHelperText(pcDateValue: string, pcConfirmedValue: boolean) {
@@ -3389,7 +3611,16 @@ function AdminSetup({
       entity_type: "building",
       entity_id: building.id,
       summary: `Building settings updated: ${building.name}`,
-      metadata: { building: building.name, ...payload },
+      metadata: {
+        building: building.name,
+        building_id: building.id,
+        ...payload,
+        changes: [
+          { field: "pc_date", previous: currentPcDate || null, next: payload.pc_date },
+          { field: "pc_confirmed", previous: building.pc_confirmed, next: payload.pc_confirmed },
+          { field: "allow_resident_access_requests", previous: building.allow_resident_access_requests, next: payload.allow_resident_access_requests },
+        ],
+      },
     });
     setBuildingDrafts((current) => {
       const next = { ...current };
@@ -3398,6 +3629,7 @@ function AdminSetup({
     });
     setEditConfirmedPcBuildingIds((current) => ({ ...current, [building.id]: false }));
     setConfirmEditPcBuildingId(null);
+    setEditingSettingsSection(null);
     onNotice(`Building settings saved for ${building.name}.`);
     await reload();
   }
@@ -3415,119 +3647,126 @@ function AdminSetup({
   const hasChanges = selectedBuilding ? buildingHasUnsavedChanges(selectedBuilding) : false;
 
   return (
-    <section className="panel grid gap-6">
-      <section
-        className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-4 shadow-[0_10px_24px_rgba(15,61,46,0.06)]"
-        data-testid="working-building-context"
-      >
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Working building</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "No building selected"}</h2>
-              {selectedBuilding && (
-                <>
-                  <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
-                  <span className={statusTone(portalMode === "post_dlp_readonly" ? "closed" : portalMode === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(portalMode)}</span>
-                  {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
-                </>
-              )}
-            </div>
-            <p className="mt-2 text-sm text-[#617169]">
-              Lifecycle, resident access and building structure settings below apply to this building.
-            </p>
-          </div>
-          <label className="field-label">
-            Selected building
-            <select className="field min-h-12 text-base font-semibold text-[#0F3D2E]" aria-label="Selected building" value={selectedBuilding?.id ?? ""} onChange={(event) => setSelectedBuildingId(event.target.value)}>
-              {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-            </select>
-          </label>
+    <section className="panel grid gap-5">
+      <section className="flex flex-col gap-3 border-b border-[#e5e9e4] pb-4 sm:flex-row sm:items-center sm:justify-between" data-testid="working-building-context">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="truncate text-xl font-bold text-[#0F3D2E]">{selectedBuilding?.name ?? "Buildings"}</h2>
+          {selectedBuilding && (
+            <>
+              <span className={statusTone(pcConfirmedValue ? "closed" : "open")}>{pcConfirmedValue ? "PC confirmed" : "Not confirmed"}</span>
+              <span className={statusTone(portalMode === "post_dlp_readonly" ? "closed" : portalMode === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(portalMode)}</span>
+              {hasChanges && <span className={statusTone("needs_more_info")}>Unsaved changes</span>}
+            </>
+          )}
+          {!selectedBuilding && buildings.length > 0 && <span className="rounded-full border border-[#d9ded6] bg-[#f4f5f2] px-2.5 py-1 text-xs font-semibold text-[#617169]">All buildings</span>}
         </div>
+        {!selectedBuilding && buildings.length > 0 && <p className="text-sm text-[#617169]">Choose View to set the global building context.</p>}
       </section>
 
-      {!selectedBuilding && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
+      {!selectedBuilding && buildings.length === 0 && <p className="text-sm text-[#617169]">No buildings have been created yet.</p>}
+
+      {!selectedBuilding && buildings.length > 0 && (
+        <section className="grid gap-3" aria-label="Building overview">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Building overview</h3>
+            <p className="mt-1 text-sm text-[#617169]">Portfolio-level setup status and commercial allocation.</p>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-[#d9ded6]">
+            <table className="min-w-[46rem] w-full text-left text-sm">
+              <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
+                <tr>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5">Building</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5">Lifecycle</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Units</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Sales route</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Rental</th>
+                  <th className="border-b border-[#d9ded6] px-3 py-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {buildings.map((building) => {
+                  const overviewUnits = units.filter((unit) => unit.building_id === building.id);
+                  const lifecycle = derivedBuildingLifecycleStatus(building);
+                  const salesRouteCount = overviewUnits.filter((unit) => ["for_sale", "reserved", "exchanged", "completed"].includes(unit.sale_status)).length;
+                  const rentalCount = overviewUnits.filter((unit) => unit.rental_portfolio_status === "active").length;
+                  return (
+                    <tr key={building.id} className="bg-white">
+                      <td className="border-b border-[#eef0eb] px-3 py-3 font-semibold text-[#0F3D2E]">{building.name}</td>
+                      <td className="border-b border-[#eef0eb] px-3 py-3"><span className={statusTone(lifecycle === "post_dlp_readonly" ? "closed" : lifecycle === "pre_pc" ? "open" : "in_progress")}>{lifecycleLabel(lifecycle)}</span></td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{overviewUnits.length}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{salesRouteCount}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 text-right">{rentalCount}</td>
+                      <td className="border-b border-[#eef0eb] px-3 py-3 text-right"><button className="snag-action-link" type="button" onClick={() => onBuildingContextChange(building.id)}>View</button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {selectedBuilding && (
         <>
           <section className="grid gap-4" data-testid="building-overview-section">
-            <div>
-              <h3 className="text-base font-semibold text-[#0F3D2E]">Building overview</h3>
-              <p className="mt-1 text-sm text-[#617169]">Settings for {selectedBuilding.name}.</p>
-              <p className="mt-1 text-sm text-[#617169]">{lifecycleEffectSummary(portalMode)}</p>
-              {hasWarning && (
-                <div className="mt-3 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                  PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
-                </div>
-              )}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[#0F3D2E]">Building lifecycle</h3>
+                <p className="mt-1 text-sm text-[#617169]">{lifecycleEffectSummary(portalMode)}</p>
+              </div>
+              {editingSettingsSection !== "lifecycle" && <button className="snag-action-link" type="button" onClick={() => setEditingSettingsSection("lifecycle")}>Edit</button>}
             </div>
+            {hasWarning && (
+              <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
+              </div>
+            )}
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="grid gap-3">
-                <label className="field-label">
-                  {pcConfirmedValue ? "Confirmed PC date" : "Expected PC date"}
-                  <input
-                    className="field min-h-10 py-2"
-                    type="date"
-                    value={pcDateValue}
-                    disabled={pcConfirmedValue && !canEditConfirmedPc}
-                    onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_date: event.target.value || null })}
-                  />
-                </label>
-                <p className="text-xs text-[#617169]">{pcConfirmHelperText(pcDateValue, pcConfirmedValue)}</p>
-                {!pcConfirmedValue && (
-                  <label className={`option-card min-h-10 px-3 py-2 text-sm ${confirmDisabled ? "opacity-60" : ""}`}>
-                    <input
-                      checked={pcConfirmedValue}
-                      disabled={confirmDisabled}
-                      onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_confirmed: event.target.checked })}
-                      type="checkbox"
-                    />
-                    PC confirmed
-                  </label>
-                )}
-                {pcConfirmedValue && !canEditConfirmedPc && (
-                  <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>
-                    Edit confirmed PC date
-                  </button>
-                )}
-                {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
-                  <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                    <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
-                    <button
-                      className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm"
-                      type="button"
-                      onClick={() => {
-                        setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true }));
-                        setConfirmEditPcBuildingId(null);
-                      }}
-                    >
-                      Allow PC date editing
-                    </button>
+            {editingSettingsSection === "lifecycle" ? (
+              <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-3">
+                    <label className="field-label">
+                      {pcConfirmedValue ? "Confirmed PC date" : "Expected PC date"}
+                      <input className="field min-h-10 py-2" type="date" value={pcDateValue} disabled={pcConfirmedValue && !canEditConfirmedPc} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_date: event.target.value || null })} />
+                    </label>
+                    <p className="text-xs text-[#617169]">{pcConfirmHelperText(pcDateValue, pcConfirmedValue)}</p>
+                    {!pcConfirmedValue && (
+                      <label className={`option-card min-h-10 px-3 py-2 text-sm ${confirmDisabled ? "opacity-60" : ""}`}>
+                        <input checked={pcConfirmedValue} disabled={confirmDisabled} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { pc_confirmed: event.target.checked })} type="checkbox" />
+                        PC confirmed
+                      </label>
+                    )}
+                    {pcConfirmedValue && !canEditConfirmedPc && <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>Edit confirmed PC date</button>}
+                    {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
+                      <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                        <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
+                        <button className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true })); setConfirmEditPcBuildingId(null); }}>Allow PC date editing</button>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="grid gap-3 text-sm">
+                    <InfoRow label="Defects reporting closes" value={reportingEnd ? formatDate(reportingEnd) : "Calculated once PC is confirmed"} />
+                    <InfoRow label="Closing notice starts" value={closingStart ? formatDate(closingStart) : "Calculated once PC is confirmed"} />
+                    <InfoRow label="Current portal mode" value={lifecycleLabel(portalMode)} />
+                  </div>
+                </div>
+                <div className="grid gap-2 border-t border-[#e5e9e4] pt-4">
+                  <label className="option-card min-h-10 px-3 py-2 text-sm"><input checked={allowRequestsValue} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { allow_resident_access_requests: event.target.checked })} type="checkbox" />Allow new resident access requests</label>
+                  <p className="text-xs text-[#617169]">Existing approved users can still log in. New residents cannot request access while access requests are disabled.</p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => cancelBuildingSettings(selectedBuilding)}>Cancel</button>
+                  <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveBuildingSettings(selectedBuilding)} disabled={!hasChanges}>Save changes</button>
+                </div>
               </div>
-
-              <div className="grid gap-3 text-sm">
-                <InfoRow label="Defects reporting closes" value={reportingEnd ? formatDate(reportingEnd) : "Calculated once PC is confirmed"} />
-                <InfoRow label="Closing notice starts" value={closingStart ? formatDate(closingStart) : "Calculated once PC is confirmed"} />
-                <InfoRow label="Current portal mode" value={lifecycleLabel(portalMode)} />
-              </div>
-            </div>
-
-            <div className="grid gap-2 border-t border-[#e5e9e4] pt-4">
-              <label className="option-card min-h-10 px-3 py-2 text-sm">
-                <input checked={allowRequestsValue} onChange={(event) => updateBuildingDraft(selectedBuilding.id, { allow_resident_access_requests: event.target.checked })} type="checkbox" />
-                Allow new resident access requests
-              </label>
-              <p className="text-xs text-[#617169]">Existing approved users can still log in. New residents cannot request access while access requests are disabled.</p>
-              {!allowRequestsValue && <p className="text-xs text-[#7a5a15]">New residents cannot request access for this building. Existing approved users are not affected.</p>}
-              <div className="flex justify-end">
-                <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveBuildingSettings(selectedBuilding)} disabled={!hasChanges}>
-                  Save building changes
-                </button>
-              </div>
-            </div>
+            ) : (
+              <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{pcConfirmedValue ? "PC confirmed" : "Expected PC"}</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{pcDateValue ? formatDate(pcDateValue) : "Not set"}</dd></div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Defects reporting</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reportingEnd ? `Closes ${formatDate(reportingEnd)}` : "Awaiting PC confirmation"}</dd>{closingStart && <dd className="mt-0.5 text-xs text-[#617169]">Closing notice begins {formatDate(closingStart)}</dd>}</div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Resident portal</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{lifecycleLabel(portalMode)}</dd><dd className="mt-0.5 text-xs text-[#617169]">New access requests {allowRequestsValue ? "On" : "Off"}</dd></div>
+              </dl>
+            )}
           </section>
 
           <BuildingDeliveryTeam
@@ -3629,6 +3868,25 @@ function BuildingSalesSetup({
   const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
   const [secondDepositPercent, setSecondDepositPercent] = useState("");
   const [secondDepositMonths, setSecondDepositMonths] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [savedValues, setSavedValues] = useState({
+    buildCost: "", agentFeePercent: "", exchangeAgentFeePercent: "", completionAgentFeePercent: "",
+    reservationFee: "", reservationFeeHolder: "sales_agent", exchangeDepositPercent: "10",
+    secondDepositEnabled: false, secondDepositPercent: "", secondDepositMonths: "",
+  });
+
+  function applySalesValues(values: typeof savedValues) {
+    setBuildCost(values.buildCost);
+    setAgentFeePercent(values.agentFeePercent);
+    setExchangeAgentFeePercent(values.exchangeAgentFeePercent);
+    setCompletionAgentFeePercent(values.completionAgentFeePercent);
+    setReservationFee(values.reservationFee);
+    setReservationFeeHolder(values.reservationFeeHolder);
+    setExchangeDepositPercent(values.exchangeDepositPercent);
+    setSecondDepositEnabled(values.secondDepositEnabled);
+    setSecondDepositPercent(values.secondDepositPercent);
+    setSecondDepositMonths(values.secondDepositMonths);
+  }
 
   const depositStructure = buildDepositStructure({
     exchangeDepositPercent: moneyInputToNumber(exchangeDepositPercent) ?? 10,
@@ -3655,16 +3913,29 @@ function BuildingSalesSetup({
           .maybeSingle();
         if (error) throw error;
         if (cancelled) return;
-        setBuildCost(data?.build_cost?.toString() ?? "");
-        setAgentFeePercent(data?.default_agent_fee_percent?.toString() ?? "");
-        setExchangeAgentFeePercent(data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "");
-        setCompletionAgentFeePercent(data?.default_completion_agent_fee_percent?.toString() ?? "0");
-        setReservationFee(data?.reservation_fee?.toString() ?? "");
-        setReservationFeeHolder(data?.reservation_fee_holder_default ?? "sales_agent");
-        setExchangeDepositPercent(data?.exchange_deposit_percent?.toString() ?? "10");
-        setSecondDepositEnabled(Boolean(data?.second_deposit_enabled));
-        setSecondDepositPercent(data?.second_deposit_percent?.toString() ?? "");
-        setSecondDepositMonths(data?.second_deposit_months_after_exchange?.toString() ?? "");
+        const loadedValues = {
+          buildCost: data?.build_cost?.toString() ?? "",
+          agentFeePercent: data?.default_agent_fee_percent?.toString() ?? "",
+          exchangeAgentFeePercent: data?.default_exchange_agent_fee_percent?.toString() ?? data?.default_agent_fee_percent?.toString() ?? "",
+          completionAgentFeePercent: data?.default_completion_agent_fee_percent?.toString() ?? "0",
+          reservationFee: data?.reservation_fee?.toString() ?? "",
+          reservationFeeHolder: data?.reservation_fee_holder_default ?? "sales_agent",
+          exchangeDepositPercent: data?.exchange_deposit_percent?.toString() ?? "10",
+          secondDepositEnabled: Boolean(data?.second_deposit_enabled),
+          secondDepositPercent: data?.second_deposit_percent?.toString() ?? "",
+          secondDepositMonths: data?.second_deposit_months_after_exchange?.toString() ?? "",
+        };
+        setBuildCost(loadedValues.buildCost);
+        setAgentFeePercent(loadedValues.agentFeePercent);
+        setExchangeAgentFeePercent(loadedValues.exchangeAgentFeePercent);
+        setCompletionAgentFeePercent(loadedValues.completionAgentFeePercent);
+        setReservationFee(loadedValues.reservationFee);
+        setReservationFeeHolder(loadedValues.reservationFeeHolder);
+        setExchangeDepositPercent(loadedValues.exchangeDepositPercent);
+        setSecondDepositEnabled(loadedValues.secondDepositEnabled);
+        setSecondDepositPercent(loadedValues.secondDepositPercent);
+        setSecondDepositMonths(loadedValues.secondDepositMonths);
+        setSavedValues(loadedValues);
       } catch (error) {
         if (!cancelled) onNotice(error instanceof Error ? error.message : "Could not load sales setup.");
       } finally {
@@ -3754,6 +4025,8 @@ function BuildingSalesSetup({
         metadata: { building: building.name, ...defaultsPayload, deposit_summary: paymentScheduleSummary(depositStructure), cascade },
       });
       onNotice(`Sales setup saved for ${building.name}. ${defaultDealSetupCascadeSummary(cascade)}`);
+      setSavedValues({ buildCost, agentFeePercent, exchangeAgentFeePercent, completionAgentFeePercent, reservationFee, reservationFeeHolder, exchangeDepositPercent, secondDepositEnabled, secondDepositPercent, secondDepositMonths });
+      setIsEditing(false);
       await reload();
     } catch (error) {
       console.error("Sales setup save failed", { buildingId: building.id, error });
@@ -3875,11 +4148,38 @@ function BuildingSalesSetup({
     return cascade;
   }
 
+  const reservationFeeHolderLabel = reservationFeeHolder === "sales_agent" ? "Sales agent"
+    : reservationFeeHolder === "developer" ? "Developer"
+      : reservationFeeHolder === "conveyancer" ? "Conveyancer" : "Other";
+
+  if (!isEditing) {
+    return (
+      <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
+            <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
+          </div>
+          <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)} disabled={isLoading}>{isLoading ? "Loading…" : "Edit"}</button>
+        </div>
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: {buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{agentFeePercent ? `${agentFeePercent}% total` : "Not set"}</dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : "Not set"}</dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Deposits</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange / {depositStructure.completionBalancePercent}% completion</dd><dd className="mt-0.5 text-xs text-[#617169]">Second deposit: {secondDepositEnabled ? `${secondDepositPercent || "0"}% after ${secondDepositMonths || "0"} months` : "None"}</dd></div>
+        </dl>
+      </section>
+    );
+  }
+
   return (
     <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
-      <div>
-        <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
-        <p className="mt-1 text-sm text-[#617169]">Default commercial deal structure for new sale attempts in {building.name}.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
+          <p className="mt-1 text-sm text-[#617169]">Default commercial deal structure for new sale attempts in {building.name}.</p>
+        </div>
+        {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
@@ -3896,7 +4196,6 @@ function BuildingSalesSetup({
               <h4 className="font-bold text-[#0F3D2E]">Default deal setup</h4>
               <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
             </div>
-            {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="field-label">Total sales agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} /></label>
@@ -3938,10 +4237,9 @@ function BuildingSalesSetup({
             </div>
             <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>
           </div>
-          <div className="mt-4 flex justify-end">
-            <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>
-              Save sales setup
-            </button>
+          <div className="mt-4 flex justify-end gap-2">
+            <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { applySalesValues(savedValues); setIsEditing(false); }} disabled={isSaving}>Cancel</button>
+            <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveSalesDefaults()} disabled={isSaving || !depositStructure.isValid || !agentFeeStructure.isValid}>Save changes</button>
           </div>
         </div>
       </div>
@@ -3976,6 +4274,15 @@ function BuildingDeliveryTeam({
   const [supportingTradeId, setSupportingTradeId] = useState("");
   const [supportingTradeType, setSupportingTradeType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  function cancelEditing() {
+    setMainContractorId(mainContractorLink?.organisation_id ?? "");
+    setDeveloperRepId(developerRepLink?.organisation_id ?? "");
+    setSupportingTradeId("");
+    setSupportingTradeType("");
+    setIsEditing(false);
+  }
 
   async function replaceRole(role: "main_contractor" | "developer_representative", organisationId: string) {
     const supabase = createSupabaseBrowserClient();
@@ -4015,6 +4322,7 @@ function BuildingDeliveryTeam({
       });
       onNotice(`Delivery team saved for ${building.name}.`);
       await reload();
+      setIsEditing(false);
     } catch (error) {
       onNotice(deliveryTeamSchemaNotice(readableError(error, "Could not save delivery team.")));
     } finally {
@@ -4084,10 +4392,20 @@ function BuildingDeliveryTeam({
 
   return (
     <section className="grid gap-4 border-t border-[#e5e9e4] pt-5">
-      <div>
-        <h3 className="text-base font-semibold text-[#0F3D2E]">Delivery team</h3>
-        <p className="mt-1 text-sm text-[#617169]">Developer snags default to the main contractor. Supporting trades can be selected for exception snags.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-[#0F3D2E]">Delivery team</h3>
+          <p className="mt-1 text-sm text-[#617169]">Developer snags default to the main contractor. Supporting trades can be selected for exception snags.</p>
+        </div>
+        {!isEditing && <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)}>Edit</button>}
       </div>
+      {!isEditing ? (
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Main contractor</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === mainContractorLink?.organisation_id)?.name ?? "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name ?? "Not set"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? "None" : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
+        </dl>
+      ) : <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">
         <label className="field-label">
           Main contractor
@@ -4103,11 +4421,6 @@ function BuildingDeliveryTeam({
             {developerRepOptions.map((organisation) => <option key={organisation.id} value={organisation.id}>{organisation.name}</option>)}
           </select>
         </label>
-      </div>
-      <div className="flex justify-end">
-        <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => void saveCoreTeam()} disabled={isSaving}>
-          Save delivery team
-        </button>
       </div>
       <div className="grid gap-3 border-t border-[#e5e9e4] pt-4">
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] lg:items-end">
@@ -4147,6 +4460,11 @@ function BuildingDeliveryTeam({
           <p className="text-sm text-[#617169]">No supporting trades are linked to this building yet.</p>
         )}
       </div>
+      <div className="flex justify-end gap-2 border-t border-[#e5e9e4] pt-4">
+        <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={cancelEditing} disabled={isSaving}>Cancel</button>
+        <button className="primary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => void saveCoreTeam()} disabled={isSaving}>Save changes</button>
+      </div>
+      </div>}
     </section>
   );
 }
@@ -4154,6 +4472,7 @@ function BuildingDeliveryTeam({
 function DeveloperSnagging({
   user,
   buildings,
+  buildingContextId,
   buildingFloors,
   units,
   areas,
@@ -4169,6 +4488,7 @@ function DeveloperSnagging({
 }: {
   user: User;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
@@ -4182,10 +4502,11 @@ function DeveloperSnagging({
   onDirtyChange: (hasUnsavedChanges: boolean) => void;
   onRequestActivePanel: (request?: ActivePanelRequest) => void;
 }) {
-  const [draft, setDraft] = useState<SnagDraft>(emptySnagDraft);
+  const initialDraft = { ...emptySnagDraft, buildingId: buildingContextId };
+  const [draft, setDraft] = useState<SnagDraft>(() => initialDraft);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingResponsibleOrganisation, setIsChangingResponsibleOrganisation] = useState(false);
-  const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(emptySnagDraft));
+  const [cleanContextSignature, setCleanContextSignature] = useState(contextSignature(initialDraft));
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const selectedUnit = units.find((unit) => unit.id === draft.unitId);
@@ -4249,8 +4570,8 @@ function DeveloperSnagging({
   }
 
   function resetAndClose() {
-    setCleanContextSignature(contextSignature(emptySnagDraft));
-    setDraft(emptySnagDraft);
+    setCleanContextSignature(contextSignature(initialDraft));
+    setDraft(initialDraft);
     setIsChangingResponsibleOrganisation(false);
     onDirtyChange(false);
     onClose();
@@ -4316,8 +4637,8 @@ function DeveloperSnagging({
       };
 
       if (closeAfterSave) {
-        setCleanContextSignature(contextSignature(emptySnagDraft));
-        setDraft(emptySnagDraft);
+        setCleanContextSignature(contextSignature(initialDraft));
+        setDraft(initialDraft);
         onDirtyChange(false);
         onNotice("Snag added.");
       } else {
@@ -4343,13 +4664,24 @@ function DeveloperSnagging({
     <div className="max-w-xl">
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
-          <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
-            setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" });
-            setIsChangingResponsibleOrganisation(false);
-          }} disabled={isSaving}>
-            <option value="">Select building</option>
-            {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-          </select>
+          {buildingContextId ? (
+            <div className="rounded-xl border border-[#dfe5df] bg-[#f8faf7] px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#66736B]">Building</p>
+              <p className="mt-0.5 font-semibold text-[#0F3D2E]">{selectedBuilding?.name}</p>
+            </div>
+          ) : (
+            <label className="grid gap-1">
+              <span className="text-xs font-semibold text-[#66736B]">Building</span>
+              <select className="field" aria-label="Building" value={draft.buildingId} onChange={(event) => {
+                setDraft({ ...draft, buildingId: event.target.value, floor: "", unitId: "", areaId: "", responsibleOrganisationId: "" });
+                setIsChangingResponsibleOrganisation(false);
+              }} disabled={isSaving}>
+                <option value="">Select building</option>
+                {buildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
+              </select>
+              {!draft.buildingId && <span className="text-xs text-[#66736B]">Choose a building to load its floors, units and communal areas.</span>}
+            </label>
+          )}
           <div className="developer-snag-toggle grid grid-cols-2 gap-1.5" role="group" aria-label="Location type">
             <button className={draft.locationType === "unit" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "unit"}>Unit</button>
             <button className={draft.locationType === "communal" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "communal"}>Communal</button>
@@ -4498,7 +4830,7 @@ type AccessListRow = {
   phone: string;
   allocation: string;
   createdAt: string | null;
-  lastSignInAt: string | null;
+  lastActiveAt: string | null;
   sortRank: number;
   profile?: Profile;
   request?: ResidentAccessRequest;
@@ -4536,39 +4868,6 @@ function UserDirectory({
   reload: () => Promise<void>;
 }) {
   const [selectedRequestId, setSelectedRequestId] = useState("");
-  const [lastSignInsByUserId, setLastSignInsByUserId] = useState<Record<string, string | null>>({});
-  const [lastSignInsStatus, setLastSignInsStatus] = useState<"loading" | "loaded" | "error">("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadLastSignIns() {
-      const supabase = createSupabaseBrowserClient();
-      const { data } = await supabase.auth.getSession();
-      const response = await fetch("/api/admin/users", {
-        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
-      });
-      const payload = (await response.json()) as {
-        users?: { id: string; lastSignInAt: string | null }[];
-        error?: string;
-      };
-
-      if (cancelled) return;
-
-      if (!response.ok || !payload.users) {
-        setLastSignInsStatus("error");
-        return;
-      }
-
-      setLastSignInsByUserId(Object.fromEntries(payload.users.map((user) => [user.id, user.lastSignInAt])));
-      setLastSignInsStatus("loaded");
-    }
-
-    void loadLastSignIns().catch(() => {
-      if (!cancelled) setLastSignInsStatus("error");
-    });
-    return () => { cancelled = true; };
-  }, []);
 
   function userStatus(profile: Profile) {
     return profile.active === false ? "deactivated" : "active";
@@ -4612,7 +4911,7 @@ function UserDirectory({
         phone: profile.phone || "",
         allocation: allocationLabel(profile),
         createdAt: profile.created_at ?? null,
-        lastSignInAt: lastSignInsByUserId[profile.id] ?? null,
+        lastActiveAt: profile.last_active_at ?? null,
         sortRank: status === "active" ? 1 : 2,
         profile,
       };
@@ -4631,7 +4930,7 @@ function UserDirectory({
       phone: request.phone,
       allocation: requestUnitsLabel(request),
       createdAt: request.created_at,
-      lastSignInAt: null,
+      lastActiveAt: null,
       sortRank: request.status === "pending" ? 0 : request.status === "approved" ? 3 : 4,
       request,
     }));
@@ -4657,11 +4956,9 @@ function UserDirectory({
     return selectedRequestId === row.id ? "Close" : "View";
   }
 
-  function lastSignInLabel(row: AccessListRow) {
+  function lastActiveLabel(row: AccessListRow) {
     if (row.kind === "request") return "—";
-    if (lastSignInsStatus === "loading") return "Loading…";
-    if (lastSignInsStatus === "error") return "Unavailable";
-    return row.lastSignInAt ? formatDateTime(row.lastSignInAt) : "Never";
+    return row.lastActiveAt ? formatDateTime(row.lastActiveAt) : "Never";
   }
 
   function rowActionIcon(row: AccessListRow, isOpen: boolean) {
@@ -4693,8 +4990,11 @@ function UserDirectory({
     <section className="panel min-w-0 overflow-hidden p-0">
       <div className="grid gap-3 border-b border-[#d9ded6] px-4 py-3 sm:flex sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-bold text-[#0F3D2E]">Access & users</h2>
-          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-bold text-[#0F3D2E]">Users &amp; access</h2>
+            <span className="rounded-full border border-[#d9ded6] bg-[#f4f5f2] px-2.5 py-1 text-xs font-semibold text-[#617169]">System-wide</span>
+          </div>
+          <p className="break-words text-sm text-[#617169]">Manage access requests, portal users and account status. This page is not filtered by the selected building.</p>
         </div>
         <button className="primary min-h-9 w-full px-3 py-1.5 text-sm sm:w-auto" onClick={onAddUser}>
           <Plus size={16} /> Add user
@@ -4720,7 +5020,7 @@ function UserDirectory({
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last login</span><span className="min-w-0 text-right font-medium">{lastSignInLabel(row)}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last active</span><span className="min-w-0 text-right font-medium">{lastActiveLabel(row)}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -4768,7 +5068,7 @@ function UserDirectory({
               <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Last login</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Last active</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
@@ -4793,7 +5093,7 @@ function UserDirectory({
                       <p className="max-w-md truncate">{row.allocation}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastSignInLabel(row)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastActiveLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
@@ -5197,6 +5497,13 @@ function UserEditPanel({
           organisationId: needsOrganisationAndBuilding ? organisationId : null,
           buildingIds: buildingIdsForSave,
           unitIds: selectedUnitIds,
+          changes: [
+            { field: "full_name", previous: profile.full_name, next: fullName },
+            { field: "phone", previous: profile.phone, next: phone },
+            { field: "role", previous: profile.role, next: role },
+            { field: "resident_type", previous: profile.resident_type, next: isResident ? residentType : null },
+            { field: "organisation_id", previous: profile.organisation_id, next: needsOrganisationAndBuilding ? organisationId : null },
+          ],
         },
       });
       onNotice("");
@@ -5283,7 +5590,11 @@ function UserEditPanel({
         entity_type: "user",
         entity_id: profile.id,
         summary: nextActive ? `User reactivated: ${profile.email}` : `User deactivated: ${profile.email}`,
-        metadata: { email: profile.email, active: nextActive },
+        metadata: {
+          email: profile.email,
+          active: nextActive,
+          changes: [{ field: "active", previous: isActive ? "active" : "inactive", next: nextActive ? "active" : "inactive" }],
+        },
       });
       onNotice(nextActive ? `${profile.email} reactivated.` : `${profile.email} deactivated.`);
       await reload();
@@ -6041,6 +6352,7 @@ function SnagWorkflow({
   user,
   profile,
   buildings,
+  buildingContextId,
   buildingFloors,
   snags,
   units,
@@ -6061,6 +6373,7 @@ function SnagWorkflow({
   user: User;
   profile: Profile | null;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
@@ -6127,8 +6440,10 @@ function SnagWorkflow({
       {!isViewingSnagDetails && showAddSnag && canCreateSnag && (
         <div ref={addSnagPanelRef} className="active-panel-target">
           <DeveloperSnagging
+            key={buildingContextId || "all-buildings"}
             user={user}
             buildings={buildings}
+            buildingContextId={buildingContextId}
             buildingFloors={buildingFloors}
             units={units}
             areas={areas}
@@ -6152,6 +6467,7 @@ function SnagWorkflow({
           user={user}
           canSendReport={canSendReport}
           buildings={buildings}
+          buildingContextId={buildingContextId}
           buildingFloors={buildingFloors}
           units={units}
           areas={areas}
@@ -6165,6 +6481,7 @@ function SnagWorkflow({
       <SnagList
         title=""
         buildings={buildings}
+        buildingContextId={buildingContextId}
         buildingFloors={buildingFloors}
         snags={snags}
         units={units}
@@ -8141,92 +8458,11 @@ function SignaturePad({ value, onChange, disabled = false }: { value: string; on
   );
 }
 
-function AuditPanel({ auditEvents, profiles }: { auditEvents: AuditEvent[]; profiles: Profile[] }) {
-  const [entityFilter, setEntityFilter] = useState("");
-  const [eventFilter, setEventFilter] = useState("");
-  const entityTypes = Array.from(new Set(auditEvents.map((event) => event.entity_type))).sort();
-  const eventTypes = Array.from(new Set(auditEvents.map((event) => event.event_type))).sort();
-  const filtered = auditEvents
-    .filter((event) => !entityFilter || event.entity_type === entityFilter)
-    .filter((event) => !eventFilter || event.event_type === eventFilter)
-    .slice(0, 100);
-
-  function authorName(userId?: string | null) {
-    if (!userId) return "System";
-    const profile = profiles.find((item) => item.id === userId);
-    return profile?.full_name || profile?.name || profile?.email || "Unknown user";
-  }
-
-  return (
-    <section className="min-w-0 overflow-hidden rounded-md border border-[#d9ded6] bg-white">
-      <div className="border-b border-[#d9ded6] px-4 py-3">
-        <h2 className="text-lg font-semibold">Activity log</h2>
-        <p className="text-sm text-[#617169]">Recent admin, setup and report events.</p>
-        <div className="mt-3 grid gap-2 md:grid-cols-2">
-          <select className={`field ${entityFilter ? "filter-active" : ""}`} value={entityFilter} onChange={(event) => setEntityFilter(event.target.value)}>
-            <option value="">All areas</option>
-            {entityTypes.map((entityType) => <option key={entityType} value={entityType}>{entityLabel(entityType)}</option>)}
-          </select>
-          <select className={`field ${eventFilter ? "filter-active" : ""}`} value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
-            <option value="">All events</option>
-            {eventTypes.map((eventType) => <option key={eventType} value={eventType}>{eventLabel(eventType)}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className="grid gap-3 bg-[#F7F5EF] p-3 md:hidden">
-        {filtered.map((event) => (
-          <article key={event.id} className="mobile-card">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-              <div className="min-w-0">
-                <p className="break-words font-bold text-[#1F2A24]">{eventLabel(event.event_type)}</p>
-                <p className="mt-0.5 text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
-              </div>
-              <span className="rounded-full bg-[#EEF6F1] px-2 py-1 text-right text-xs font-semibold leading-tight text-[#0F3D2E]">
-                {entityLabel(event.entity_type)}
-              </span>
-            </div>
-            <p className="mt-3 break-words text-sm text-[#34413a]">{event.summary}</p>
-            <div className="mt-3 grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 text-sm">
-              <span className="text-[#66736B]">User</span>
-              <span className="min-w-0 break-words text-right font-medium">{authorName(event.created_by_user_id)}</span>
-            </div>
-          </article>
-        ))}
-        {filtered.length === 0 && <p className="mobile-empty">No audit events to show.</p>}
-      </div>
-      <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[920px] w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
-              <th className="border-b border-[#d9ded6] px-3 py-2">Date</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Event</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Area</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Summary</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">User</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((event) => (
-              <tr key={event.id}>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{formatDateTime(event.created_at)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{eventLabel(event.event_type)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{entityLabel(event.entity_type)}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{event.summary}</td>
-                <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{authorName(event.created_by_user_id)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <p className="p-4 text-sm text-[#617169]">No audit events to show.</p>}
-      </div>
-    </section>
-  );
-}
-
 function ReportsPanel({
   user,
   canSendReport,
   buildings,
+  buildingContextId,
   buildingFloors,
   units,
   areas,
@@ -8239,6 +8475,7 @@ function ReportsPanel({
   user: User;
   canSendReport: boolean;
   buildings: Building[];
+  buildingContextId: string;
   buildingFloors: BuildingFloor[];
   units: Unit[];
   areas: Area[];
@@ -8248,26 +8485,21 @@ function ReportsPanel({
   onNotice: (notice: string) => void;
   recordAudit: (event: Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">) => Promise<void>;
 }) {
-  const reportBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
   const reportUnitIds = Array.from(new Set(snags.map((snag) => snag.unit_id).filter(Boolean))) as string[];
   const reportCommunalAreaIds = Array.from(new Set(snags.filter((snag) => !snag.unit_id).map((snag) => snag.area_id).filter(Boolean))) as string[];
-  const reportBuildings = buildings.filter((building) => reportBuildingIds.includes(building.id));
-  const [buildingId, setBuildingId] = useState(reportBuildings[0]?.id ?? "");
   const [locationType, setLocationType] = useState<"unit" | "communal">("unit");
   const buildingUnits = units
-    .filter((unit) => reportUnitIds.includes(unit.id))
-    .filter((unit) => !buildingId || unit.building_id === buildingId);
-  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingId);
+    .filter((unit) => reportUnitIds.includes(unit.id));
+  const sortedBuildingUnits = sortUnitsByFloorOrder(buildingUnits, buildingFloors, buildingContextId);
   const buildingCommunalAreas = sortAreasByFloorOrder(
     areas
       .filter((area) => reportCommunalAreaIds.includes(area.id))
-      .filter((area) => area.area_type === "communal_area")
-      .filter((area) => !buildingId || area.building_id === buildingId),
+      .filter((area) => area.area_type === "communal_area"),
     buildingFloors,
-    buildingId,
+    buildingContextId,
   );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
-  const [communalAreaId, setCommunalAreaId] = useState("");
+  const [communalAreaId, setCommunalAreaId] = useState(buildingContextId ? "" : buildingCommunalAreas[0]?.id ?? "");
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
   const [sendState, setSendState] = useState<"idle" | "loading_recipients" | "preview" | "sending" | "sent" | "failed">("idle");
@@ -8284,28 +8516,28 @@ function ReportsPanel({
     .filter((snag) => includeClosedSnags || snag.status !== "closed");
   const unit = units.find((item) => item.id === unitId);
   const communalArea = areas.find((item) => item.id === communalAreaId);
+  const buildingId = locationType === "unit"
+    ? unit?.building_id ?? buildingContextId
+    : communalArea?.building_id ?? buildingContextId;
   const building = buildings.find((item) => item.id === buildingId);
   const locationLabel = locationType === "unit"
-    ? `Unit ${unit?.unit_number ?? ""}`.trim()
+    ? `${buildingContextId ? "" : `${building?.name ?? "Building"} · `}Unit ${unit?.unit_number ?? ""}`.trim()
     : communalArea
-      ? `${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
+      ? `${buildingContextId ? "" : `${building?.name ?? "Building"} · `}${communalArea.name}${communalArea.floor ? ` / ${communalArea.floor}` : ""}`
       : "All communal areas";
   const locationSummaryLabel = locationType === "unit" ? "this flat" : communalArea ? "this communal area" : "all communal areas";
   useEffect(() => {
-    if (!reportBuildings.some((building) => building.id === buildingId)) {
-      setBuildingId(reportBuildings[0]?.id ?? "");
-      return;
-    }
     if (locationType === "unit") {
       if (!sortedBuildingUnits.some((unit) => unit.id === unitId)) {
         if (sortedBuildingUnits[0]) setUnitId(sortedBuildingUnits[0].id);
         else if (buildingCommunalAreas.length > 0) setLocationType("communal");
       }
     }
-    if (locationType === "communal" && communalAreaId && !buildingCommunalAreas.some((area) => area.id === communalAreaId)) {
-      setCommunalAreaId("");
+    if (locationType === "communal") {
+      const selectionIsValid = communalAreaId && buildingCommunalAreas.some((area) => area.id === communalAreaId);
+      if (!selectionIsValid) setCommunalAreaId(buildingContextId ? "" : buildingCommunalAreas[0]?.id ?? "");
     }
-  }, [buildingCommunalAreas, buildingId, communalAreaId, locationType, reportBuildings, sortedBuildingUnits, unitId]);
+  }, [buildingCommunalAreas, buildingContextId, communalAreaId, locationType, sortedBuildingUnits, unitId]);
 
   function resetSendState() {
     setSendState("idle");
@@ -8782,12 +9014,6 @@ function ReportsPanel({
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
-      <select className="field" value={buildingId} onChange={(event) => {
-        setBuildingId(event.target.value);
-        resetSendState();
-      }}>
-        {reportBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-      </select>
       <div className="grid grid-cols-2 gap-2">
         <button
           className={locationType === "unit" ? "primary" : "secondary"}
@@ -8818,17 +9044,21 @@ function ReportsPanel({
           resetSendState();
         }} disabled={sortedBuildingUnits.length === 0}>
           {sortedBuildingUnits.length === 0 && <option value="">No flat snags available</option>}
-          {sortedBuildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+          {sortedBuildingUnits.map((unit) => (
+            <option key={unit.id} value={unit.id}>
+              {!buildingContextId ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}{unit.unit_number}
+            </option>
+          ))}
         </select>
       ) : (
         <select className="field" value={communalAreaId} onChange={(event) => {
           setCommunalAreaId(event.target.value);
           resetSendState();
         }} disabled={buildingCommunalAreas.length === 0}>
-          <option value="">All communal areas</option>
+          {buildingContextId && <option value="">All communal areas</option>}
           {buildingCommunalAreas.map((area) => (
             <option key={area.id} value={area.id}>
-              {area.name}{area.floor ? ` / ${area.floor}` : ""}
+              {!buildingContextId ? `${buildings.find((building) => building.id === area.building_id)?.name ?? "Building"} · ` : ""}{area.name}{area.floor ? ` / ${area.floor}` : ""}
             </option>
           ))}
         </select>
@@ -8902,6 +9132,7 @@ function ReportsPanel({
 function SnagList({
   title,
   buildings,
+  buildingContextId = "",
   buildingFloors,
   snags,
   units,
@@ -8925,6 +9156,7 @@ function SnagList({
 }: {
   title: string;
   buildings: Building[];
+  buildingContextId?: string;
   buildingFloors: BuildingFloor[];
   snags: ProductionSnag[];
   units: Unit[];
@@ -8946,7 +9178,6 @@ function SnagList({
   onDetailViewChange?: (isOpen: boolean) => void;
   residentMode?: boolean;
 }) {
-  const [buildingFilter, setBuildingFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [tradeFilter, setTradeFilter] = useState("");
@@ -8956,18 +9187,16 @@ function SnagList({
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
   const [selectedSnagId, setSelectedSnagId] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const availableBuildingIds = Array.from(new Set(snags.map((snag) => snag.building_id).filter(Boolean))) as string[];
-  const availableBuildings = buildings.filter((building) => availableBuildingIds.includes(building.id));
-  const selectedBuildingId = buildingFilter || availableBuildings[0]?.id || "";
+  const contextIsAll = !buildingContextId && buildings.length > 1;
   const buildingUnits = sortUnitsByFloorOrder(
-    units.filter((unit) => unit.building_id === selectedBuildingId),
+    units,
     buildingFloors,
-    selectedBuildingId,
+    buildingContextId,
   );
   const buildingCommunalAreas = areas
-    .filter((area) => area.building_id === selectedBuildingId && area.area_type === "communal_area")
+    .filter((area) => area.area_type === "communal_area")
     .sort((a, b) => a.name.localeCompare(b.name));
-  const buildingSnags = snags.filter((snag) => snag.building_id === selectedBuildingId);
+  const buildingSnags = snags;
   const workflowStatuses = ["open", "needs_more_info", "resolved_by_contractor", "rejected_back_to_contractor", "closed"];
   const statuses = workflowStatuses.filter((status) => buildingSnags.some((snag) => snag.status === status));
   const statusFilterStillAvailable = !statusFilter || statuses.includes(statusFilter);
@@ -9002,7 +9231,6 @@ function SnagList({
   const moreInfoTodaySnagIds = statusEventSnagIds("needs_more_info");
   const buildingUnitOrder = new Map(buildingUnits.map((unit, index) => [unit.id, index]));
   const filtered = snags
-    .filter((snag) => snag.building_id === selectedBuildingId)
     .filter((snag) => {
       if (!unitFilter) return true;
       if (unitFilter === "__communal__") return !snag.unit_id;
@@ -9046,25 +9274,27 @@ function SnagList({
   const currentPage = Math.min(page, totalPages);
   const pageStart = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd = Math.min(currentPage * pageSize, filtered.length);
-  const defaultBuildingId = availableBuildings[0]?.id ?? "";
   const hasActiveResultFilters = Boolean(
-    (defaultBuildingId && selectedBuildingId !== defaultBuildingId) || unitFilter || activeStatusFilter || tradeFilter || quickFilter,
+    unitFilter || activeStatusFilter || tradeFilter || quickFilter,
   );
   const showPaginationControls = filtered.length > 0 && totalPages > 1;
   const activeFilterCount = [
-    defaultBuildingId && selectedBuildingId !== defaultBuildingId,
     unitFilter,
     activeStatusFilter,
     tradeFilter,
     quickFilter,
   ].filter(Boolean).length;
-  const selectedBuildingName = buildings.find((building) => building.id === selectedBuildingId)?.name ?? "Building";
+  const selectedBuildingName = buildings.find((building) => building.id === buildingContextId)?.name ?? "All buildings";
   const selectedLocationName = unitFilter
     ? unitFilter === "__communal__"
       ? "Communal"
       : unitFilter.startsWith("area:")
         ? buildingCommunalAreas.find((area) => area.id === unitFilter.replace("area:", ""))?.name ?? "Communal area"
-        : `Unit ${buildingUnits.find((unit) => unit.id === unitFilter)?.unit_number ?? ""}`.trim()
+        : (() => {
+          const selectedUnit = buildingUnits.find((unit) => unit.id === unitFilter);
+          const buildingName = buildings.find((building) => building.id === selectedUnit?.building_id)?.name;
+          return `${contextIsAll && buildingName ? `${buildingName} · ` : ""}Unit ${selectedUnit?.unit_number ?? ""}`.trim();
+        })()
     : "All locations";
   const selectedTradeName = residentMode
     ? ""
@@ -9084,8 +9314,9 @@ function SnagList({
   const pagedSnags = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const grouped = pagedSnags.reduce<Array<{ unitId: string; unitLabel: string; snags: ProductionSnag[] }>>((groups, snag) => {
     const unit = units.find((item) => item.id === snag.unit_id);
-    const unitId = unit?.id ?? "communal";
-    const unitLabel = unit ? `Unit ${unit.unit_number}` : "Communal";
+    const buildingName = buildings.find((building) => building.id === snag.building_id)?.name ?? "Building";
+    const unitId = `${snag.building_id}:${unit?.id ?? "communal"}`;
+    const unitLabel = `${contextIsAll ? `${buildingName} · ` : ""}${unit ? `Unit ${unit.unit_number}` : "Communal"}`;
     const group = groups.find((item) => item.unitId === unitId);
     if (group) group.snags.push(snag);
     else groups.push({ unitId, unitLabel: residentMode && unit ? `Flat ${unit.unit_number}` : unitLabel, snags: [snag] });
@@ -9093,17 +9324,11 @@ function SnagList({
   }, []);
 
   useEffect(() => {
-    if (!selectedBuildingId || buildingFilter) return;
-    setBuildingFilter(selectedBuildingId);
-  }, [buildingFilter, selectedBuildingId]);
-
-  useEffect(() => {
     setUnitFilter("");
-  }, [selectedBuildingId]);
+  }, [buildingContextId]);
 
   useEffect(() => {
     if (!requestedFilters) return;
-    if (requestedFilters.buildingId) setBuildingFilter(requestedFilters.buildingId);
     setUnitFilter(requestedFilters.unitFilter ?? "");
     setStatusFilter(requestedFilters.statusFilter ?? "");
     setTradeFilter(requestedFilters.tradeFilter ?? "");
@@ -9112,7 +9337,7 @@ function SnagList({
 
   useEffect(() => {
     setPage(1);
-  }, [selectedBuildingId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
+  }, [buildingContextId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -9212,20 +9437,17 @@ function SnagList({
           </div>
         )}
         {showFilters && (
-          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
-            <select aria-label="Building filter" className="field" value={selectedBuildingId} onChange={(event) => setBuildingFilter(event.target.value)}>
-              {availableBuildings.map((building) => <option key={building.id} value={building.id}>{building.name}</option>)}
-            </select>
+          <div className={`${mobileFiltersOpen ? "grid" : "hidden"} mt-3 gap-2 md:grid ${residentMode ? "md:grid-cols-2" : "md:grid-cols-3"}`}>
             <select aria-label="Unit filter" className={`field ${unitFilter ? "filter-active" : ""}`} value={unitFilter} onChange={(event) => setUnitFilter(event.target.value)}>
               <option value="">All units</option>
               {buildingUnits.length > 0 && (
                 <optgroup label="Flats">
-                  {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.unit_number}</option>)}
+                  {buildingUnits.map((unit) => <option key={unit.id} value={unit.id}>{contextIsAll ? `${buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"} · ` : ""}{unit.unit_number}</option>)}
                 </optgroup>
               )}
               <optgroup label="Communal">
                 <option value="__communal__">All communal spaces</option>
-                {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{area.name}</option>)}
+                {buildingCommunalAreas.map((area) => <option key={area.id} value={`area:${area.id}`}>{contextIsAll ? `${buildings.find((building) => building.id === area.building_id)?.name ?? "Building"} · ` : ""}{area.name}</option>)}
               </optgroup>
             </select>
             {!residentMode && (
@@ -9256,6 +9478,7 @@ function SnagList({
           {pagedSnags.map((snag) => {
             const unit = units.find((item) => item.id === snag.unit_id);
             const area = areas.find((item) => item.id === snag.area_id);
+            const building = buildings.find((item) => item.id === snag.building_id);
             const trade = trades.find((item) => item.id === snag.trade_id);
             const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
             const rowActions = listActions?.(snag);
@@ -9268,7 +9491,7 @@ function SnagList({
                 <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold leading-tight text-[#1F2A24]">{snag.title}</p>
-                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{contextIsAll ? `${building?.name ?? "Building"} / ` : ""}{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
@@ -9310,6 +9533,7 @@ function SnagList({
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Title</th>
+              {contextIsAll && <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Building</th>}
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">{residentMode ? "Flat" : "Unit"}</th>
               <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Area</th>
               {!residentMode && <th className="border-b border-[#d9ded6] bg-white px-3 py-2">Trade</th>}
@@ -9323,13 +9547,14 @@ function SnagList({
             {grouped.map((group) => (
               <Fragment key={group.unitId}>
                 <tr>
-                  <td colSpan={residentMode ? 7 : 8} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
+                  <td colSpan={(residentMode ? 7 : 8) + (contextIsAll ? 1 : 0)} className="border-b border-[#d9ded6] bg-[#f8faf7] px-3 py-2 text-sm font-semibold">
                     {group.unitLabel} <span className="font-normal text-[#617169]">({group.snags.length})</span>
                   </td>
                 </tr>
                 {group.snags.map((snag) => {
                   const unit = units.find((item) => item.id === snag.unit_id);
                   const area = areas.find((item) => item.id === snag.area_id);
+                  const building = buildings.find((item) => item.id === snag.building_id);
                   const trade = trades.find((item) => item.id === snag.trade_id);
                   const photo = primarySnagMedia(photos.filter((item) => item.snag_id === snag.id));
                   const rowActions = listActions?.(snag);
@@ -9343,6 +9568,7 @@ function SnagList({
                         <p className="max-w-xs truncate font-medium">{snag.title}</p>
                         {snag.description && <p className="mt-0.5 max-w-xs truncate text-xs text-[#617169]">{snag.description}</p>}
                       </td>
+                      {contextIsAll && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{building?.name ?? "Building"}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{unit?.unit_number ?? "Communal"}</td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{area?.name ?? "No area"}</td>
                       {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>}
