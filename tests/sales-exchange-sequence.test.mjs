@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
+const taskSource = readFileSync("src/lib/sales/stage-tasks.ts", "utf8");
 
 function functionBody(source, name) {
   const start = source.indexOf(`async function ${name}`);
@@ -16,8 +17,9 @@ test("exchange panel contains legal-readiness activities only", () => {
   const exchangeStart = workflowSource.indexOf('activeWorkflowStage === "exchange"');
   const completionStart = workflowSource.indexOf('activeWorkflowStage === "completion"', exchangeStart);
   const exchangePanel = workflowSource.slice(exchangeStart, completionStart);
-  assert.match(exchangePanel, />Confirm commercial terms</);
-  assert.match(exchangePanel, />Record exchange</);
+  assert.match(exchangePanel, /<SalesStageTasks stage="Exchange" steps=\{exchangeTasks\}/);
+  assert.match(taskSource, /title: "Confirm commercial terms"/);
+  assert.match(taskSource, /title: "Record exchange"/);
   assert.match(exchangePanel, /label: "Exchange deposit due"/);
   assert.doesNotMatch(exchangePanel, /Agent invoice|invoice approval|invoice payment/i);
   assert.doesNotMatch(workflowSource, /exchangeProcessStep/);
@@ -29,7 +31,7 @@ test("sale stages and selected stage workspace have distinct hierarchy", () => {
   assert.match(workflowSource, /min-w-0 flex-wrap items-center justify-between/);
   assert.match(workflowSource, /max-w-full shrink-0 whitespace-normal break-words/);
   assert.match(workflowSource, />Selected sales stage</);
-  assert.match(workflowSource, />Exchange tasks</);
+  assert.match(workflowSource, /<SalesStageTasks stage="Exchange"/);
   assert.match(workflowSource, /taskLabel = "Current task"/);
   assert.match(workflowSource, /title="Reservation"/);
   assert.match(workflowSource, /title="Exchange"/);

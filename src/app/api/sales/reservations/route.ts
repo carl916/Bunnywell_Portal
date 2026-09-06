@@ -4,6 +4,7 @@ import type { AppRole } from "@/lib/data/production";
 import { canCreateSaleAttempt } from "@/lib/units/commercial-allocation";
 import { canPerformSalesAction, canViewSalesBuilding, isSalesInternalRole } from "@/lib/sales/permissions";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
+import { getCompletionDocumentState } from "@/lib/sales/stage-tasks";
 import { buildDepositStructure, buildPaymentScheduleRows, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { parseGbpInput } from "@/lib/sales/currency";
 import { calculateMilestoneFee, validateAgentFeeStructure } from "@/lib/sales/agent-fees";
@@ -746,6 +747,7 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
     const { error } = await adminClient.from("unit_sale_documents").update({
       status: "uploaded",
       query_note: null,
+      ...(requiredAction === "submit_completion_documents" ? { approved_at: null, approved_by_user_id: null } : {}),
       updated_by_user_id: requester.id,
       updated_at: new Date().toISOString(),
     }).eq("id", document.id);
@@ -1596,9 +1598,10 @@ async function voidAgentFeePayment(adminClient: SupabaseClient, requester: Reque
 async function loadCompletionDocuments(adminClient: SupabaseClient, saleAttemptId: string) {
   const { data, error } = await adminClient
     .from("unit_sale_documents")
-    .select("id,document_type,status")
+    .select("id,document_type,status,approved_at,updated_at")
     .eq("sale_attempt_id", saleAttemptId)
     .in("document_type", ["completion_statement", "statement_of_account"])
+    .is("superseded_at", null)
     .is("redacted_at", null);
   if (error) throw error;
   return data ?? [];
@@ -1616,6 +1619,21 @@ async function currentDocumentVersionExists(adminClient: SupabaseClient, documen
   return Boolean(data);
 }
 
+async function loadCompletionReviewState(adminClient: SupabaseClient, saleAttemptId: string, documents: Awaited<ReturnType<typeof loadCompletionDocuments>>) {
+  const [versionsResult, queryResult] = await Promise.all([
+    documents.length ? adminClient.from("unit_sale_document_versions")
+      .select("document_id,is_current,uploaded_at,redacted_at")
+      .in("document_id", documents.map((document) => document.id))
+      .eq("is_current", true).is("redacted_at", null) : Promise.resolve({ data: [], error: null }),
+    adminClient.from("unit_sale_workflow_events").select("created_at")
+      .eq("sale_attempt_id", saleAttemptId).eq("event_type", "completion_documents_query_raised")
+      .order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  if (versionsResult.error) throw versionsResult.error;
+  if (queryResult.error) throw queryResult.error;
+  return getCompletionDocumentState(documents, versionsResult.data ?? [], queryResult.data?.created_at);
+}
+
 async function approveCompletionDocuments(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "approve_completion_documents")) throw new Error("Only developers can approve completion documents.");
   if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
@@ -1630,7 +1648,8 @@ async function approveCompletionDocuments(adminClient: SupabaseClient, requester
   const completionDocuments = await loadCompletionDocuments(adminClient, attempt.id);
   const completionStatement = completionDocuments.find((document) => document.document_type === "completion_statement");
   const statementOfAccount = completionDocuments.find((document) => document.document_type === "statement_of_account");
-  if (completionStatement?.status === "approved" && statementOfAccount?.status === "approved") {
+  const reviewState = await loadCompletionReviewState(adminClient, attempt.id, completionDocuments);
+  if (reviewState.approved) {
     return { saleAttemptId: attempt.id, alreadyApproved: true };
   }
   if (!completionStatement || !(await currentDocumentVersionExists(adminClient, completionStatement.id))) {
@@ -1638,6 +1657,9 @@ async function approveCompletionDocuments(adminClient: SupabaseClient, requester
   }
   if (!statementOfAccount || !(await currentDocumentVersionExists(adminClient, statementOfAccount.id))) {
     throw new Error("Upload the statement of account before approval.");
+  }
+  if (reviewState.needsChanges) {
+    throw new Error("The solicitor must upload corrected documents before developer review can resume.");
   }
 
   const now = new Date().toISOString();
@@ -1687,12 +1709,14 @@ async function queryCompletionDocuments(adminClient: SupabaseClient, requester: 
   const { error: documentError } = await adminClient.from("unit_sale_documents").update({
     status: "query_raised",
     query_note: queryNote,
+    approved_at: null,
+    approved_by_user_id: null,
     updated_by_user_id: requester.id,
     updated_at: now,
   }).in("id", completionDocuments.map((document) => document.id));
   if (documentError) throw documentError;
 
-  await adminClient.from("unit_sale_notes").insert({
+  const { error: noteError } = await adminClient.from("unit_sale_notes").insert({
     sale_attempt_id: attempt.id,
     building_id: attempt.building_id,
     unit_id: attempt.unit_id,
@@ -1701,6 +1725,7 @@ async function queryCompletionDocuments(adminClient: SupabaseClient, requester: 
     body: queryNote,
     created_by_user_id: requester.id,
   });
+  if (noteError) throw noteError;
 
   await insertEvent(adminClient, attempt, requester, {
     type: "completion_documents_query_raised",
@@ -1726,6 +1751,11 @@ async function recordCompletion(adminClient: SupabaseClient, requester: Requeste
   if (attempt.workflow_status === "completed") return { saleAttemptId: attempt.id, alreadyCompleted: true };
   if (attempt.workflow_status !== "completion_pending") {
     throw new Error("Completion documents must be approved before recording completion.");
+  }
+  const completionDocuments = await loadCompletionDocuments(adminClient, attempt.id);
+  const reviewState = await loadCompletionReviewState(adminClient, attempt.id, completionDocuments);
+  if (!reviewState.approved) {
+    throw new Error("The developer must approve the current completion documents before recording completion.");
   }
 
   const now = new Date().toISOString();

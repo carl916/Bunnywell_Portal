@@ -17,6 +17,8 @@ import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
 import { useActivePanel } from "@/hooks/useActivePanel";
 import { historicalActorLabel } from "@/lib/sales/actor-identity";
+import { currentSalesTask, getCompletionDocumentState, getCompletionTasks, getExchangeTasks, getReservationTasks } from "@/lib/sales/stage-tasks";
+import { SalesStageTasks } from "./SalesStageTasks";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import styles from "./SalesReservationWorkflow.module.css";
 import {
@@ -148,6 +150,8 @@ type SaleDocument = {
   approved_by_user_id: string | null;
   approved_at: string | null;
   redacted_at: string | null;
+  superseded_at: string | null;
+  updated_at: string;
 };
 
 type SaleDocumentVersion = {
@@ -158,6 +162,7 @@ type SaleDocumentVersion = {
   file_name: string;
   file_size_bytes: number | null;
   uploaded_at: string;
+  uploaded_by_user_id: string | null;
   redacted_at: string | null;
 };
 
@@ -515,7 +520,7 @@ function SaleActivity({ events, actorName }: { events: SaleWorkflowEvent[]; acto
         </span>
       </summary>
       <div className="grid gap-2 border-t border-[#eef0eb] p-3">
-        {events.slice(0, 8).map((event) => (
+        {events.map((event) => (
           <div key={event.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
             <div className="flex flex-wrap justify-between gap-3">
               <strong>{event.summary}</strong>
@@ -525,6 +530,7 @@ function SaleActivity({ events, actorName }: { events: SaleWorkflowEvent[]; acto
               </span>
             </div>
             {typeof event.metadata?.rejectionReason === "string" && <p className="mt-1 text-[#7a271a]">{event.metadata.rejectionReason}</p>}
+            {typeof event.metadata?.queryNote === "string" && <p className="mt-1 whitespace-pre-wrap text-[#7a271a]">{event.metadata.queryNote}</p>}
           </div>
         ))}
       </div>
@@ -635,10 +641,10 @@ function PdfUploadBox({
     return (
       <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="mt-1 rounded-full bg-[#EEF6F1] p-2 text-[#0F3D2E]"><FileText size={18} aria-hidden /></span>
-            <div>
-              <p className="font-bold text-[#0F3D2E]">{currentVersion.file_name}</p>
+          <div className="flex min-w-0 max-w-full items-start gap-3">
+            <span className="mt-1 shrink-0 rounded-full bg-[#EEF6F1] p-2 text-[#0F3D2E]"><FileText size={18} aria-hidden /></span>
+            <div className="min-w-0">
+              <p className="font-bold text-[#0F3D2E] [overflow-wrap:anywhere]">{currentVersion.file_name}</p>
               <p className="text-sm text-[#617169]">
                 Uploaded {formatDate(currentVersion.uploaded_at)} {fileSizeLabel(currentVersion.file_size_bytes)}
               </p>
@@ -684,8 +690,8 @@ function PdfUploadBox({
       <span className="mt-3 block font-bold text-[#0F3D2E]">{label}</span>
       <span className="mt-1 block text-sm text-[#617169]">Choose a file or drag and drop. PDF only, maximum 10 MB.</span>
       {selectedName && (
-        <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#0F3D2E]">
-          {selectedName}
+        <span className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#0F3D2E]">
+          <span className="min-w-0 [overflow-wrap:anywhere]">{selectedName}</span>
           <button
             type="button"
             className="rounded-full p-0.5 text-[#617169] hover:bg-white"
@@ -1164,9 +1170,9 @@ export function SalesReservationWorkflow({
   const agentInvoiceVersion = agentInvoiceDocument ? versions.find((item) => item.document_id === agentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
   const completionAgentInvoiceDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "agent_invoice" && item.fee_milestone === "completion") : null;
   const completionAgentInvoiceVersion = completionAgentInvoiceDocument ? versions.find((item) => item.document_id === completionAgentInvoiceDocument.id && item.is_current && !item.redacted_at) : null;
-  const completionStatementDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "completion_statement") : null;
+  const completionStatementDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "completion_statement" && !item.redacted_at && !item.superseded_at) : null;
   const completionStatementVersion = completionStatementDocument ? versions.find((item) => item.document_id === completionStatementDocument.id && item.is_current && !item.redacted_at) : null;
-  const statementOfAccountDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "statement_of_account") : null;
+  const statementOfAccountDocument = activeAttempt ? documents.find((item) => item.sale_attempt_id === activeAttempt.id && item.document_type === "statement_of_account" && !item.redacted_at && !item.superseded_at) : null;
   const statementOfAccountVersion = statementOfAccountDocument ? versions.find((item) => item.document_id === statementOfAccountDocument.id && item.is_current && !item.redacted_at) : null;
   const activeInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id && item.invoice_type === "sales_agent" && (item.fee_milestone === "exchange" || item.fee_milestone === null)) : null;
   const completionAgentInvoice = activeAttempt ? invoices.find((item) => item.sale_attempt_id === activeAttempt.id && item.invoice_type === "sales_agent" && item.fee_milestone === "completion") : null;
@@ -1179,16 +1185,23 @@ export function SalesReservationWorkflow({
     ? versions.filter((item) => item.document_id === completionAgentInvoiceDocument.id && !item.redacted_at).sort((a, b) => b.version_number - a.version_number)
     : [];
   const activePaymentSchedule = activeAttempt ? paymentSchedule.filter((item) => item.sale_attempt_id === activeAttempt.id).sort((a, b) => a.sequence_no - b.sequence_no) : [];
-  const activeWorkflowEvents = activeAttempt ? workflowEvents.filter((event) => event.sale_attempt_id === activeAttempt.id) : [];
+  const activeWorkflowEvents = activeAttempt ? workflowEvents.filter((event) => event.sale_attempt_id === activeAttempt.id)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)) : [];
   const commercialApprovalEvent = activeWorkflowEvents.find((event) => event.event_type === "commercial_package_approved");
   const exchangeRecordedEvent = activeWorkflowEvents.find((event) => event.event_type === "exchange_recorded");
   const completionApprovalEvent = activeWorkflowEvents.find((event) => event.event_type === "completion_documents_approved");
   const completionRecordedEvent = activeWorkflowEvents.find((event) => event.event_type === "completion_recorded");
+  const completionQueryEvent = activeWorkflowEvents.find((event) => event.event_type === "completion_documents_query_raised");
+  const completionDocumentState = getCompletionDocumentState(
+    [completionStatementDocument, statementOfAccountDocument].filter((document): document is SaleDocument => Boolean(document)),
+    versions,
+    completionQueryEvent?.created_at,
+  );
   const reservationApproved = activeAttempt ? ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) : false;
   const commercialApproved = activeAttempt?.workflow_status === "ready_for_exchange" || Boolean(activeAttempt?.commercial_approved_at);
   const exchangeRecorded = activeAttempt ? ["exchanged", "completion_pending", "completed"].includes(activeAttempt.workflow_status) || Boolean(activeAttempt.exchanged_at) : false;
-  const completionDocumentsApproved = completionStatementDocument?.status === "approved" && statementOfAccountDocument?.status === "approved";
-  const completionReady = activeAttempt ? ["completion_pending", "completed"].includes(activeAttempt.workflow_status) || completionDocumentsApproved : false;
+  const completionDocumentsApproved = completionDocumentState.approved;
+  const completionReady = exchangeRecorded && completionDocumentsApproved;
   const completionRecorded = activeAttempt ? activeAttempt.workflow_status === "completed" || Boolean(activeAttempt.completed_at) : false;
 
   function actorName(userId?: string | null) {
@@ -1206,6 +1219,20 @@ export function SalesReservationWorkflow({
     ?? completionStatementDocument?.approved_at
     ?? statementOfAccountDocument?.approved_at;
   const completionRecordedBy = actorName(completionRecordedEvent?.created_by_user_id);
+  const taskActorName = (userId?: string | null) => historicalActorLabel({ userId, profiles, fallback: "" });
+  const completionTasks = getCompletionTasks({
+    exchangeRecorded, completionRecorded, documents: completionDocumentState,
+    uploadedBy: taskActorName(completionDocumentState.uploadedByUserId),
+    approvedBy: taskActorName(completionApprovalEvent?.created_by_user_id ?? completionStatementDocument?.approved_by_user_id ?? statementOfAccountDocument?.approved_by_user_id),
+    recordedBy: taskActorName(completionRecordedEvent?.created_by_user_id),
+  });
+  const exchangeTasks = getExchangeTasks({
+    reservationApproved, commercialApproved, exchangeRecorded,
+    commercialApprovedBy: taskActorName(commercialApprovalEvent?.created_by_user_id ?? activeAttempt?.commercial_approved_by_user_id),
+    exchangeRecordedBy: taskActorName(exchangeRecordedEvent?.created_by_user_id),
+  });
+  const persistedCompletionQuery = typeof completionQueryEvent?.metadata?.queryNote === "string"
+    ? completionQueryEvent.metadata.queryNote : completionStatementDocument?.query_note ?? statementOfAccountDocument?.query_note;
   const displayAgentFeePercent = activeTerms?.agent_fee_percent ?? selectedBuildingDefault?.default_agent_fee_percent ?? 0;
   const displayExchangeAgentFeePercent = activeTerms?.exchange_agent_fee_percent ?? selectedBuildingDefault?.default_exchange_agent_fee_percent ?? displayAgentFeePercent;
   const displayCompletionAgentFeePercent = activeTerms?.completion_agent_fee_percent ?? selectedBuildingDefault?.default_completion_agent_fee_percent ?? 0;
@@ -1511,6 +1538,11 @@ export function SalesReservationWorkflow({
     approved: "Approved",
     failed: "Failed",
   };
+  const reservationTasks = getReservationTasks({
+    state: reservationState,
+    submittedBy: submittedByName === "-" ? null : submittedByName,
+    approvedBy: approvedByName === "-" ? null : approvedByName,
+  });
   const reservationCanBeEdited = canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
   const reservationCanBeReviewed = canApproveReservation && reservationState === "awaiting_approval";
   const approvalBlocked = !activeAttempt || !reservationVersion || reservationDateMissing || reservationDateIsFuture || !hasRequiredBuyerInfo(activeAttempt);
@@ -2550,7 +2582,7 @@ export function SalesReservationWorkflow({
   }
 
   async function approveCompletionDocuments() {
-    if (!activeAttempt || completionDocumentsApproved || completionReviewSubmissionInFlightRef.current) return;
+    if (!activeAttempt || completionDocumentsApproved || !completionDocumentState.canReview || completionReviewSubmissionInFlightRef.current) return;
     completionReviewSubmissionInFlightRef.current = true;
     setIsSaving(true);
     try {
@@ -2580,7 +2612,7 @@ export function SalesReservationWorkflow({
   }
 
   async function recordCompletion() {
-    if (!activeAttempt || !selectedUnit || completionRecorded || completionRecordSubmissionInFlightRef.current) return;
+    if (!activeAttempt || !selectedUnit || completionRecorded || !completionReady || completionRecordSubmissionInFlightRef.current) return;
     if (!completionDate) {
       onNotice("Enter the actual completion date.");
       return;
@@ -2807,7 +2839,7 @@ export function SalesReservationWorkflow({
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="grid min-w-0 grid-cols-1 gap-5">
       <section className="panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <button className="secondary w-fit" onClick={backToSalesOverview}>
@@ -2842,7 +2874,7 @@ export function SalesReservationWorkflow({
       </section>
 
       {selectedUnit && (
-        <section className="panel">
+        <section className="panel min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected sale file</p>
@@ -3136,7 +3168,8 @@ export function SalesReservationWorkflow({
               status={reservationStateLabel[reservationState]}
               statusTone={reservationState === "approved" ? "done" : reservationState === "rejected" || reservationState === "failed" ? "attention" : "current"}
               taskLabel={reservationState === "approved" ? "Stage outcome" : "Current task"}
-              currentTask={reservationState === "approved" ? "Approval record" : reservationState === "awaiting_approval" ? "Developer review" : reservationState === "rejected" ? "Update and resubmit reservation" : reservationState === "failed" ? "Reservation ended" : "Prepare reservation"}
+              currentTask={reservationState === "approved" ? "Approval record" : currentSalesTask(reservationTasks, "Reservation ended")}
+              taskNavigation={<SalesStageTasks stage="Reservation" steps={reservationTasks} />}
             >
 
               {reservationCanBeEdited && (
@@ -3654,29 +3687,7 @@ export function SalesReservationWorkflow({
               statusTone={currentWorkflowIndex > 1 ? "done" : currentWorkflowIndex < 1 ? "locked" : "current"}
               taskLabel={exchangeRecorded ? "Stage outcome" : "Current task"}
               currentTask={exchangeRecorded ? "Exchange recorded" : !reservationApproved ? "Waiting for reservation approval" : !commercialApproved ? "Confirm commercial terms" : "Record exchange"}
-              taskNavigation={reservationApproved ? (
-                <div className="mt-6">
-                  <h4 className="text-sm font-bold text-[#0F3D2E]">Exchange tasks</h4>
-                  <ol className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <li className={`rounded-lg p-3 ${commercialApproved ? "bg-[#eaf6ee]" : "bg-[#fff1cc] ring-1 ring-[#d6a23a]"}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold uppercase text-[#617169]">Step 1</span>
-                        <span className={`text-xs font-bold ${commercialApproved ? "text-[#18794e]" : "text-[#D6A23A]"}`}>{commercialApproved ? "Complete" : "Current"}</span>
-                      </div>
-                      <p className="mt-1 font-bold text-[#0F3D2E]">Confirm commercial terms</p>
-                      {commercialApproved && <p className="mt-1 text-xs text-[#617169]">by {commercialApprovedBy}</p>}
-                    </li>
-                    <li className={`rounded-lg p-3 ${exchangeRecorded ? "bg-[#eaf6ee]" : commercialApproved ? "bg-[#fff1cc] ring-1 ring-[#d6a23a]" : "bg-[#e7eae6]"}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold uppercase text-[#617169]">Step 2</span>
-                        <span className={`text-xs font-bold ${exchangeRecorded ? "text-[#18794e]" : commercialApproved ? "text-[#D6A23A]" : "text-[#9aa59f]"}`}>{exchangeRecorded ? "Complete" : commercialApproved ? "Current" : "Waiting"}</span>
-                      </div>
-                      <p className="mt-1 font-bold text-[#0F3D2E]">Record exchange</p>
-                      {exchangeRecorded && <p className="mt-1 text-xs text-[#617169]">by {exchangeRecordedBy}</p>}
-                    </li>
-                  </ol>
-                </div>
-              ) : undefined}
+              taskNavigation={<SalesStageTasks stage="Exchange" steps={exchangeTasks} />}
             >
               {!reservationApproved ? (
                 <div className="rounded-md border border-[#e2ded3] bg-white p-4 text-sm text-[#617169]">
@@ -3767,10 +3778,11 @@ export function SalesReservationWorkflow({
               id="sales-stage-completion"
               title="Completion"
               description="Complete the document review and record the legal completion date."
-              status={completionRecorded ? "Completed" : completionReady ? "Approved" : exchangeRecorded ? "Documents required" : "Locked"}
-              statusTone={currentWorkflowIndex > 2 ? "done" : currentWorkflowIndex < 2 ? "locked" : "current"}
+              status={completionRecorded ? "Completed" : completionReady ? "Approved" : !exchangeRecorded ? "Locked" : completionDocumentState.needsChanges ? "Changes required" : completionDocumentState.uploaded ? "Awaiting developer review" : "Documents required"}
+              statusTone={completionRecorded ? "done" : !exchangeRecorded ? "locked" : completionDocumentState.needsChanges ? "attention" : "current"}
               taskLabel={completionRecorded ? "Stage outcome" : "Current task"}
-              currentTask={completionRecorded ? "Completion recorded" : !exchangeRecorded ? "Waiting for exchange" : !completionStatementVersion || !statementOfAccountVersion ? "Upload completion documents" : !completionReady ? "Developer review" : "Record completion"}
+              currentTask={completionRecorded ? "Completion recorded" : currentSalesTask(completionTasks, "Waiting for exchange")}
+              taskNavigation={<SalesStageTasks stage="Completion" steps={completionTasks} />}
             >
 
             {!exchangeRecorded ? (
@@ -3779,6 +3791,14 @@ export function SalesReservationWorkflow({
               </div>
             ) : (
               <div className="mt-4">
+                {persistedCompletionQuery && !completionRecorded && !completionDocumentsApproved && (
+                  <div className={`mb-4 rounded-md border p-4 ${completionDocumentState.needsChanges ? "border-[#e7b7ae] bg-[#fbeeea]" : "border-[#e2ded3] bg-white"}`}>
+                    <h5 className="font-bold text-[#0F3D2E]">{completionDocumentState.needsChanges ? "Completion documents need changes" : "Documents resubmitted for review"}</h5>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-[#7a271a]">{persistedCompletionQuery}</p>
+                    {completionQueryEvent && <p className="mt-2 text-xs text-[#617169]">Queried by {actorName(completionQueryEvent.created_by_user_id)} · {formatDateTime(completionQueryEvent.created_at)}</p>}
+                    <p className="mt-2 text-sm text-[#617169]">{completionDocumentState.needsChanges ? "The solicitor must replace the relevant documents below. The developer will then review the document pack again." : "The developer must review the current documents and explicitly approve them before completion can be recorded."}</p>
+                  </div>
+                )}
                 <div className="grid items-stretch gap-4 lg:grid-cols-2">
                   <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -3804,6 +3824,7 @@ export function SalesReservationWorkflow({
                           <button className="secondary" type="button" onClick={() => void uploadCompletionDocument("completion_statement")} disabled={isSaving || !completionStatementFile}>Upload completion statement</button>
                         </div>
                       )}
+                      {completionStatementDocument && versions.some((version) => version.document_id === completionStatementDocument.id && !version.is_current && !version.redacted_at) && <DocumentVersionHistory versions={versions.filter((version) => version.document_id === completionStatementDocument.id && !version.redacted_at)} onOpen={(version) => void openDocumentVersion(version)} />}
                     </div>
                   </section>
 
@@ -3831,6 +3852,7 @@ export function SalesReservationWorkflow({
                           <button className="secondary" type="button" onClick={() => void uploadCompletionDocument("statement_of_account")} disabled={isSaving || !statementOfAccountFile}>Upload statement of account</button>
                         </div>
                       )}
+                      {statementOfAccountDocument && versions.some((version) => version.document_id === statementOfAccountDocument.id && !version.is_current && !version.redacted_at) && <DocumentVersionHistory versions={versions.filter((version) => version.document_id === statementOfAccountDocument.id && !version.redacted_at)} onOpen={(version) => void openDocumentVersion(version)} />}
                     </div>
                   </section>
                 </div>
@@ -3845,24 +3867,22 @@ export function SalesReservationWorkflow({
                         { label: "Approved at", value: formatDateTime(completionDocumentsApprovedAt) },
                       ]}
                     />
-                  ) : (
+                  ) : completionDocumentState.canReview && !completionRecorded ? (
                     <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
-                      <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
-                      <p className="mt-1 text-sm text-[#617169]">Approve or query both documents before completion is recorded.</p>
+                      <h5 className="font-bold text-[#0F3D2E]">Review completion documents</h5>
+                      <p className="mt-1 text-sm text-[#617169]">{canApproveCompletionDocuments ? "Review the PDFs above, then approve the document pack or request corrections from the solicitor." : "Awaiting the developer’s review of the documents above. Completion stays locked until approval."}</p>
+                      {canApproveCompletionDocuments && <>
                       <label className="field-label mt-3">
-                        Query note
-                        <textarea className="field min-h-24" value={completionQueryNote} onChange={(event) => setCompletionQueryNote(event.target.value)} disabled={!canApproveCompletionDocuments} />
+                        Rejection / query reason
+                        <textarea className="field min-h-24" value={completionQueryNote} onChange={(event) => setCompletionQueryNote(event.target.value)} disabled={isSaving} />
                       </label>
                       <div className="mt-3 flex flex-wrap justify-end gap-2">
-                        {canApproveCompletionDocuments && (
-                          <>
-                            <button className="secondary" type="button" onClick={() => void queryCompletionDocuments()} disabled={isSaving || (!completionStatementDocument && !statementOfAccountDocument)}>Query documents</button>
-                            <button className="primary" type="button" onClick={() => void approveCompletionDocuments()} disabled={isSaving || !completionStatementVersion || !statementOfAccountVersion}>Approve completion documents</button>
-                          </>
-                        )}
+                        <button className="danger-button" type="button" onClick={() => void queryCompletionDocuments()} disabled={isSaving || !completionQueryNote.trim()}>Reject / query documents</button>
+                        <button className="primary" type="button" onClick={() => void approveCompletionDocuments()} disabled={isSaving || !completionDocumentState.canReview}>Approve completion documents</button>
                       </div>
+                      </>}
                     </section>
-                  )}
+                  ) : null}
 
                   {completionRecorded ? (
                     <CompletedActionSummary
@@ -3873,10 +3893,10 @@ export function SalesReservationWorkflow({
                         { label: "Completed by", value: completionRecordedBy },
                       ]}
                     />
-                  ) : (
+                  ) : completionReady ? (
                     <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
                       <h5 className="font-bold text-[#0F3D2E]">Record completion</h5>
-                      <p className="mt-1 text-sm text-[#617169]">This marks the unit Completed. The existing handover workflow is unchanged.</p>
+                      <p className="mt-1 text-sm text-[#617169]">{canRecordCompletion ? "Enter the actual legal completion date to mark this unit Completed." : "The solicitor can now enter the legal completion date and mark this unit Completed."}</p>
                       <label className="field-label mt-3">
                         Actual completion date
                         <input className="field" type="date" max={todayDate} value={completionDate} onChange={(event) => setCompletionDate(event.target.value)} disabled={!canRecordCompletion || !completionReady} />
@@ -3889,7 +3909,7 @@ export function SalesReservationWorkflow({
                         )}
                       </div>
                     </section>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}

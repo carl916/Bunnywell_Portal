@@ -1,0 +1,45 @@
+.container {
+  container-type: inline-size;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.card {
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.5rem;
+}
+
+.complete { background: #eaf6ee; }
+.complete .status { color: #18794e; }
+.current { background: #fff1cc; box-shadow: inset 0 0 0 1px #d6a23a; }
+.current .status { color: #886019; }
+.locked { background: #e7eae6; }
+.locked .status { color: #617169; }
+.changes_required { background: #fbeeea; box-shadow: inset 0 0 0 1px #e7b7ae; }
+.changes_required .status, .awaiting_resubmission .status { color: #8d382d; }
+.awaiting_resubmission { background: #f6efec; }
+
+@container (min-width: 30rem) {
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .threeSteps > :last-child { grid-column: 1 / -1; }
+}
+
+@container (min-width: 48rem) {
+  .threeSteps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .threeSteps > :last-child { grid-column: auto; }
+}
