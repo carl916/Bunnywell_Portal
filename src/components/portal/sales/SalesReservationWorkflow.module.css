@@ -1,0 +1,61 @@
+.financialOverview {
+  container-name: financial-overview;
+  container-type: inline-size;
+}
+
+.financialOverviewGrid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.financialOverviewCard {
+  min-width: 0;
+}
+
+.approvalHistoryCard {
+  container-name: approval-history;
+  container-type: inline-size;
+}
+
+.approvalEventRow {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.5rem;
+}
+
+.approvalEventName {
+  grid-column: 1 / -1;
+}
+
+@container approval-history (min-width: 30rem) {
+  .approvalEventRow {
+    grid-template-columns: minmax(8rem, 0.9fr) minmax(8.25rem, 1fr) minmax(0, 1.1fr);
+    column-gap: 1rem;
+  }
+
+  .approvalEventName {
+    grid-column: auto;
+  }
+
+  .approvalEventSeparator {
+    display: none;
+  }
+}
+
+@container financial-overview (min-width: 42rem) {
+  .financialOverviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profitCard {
+    grid-column: 1 / -1;
+  }
+}
+
+@container financial-overview (min-width: 64rem) {
+  .financialOverviewGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .profitCard {
+    grid-column: auto;
+  }
+}

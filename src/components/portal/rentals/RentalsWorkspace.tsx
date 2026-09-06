@@ -490,6 +490,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
   function openRentalFile(unit: Unit, rememberListPosition = false) {
     if (rememberListPosition) rentalListScrollYRef.current = window.scrollY;
     setSelectedUnitId(unit.id);
+    setTab("current");
     setEditingTenancyId("");
     writeUrl(buildingId, unit.id);
   }

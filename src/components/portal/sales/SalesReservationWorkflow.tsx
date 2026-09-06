@@ -18,6 +18,7 @@ import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/port
 import { useActivePanel } from "@/hooks/useActivePanel";
 import { historicalActorLabel } from "@/lib/sales/actor-identity";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
+import styles from "./SalesReservationWorkflow.module.css";
 import {
   SALES_ROUTE_STATUSES,
   isSalesRouteUnit,
@@ -217,6 +218,13 @@ type SaleWorkflowStage = "reservation" | "exchange" | "completion" | "handover";
 type SalesView = "pipeline" | "agent_fees";
 type UnitSaleSection = SaleFileWorkspace;
 
+type ApprovalHistoryEvent = {
+  id: string;
+  label: string;
+  occurredAt: string | null;
+  actor: string;
+};
+
 const SALES_PAGE_SIZE = 12;
 const SALES_STAGE_FILTERS: Array<{ value: SalesStageFilter; label: string }> = [
   { value: "for_sale", label: "For sale" },
@@ -260,14 +268,6 @@ function formatDate(value?: string | null) {
 function formatDateTime(value?: string | null) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
-}
-
-function formatNarrativeDateTime(value?: string | null) {
-  if (!value) return "an unrecorded date";
-  const date = new Date(value);
-  const calendarDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(date);
-  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(date);
-  return `${calendarDate} at ${time}`;
 }
 
 function paymentRecorderLabel(payment: SaleInvoicePayment, profiles: Profile[], organisations: Organisation[]) {
@@ -482,6 +482,20 @@ function SaleMetadataStrip({ items }: { items: Array<{ label: string; value: Rea
         </div>
       ))}
     </dl>
+  );
+}
+
+function ApprovalEventHistory({ events }: { events: ApprovalHistoryEvent[] }) {
+  return (
+    <ol className="mt-3 divide-y divide-[#eef0eb] text-sm" aria-label="Reservation approval history">
+      {events.map((event) => (
+        <li key={event.id} className={`grid min-w-0 gap-y-1 py-3 first:pt-0 last:pb-0 ${styles.approvalEventRow}`}>
+          <strong className={`min-w-0 break-words font-semibold text-[#34413a] ${styles.approvalEventName}`}>{event.label}</strong>
+          <time className="numeric-value whitespace-nowrap text-[#617169]" dateTime={event.occurredAt ?? undefined}>{formatDateTime(event.occurredAt)}</time>
+          <span className="min-w-0 break-words text-[#617169]"><span className={`mr-1 ${styles.approvalEventSeparator}`} aria-hidden="true">·</span>{event.actor}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -1397,6 +1411,20 @@ export function SalesReservationWorkflow({
     profiles,
     fallback: "-",
   });
+  const approvalHistoryEvents: ApprovalHistoryEvent[] = activeAttempt ? [
+    {
+      id: `${activeAttempt.id}-reservation-submitted`,
+      label: "Reservation submitted",
+      occurredAt: activeAttempt.reservation_submitted_at,
+      actor: submittedByName,
+    },
+    {
+      id: `${activeAttempt.id}-reservation-approved`,
+      label: "Approved",
+      occurredAt: activeAttempt.reservation_approved_at,
+      actor: approvedByName,
+    },
+  ] : [];
   const rejectionByName = historicalActorLabel({
     snapshotName: activeAttempt?.reservation_rejected_by_name,
     snapshotEmail: activeAttempt?.reservation_rejected_by_email,
@@ -2607,13 +2635,13 @@ export function SalesReservationWorkflow({
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
 
-        <section className="panel">
+        <section className={`panel ${styles.financialOverview}`}>
           <div>
             <h3 className="text-xl font-bold text-[#0F3D2E]">Financial overview</h3>
             <p className="mt-1 text-sm text-[#617169]">Forecast sales position for units currently in the sales route.</p>
           </div>
-          <div className="mt-5 grid gap-4 xl:grid-cols-3">
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <div className={`mt-5 grid gap-4 ${styles.financialOverviewGrid}`}>
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Revenue view</h4>
               <p className="mt-1 text-sm text-[#617169]">Sales-route list-price baseline compared with the current forecast.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2622,7 +2650,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value text-right">{money(forecastRevenue - baselineGdv)}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Cost / debt view</h4>
               <p className="mt-1 text-sm text-[#617169]">Core assumptions will be set in forecasting.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2631,7 +2659,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Net sales proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(netSalesProceeds)}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard} ${styles.profitCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Profit view</h4>
               <p className="mt-1 text-sm text-[#617169]">Profitability will appear once scheme costs and debt have been added.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -3276,11 +3304,9 @@ export function SalesReservationWorkflow({
                     </div>
                     {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                   </section>
-                  <section className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+                  <section className={`rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5 ${styles.approvalHistoryCard}`}>
                     <h5 className="font-bold text-[#0F3D2E]">Approval</h5>
-                    <p className="mt-3 text-sm leading-7 text-[#52645b] sm:text-base">
-                      Reservation submitted on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_submitted_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{submittedByName}</strong> and approved on <strong className="font-bold text-[#0F3D2E]">{formatNarrativeDateTime(activeAttempt?.reservation_approved_at)}</strong> by <strong className="font-bold text-[#0F3D2E]">{approvedByName}</strong>.
-                    </p>
+                    <ApprovalEventHistory events={approvalHistoryEvents} />
                   </section>
                   </div>
               )}

@@ -69,6 +69,7 @@ type Profile = {
   organisation_id: string | null;
   active?: boolean | null;
   created_at?: string | null;
+  last_active_at?: string | null;
 };
 
 type UserBuildingAccess = {
@@ -843,6 +844,8 @@ export function ProductionPortalApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
+  const lastActivityPingAtRef = useRef(0);
+  const lastActivityAtRef = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -1008,6 +1011,58 @@ export function ProductionPortalApp() {
   }, [supabaseEnabled]);
 
   useEffect(() => {
+    if (!user?.id) {
+      lastActivityPingAtRef.current = 0;
+      lastActivityAtRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    const activeUserId = user.id;
+    const activityIntervalMs = 5 * 60 * 1000;
+
+    async function recordActivity() {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastActivityPingAtRef.current < activityIntervalMs) return;
+      lastActivityPingAtRef.current = now;
+
+      const supabase = createSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.access_token) return;
+
+      const response = await fetch("/api/auth/activity", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as { lastActiveAt?: string };
+      if (cancelled || !payload.lastActiveAt) return;
+
+      lastActivityAtRef.current = payload.lastActiveAt;
+      setProfile((current) => current?.id === activeUserId ? { ...current, last_active_at: payload.lastActiveAt } : current);
+      setProfiles((current) => current.map((item) => item.id === activeUserId ? { ...item, last_active_at: payload.lastActiveAt } : item));
+    }
+
+    function recordActivityWhenVisible() {
+      if (document.visibilityState === "visible") void recordActivity();
+    }
+
+    void recordActivity();
+    const interval = window.setInterval(recordActivity, activityIntervalMs);
+    window.addEventListener("focus", recordActivityWhenVisible);
+    document.addEventListener("visibilitychange", recordActivityWhenVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", recordActivityWhenVisible);
+      document.removeEventListener("visibilitychange", recordActivityWhenVisible);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     function handleRouteChange() {
       setActiveTab(screenFromUrl() ?? defaultTabForRole(role));
       setNotice("");
@@ -1052,7 +1107,7 @@ export function ProductionPortalApp() {
     if (!userId) return;
 
     const supabase = createSupabaseBrowserClient();
-    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at";
+    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
     let profileResult = await supabase
       .from("profiles")
       .select(profileSelect)
@@ -1111,7 +1166,7 @@ export function ProductionPortalApp() {
       supabase.from("trades").select("*").order("sort_order"),
       supabase.from("organisations").select("*").order("name"),
       supabase.from("building_organisations").select("*"),
-      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at").order("email"),
+      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
       supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
       supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
       supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
@@ -1142,7 +1197,16 @@ export function ProductionPortalApp() {
       setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
     }
 
-    setProfile(loadedProfile);
+    const recordedActivityAt = lastActivityAtRef.current;
+    const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
+      ? { ...loadedProfile, last_active_at: recordedActivityAt }
+      : loadedProfile;
+    const loadedProfiles = (profilesResult.data ?? []) as Profile[];
+    const profilesWithCurrentActivity = recordedActivityAt
+      ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
+      : loadedProfiles;
+
+    setProfile(profileWithCurrentActivity);
     setBuildings((buildingsResult.data ?? []) as Building[]);
     setUnits((unitsResult.data ?? []) as Unit[]);
     setAreas((areasResult.data ?? []) as Area[]);
@@ -1153,7 +1217,7 @@ export function ProductionPortalApp() {
     setOrganisations((orgsResult.data ?? []) as Organisation[]);
     const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
     setBuildingOrganisations(loadedBuildingOrganisations);
-    setProfiles((profilesResult.data ?? []) as Profile[]);
+    setProfiles(profilesWithCurrentActivity);
     setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
     setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
     setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
@@ -4766,7 +4830,7 @@ type AccessListRow = {
   phone: string;
   allocation: string;
   createdAt: string | null;
-  lastSignInAt: string | null;
+  lastActiveAt: string | null;
   sortRank: number;
   profile?: Profile;
   request?: ResidentAccessRequest;
@@ -4804,39 +4868,6 @@ function UserDirectory({
   reload: () => Promise<void>;
 }) {
   const [selectedRequestId, setSelectedRequestId] = useState("");
-  const [lastSignInsByUserId, setLastSignInsByUserId] = useState<Record<string, string | null>>({});
-  const [lastSignInsStatus, setLastSignInsStatus] = useState<"loading" | "loaded" | "error">("loading");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadLastSignIns() {
-      const supabase = createSupabaseBrowserClient();
-      const { data } = await supabase.auth.getSession();
-      const response = await fetch("/api/admin/users", {
-        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
-      });
-      const payload = (await response.json()) as {
-        users?: { id: string; lastSignInAt: string | null }[];
-        error?: string;
-      };
-
-      if (cancelled) return;
-
-      if (!response.ok || !payload.users) {
-        setLastSignInsStatus("error");
-        return;
-      }
-
-      setLastSignInsByUserId(Object.fromEntries(payload.users.map((user) => [user.id, user.lastSignInAt])));
-      setLastSignInsStatus("loaded");
-    }
-
-    void loadLastSignIns().catch(() => {
-      if (!cancelled) setLastSignInsStatus("error");
-    });
-    return () => { cancelled = true; };
-  }, []);
 
   function userStatus(profile: Profile) {
     return profile.active === false ? "deactivated" : "active";
@@ -4880,7 +4911,7 @@ function UserDirectory({
         phone: profile.phone || "",
         allocation: allocationLabel(profile),
         createdAt: profile.created_at ?? null,
-        lastSignInAt: lastSignInsByUserId[profile.id] ?? null,
+        lastActiveAt: profile.last_active_at ?? null,
         sortRank: status === "active" ? 1 : 2,
         profile,
       };
@@ -4899,7 +4930,7 @@ function UserDirectory({
       phone: request.phone,
       allocation: requestUnitsLabel(request),
       createdAt: request.created_at,
-      lastSignInAt: null,
+      lastActiveAt: null,
       sortRank: request.status === "pending" ? 0 : request.status === "approved" ? 3 : 4,
       request,
     }));
@@ -4925,11 +4956,9 @@ function UserDirectory({
     return selectedRequestId === row.id ? "Close" : "View";
   }
 
-  function lastSignInLabel(row: AccessListRow) {
+  function lastActiveLabel(row: AccessListRow) {
     if (row.kind === "request") return "—";
-    if (lastSignInsStatus === "loading") return "Loading…";
-    if (lastSignInsStatus === "error") return "Unavailable";
-    return row.lastSignInAt ? formatDateTime(row.lastSignInAt) : "Never";
+    return row.lastActiveAt ? formatDateTime(row.lastActiveAt) : "Never";
   }
 
   function rowActionIcon(row: AccessListRow, isOpen: boolean) {
@@ -4991,7 +5020,7 @@ function UserDirectory({
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last login</span><span className="min-w-0 text-right font-medium">{lastSignInLabel(row)}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last active</span><span className="min-w-0 text-right font-medium">{lastActiveLabel(row)}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -5039,7 +5068,7 @@ function UserDirectory({
               <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Last login</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Last active</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
@@ -5064,7 +5093,7 @@ function UserDirectory({
                       <p className="max-w-md truncate">{row.allocation}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastSignInLabel(row)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastActiveLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button

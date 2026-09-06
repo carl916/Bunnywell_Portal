@@ -81,6 +81,10 @@ test("rental file navigation follows the visible unit order and stops at each ed
   assert.deepEqual(adjacentRentalUnits(units, "missing"), { previousUnit: null, nextUnit: null });
 });
 
+test("opening another rental file resets the tenancy tab to current", () => {
+  assert.match(workspace, /function openRentalFile[\s\S]*?setSelectedUnitId\(unit\.id\);\s*setTab\("current"\);\s*setEditingTenancyId\(""\);/);
+});
+
 test("rent roll includes only active tenancies and annualises monthly rent", () => {
   const units = [unit(), unit({ id: "u-2", unit_number: "70" }), unit({ id: "u-3", unit_number: "71" })];
   const tenancies = [tenancy(), tenancy({ id: "t-2", unit_id: "u-2", monthly_rent: 1000, tenancy_end_date: "2026-08-29" }), tenancy({ id: "t-3", unit_id: "u-3", monthly_rent: 900, tenancy_start_date: "2026-09-01" })];
