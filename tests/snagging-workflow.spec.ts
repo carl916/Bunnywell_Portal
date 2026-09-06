@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
+import { selectBuildingContext } from "./helpers/building-context";
 
 type SnagStatus = "open" | "needs_more_info" | "resolved_by_contractor" | "rejected_back_to_contractor" | "closed";
 
@@ -193,7 +194,7 @@ async function setStatusFilter(page: Page, status: SnagStatus | "") {
 }
 
 async function applySnagFilters(page: Page, snag: CreatedSnag, status: SnagStatus | "") {
-  await selectPreferredOption(page.getByLabel("Current building"), ["Forum House"], "global building context");
+  await selectBuildingContext(page, "Forum House");
   await setStatusFilter(page, status);
 
   const unitFilter = page.getByLabel("Unit filter");

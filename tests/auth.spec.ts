@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { selectBuildingContext } from "./helpers/building-context";
 
 function requiredEnv(name: string) {
   const value = process.env[name];
@@ -59,7 +60,7 @@ test("admin selected building updates overview and structure", async ({ page }) 
   test.skip(buildingNames.length < 2, "At least two buildings are required to verify selected-building switching.");
 
   for (const targetBuilding of buildingNames.slice(0, 2)) {
-    await selectedBuilding.selectOption({ label: targetBuilding });
+    await selectBuildingContext(page, targetBuilding);
     await expect(page.getByTestId("working-building-context")).toContainText(targetBuilding);
     await expect(page.getByTestId("building-overview-section")).toBeVisible();
     await expect(page.getByTestId("building-structure-section")).toHaveAttribute("data-building-name", targetBuilding);
@@ -217,6 +218,7 @@ test("contractor can sign in and see contractor navigation", async ({ page }) =>
     requiredEnv("PLAYWRIGHT_CONTRACTOR_PASSWORD"),
   );
 
+  await selectBuildingContext(page, "Forum House");
   const navigation = desktopNavigation(page);
   await expect(navigation.getByRole("button", { name: "Dashboard", exact: true })).toBeVisible();
   await expect(navigation.getByRole("button", { name: "Snags", exact: true })).toBeVisible();
