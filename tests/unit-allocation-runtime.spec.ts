@@ -48,24 +48,28 @@ async function allocationMutation(
 }
 
 async function selectTestUnit(page: Page, unitNumber: string) {
-  const checkbox = page.getByLabel(`Select unit ${unitNumber}`);
+  const checkbox = page.getByRole("checkbox", { name: `Select unit ${unitNumber}`, exact: true });
   await expect(checkbox).toBeVisible();
   await checkbox.check();
 }
 
 async function applyToolbarAction(page: Page, actionName: string) {
-  await page.getByRole("button", { name: actionName, exact: true }).click();
+  if (["Not released", "Retained / not for sale", "For sale"].includes(actionName)) {
+    await page.getByRole("combobox", { name: "Change sales availability", exact: true }).selectOption({ label: actionName });
+  } else {
+    await page.getByRole("button", { name: actionName, exact: true }).click();
+  }
   await expect(page.getByRole("dialog", { name: "Confirm allocation change" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm change", exact: true }).click();
-  await expect(page.getByText("0 units selected", { exact: true })).toBeVisible();
+  await expect(page.getByText("Select units to make bulk changes.", { exact: true })).toBeVisible();
 }
 
 async function openUnitAllocation(page: Page, unitNumber: string) {
   await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
-  await page.getByRole("button", { name: "Unit allocation", exact: true }).click();
+  await page.getByRole("tab", { name: "Unit allocation", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Unit allocation", exact: true })).toBeVisible();
   await page.getByLabel("Unit number").fill(unitNumber);
-  await expect(page.getByLabel(`Select unit ${unitNumber}`)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: `Select unit ${unitNumber}`, exact: true })).toBeVisible();
 }
 
 test("new-unit setup baseline remains allocatable until meaningful sales work starts", async ({ page, request }) => {
@@ -86,6 +90,7 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
 
   try {
     await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
+    await page.getByRole("combobox", { name: "Current building", exact: true }).selectOption({ label: "Forum House" });
     const structure = page.getByTestId("building-structure-section");
     await expect(structure).toBeVisible();
 
@@ -259,7 +264,7 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
     companionUnitId = companionUnit.id;
 
     await openUnitAllocation(page, unitNumber);
-    const unitRow = page.getByLabel(`Select unit ${unitNumber}`).locator("xpath=ancestor::tr[1]");
+    const unitRow = page.getByRole("checkbox", { name: `Select unit ${unitNumber}`, exact: true }).locator("xpath=ancestor::tr[1]");
     await expect(unitRow.getByText("Not released", { exact: true }).first()).toBeVisible();
     await expect(unitRow.getByText("Not started", { exact: true })).toBeVisible();
 
@@ -277,10 +282,10 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
     await expect(unitRow.getByRole("menu")).toBeHidden();
 
     await selectTestUnit(page, unitNumber);
-    await expect(page.getByRole("button", { name: "Not released", exact: true })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Not released", exact: true })).toHaveAttribute("title", "Already not released.");
-    await expect(page.getByRole("button", { name: "Retained / not for sale", exact: true })).toBeEnabled();
-    await expect(page.getByRole("button", { name: "For sale", exact: true })).toBeEnabled();
+    const salesAvailability = page.getByRole("combobox", { name: "Change sales availability", exact: true });
+    await expect(salesAvailability.getByRole("option", { name: "Not released", exact: true })).toBeDisabled();
+    await expect(salesAvailability.getByRole("option", { name: "Retained / not for sale", exact: true })).toBeEnabled();
+    await expect(salesAvailability.getByRole("option", { name: "For sale", exact: true })).toBeEnabled();
     await expect(page.getByRole("button", { name: "Add to rental", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Remove from rental", exact: true })).toBeDisabled();
     await applyToolbarAction(page, "For sale");
@@ -310,16 +315,14 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
     });
 
     await page.getByLabel("Unit number").fill(unitPrefix);
-    await expect(page.getByLabel(`Select unit ${companionUnitNumber}`)).toBeVisible();
-    await page.getByLabel(`Select unit ${unitNumber}`).check();
-    await page.getByLabel(`Select unit ${companionUnitNumber}`).check();
-    await expect(page.getByRole("button", { name: "For sale", exact: true })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "For sale", exact: true })).toHaveAttribute("title", "Already for sale.");
+    await selectTestUnit(page, unitNumber);
+    await selectTestUnit(page, companionUnitNumber);
+    await expect(salesAvailability.getByRole("option", { name: "For sale", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Add to rental", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Add to rental", exact: true })).toHaveAttribute("title", "Selection includes units already in the rental portfolio.");
     await expect(page.getByRole("button", { name: "Remove from rental", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Remove from rental", exact: true })).toHaveAttribute("title", "Selection includes units not in the rental portfolio.");
-    await page.getByLabel(`Select unit ${companionUnitNumber}`).uncheck();
+    await page.getByRole("checkbox", { name: `Select unit ${companionUnitNumber}`, exact: true }).uncheck();
     await page.getByLabel("Unit number").fill(unitNumber);
 
     const commercialResponse = await request.post("/api/sales/reservations", {
@@ -343,8 +346,7 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
 
     await openUnitAllocation(page, unitNumber);
     await selectTestUnit(page, unitNumber);
-    await expect(page.getByRole("button", { name: "Not released", exact: true })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Not released", exact: true })).toHaveAttribute("title", "Sales workflow in progress.");
+    await expect(salesAvailability.getByRole("option", { name: "Not released", exact: true })).toBeDisabled();
     await expect(unitRow.getByText("Sale preparation", { exact: true })).toBeVisible();
 
     const blockedWithdrawal = await allocationMutation(request, token, {

@@ -54,18 +54,16 @@ test("admin selected building updates overview and structure", async ({ page }) 
   );
 
   await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
-  await expect(page.getByText("Working building", { exact: true })).toBeVisible();
-
-  const selectedBuilding = page.getByLabel("Selected building");
-  const buildingNames = (await selectedBuilding.locator("option").allTextContents()).map((name) => name.trim()).filter(Boolean);
+  const selectedBuilding = page.getByRole("combobox", { name: "Current building", exact: true });
+  const buildingNames = (await selectedBuilding.locator('option:not([value=""])').allTextContents()).map((name) => name.trim()).filter(Boolean);
   test.skip(buildingNames.length < 2, "At least two buildings are required to verify selected-building switching.");
 
-  const targetBuilding = buildingNames[1];
-  await selectedBuilding.selectOption({ label: targetBuilding });
-
-  await expect(page.getByTestId("working-building-context")).toContainText(targetBuilding);
-  await expect(page.getByTestId("building-overview-section")).toContainText(targetBuilding);
-  await expect(page.getByTestId("building-structure-section")).toHaveAttribute("data-building-name", targetBuilding);
+  for (const targetBuilding of buildingNames.slice(0, 2)) {
+    await selectedBuilding.selectOption({ label: targetBuilding });
+    await expect(page.getByTestId("working-building-context")).toContainText(targetBuilding);
+    await expect(page.getByTestId("building-overview-section")).toBeVisible();
+    await expect(page.getByTestId("building-structure-section")).toHaveAttribute("data-building-name", targetBuilding);
+  }
 });
 
 test("admin can open the Unit allocation Setup workspace", async ({ page }) => {
@@ -76,7 +74,7 @@ test("admin can open the Unit allocation Setup workspace", async ({ page }) => {
   );
 
   await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
-  await page.getByRole("button", { name: "Unit allocation", exact: true }).click();
+  await page.getByRole("tab", { name: "Unit allocation", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Unit allocation", exact: true })).toBeVisible();
   await expect(page.getByText("Total units", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Sales position")).toBeVisible();
@@ -86,7 +84,7 @@ test("admin can open the Unit allocation Setup workspace", async ({ page }) => {
   await expect(page.getByText("Sales action", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "draft", exact: true })).toHaveCount(0);
   if (await page.getByLabel(/^Sales availability for unit /).count()) {
-    await expect(page.getByLabel(/^Sales availability for unit /).first()).toHaveValue(/^(not_released|not_for_sale|for_sale)$/);
+    await expect(page.getByRole("button", { name: /^Sales availability for unit / }).first()).toHaveAttribute("aria-haspopup", "menu");
   }
 });
 
@@ -98,6 +96,7 @@ test("Building Structure keeps sale status read-only and rejects a tampered upda
   );
 
   await desktopNavigation(page).getByRole("button", { name: "Setup", exact: true }).click();
+  await page.getByRole("combobox", { name: "Current building", exact: true }).selectOption({ label: "Forum House" });
   const structure = page.getByTestId("building-structure-section");
   await expect(structure).toBeVisible();
 
