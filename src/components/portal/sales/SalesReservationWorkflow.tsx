@@ -19,6 +19,7 @@ import { useActivePanel } from "@/hooks/useActivePanel";
 import { historicalActorLabel } from "@/lib/sales/actor-identity";
 import { currentSalesTask, getCompletionDocumentState, getCompletionTasks, getExchangeTasks, getReservationTasks } from "@/lib/sales/stage-tasks";
 import { SalesStageTasks } from "./SalesStageTasks";
+import { parsePercentInput } from "@/lib/sales/percentages";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import styles from "./SalesReservationWorkflow.module.css";
 import {
@@ -416,9 +417,9 @@ function sortUnitsByFloorOrder(units: Unit[], buildingFloors: BuildingFloor[], b
   });
 }
 
-function formatPercentValue(value?: number | null) {
+function formatPercentValue(value?: number | null, maximumFractionDigits = 2) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
-  return `${Number(value).toLocaleString("en-GB", { maximumFractionDigits: 2 })}%`;
+  return `${Number(value).toLocaleString("en-GB", { maximumFractionDigits })}%`;
 }
 
 function contributionAmount(value: number, valueType: "amount" | "percent", contractPrice: number) {
@@ -888,11 +889,11 @@ function AgentInvoicePaymentSection({
         </div>
 
         {canRecord && position.paymentStatus !== "Paid" && showPaymentForm && (
-          <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3">
-            <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className={`mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3 ${styles.paymentEntry}`}>
+            <div className={styles.paymentEntryGrid}>
               <label className="field-label">Amount<GbpInput value={amount} onChange={onAmount} disabled={isSaving} aria-label="Agent fee payment amount" /></label>
               <label className="field-label">Payment date<input className="field" type="date" max={todayDate} value={paymentDate} onChange={(event) => onPaymentDate(event.target.value)} disabled={isSaving} /></label>
-              <div className="flex flex-wrap justify-end gap-2">
+              <div className={styles.paymentEntryActions}>
                 <button className="secondary min-h-10 px-3" type="button" onClick={() => setShowPaymentForm(false)} disabled={isSaving}>Cancel</button>
                 <button className="primary min-h-10 px-3" type="button" onClick={() => void submitPayment()} disabled={isSaving || (parseGbpInput(amount) ?? 0) <= 0 || !paymentDate || (parseGbpInput(amount) ?? 0) > position.outstandingBalance}>{isSaving ? "Recording…" : "Save payment"}</button>
               </div>
@@ -1067,7 +1068,6 @@ export function SalesReservationWorkflow({
   const [developerContributionValueType, setDeveloperContributionValueType] = useState<"amount" | "percent">("amount");
   const [agentContribution, setAgentContribution] = useState("");
   const [agentContributionValueType, setAgentContributionValueType] = useState<"amount" | "percent">("amount");
-  const [parkingContributionValue, setParkingContributionValue] = useState("");
   const [parkingLocationDetails, setParkingLocationDetails] = useState("");
   const [additionalSpecialConditions, setAdditionalSpecialConditions] = useState<string[]>([""]);
   const [agentFeePercent, setAgentFeePercent] = useState("");
@@ -1120,6 +1120,7 @@ export function SalesReservationWorkflow({
   const [activeUnitSection, setActiveUnitSection] = useState<UnitSaleSection>("progression");
   const [showCommercialModel, setShowCommercialModel] = useState(false);
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
+  const [commercialSetupChanged, setCommercialSetupChanged] = useState(false);
   const [showForecasting, setShowForecasting] = useState(false);
   const [showRejectReservationConfirm, setShowRejectReservationConfirm] = useState(false);
   const [showReturnToForSaleConfirm, setShowReturnToForSaleConfirm] = useState(false);
@@ -1253,14 +1254,16 @@ export function SalesReservationWorkflow({
     secondDepositMonthsAfterExchange: selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
   });
   const previewContractPrice = parseGbpInput(contractPrice) ?? activeTerms?.contract_price ?? 0;
-  const previewAgentFeePercent = normaliseNumberInput(agentFeePercent) ?? displayAgentFeePercent;
-  const previewExchangeAgentFeePercent = normaliseNumberInput(exchangeAgentFeePercent) ?? displayExchangeAgentFeePercent;
-  const previewCompletionAgentFeePercent = normaliseNumberInput(completionAgentFeePercent) ?? displayCompletionAgentFeePercent;
-  const previewAgentFeeStructure = validateAgentFeeStructure({
+  const previewAgentFeePercent = parsePercentInput(agentFeePercent) ?? displayAgentFeePercent;
+  const previewExchangeAgentFeePercent = parsePercentInput(exchangeAgentFeePercent) ?? displayExchangeAgentFeePercent;
+  const previewCompletionAgentFeePercent = parsePercentInput(completionAgentFeePercent) ?? displayCompletionAgentFeePercent;
+  const invalidAgentFeeInput = [agentFeePercent, exchangeAgentFeePercent, completionAgentFeePercent].some((value) => value.trim() !== "" && parsePercentInput(value) === null);
+  const previewAgentFeeStructure = invalidAgentFeeInput ? { isValid: false, error: "Enter percentages between 0% and 100%." } : validateAgentFeeStructure({
     totalFeePercent: previewAgentFeePercent,
     exchangeFeePercent: previewExchangeAgentFeePercent,
     completionFeePercent: previewCompletionAgentFeePercent,
   });
+  const previewAgentFeeSum = Math.round((previewExchangeAgentFeePercent + previewCompletionAgentFeePercent) * 10_000) / 10_000;
   const previewReservationFee = parseGbpInput(reservationFee) ?? displayReservationFee;
   const previewDeveloperContributionValue = parseGbpInput(developerContribution) ?? activeTerms?.developer_contribution_value ?? activeTerms?.developer_contribution ?? 0;
   const previewDeveloperContributionType = developerContributionValueType;
@@ -1803,7 +1806,6 @@ export function SalesReservationWorkflow({
       setDeveloperContributionValueType("amount");
       setAgentContribution("");
       setAgentContributionValueType("amount");
-      setParkingContributionValue("");
       setParkingLocationDetails("");
       setAdditionalSpecialConditions([""]);
       setAgentFeePercent(selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
@@ -1852,6 +1854,7 @@ export function SalesReservationWorkflow({
       setShowRejectInvoiceConfirm(false);
       setShowRejectCompletionInvoiceConfirm(false);
       setShowAdvancedDealSetup(false);
+      setCommercialSetupChanged(false);
       return;
     }
 
@@ -1872,7 +1875,6 @@ export function SalesReservationWorkflow({
     setDeveloperContributionValueType(activeTerms?.developer_contribution_value_type ?? "amount");
     setAgentContribution((activeTerms?.agent_contribution_value ?? activeTerms?.agent_contribution)?.toString() ?? "");
     setAgentContributionValueType(activeTerms?.agent_contribution_value_type ?? "amount");
-    setParkingContributionValue(activeTerms?.parking_contribution_value?.toString() ?? "");
     setParkingLocationDetails("");
     const loadedAdditionalConditions = activeTerms?.additional_special_conditions?.filter((condition) => condition.trim()) ?? [];
     const legacyParkingCondition = activeTerms?.parking_location_details?.trim();
@@ -1932,6 +1934,7 @@ export function SalesReservationWorkflow({
     setShowRejectInvoiceConfirm(false);
     setShowRejectCompletionInvoiceConfirm(false);
     setShowAdvancedDealSetup(false);
+    setCommercialSetupChanged(false);
   }, [activeAttempt, activeInvoice, activeTerms, completionAgentInvoice, completionStatementDocument, reservationDocument, selectedBuildingDefault, statementOfAccountDocument]);
 
   async function loadSalesData() {
@@ -2027,6 +2030,7 @@ export function SalesReservationWorkflow({
   }, [buildingId, units.length]);
 
   function resetCommercialModelDraft() {
+    setCommercialSetupChanged(false);
     const loadedAdditionalConditions = activeTerms?.additional_special_conditions?.filter((condition) => condition.trim()) ?? [];
     const legacyParkingCondition = activeTerms?.parking_location_details?.trim();
     const combinedAdditionalConditions = [
@@ -2042,7 +2046,6 @@ export function SalesReservationWorkflow({
     setDeveloperContributionValueType(activeTerms?.developer_contribution_value_type ?? "amount");
     setAgentContribution((activeTerms?.agent_contribution_value ?? activeTerms?.agent_contribution)?.toString() ?? "");
     setAgentContributionValueType(activeTerms?.agent_contribution_value_type ?? "amount");
-    setParkingContributionValue(activeTerms?.parking_contribution_value?.toString() ?? "");
     setParkingLocationDetails("");
     setAdditionalSpecialConditions(combinedAdditionalConditions);
     setAgentFeePercent(activeTerms?.agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_agent_fee_percent?.toString() ?? "");
@@ -2315,7 +2318,6 @@ export function SalesReservationWorkflow({
         developerContributionValueType,
         agentContribution,
         agentContributionValueType,
-        parkingContributionValue,
         parkingLocationDetails,
         additionalSpecialConditions: additionalSpecialConditions.map((condition) => condition.trim()).filter(Boolean),
         commercialSummary,
@@ -2325,13 +2327,13 @@ export function SalesReservationWorkflow({
         invoiceVatAmount,
         invoiceGrossAmount,
       };
-      if (showAdvancedDealSetup) {
+      if (showAdvancedDealSetup || commercialSetupChanged) {
         Object.assign(payload, {
           reservationFee,
           reservationFeeHolder,
-          agentFeePercent,
-          exchangeAgentFeePercent,
-          completionAgentFeePercent,
+          agentFeePercent: previewAgentFeePercent,
+          exchangeAgentFeePercent: previewExchangeAgentFeePercent,
+          completionAgentFeePercent: previewCompletionAgentFeePercent,
           solicitorFee,
           exchangeDepositPercent,
           secondDepositEnabled,
@@ -2965,51 +2967,52 @@ export function SalesReservationWorkflow({
           </div>
 
           {showCommercialModel && (
-            <div className="mt-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
-              <div className="grid gap-4 xl:grid-cols-3">
-                <div className="rounded-lg border border-[#e2ded3] bg-white p-4">
+            <div className={`mt-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.commercialEditor}`} data-testid="commercial-model-editor">
+              <div className={styles.commercialEditorGrid}>
+                <div className={`rounded-lg border border-[#e2ded3] bg-white p-4 ${styles.commercialInputs}`}>
                   <h4 className="font-bold text-[#0F3D2E]">Deal inputs</h4>
                   <p className="mt-1 text-sm text-[#617169]">Developer-only modelling before commercial approval.</p>
                   <div className="mt-4 grid gap-3">
                     <h5 className="text-sm font-bold text-[#0F3D2E]">Commercial model</h5>
-                    <label className="field-label">Proposed contract price<GbpInput value={contractPrice} onChange={setContractPrice} disabled={!commercialModelEditable} aria-label="Proposed contract price" /></label>
-                    <label className="field-label">Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!commercialModelEditable} aria-label="Parking value" /></label>
-                    <div className="rounded-md border border-[#eef0eb] bg-white p-3">
+                    <div className={styles.fieldRow}>
+                      <label className={`field-label ${styles.numericField}`}>Proposed contract price<GbpInput value={contractPrice} onChange={setContractPrice} disabled={!commercialModelEditable} aria-label="Proposed contract price" /></label>
+                      <label className={`field-label ${styles.numericField}`}>Parking value<GbpInput value={parkingValue} onChange={setParkingValue} disabled={!commercialModelEditable} aria-label="Parking value" /></label>
+                    </div>
+                    <div className="border-t border-[#eef0eb] pt-4">
                       <h5 className="text-sm font-bold text-[#0F3D2E]">Buyer incentives and special conditions</h5>
-                      <div className="mt-3 grid gap-3">
+                      <div className={`mt-3 ${styles.fieldRow}`}>
                         <label className="field-label">
                           Developer contribution
-                          <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
+                          <div className={styles.contributionInput}>
                             {developerContributionValueType === "percent" ? (
                               <input className="field" inputMode="decimal" value={developerContribution} onChange={(event) => setDeveloperContribution(event.target.value)} disabled={!commercialModelEditable} aria-label="Developer contribution percent" />
                             ) : (
                               <GbpInput value={developerContribution} onChange={setDeveloperContribution} disabled={!commercialModelEditable} aria-label="Developer contribution amount" />
                             )}
                             <select className="field" value={developerContributionValueType} onChange={(event) => setDeveloperContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable} aria-label="Developer contribution value type">
-                              <option value="amount">GBP amount</option>
-                              <option value="percent">% of price</option>
+                              <option value="amount">GBP</option>
+                              <option value="percent">%</option>
                             </select>
                           </div>
                           {developerContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewDeveloperContributionAmount)}</span>}
                         </label>
                         <label className="field-label">
                           Agent contribution
-                          <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
+                          <div className={styles.contributionInput}>
                             {agentContributionValueType === "percent" ? (
                               <input className="field" inputMode="decimal" value={agentContribution} onChange={(event) => setAgentContribution(event.target.value)} disabled={!commercialModelEditable} aria-label="Agent contribution percent" />
                             ) : (
                               <GbpInput value={agentContribution} onChange={setAgentContribution} disabled={!commercialModelEditable} aria-label="Agent contribution amount" />
                             )}
                             <select className="field" value={agentContributionValueType} onChange={(event) => setAgentContributionValueType(event.target.value as "amount" | "percent")} disabled={!commercialModelEditable} aria-label="Agent contribution value type">
-                              <option value="amount">GBP amount</option>
-                              <option value="percent">% of price</option>
+                              <option value="amount">GBP</option>
+                              <option value="percent">%</option>
                             </select>
                           </div>
                           {agentContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewAgentContribution)}</span>}
                         </label>
-                        <label className="field-label">Parking contribution<GbpInput value={parkingContributionValue} onChange={setParkingContributionValue} disabled={!commercialModelEditable} aria-label="Parking contribution" /></label>
-                        <AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} />
                       </div>
+                      <div className="mt-3"><AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} /></div>
                     </div>
                     <div className="border-t border-[#eef0eb] pt-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -3017,17 +3020,17 @@ export function SalesReservationWorkflow({
                           <h5 className="text-sm font-bold text-[#0F3D2E]">Advanced deal setup</h5>
                           <p className="mt-1 text-xs text-[#617169]">These values normally come from the building defaults. Only change them for unit-specific exceptions.</p>
                         </div>
-                        <button className="secondary" type="button" onClick={() => setShowAdvancedDealSetup((value) => !value)} disabled={!commercialModelEditable}>
+                        <button className="secondary" type="button" aria-expanded={showAdvancedDealSetup} aria-controls="commercial-advanced-setup" onClick={() => setShowAdvancedDealSetup((value) => !value)} disabled={!commercialModelEditable}>
                           {showAdvancedDealSetup ? "Hide setup" : "Edit deal setup"}
                         </button>
                       </div>
                     </div>
                     {!showAdvancedDealSetup ? (
                       <div className="rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
-                        <div className="grid gap-2">
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value">{formatPercentValue(previewExchangeAgentFeePercent)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value">{formatPercentValue(previewCompletionAgentFeePercent)}</strong></div>
+                        <div className={styles.setupSummary}>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent, 4)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value">{formatPercentValue(previewExchangeAgentFeePercent, 4)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value">{formatPercentValue(previewCompletionAgentFeePercent, 4)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(previewReservationFee)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
                           {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Second deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
@@ -3035,13 +3038,22 @@ export function SalesReservationWorkflow({
                         </div>
                       </div>
                     ) : (
-                      <>
+                      <div id="commercial-advanced-setup" className="grid gap-5" onChange={() => setCommercialSetupChanged(true)}>
+                      <fieldset className="min-w-0">
+                        <legend className="mb-3 text-sm font-bold text-[#0F3D2E]">Agent fees</legend>
+                        <div className={styles.feeRow}>
                         <label className="field-label">Total agent fee %<input className="field" inputMode="decimal" value={agentFeePercent} onChange={(event) => setAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         <label className="field-label">Exchange fee %<input className="field" inputMode="decimal" value={exchangeAgentFeePercent} onChange={(event) => setExchangeAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
-                        <div className={`rounded-md border p-3 text-sm ${previewAgentFeeStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
-                          <p>{previewAgentFeeStructure.error ?? "Exchange and Completion fees match the total agent fee."}</p>
                         </div>
+                        <div className={`mt-3 rounded-md px-3 py-2 text-sm ${previewAgentFeeStructure.isValid ? "bg-[#eaf6ee] text-[#18794e]" : "bg-[#fff8e7] text-[#7a5416]"}`} role="status" aria-live="polite" data-testid="agent-fee-validation">
+                          {!invalidAgentFeeInput && <p className="numeric-value font-semibold">{formatPercentValue(previewExchangeAgentFeePercent, 4)} + {formatPercentValue(previewCompletionAgentFeePercent, 4)} = {formatPercentValue(previewAgentFeeSum, 4)}{previewAgentFeeStructure.isValid && <CheckCircle2 className="ml-2 inline-block" size={15} aria-label="Valid fee split" />}</p>}
+                          {!previewAgentFeeStructure.isValid && <p>{invalidAgentFeeInput ? previewAgentFeeStructure.error : `Must equal total agent fee of ${formatPercentValue(previewAgentFeePercent, 4)}.`}</p>}
+                        </div>
+                      </fieldset>
+                      <fieldset className="min-w-0 border-t border-[#eef0eb] pt-4">
+                        <legend className="text-sm font-bold text-[#0F3D2E]">Reservation</legend>
+                        <div className={styles.fieldRow}>
                         <label className="field-label">Reservation fee<GbpInput value={reservationFee} onChange={setReservationFee} disabled={!commercialModelEditable} aria-label="Reservation fee" /></label>
                         <label className="field-label">
                           Reservation fee holder
@@ -3052,25 +3064,39 @@ export function SalesReservationWorkflow({
                             <option value="other">Other</option>
                           </select>
                         </label>
+                        </div>
+                      </fieldset>
+                      <fieldset className="min-w-0 border-t border-[#eef0eb] pt-4">
+                        <legend className="text-sm font-bold text-[#0F3D2E]">Buyer payment schedule</legend>
+                        <div className={styles.feeRow}>
                         <label className="field-label">Exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
-                        <label className="option-card min-h-10 px-3 py-2 text-sm">
-                          <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!commercialModelEditable} />
-                          Optional second deposit
-                        </label>
                         {secondDepositEnabled && (
                           <>
                             <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
-                            <label className="field-label">Second deposit timing<input className="field" inputMode="numeric" value={secondDepositMonthsAfterExchange} onChange={(event) => setSecondDepositMonthsAfterExchange(event.target.value)} disabled={!commercialModelEditable} placeholder="Months after exchange" /></label>
+                            <label className="field-label">Months after exchange<input className="field" inputMode="numeric" value={secondDepositMonthsAfterExchange} onChange={(event) => setSecondDepositMonthsAfterExchange(event.target.value)} disabled={!commercialModelEditable} /></label>
                           </>
                         )}
-                        <div className={`rounded-md border p-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
-                          <div className="flex justify-between gap-3"><span>Completion balance</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
+                        </div>
+                        <label className="mt-3 flex w-fit items-center gap-2 text-sm text-[#34413a]">
+                          <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!commercialModelEditable} />
+                          Optional second deposit
+                        </label>
+                        <div className={`mt-3 rounded-md border p-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`} role="status" data-testid="payment-schedule-summary">
+                          <div className={styles.feeRow}>
+                            <div>Exchange deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
+                            {previewDepositStructure.secondDepositEnabled && <div>Second deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
+                            <div>Completion balance<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
+                          </div>
+                          {previewDepositStructure.isValid && <p className="mt-2 border-t border-[#e8e5dc] pt-2 font-semibold">Total 100% <CheckCircle2 className="ml-1 inline-block text-[#18794e]" size={15} aria-label="Valid payment schedule" /></p>}
                           <p className="mt-1 text-xs">{previewDepositStructure.error ?? "Reservation fee is separate from the 100% payment schedule."}</p>
                         </div>
-                      </>
+                      </fieldset>
+                      </div>
                     )}
+                    {!showAdvancedDealSetup && !previewAgentFeeStructure.isValid && <p className="text-sm text-[#7a5416]" role="alert">{previewAgentFeeStructure.error} Open Edit deal setup to correct the fee split.</p>}
                     </div>
                   </div>
+                <aside className={styles.previewRail} aria-label="Commercial preview">
                 <div className="rounded-lg border border-[#e2ded3] bg-white p-4">
                   <h4 className="font-bold text-[#0F3D2E]">Live preview</h4>
                   <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -3096,6 +3122,7 @@ export function SalesReservationWorkflow({
                   </div>
                   <p className="mt-3 text-xs text-[#617169]">Estimate based on current For Sale units.</p>
                 </div>
+                </aside>
               </div>
               <div className="mt-4 flex justify-end gap-2">
                 <button className="secondary" onClick={cancelCommercialModel}>Cancel</button>
@@ -3191,7 +3218,7 @@ export function SalesReservationWorkflow({
                       <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
                         <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Developer contribution</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
                         <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionLabel}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right">{money(activeTerms?.parking_contribution_value ?? 0)}</strong></div>
+                        {(activeTerms?.parking_contribution_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right">{money(activeTerms?.parking_contribution_value ?? 0)}</strong></div>}
                         {activeSpecialConditions.length > 0 ? activeSpecialConditions.map((condition, index) => (
                           <div key={`${condition}-${index}`} className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Additional condition</span><strong className="text-right">{condition}</strong></div>
                         )) : <div className="flex justify-between gap-4"><span>Additional condition</span><strong>-</strong></div>}

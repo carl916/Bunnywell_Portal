@@ -7,6 +7,7 @@ import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import { getCompletionDocumentState } from "@/lib/sales/stage-tasks";
 import { buildDepositStructure, buildPaymentScheduleRows, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { parseGbpInput } from "@/lib/sales/currency";
+import { parsePercentInput } from "@/lib/sales/percentages";
 import { calculateMilestoneFee, validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { createSupabaseServiceRoleClient, requiredEnv } from "@/lib/supabase/admin";
 
@@ -110,9 +111,7 @@ function normaliseMoney(value?: string | number | null) {
 }
 
 function normalisePercent(value?: string | number | null) {
-  const numeric = normaliseMoney(value);
-  if (numeric === null || numeric > 100) return null;
-  return numeric;
+  return parsePercentInput(value);
 }
 
 function normaliseInteger(value?: string | number | null) {
@@ -400,7 +399,7 @@ function termsSnapshotFromDefaults(input: {
   const payloadExchangeDeposit = usePayloadCommercials ? normalisePercent(payload?.exchangeDepositPercent) : null;
   const payloadSecondDepositPercent = usePayloadCommercials ? normalisePercent(payload?.secondDepositPercent) : null;
   const payloadSecondDepositMonths = usePayloadCommercials ? normaliseInteger(payload?.secondDepositMonthsAfterExchange) : null;
-  const payloadSecondDepositEnabled = usePayloadCommercials ? Boolean(payload?.secondDepositEnabled) : null;
+  const payloadSecondDepositEnabled = usePayloadCommercials && hasPayloadValue("secondDepositEnabled") ? Boolean(payload?.secondDepositEnabled) : null;
 
   const currentContractPrice = toNullableNumber(currentTerms?.contract_price ?? currentTerms?.list_price_at_offer);
   const contractPrice = usePayloadCommercials
@@ -433,14 +432,19 @@ function termsSnapshotFromDefaults(input: {
   });
 
   if (!depositStructure.isValid) throw new Error(depositStructure.error ?? "Payment schedule is invalid.");
+  for (const key of ["agentFeePercent", "exchangeAgentFeePercent", "completionAgentFeePercent"] as const) {
+    if (usePayloadCommercials && hasPayloadValue(key) && payload?.[key] !== null && payload?.[key] !== undefined && payload[key]?.toString().trim() !== "" && normalisePercent(payload[key]) === null) {
+      throw new Error("Agent fee percentages must be numbers between 0% and 100%.");
+    }
+  }
   const totalAgentFeePercent = usePayloadCommercials && hasPayloadValue("agentFeePercent")
-    ? normalisePercent(payload?.agentFeePercent)
+    ? normalisePercent(payload?.agentFeePercent) ?? Number(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent ?? 0)
     : Number(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent ?? 0);
   const exchangeAgentFeePercent = usePayloadCommercials && hasPayloadValue("exchangeAgentFeePercent")
-    ? normalisePercent(payload?.exchangeAgentFeePercent)
+    ? normalisePercent(payload?.exchangeAgentFeePercent) ?? Number(currentTerms?.exchange_agent_fee_percent ?? defaults?.default_exchange_agent_fee_percent ?? totalAgentFeePercent ?? 0)
     : Number(currentTerms?.exchange_agent_fee_percent ?? defaults?.default_exchange_agent_fee_percent ?? totalAgentFeePercent ?? 0);
   const completionAgentFeePercent = usePayloadCommercials && hasPayloadValue("completionAgentFeePercent")
-    ? normalisePercent(payload?.completionAgentFeePercent)
+    ? normalisePercent(payload?.completionAgentFeePercent) ?? Number(currentTerms?.completion_agent_fee_percent ?? defaults?.default_completion_agent_fee_percent ?? 0)
     : Number(currentTerms?.completion_agent_fee_percent ?? defaults?.default_completion_agent_fee_percent ?? 0);
   const feeStructure = validateAgentFeeStructure({
     totalFeePercent: totalAgentFeePercent,

@@ -5,6 +5,7 @@ import ts from "typescript";
 
 // Exercise real route/component code with explicit test adapters, without a
 // running server or a connection to a project database.
+/** @param {string} filename @param {{ overrides?: Record<string, unknown>, exports?: string[] }} options */
 export function loadTypescriptModule(filename, { overrides = {}, exports: extraExports = [] } = {}) {
   const cache = new Map();
   function load(file, addedExports = []) {

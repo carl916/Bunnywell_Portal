@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Module } from "node:module";
 import ts from "typescript";
+import { parsePercentInput } from "../src/lib/sales/percentages.ts";
+import { validateAgentFeeStructure } from "../src/lib/sales/agent-fees.ts";
+import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
@@ -12,6 +15,92 @@ const migrationSource = readFileSync("supabase/migrations/20260723_sales_stage_t
 const buyerIncentivesMigrationSource = readFileSync("supabase/migrations/20260725_sales_buyer_incentives_and_identity.sql", "utf8");
 const reservationApprovalMigrationSource = readFileSync("supabase/migrations/20260804_reservation_approval_workflow.sql", "utf8");
 const commercialModelSource = readFileSync("src/lib/sales/commercial-model.ts", "utf8");
+const { saveCommercialModel } = loadTypescriptModule("src/app/api/sales/reservations/route.ts", {
+  overrides: { "@/lib/supabase/admin": { createSupabaseServiceRoleClient() { throw new Error("Live database access is forbidden in this test"); } } },
+  exports: ["saveCommercialModel"],
+});
+
+function commercialSaveFixture(terms = {}, defaults = {}) {
+  const rpcCalls = [];
+  const records = {
+    units: { id: "unit", unit_number: "101", building_id: "building", sale_status: "for_sale" },
+    unit_sale_attempts: { id: "attempt", unit_id: "unit", building_id: "building", is_active: true, workflow_status: "draft" },
+    unit_sale_terms: { id: "terms", contract_price: 340500, agent_fee_percent: 10, exchange_agent_fee_percent: 9.5, completion_agent_fee_percent: 0.5, second_deposit_enabled: true, second_deposit_percent: 5, second_deposit_months_after_exchange: 3, exchange_deposit_percent: 10, ...terms },
+    building_sale_defaults: { default_agent_fee_percent: 10, default_exchange_agent_fee_percent: 9.5, default_completion_agent_fee_percent: 0.5, ...defaults },
+  };
+  const client = {
+    from(table) {
+      assert.ok(records[table], `Unexpected table ${table}`);
+      const query = { select() { return query; }, eq() { return query; }, maybeSingle: async () => ({ data: records[table], error: null }) };
+      return query;
+    },
+    rpc: async (name, payload) => { rpcCalls.push({ name, payload }); return { data: { sale_attempt_id: "attempt", sale_terms_id: "terms" }, error: null }; },
+  };
+  const save = (patch = {}) => saveCommercialModel(client, { id: "developer", role: "developer" }, { action: "save_commercial_model", unitId: "unit", saleAttemptId: "attempt", ...patch });
+  return { save, rpcCalls };
+}
+
+test("percentages preserve fractional percentage points rather than using whole-pound parsing", () => {
+  for (const value of [9.5, "9.5", " 9.5 "]) assert.equal(parsePercentInput(value), 9.5);
+  assert.equal(parsePercentInput(".5"), 0.5);
+  assert.equal(parsePercentInput("0.095"), 0.095);
+  assert.equal(parsePercentInput("10"), 10);
+  assert.equal(parsePercentInput("9.50004"), 9.5);
+  for (const value of ["", null, undefined, "nine", -1, "-0.5", 101, Infinity, NaN]) assert.equal(parsePercentInput(value), null);
+  assert.equal(validateAgentFeeStructure({ totalFeePercent: 10, exchangeFeePercent: parsePercentInput("9.1"), completionFeePercent: parsePercentInput(".9") }).isValid, true);
+});
+
+test("saving displayed 10 / 9.5 / 0.5 fees sends the exact decimal split to the transactional RPC", async () => {
+  const { save, rpcCalls } = commercialSaveFixture();
+  await save({ agentFeePercent: "10", exchangeAgentFeePercent: "9.5", completionAgentFeePercent: "0.5", contractPrice: "350500", developerContribution: "2000" });
+  const saved = rpcCalls[0].payload;
+  assert.equal(rpcCalls[0].name, "save_unit_commercial_model_with_agent_fees");
+  assert.equal(saved.p_agent_fee_percent, 10);
+  assert.equal(saved.p_exchange_agent_fee_percent, 9.5);
+  assert.equal(saved.p_completion_agent_fee_percent, 0.5);
+  assert.equal(saved.p_contract_price, 350500);
+  assert.equal(saved.p_developer_contribution, 2000);
+});
+
+test("unrelated saves preserve fees and the enabled second deposit when advanced fields are omitted", async () => {
+  const { save, rpcCalls } = commercialSaveFixture();
+  await save({ parkingContributionValue: "500", additionalSpecialConditions: ["Include parking"] });
+  const saved = rpcCalls[0].payload;
+  assert.deepEqual([saved.p_agent_fee_percent, saved.p_exchange_agent_fee_percent, saved.p_completion_agent_fee_percent], [10, 9.5, 0.5]);
+  assert.equal(saved.p_second_deposit_enabled, true);
+  assert.equal(saved.p_second_deposit_percent, 5);
+  assert.equal(saved.p_completion_balance_percent, 85);
+  assert.equal(saved.p_payment_schedule.length, 3);
+});
+
+test("saved unit fee overrides take precedence, null overrides inherit defaults, and zero stays zero", async () => {
+  for (const [terms, expected] of [
+    [{ agent_fee_percent: 8, exchange_agent_fee_percent: 7.5, completion_agent_fee_percent: 0.5 }, [8, 7.5, 0.5]],
+    [{ agent_fee_percent: null, exchange_agent_fee_percent: null, completion_agent_fee_percent: null }, [10, 9.5, 0.5]],
+    [{ agent_fee_percent: 0, exchange_agent_fee_percent: 0, completion_agent_fee_percent: 0 }, [0, 0, 0]],
+  ]) {
+    const { save, rpcCalls } = commercialSaveFixture(terms);
+    await save({ agentFeePercent: "", exchangeAgentFeePercent: null });
+    const saved = rpcCalls[0].payload;
+    assert.deepEqual([saved.p_agent_fee_percent, saved.p_exchange_agent_fee_percent, saved.p_completion_agent_fee_percent], expected);
+  }
+});
+
+test("invalid splits and malformed explicit fee inputs are blocked before the save RPC", async () => {
+  for (const values of [[10, 9.5, 0.4], [10, -1, 11], ["bad", 0, 0], [101, 101, 0]]) {
+    const { save, rpcCalls } = commercialSaveFixture();
+    await assert.rejects(save({ agentFeePercent: values[0], exchangeAgentFeePercent: values[1], completionAgentFeePercent: values[2] }), /fee percentages|must equal/);
+    assert.equal(rpcCalls.length, 0);
+  }
+});
+
+test("explicit second deposit disable remains supported and fractional deposit percentages are preserved", async () => {
+  const { save, rpcCalls } = commercialSaveFixture();
+  await save({ secondDepositEnabled: false, exchangeDepositPercent: "9.5" });
+  assert.equal(rpcCalls[0].payload.p_second_deposit_enabled, false);
+  assert.equal(rpcCalls[0].payload.p_exchange_deposit_percent, 9.5);
+  assert.equal(rpcCalls[0].payload.p_completion_balance_percent, 90.5);
+});
 
 function functionBody(source, name) {
   const start = source.indexOf(`async function ${name}`);
@@ -216,7 +305,7 @@ test("commercial model seeds deal setup from saved terms then building defaults"
 
 test("commercial model omits advanced setup fields unless the section is opened", () => {
   const body = functionBody(workflowSource, "saveCommercialPackage");
-  const advancedBlockStart = body.indexOf("if (showAdvancedDealSetup)");
+  const advancedBlockStart = body.indexOf("if (showAdvancedDealSetup || commercialSetupChanged)");
   assert.notEqual(advancedBlockStart, -1, "saveCommercialPackage should gate advanced deal setup fields");
   const advancedBlock = body.slice(advancedBlockStart);
 

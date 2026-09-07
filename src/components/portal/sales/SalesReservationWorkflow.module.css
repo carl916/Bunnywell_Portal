@@ -3,6 +3,93 @@
   container-type: inline-size;
 }
 
+.commercialEditor {
+  container: commercial-editor / inline-size;
+}
+
+.commercialEditorGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.commercialInputs {
+  container: commercial-inputs / inline-size;
+  min-width: 0;
+}
+
+.previewRail {
+  display: grid;
+  min-width: 0;
+  gap: 1rem;
+}
+
+.fieldRow, .feeRow, .setupSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+}
+
+.fieldRow > *, .feeRow > * { min-width: 0; }
+.numericField { max-width: 14rem; }
+
+.contributionInput {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  gap: 0.5rem;
+}
+
+.contributionInput > * { min-width: 0; }
+
+.paymentEntry {
+  container: payment-entry / inline-size;
+}
+
+.paymentEntryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.paymentEntryGrid > *, .paymentEntryGrid input { min-width: 0; }
+
+.paymentEntryActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@container payment-entry (min-width: 28rem) {
+  .paymentEntryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .paymentEntryActions { grid-column: 1 / -1; }
+}
+
+@container payment-entry (min-width: 44rem) {
+  .paymentEntryGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .paymentEntryActions { grid-column: auto; }
+}
+
+.previewRail strong { flex-shrink: 0; white-space: nowrap; }
+.previewRail span { min-width: 0; }
+
+@container commercial-inputs (min-width: 26rem) {
+  .fieldRow, .setupSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container commercial-inputs (min-width: 32rem) {
+  .feeRow, .setupSummary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container commercial-editor (min-width: 56rem) {
+  .commercialEditorGrid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  @media (min-height: 56rem) {
+    .previewRail { position: sticky; top: 7.5rem; }
+  }
+}
+
 .financialOverviewGrid {
   grid-template-columns: minmax(0, 1fr);
 }
