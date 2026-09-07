@@ -1,0 +1,22 @@
+▶ discussion migration and permission, history, isolation and unread contracts in PostgreSQL
+  ✔ assigned agent, developer and solicitor share one sale; another sale agent is denied (18.4585ms)
+  ✔ mentions are eligible user IDs; retries deduplicate both comment and notification (9.7702ms)
+  ✔ same-sale replies, author-only edits, revision retention and optimistic edit conflicts (6.305ms)
+  ✔ reads acknowledge only presented IDs; own comments excluded, edits do not increase unread (10.4238ms)
+  ✔ server enforces limits and forbids raw mutation / audit payload access (4.5383ms)
+  ✔ revocation blocks comments, history, mentions, notifications and direct RLS reads (6.6735ms)
+  ✔ replacement buyer has a new identity; draft discussion does not record a reservation (8.164ms)
+  ✔ stable pagination retains more than the initial history and validates deep links (39.5199ms)
+  ✔ completed discussions remain open; building and account revocation still apply (3.7654ms)
+✔ discussion migration and permission, history, isolation and unread contracts in PostgreSQL (954.6574ms)
+✔ document triggers write distinct subjects and viewer-safe timeline projections (616.0915ms)
+✔ client ordering, draft isolation and legacy presentation (0.2069ms)
+✔ document deep links recheck current discussion access, transaction and document visibility before signing (123.1317ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2016.3656

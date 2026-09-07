@@ -7,6 +7,30 @@
   container: commercial-editor / inline-size;
 }
 
+.commercialSummary {
+  container: commercial-summary / inline-size;
+}
+
+.commercialCards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.commercialCards > div, .commercialCards span { min-width: 0; }
+.commercialCards span { overflow-wrap: anywhere; }
+.commercialCards strong { flex-shrink: 0; white-space: nowrap; }
+
+/* Give two-card tablet rows room for labels and amounts. Desktop can use
+   three compact 264px cards, including the existing 34px padding/borders. */
+@container commercial-summary (min-width: 40rem) {
+  .commercialCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container commercial-summary (min-width: 51.5rem) {
+  .commercialCards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 .commercialEditorGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -320,7 +320,7 @@ test("rejected invoice replacement retains document version audit history", () =
   assert.match(uploadInvoiceBody, /existingInvoice\.data\.status !== "query_raised"/);
   assert.match(uploadDocumentBody, /versionNumber = .* \+ 1/);
   assert.match(uploadDocumentBody, /is_current: false/);
-  assert.match(uploadDocumentBody, /agent_invoice.*replaced|documentType}_replaced/);
+  assert.match(readFileSync("supabase/migrations/20260907b_sale_activity_projection.sql", "utf8"), /d.document_type\|\|'_'\|\|kind/);
   assert.match(workflowSource, />Document history</);
 });
 
@@ -366,7 +366,7 @@ test("RLS and server permissions keep Completion review and payments developer-o
 
 test("Completion invoice activity covers submit, replacement, reject, approve, payment and fully paid", () => {
   assert.match(routeSource, /documentTitle: `\$\{milestoneLabel\} agent invoice`/);
-  assert.match(routeSource, /type: isReplacement \? `\$\{documentType\}_replaced` : `\$\{documentType\}_uploaded`/);
+  assert.match(readFileSync("supabase/migrations/20260907b_sale_activity_projection.sql", "utf8"), /version_number>1 then 'replaced' else 'uploaded'/);
   assert.match(routeSource, /completion_agent_invoice_rejected/);
   assert.match(routeSource, /completion_agent_invoice_approved/);
   assert.match(routeSource, /agent_fee_payment_recorded/);
@@ -387,5 +387,5 @@ test("Exchange and Completion share one persisted payment component", () => {
   assert.match(workflowSource, /function AgentInvoicePaymentSection/);
   const uses = workflowSource.match(/<AgentInvoicePaymentSection/g) ?? [];
   assert.equal(uses.length, 2);
-  assert.match(workflowSource, /<details className="group/);
+  assert.match(workflowSource, /<SaleConversationLayout/);
 });

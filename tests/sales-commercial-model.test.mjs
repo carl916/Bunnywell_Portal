@@ -278,9 +278,9 @@ test("reservation approval uses the form date and developer reject action", () =
 test("reservation UI keeps document and activity history visible", () => {
   assert.match(workflowSource, /DocumentVersionHistory/);
   assert.match(workflowSource, /unit_sale_document_versions"\)\s+\.select\("\*"\)\s+\.in\("document_id", documentIds\)\s+\.order\("version_number"/);
-  assert.match(workflowSource, /unit_sale_workflow_events/);
-  assert.match(workflowSource, /recorded \{events\.length === 1 \? "update" : "updates"\}/);
-  assert.match(workflowSource, />Show history</);
+  assert.match(workflowSource, /sale_workflow_context/);
+  assert.match(workflowSource, /<SaleConversationLayout/);
+  assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /Load older activity/);
   assert.doesNotMatch(workflowSource, /Activity \{activeWorkflowEvents\.length\}/);
 });
 

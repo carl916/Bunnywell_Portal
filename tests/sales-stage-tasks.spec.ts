@@ -93,8 +93,9 @@ test("completion survives reload through upload, query, replacement, approval an
   await f.reloadStage("Completion");
   await expectSteps(page, "Completion", ["Complete", "Complete", "Complete"]);
   await expect(page.getByRole("heading", { name: "Completion recorded", exact: true })).toBeVisible();
-  await page.getByText("Show history", { exact: true }).click();
-  await expect(page.getByText("Correct the completion balance.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /^Comments/ }).first().click();
+  await page.locator('#sale-conversation').getByRole("tab", { name: "Activity", exact: true }).click();
+  await expect(page.getByText("Reason: Correct the completion balance.", { exact: true })).toBeVisible();
 });
 
 test("task cards use available width without overflow at desktop, tablet and mobile sizes", async ({ page }, testInfo) => {

@@ -80,11 +80,10 @@ test("query, replacement, fresh approval and completion preserve audit and enfor
   assert.equal(rows.unit_sale_attempts[0].workflow_status, "completed");
   assert.equal(rows.unit_sale_attempts[0].completed_at, "2026-08-05");
   assert.deepEqual(rpcCalls, ["sales_workflow_mark_unit_completed"]);
-  assert.deepEqual(rows.unit_sale_workflow_events.map((event) => [event.event_type, event.created_by_user_id]), [
-    ["completion_documents_query_raised", "developer"], ["completion_statement_replaced", "solicitor"],
-    ["completion_documents_approved", "developer"], ["completion_recorded", "solicitor"],
-  ]);
-  assert.equal(rows.unit_sale_workflow_events[0].metadata.queryNote, "Correct the completion balance.");
+  // Document events now run inside real PostgreSQL triggers. Their exact titles,
+  // subjects, versions and query reasons are exercised in sales-discussion.test.mjs.
+  // This lightweight route adapter must not fabricate those database events.
+  assert.deepEqual(rows.unit_sale_workflow_events.map((event) => [event.event_type, event.created_by_user_id]), [["completion_recorded", "solicitor"]]);
   assert.equal((await actions.recordCompletion(client, solicitor, payload)).alreadyCompleted, true);
 });
 

@@ -28,6 +28,13 @@ export async function salesFixture(page: Page) {
   });
   await page.route("**/rest/v1/**", async (route) => {
     const url = new URL(route.request().url());
+    if (url.pathname.includes('/rpc/')) {
+      const name = url.pathname.split('/').at(-1);
+      const json = name === 'sale_workflow_context' || name === 'sale_activity_page' ? rows.unit_sale_workflow_events
+        : name === 'sale_comment_page' ? { comments: [], hasBefore: false, hasAfter: false }
+        : name === 'sale_comment_unread' ? {} : [];
+      await route.fulfill({ json }); return;
+    }
     let result = rows[url.pathname.split("/").at(-1)!] ?? [];
     for (const [key, value] of url.searchParams) {
       if (value.startsWith("eq.")) result = result.filter((row) => String(row[key]) === value.slice(3));

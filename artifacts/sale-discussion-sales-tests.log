@@ -1,0 +1,273 @@
+
+> bunnywell-portal@0.1.0 test:sales
+> node --test tests/sales-stage-tasks.test.mjs tests/sales-completion-workflow.test.mjs tests/sales-permissions.test.mjs tests/sales-reservation-redaction.test.mjs tests/sales-deal-structure.test.mjs tests/sales-currency.test.mjs tests/sales-commercial-model.test.mjs tests/sales-default-cascade.test.mjs tests/sales-exchange-sequence.test.mjs tests/sales-agent-fees.test.mjs tests/sales-payment-corrections.test.mjs tests/sales-agent-fees-portfolio.test.mjs tests/sales-unit-detail-sections.test.mjs tests/building-structure-unit-safety.test.mjs tests/commercial-unit-allocation.test.mjs tests/setup-ui-refactor.test.mjs tests/notifications.test.mjs
+
+(node:8196) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/units/structural-update.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Building Structure removes the sale-status editor but retains the read-only card badge (1.1986ms)
+✔ a structural update changes allowed fields while preserving a reserved sale status (1.1852ms)
+✔ a tampered structural request containing sale_status is rejected before any update (0.7457ms)
+✔ the protected route uses the structural allow-list and never forwards an arbitrary request body (0.1758ms)
+✔ reservation approval remains a legitimate workflow writer for the unit summary status (0.1451ms)
+(node:10948) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/units/commercial-allocation.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ foundation migration extends valid positions and backfills rental allocation without changing its contemporary default (1.181ms)
+✔ organisation and building-role constraints accept letting and managing agents without changing profile roles (0.4981ms)
+✔ generic authenticated updates are closed while narrow service-only functions remain (0.2926ms)
+✔ allocation API accepts only named administrative and rental responsibilities (1.2429ms)
+✔ sales availability validation blocks formal stages and active sale files (0.3086ms)
+✔ pristine active drafts do not block allocation, but substantive and progressed workflows do (0.2847ms)
+✔ database helper treats persisted buyer, commercial, document and financial work as substantive (0.3093ms)
+✔ bulk allocation actions are contextual across current, blocked, rental and mixed selections (0.3599ms)
+✔ rental allocation is independent of the sales position and follows the permitted matrix (0.1937ms)
+✔ completion exits active rental stock in the same protected function and handover does not repeat it (0.2187ms)
+✔ new sale files require For sale while legitimate route writers use named protected RPCs (0.3663ms)
+✔ Unit allocation is a gated Setup workspace with filters, summaries, selection, pagination and confirmation (1.0913ms)
+✔ unit allocation follows each building's configured floor order before natural unit number order (9.9373ms)
+✔ rental confirmations preserve the sales position and exited is operationally not in portfolio (0.7324ms)
+✔ new units default to Not released and enter sales only after allocation (0.449ms)
+✔ allocation summaries are calculated over the current filtered scope (0.2253ms)
+✔ one shared sales-route definition scopes results, counts and forecast value inputs (2.0541ms)
+✔ Agent Fees suppresses prospective fees after withdrawal but retains actual financial positions (1.0594ms)
+(node:28952) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/notifications.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ completed actions use the success notification semantic (1.5327ms)
+✔ warning, destructive/error and neutral messages have distinct semantics (0.1615ms)
+✔ the shared portal notice renders all four semantic variants accessibly (0.4574ms)
+(node:8808) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/agent-fees-portfolio.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Exchange invoice Paid is one combined portfolio status (2.1698ms)
+✔ approved unpaid Exchange invoice exposes the correct amount due (0.1865ms)
+✔ part-paid Exchange invoice exposes only the remaining amount (0.1353ms)
+✔ Completion invoice uses the same combined invoice and payment state (0.1386ms)
+✔ future uninvoiced Completion fee is not current outstanding (0.1909ms)
+✔ current outstanding sums approved balances across both milestones (0.1622ms)
+✔ current outstanding includes submitted invoices awaiting approval (0.1165ms)
+✔ voided payments are excluded through the shared active-payment helper (0.1401ms)
+✔ historical rejected or superseded invoices cannot create duplicate balances (0.1617ms)
+✔ Needs attention is derived from current invoice action (0.1685ms)
+✔ Up to date means no current action while the fee journey remains open (0.1662ms)
+✔ Complete requires legal completion and every expected invoice settled (0.2048ms)
+✔ Awaiting approval summary counts active invoices, not sales (0.2036ms)
+✔ Outstanding payments summary totals current approved balances (0.2489ms)
+✔ Future completion fees exclude sales with a current Completion invoice (0.1559ms)
+✔ Building filter returns only the selected building (0.754ms)
+✔ Agent filter includes assigned and unassigned positions (0.1237ms)
+✔ Status filter uses the central derived portfolio status (0.1103ms)
+✔ Milestone filter selects sales with a relevant milestone position (0.1936ms)
+✔ portfolio access is developer/admin-only and building scoped in the RPC (0.1816ms)
+✔ clicking a portfolio row opens the matching unit Agent Fees workspace (0.1426ms)
+(node:16316) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/agent-fees.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Exchange lifecycle completes independently of agent fee payment (1.294ms)
+✔ Agent Fees contains the migrated Exchange invoice and Completion readiness (0.4103ms)
+✔ milestone expected fees use their own percentages (0.7314ms)
+✔ fee split validation requires Exchange plus Completion to equal Total (0.4422ms)
+✔ sale terms snapshot building milestone defaults (0.2357ms)
+✔ payment position derives payer totals and Paid state from persisted rows (0.4342ms)
+✔ the blank next-payment form cannot alter historical totals (0.575ms)
+✔ Payment position presents cash due, receipts and outstanding without deducting the reservation fee twice (0.2209ms)
+✔ shared financial number styles enable tabular lining figures (0.2609ms)
+✔ reservation credit is deducted once from cash due (0.4511ms)
+✔ payments append transactionally and survive client reload (0.2196ms)
+✔ migration preserves existing sales and invoices while classifying legacy invoices as Exchange (0.116ms)
+✔ only internal developer/admin roles can create payment records (0.095ms)
+✔ 10 percent total fee is explicitly split 9.5 percent Exchange and 0.5 percent Completion (0.1769ms)
+✔ Completion expected fee is calculated only from the 0.5 percent tranche (0.1781ms)
+✔ Exchange expected fee continues to use the 9.5 percent tranche (0.1887ms)
+✔ Completion invoice submission is allowed after Exchange and before or after legal Completion (0.1499ms)
+✔ legal Completion can be recorded with no Completion invoice (0.1522ms)
+✔ legal Completion can be recorded while a Completion invoice is unpaid (0.137ms)
+✔ Completion invoice approval changes invoice and document state but not legal Completion state (0.165ms)
+✔ Completion payment uses the persisted generic invoice payment RPC (0.1591ms)
+✔ multiple persisted payments can settle a Completion invoice (0.1271ms)
+✔ Completion invoice becomes Paid when its persisted outstanding balance reaches zero (0.1874ms)
+✔ Agent Fees summary totals both independently rounded milestone fees (0.2877ms)
+✔ submitted invoice outstanding and remaining uninvoiced fee are separate summary values (0.2558ms)
+✔ paid Exchange plus no Completion invoice has zero submitted outstanding and future Completion fee (0.1599ms)
+✔ sales agent can submit milestone invoices but cannot use developer payment controls (0.3232ms)
+✔ milestone is explicit and duplicate active Completion invoices are rejected (0.2053ms)
+✔ rejected invoice replacement retains document version audit history (0.3909ms)
+✔ an approved Completion invoice cannot be rejected after approval or payment (0.1298ms)
+✔ reservation fee and agent contribution credits are never applied to Completion invoice (0.1033ms)
+✔ existing Exchange invoice and payment behavior remains milestone-aware (0.1641ms)
+✔ no Agent Fees status or balance gates legal Completion (0.1712ms)
+✔ RLS and server permissions keep Completion review and payments developer-only (0.2176ms)
+✔ Completion invoice activity covers submit, replacement, reject, approve, payment and fully paid (0.334ms)
+✔ agent invoice form is shared and clearly identifies its milestone and expected tax values (0.3163ms)
+✔ Exchange and Completion share one persisted payment component (0.2281ms)
+(node:21264) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/percentages.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ percentages preserve fractional percentage points rather than using whole-pound parsing (0.7656ms)
+✔ saving displayed 10 / 9.5 / 0.5 fees sends the exact decimal split to the transactional RPC (1.1554ms)
+✔ unrelated saves preserve fees and the enabled second deposit when advanced fields are omitted (0.5892ms)
+✔ saved unit fee overrides take precedence, null overrides inherit defaults, and zero stays zero (0.3718ms)
+✔ invalid splits and malformed explicit fee inputs are blocked before the save RPC (0.639ms)
+✔ explicit second deposit disable remains supported and fractional deposit percentages are preserved (0.2539ms)
+✔ commercial model saves use the dedicated action name from setup and sales UI (0.2624ms)
+✔ financial overview uses deliberate container-width layouts (0.2388ms)
+✔ commercial model API uses the transactional RPC and avoids reservation progression side effects (0.1395ms)
+✔ stage timestamp schema is dedicated and commercial model RPC does not overwrite it (0.1222ms)
+✔ commercial model preview keeps developer net and agent invoice deductions separated (3.3774ms)
+✔ blank commercial model percentage input does not override saved agent fee (0.1054ms)
+✔ sale file includes the Buyer commercial section and advanced deal setup friction (0.4928ms)
+✔ commercial model opening scrolls to the close button and top cards show contribution types (0.0983ms)
+✔ commercial model preserves contribution input types and calculates pound values (0.0553ms)
+✔ reservation submission requires checked terms and split buyer identity (0.3534ms)
+✔ reservation approval uses the form date and developer reject action (0.2771ms)
+✔ reservation UI keeps document and activity history visible (0.3689ms)
+✔ buyer identity migration backfills legacy buyer name without concatenating fields (0.1048ms)
+✔ company-only buyer display does not reuse legacy buyer name as a personal name (0.1631ms)
+✔ commercial model seeds deal setup from saved terms then building defaults (0.0633ms)
+✔ commercial model omits advanced setup fields unless the section is opened (0.1185ms)
+✔ query, replacement, fresh approval and completion preserve audit and enforce the sequence (5.1925ms)
+✔ an overall completion_pending status cannot bypass unapproved or missing current documents (0.6219ms)
+✔ completion actions reject unauthorised roles and out-of-building solicitors (0.6909ms)
+✔ review requires both current documents and a query requires a reason (0.1945ms)
+(node:19580) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/currency.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ GBP parser accepts plain, comma-formatted and pound-prefixed values (0.8659ms)
+✔ GBP parser clears optional values and preserves zero (0.1436ms)
+✔ GBP parser strips invalid characters and discards pence for whole-pound fields (0.1947ms)
+✔ GBP formatter presents whole pounds consistently (18.5395ms)
+✔ GBP input formatter displays commas while keeping raw state database-safe (0.3347ms)
+(node:10284) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/deal-structure.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ deal structure calculates Forum House-style 10/5/85 schedule (1.3643ms)
+✔ deal structure validates deposits above 100% (0.2621ms)
+✔ payment schedule rows use contract price and exclude reservation fee from percent validation (0.8585ms)
+(node:5520) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/default-cascade.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ building default cascade updates only unreserved For Sale units (1.8266ms)
+✔ building default cascade skips reservation drafts (0.3257ms)
+✔ building sales setup communicates cascade scope and count summary (0.4508ms)
+✔ protected sale files show a muted snapshot note when defaults differ (0.248ms)
+✔ default cascade summary includes updated and protected counts (0.1777ms)
+✔ exchange panel contains legal-readiness activities only (1.7716ms)
+✔ sale stages and selected stage workspace have distinct hierarchy (0.73ms)
+✔ agent invoice upload captures details before developer approval (0.3179ms)
+✔ agent sees expected invoice amounts alongside the upload form (0.5324ms)
+✔ developer can reject an agent invoice with a reason and request a replacement (1.223ms)
+✔ exchange requires deposit confirmation and keeps agent fee payment separate (0.479ms)
+(node:21128) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/agent-fees.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ active payment contributes to invoice totals (1.4974ms)
+✔ developer and admin can void an active payment (0.4107ms)
+✔ void reason is required in the client, route and database (0.2156ms)
+✔ voided payment remains in the table and visible in history (0.5455ms)
+✔ voided payment no longer contributes to payment totals (0.1783ms)
+✔ invoice outstanding balance recalculates after a void (0.1998ms)
+✔ Paid invoice can return to Part paid when one payment is voided (0.34ms)
+✔ replacement payment is recorded through the normal append-only RPC (0.461ms)
+✔ already voided payment cannot be changed or voided again (0.1951ms)
+✔ sales agent and external roles cannot void payments (0.2539ms)
+✔ direct API and RPC calls cannot bypass permission checks (0.2323ms)
+✔ duplicate and concurrent void submissions are handled safely (0.2583ms)
+✔ sale-level Agent Fees summary excludes voided payments (0.2731ms)
+✔ payment correction never mutates Exchange, Completion or Handover state (0.1629ms)
+✔ existing payment records remain active after the additive migration (0.1081ms)
+✔ void activity records the original transaction, actor and reason (0.0956ms)
+✔ void mutation and activity event are atomic (0.0767ms)
+✔ amount, date, payer and notes are corrected only by void-and-re-record (0.2263ms)
+✔ payment panel stays expanded while its compact entry form is disclosed on demand (0.5667ms)
+✔ the backend derives recorder identity and never accepts payer or note input (0.1119ms)
+✔ recorder identity is snapshotted and immutable with a legacy display fallback (0.479ms)
+✔ payment history is compact and summarises active receipts and voids (0.0903ms)
+(node:16564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/permissions.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ developer roles can see and manage the full sales pipeline (1.0033ms)
+✔ sales agents are building scoped and limited to reservation and invoice submission (0.1608ms)
+✔ conveyancers are building scoped and limited to exchange/completion recording (0.1293ms)
+✔ residents and contractors are blocked from sales pipeline data and actions (0.123ms)
+✔ unknown or inactive role values have no sales access (0.1196ms)
+(node:20736) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/reservation-redaction.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ failed reservation redaction preserves buyer names while clearing contact details (0.6136ms)
+✔ failed reservation redaction records a default reason when blank (0.103ms)
+✔ every active pre-exchange stage can return to For sale and later stages cannot (0.1195ms)
+✔ cancelling a reservation attempt is kept in the Reservation step and enforced atomically in the database (1.1942ms)
+(node:30344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/stage-tasks.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ reservation not_started selects the right task and retains its two steps (2.4502ms)
+✔ reservation awaiting_approval selects the right task and retains its two steps (0.1998ms)
+✔ reservation approved selects the right task and retains its two steps (0.1062ms)
+✔ reservation rejected selects the right task and retains its two steps (0.0862ms)
+✔ reservation failed selects the right task and retains its two steps (0.0986ms)
+✔ same and different reservation actors are preserved; missing actors are not invented (0.2375ms)
+✔ exchange lifecycle locked / locked (0.1625ms)
+✔ exchange lifecycle current / locked (0.0886ms)
+✔ exchange lifecycle complete / current (0.0997ms)
+✔ exchange lifecycle complete / complete (0.1639ms)
+✔ completion remains locked before exchange (0.3374ms)
+✔ completion needs both current uploads (none) (0.1291ms)
+✔ completion needs both current uploads (document-0) (0.0773ms)
+✔ completion needs both current uploads (document-1) (0.0449ms)
+✔ document records, redacted/superseded documents and old versions cannot stand in for current uploads (0.1838ms)
+✔ both uploads require a separate developer approval and attribute the last required upload (0.1603ms)
+✔ query returns work to the solicitor; one relevant replacement requires fresh developer review (0.2579ms)
+✔ stale approval and a failed replacement upload cannot advance completion (0.077ms)
+✔ responsibilities use existing role permissions, including internal administrative access (0.1963ms)
+(node:24840) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/GitHub/Bunnywell_Portal/src/lib/sales/actor-identity.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\GitHub\Bunnywell_Portal\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Progression is the default unit sale section (1.6531ms)
+✔ commercial audiences and editor render only in Commercial (0.1509ms)
+✔ Agent fees render only in Financials and not in the legal stage selector (0.2272ms)
+✔ approved Reservation uses grouped key value lists (0.1818ms)
+✔ legal Exchange can be recorded with no Exchange invoice (0.1981ms)
+✔ legal Completion can be recorded with no Completion invoice (0.1424ms)
+✔ Exchange invoice submission is financial and remains available after Reservation (0.1522ms)
+✔ Completion invoice submission becomes available after legal Exchange (0.1031ms)
+✔ invoice approval and rejection do not change legal sale status (0.1672ms)
+✔ commercial confirmation no longer requires or approves an invoice (0.1897ms)
+✔ portfolio Agent Fees links can still focus a milestone (0.2127ms)
+✔ selecting the Financials tab does not scroll to a fee milestone (0.1725ms)
+✔ sale file workspaces use a prominent three-column underline tab rail (0.4961ms)
+✔ sale file summary uses compact content-width metadata instead of thirds (0.1525ms)
+✔ sale file workspace tabs expose selection and keyboard navigation (0.162ms)
+✔ sale activity and legal milestone summaries identify their actors (0.4973ms)
+✔ approved Reservation uses a structured, responsive event history (0.6532ms)
+✔ legacy reservation actor IDs resolve to profile names and never render as UUIDs (0.3975ms)
+✔ completion uses styled PDF pickers and replaces completed controls with summaries (0.2034ms)
+✔ completion review and completion recording are idempotent (0.1924ms)
+✔ tabs and key value lists collapse without ordinary horizontal overflow (0.2153ms)
+✔ Setup uses a compact accessible horizontal sub-navigation (1.9245ms)
+✔ Buildings presents lifecycle, delivery team and sales setup as summaries with explicit edit modes (0.3233ms)
+✔ Building structure keeps full edit capability behind compact unit rows (0.2309ms)
+✔ Unit allocation inherits the global building context and keeps actions beside their state (0.3018ms)
+✔ Unit allocation actions share one quiet icon-and-label treatment (0.2884ms)
+ℹ tests 205
+ℹ suites 0
+ℹ pass 205
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 578.0937

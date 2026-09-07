@@ -726,6 +726,23 @@ textarea.field {
   transform: translateY(-1px);
 }
 
+/* The selected sale has room for a conversation rail on wide screens. CSS
+   follows the rendered workspace, avoiding URL-dependent hydration classes. */
+html:has([data-sale-file]) {
+  /* Preserve the measured width when content height changes or a drawer
+     locks body scrolling, including browsers with non-overlay scrollbars. */
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 600px) {
+  html:has([data-sale-file]) { scrollbar-gutter: auto; }
+}
+
+.app-shell:has([data-sale-file]) > .portal-content,
+.app-shell:has([data-sale-file]) .portal-header-content {
+  max-width: 1680px;
+}
+
 .developer-snag-toggle .primary,
 .developer-snag-toggle .secondary {
   min-height: 2.75rem;

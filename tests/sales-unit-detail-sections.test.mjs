@@ -143,7 +143,7 @@ test("sale file workspace tabs expose selection and keyboard navigation", () => 
 });
 
 test("sale activity and legal milestone summaries identify their actors", () => {
-  assert.match(workflowSource, /actorName\(event\.created_by_user_id\)/);
+  assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /event\.actor_name/);
   assert.match(workflowSource, /label: "Confirmed by", value: commercialApprovedBy/);
   assert.match(workflowSource, /label: "Recorded by", value: exchangeRecordedBy/);
   assert.match(workflowSource, /label: "Approved by", value: completionDocumentsApprovedBy/);
@@ -152,7 +152,7 @@ test("sale activity and legal milestone summaries identify their actors", () => 
 
 test("approved Reservation uses a structured, responsive event history", () => {
   const approvedPanel = workflowSource.slice(workflowSource.indexOf('{reservationState === "approved" && ('), workflowSource.indexOf("</StageWorkspace>", workflowSource.indexOf('{reservationState === "approved" && (')));
-  const eventHistory = workflowSource.slice(workflowSource.indexOf("function ApprovalEventHistory"), workflowSource.indexOf("function SaleActivity"));
+  const eventHistory = workflowSource.slice(workflowSource.indexOf("function ApprovalEventHistory"), workflowSource.indexOf("function CompletedActionSummary"));
   assert.match(approvedPanel, /<ApprovalEventHistory events=\{approvalHistoryEvents\}/);
   assert.match(workflowSource, /label: "Reservation submitted"[\s\S]*label: "Approved"/);
   assert.match(eventHistory, /<ol[\s\S]*events\.map/);

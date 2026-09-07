@@ -1,0 +1,305 @@
+{
+  "errors": 22.0,
+  "warnings": 28.0,
+  "files": [
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\scripts\\one-off-forum-house-unit-prices.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 59
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\app\\api\\sales\\reservations\\route.ts",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 194
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\components\\portal\\PortalApp.tsx",
+      "errors": 1,
+      "warnings": 5,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 59
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 100
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 138
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 216
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 981
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 985
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\components\\portal\\ProductionPortalApp.tsx",
+      "errors": 13,
+      "warnings": 18,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 644
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 839
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 936
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 1011
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 1644
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 2954
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 3091
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 6363
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 6914
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 7132
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 8035
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 8104
+        },
+        {
+          "ruleId": "react/no-unescaped-entities",
+          "severity": 2,
+          "line": 8348
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 8382
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 8462
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 8532
+        },
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 8563
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 9329
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 9334
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 9341
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 9345
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 9641
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 9713
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 9993
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 10002
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 10149
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 10254
+        },
+        {
+          "ruleId": "react-hooks/immutability",
+          "severity": 2,
+          "line": 10284
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 10287
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 10291
+        },
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 10394
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\components\\portal\\RequestAccessPage.tsx",
+      "errors": 0,
+      "warnings": 1,
+      "messages": [
+        {
+          "ruleId": "@next/next/no-img-element",
+          "severity": 1,
+          "line": 285
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\components\\portal\\sales\\SalesForecastingModule.tsx",
+      "errors": 4,
+      "warnings": 0,
+      "messages": [
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 196
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 202
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 253
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 258
+        }
+      ]
+    },
+    {
+      "file": "C:\\GitHub\\Bunnywell_Portal\\src\\components\\portal\\sales\\SalesReservationWorkflow.tsx",
+      "errors": 4,
+      "warnings": 2,
+      "messages": [
+        {
+          "ruleId": "@typescript-eslint/no-unused-vars",
+          "severity": 1,
+          "line": 1021
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 1691
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "line": 1718
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 1745
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 1769
+        },
+        {
+          "ruleId": "react-hooks/set-state-in-effect",
+          "severity": 2,
+          "line": 2006
+        }
+      ]
+    }
+  ]
+}

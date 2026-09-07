@@ -51,6 +51,8 @@ async function editorFixture(page: Page) {
   });
   await page.reload();
   await page.getByRole("tab", { name: /^Commercial/ }).click();
+  const closeConversation = page.getByRole("button", { name: "Close comments panel", exact: true });
+  if (await closeConversation.isVisible()) await closeConversation.click();
   await page.getByRole("button", { name: "Edit commercial model", exact: true }).click();
   await expect(page.getByTestId("commercial-model-editor")).toBeVisible();
   return { ...f, terms, payloads, rpcPayloads };

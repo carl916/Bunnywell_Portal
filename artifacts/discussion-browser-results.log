@@ -1,0 +1,20 @@
+
+Running 13 tests using 1 worker
+
+(node:22476) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\sales-commercial-editor.spec.ts:61:5 › valid saved fees allow unrelated changes, live previews and a save through server validation (3.8s)
+  ok  2 [chromium] › tests\sales-commercial-editor.spec.ts:88:5 › invalid splits are explained inline; collapsing advanced edits still saves the displayed split (2.3s)
+  ok  3 [chromium] › tests\sales-commercial-editor.spec.ts:103:5 › untouched advanced settings remain inherited/preserved on an ordinary commercial save (1.7s)
+  ok  4 [chromium] › tests\sales-commercial-editor.spec.ts:120:5 › commercial editor has a wide input area, stacked preview rail and responsive grouped fields (2.7s)
+  ok  5 [chromium] › tests\sales-discussion.spec.ts:28:5 › docking, drawer fallback, mobile, draft and unsaved commercial values survive presentation changes (3.1s)
+  ok  6 [chromium] › tests\sales-discussion.spec.ts:63:5 › activity keeps earlier pages and scroll, identifies document subjects and links to the recorded version (2.4s)
+  ok  7 [chromium] › tests\sales-discussion.spec.ts:93:5 › hidden panel and Activity do not read comments; visible comments acknowledge presented messages (6.0s)
+  ok  8 [chromium] › tests\sales-discussion.spec.ts:111:5 › plain text, mentions, lost-response retry, reply, edit and revision history work against the SQL actions (2.2s)
+  ok  9 [chromium] › tests\sales-discussion.spec.ts:142:5 › pagination and incoming messages preserve older reading position and separate activity scroll (19.1s)
+  ok 10 [chromium] › tests\sales-discussion.spec.ts:163:5 › overview indicator and comment deep link open the correct sale and retain stage changes (3.2s)
+  ok 11 [chromium] › tests\sales-stage-tasks.spec.ts:10:5 › reservation and exchange show their saved milestones, rejection and completed history (2.9s)
+  ok 12 [chromium] › tests\sales-stage-tasks.spec.ts:48:5 › completion survives reload through upload, query, replacement, approval and recording (4.3s)
+  ok 13 [chromium] › tests\sales-stage-tasks.spec.ts:101:5 › task cards use available width without overflow at desktop, tablet and mobile sizes (2.0s)
+
+  13 passed (56.9s)

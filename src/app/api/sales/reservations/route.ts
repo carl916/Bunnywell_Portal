@@ -733,7 +733,6 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   }
   await ensureSaleDocumentsBucket(adminClient);
 
-  const isReplacement = Boolean(document);
   if (!document) {
     const { data, error } = await adminClient.from("unit_sale_documents").insert({
       sale_attempt_id: saleAttemptId,
@@ -793,11 +792,8 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   });
   if (insertVersionError) throw insertVersionError;
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: isReplacement ? `${documentType}_replaced` : `${documentType}_uploaded`,
-    summary: `${documentTitle} ${isReplacement ? "replaced" : "uploaded"}.`,
-    metadata: { fileName: safeFileName, versionNumber, feeMilestone },
-  });
+  // The version insert records a document-specific event in the same database
+  // transaction, including the exact version ID and filename.
 
   return { saleAttemptId, documentId: document.id };
 }
@@ -1685,11 +1681,7 @@ async function approveCompletionDocuments(adminClient: SupabaseClient, requester
   }).eq("id", attempt.id);
   if (attemptError) throw attemptError;
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: "completion_documents_approved",
-    toStatus: attempt.workflow_status === "completed" ? "completed" : "completion_pending",
-    summary: "Completion statement and statement of account approved.",
-  });
+  // Each document status update records its own typed event transactionally.
 
   return { saleAttemptId: attempt.id };
 }
@@ -1731,12 +1723,7 @@ async function queryCompletionDocuments(adminClient: SupabaseClient, requester: 
   });
   if (noteError) throw noteError;
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: "completion_documents_query_raised",
-    toStatus: attempt.workflow_status,
-    summary: "Completion document query raised.",
-    metadata: { queryNote },
-  });
+  // Document review events include their recorded query reasons transactionally.
 
   return { saleAttemptId: attempt.id };
 }
@@ -1789,7 +1776,7 @@ async function recordCompletion(adminClient: SupabaseClient, requester: Requeste
   return { saleAttemptId: updatedAttempt.id };
 }
 
-async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: Requester, versionId: string | null) {
+async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: Requester, versionId: string | null, discussionSaleId: string | null = null) {
   if (!versionId) throw new Error("Document version is required.");
 
   const { data: version, error: versionError } = await adminClient
@@ -1802,11 +1789,18 @@ async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: 
 
   const { data: document, error: documentError } = await adminClient
     .from("unit_sale_documents")
-    .select("id,sale_attempt_id,redacted_at")
+    .select("id,sale_attempt_id,redacted_at,visibility")
     .eq("id", version.document_id)
     .maybeSingle();
   if (documentError) throw documentError;
   if (!document || document.redacted_at) throw new Error("Document not found.");
+
+  if (discussionSaleId) {
+    if (document.sale_attempt_id !== discussionSaleId) throw new Error("Document does not belong to this sale.");
+    const { data: allowed, error } = await adminClient.rpc("sale_discussion_access", { p_sale: discussionSaleId, p_user: requester.id });
+    if (error || !allowed) throw new Error("You no longer have access to this sale discussion.");
+    if (!isSalesInternalRole(requester.role) && document.visibility !== "shared_sale_file" && document.visibility !== requester.role) throw new Error("Document access denied.");
+  }
 
   const attempt = await loadSaleAttempt(adminClient, document.sale_attempt_id as string);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
@@ -1827,7 +1821,7 @@ export async function GET(request: Request) {
     if (response || !requester) return response;
 
     const url = new URL(request.url);
-    return NextResponse.json(await signedDocumentVersionUrl(adminClient, requester, url.searchParams.get("versionId")));
+    return NextResponse.json(await signedDocumentVersionUrl(adminClient, requester, url.searchParams.get("versionId"), url.searchParams.get("discussionSaleId")));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Document link could not be created." }, { status: 400 });
   }

@@ -1638,7 +1638,7 @@ function Shell({
     <main className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
       <header className="app-header">
         <EnvironmentBanner />
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="portal-header-content mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <img src="/bunnywell-logo-icon.jpg" alt="Bunnywell Homes" className="h-11 w-auto shrink-0 object-contain sm:h-12" />
@@ -1736,7 +1736,7 @@ function Shell({
           </span>
         </div>
       )}
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
+      <div className="portal-content mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
       {tabs.length > 0 && (
         <nav className="mobile-bottom-nav md:hidden" aria-label="Primary mobile navigation">
           {mobileNavItems.map((item) => (

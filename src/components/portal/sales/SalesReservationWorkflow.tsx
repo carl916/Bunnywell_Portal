@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { CheckCircle2, ChevronDown, FileText, UploadCloud, X } from "lucide-react";
+import { CheckCircle2, FileText, UploadCloud, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import type { AppRole, Building, BuildingFloor, Organisation, Unit } from "@/lib/data/production";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
@@ -15,6 +15,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { SalesForecastingModule } from "@/components/portal/sales/SalesForecastingModule";
 import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio";
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
+import { SaleConversationLayout, SaleMentionsInbox, UnreadBadge, useSaleConversationLayout, useSaleUnread } from "./SaleConversation";
 import { useActivePanel } from "@/hooks/useActivePanel";
 import { historicalActorLabel } from "@/lib/sales/actor-identity";
 import { currentSalesTask, getCompletionDocumentState, getCompletionTasks, getExchangeTasks, getReservationTasks } from "@/lib/sales/stage-tasks";
@@ -502,40 +503,6 @@ function ApprovalEventHistory({ events }: { events: ApprovalHistoryEvent[] }) {
         </li>
       ))}
     </ol>
-  );
-}
-
-function SaleActivity({ events, actorName }: { events: SaleWorkflowEvent[]; actorName: (userId?: string | null) => string }) {
-  if (events.length === 0) return null;
-  return (
-    <details className="group mt-6 rounded-md border border-[#e2ded3] bg-white">
-      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-md p-3 transition hover:bg-[#fbfcfa]">
-        <div className="min-w-0">
-          <h5 className="text-sm font-bold text-[#0F3D2E]">Activity</h5>
-          <p className="mt-0.5 text-xs text-[#617169]">{events.length} recorded {events.length === 1 ? "update" : "updates"}</p>
-        </div>
-        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#617169]">
-          <span className="group-open:hidden">Show history</span>
-          <span className="hidden group-open:inline">Hide history</span>
-          <ChevronDown className="transition-transform group-open:rotate-180" size={16} aria-hidden />
-        </span>
-      </summary>
-      <div className="divide-y divide-[#eef0eb] border-t border-[#eef0eb] px-3">
-        {events.map((event) => (
-          <div key={event.id} className="py-3 text-sm text-[#34413a] [overflow-wrap:anywhere]">
-            <div className="flex flex-wrap justify-between gap-3">
-              <strong>{event.summary}</strong>
-              <span className="text-right text-[#617169]">
-                <span className="block font-semibold text-[#34413a]">{actorName(event.created_by_user_id)}</span>
-                <span className="block text-xs">{formatDateTime(event.created_at)}</span>
-              </span>
-            </div>
-            {typeof event.metadata?.rejectionReason === "string" && <p className="mt-1 text-[#7a271a]">{event.metadata.rejectionReason}</p>}
-            {typeof event.metadata?.queryNote === "string" && <p className="mt-1 whitespace-pre-wrap text-[#7a271a]">{event.metadata.queryNote}</p>}
-          </div>
-        ))}
-      </div>
-    </details>
   );
 }
 
@@ -1040,6 +1007,9 @@ export function SalesReservationWorkflow({
   );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
+  const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
+  const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
+  const [conversationTarget, setConversationTarget] = useState<{ unit: string; sale?: string; comment?: string } | null>(null);
   const [terms, setTerms] = useState<SaleTerms[]>([]);
   const [buildingSaleDefaults, setBuildingSaleDefaults] = useState<BuildingSaleDefault[]>([]);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleRow[]>([]);
@@ -1154,6 +1124,7 @@ export function SalesReservationWorkflow({
   const scopeBuilding = buildings.find((building) => building.id === buildingId);
   const selectedBuildingDefault = buildingSaleDefaults.find((item) => item.building_id === (selectedUnit?.building_id ?? buildingId)) ?? null;
   const activeAttempt = attempts.find((attempt) => attempt.unit_id === unitId && attempt.is_active);
+  const selectedConversationId = conversationTarget?.unit === unitId && conversationTarget.sale ? conversationTarget.sale : activeAttempt?.id;
   const canReturnToForSale = canPerformSalesAction(role, "fail_reservation")
     && Boolean(activeAttempt?.is_active && canReturnUnitToForSale(activeAttempt.workflow_status));
   const failedAttempts = attempts.filter((attempt) => attempt.unit_id === unitId && attempt.workflow_status === "fallen_through");
@@ -1656,6 +1627,7 @@ export function SalesReservationWorkflow({
   }
 
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
+    setConversationTarget(null);
     manuallySelectedWorkflowStageRef.current = null;
     pendingAgentFeesScrollRef.current = focusAgentFees ? "exchange" : null;
     setUnitId(nextUnitId);
@@ -1713,6 +1685,12 @@ export function SalesReservationWorkflow({
     const urlSection = params.get("section") as UnitSaleSection | null;
 
     if (urlUnitId && units.some((unit) => unit.id === urlUnitId)) {
+      const conversation = params.get("conversation");
+      const comment = params.get("comment");
+      if (conversation || comment) {
+        setConversationTarget({ unit: urlUnitId, sale: conversation ?? undefined, comment: comment ?? undefined });
+        setConversationIntent("open");
+      }
       const urlUnit = units.find((unit) => unit.id === urlUnitId);
       setUnitId(urlUnitId);
       setSelectedSaleUnitId(urlUnitId);
@@ -1737,7 +1715,7 @@ export function SalesReservationWorkflow({
     }
 
     setHasReadSalesUrl(true);
-  }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, units]);
+  }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, setConversationIntent, units]);
 
   useEffect(() => {
     if (!pendingAgentFeesScrollRef.current || !activeAttempt || activeUnitSection !== "financials") return;
@@ -1987,7 +1965,7 @@ export function SalesReservationWorkflow({
         supabase.from("unit_sale_documents").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoices").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", attemptIds),
-        supabase.from("unit_sale_workflow_events").select("*").in("sale_attempt_id", attemptIds).order("created_at", { ascending: false }),
+        supabase.rpc("sale_workflow_context", { p_sales: attemptIds }),
       ]);
       if (termsResult.error) throw termsResult.error;
       if (scheduleResult.error) throw scheduleResult.error;
@@ -2642,6 +2620,7 @@ export function SalesReservationWorkflow({
             <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
             <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
             <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
+            <div className="mt-3"><SaleMentionsInbox /></div>
           </section>
           <AgentFeesPortfolio
             requesterId={profile?.id ?? user.id}
@@ -2667,6 +2646,7 @@ export function SalesReservationWorkflow({
             </div>
           </div>
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
+          <div className="mt-3"><SaleMentionsInbox /></div>
         </section>
 
         <section className={`panel ${styles.financialOverview}`}>
@@ -2784,7 +2764,11 @@ export function SalesReservationWorkflow({
                       className={`cursor-pointer transition-colors ${stageTone.row}`}
                       onClick={() => openSaleFile(unit.id)}
                     >
-                      <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]">Unit {unit.unit_number}</td>
+                      <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]">Unit {unit.unit_number}
+                        {attempt && (unreadComments[attempt.id] ?? 0) > 0 && <button className="ml-2 text-xs font-medium underline" aria-label={`Open ${unreadComments[attempt.id]} unread comments for Unit ${unit.unit_number}`} onClick={(event) => {
+                          event.stopPropagation(); openSaleFile(unit.id); setConversationIntent("open"); setConversationTarget({ unit: unit.id, sale: attempt.id });
+                        }}>Comments <UnreadBadge count={unreadComments[attempt.id]} /></button>}
+                      </td>
                       {!buildingId && <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{buildings.find((building) => building.id === unit.building_id)?.name ?? "Building"}</td>}
                       <td className="border-b border-[#eef0eb] px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${stageTone.badge}`}>
@@ -2841,12 +2825,13 @@ export function SalesReservationWorkflow({
   }
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-5">
+    <div data-sale-file className="grid min-w-0 grid-cols-1 gap-5">
       <section className="panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <button className="secondary w-fit" onClick={backToSalesOverview}>
             &lt; Back to sales overview
           </button>
+          <SaleMentionsInbox />
           <div className="grid gap-3 sm:grid-cols-2 lg:w-[520px]">
             <label className="field-label">
               Search sales
@@ -2884,6 +2869,7 @@ export function SalesReservationWorkflow({
               <p className="text-sm text-[#617169]">{selectedBuilding?.name ?? "Building"} / {selectedUnit.floor ?? "No floor"}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button className="secondary" aria-controls="sale-conversation" aria-expanded={conversationOpen} onClick={() => setConversationIntent("open")}>Comments <UnreadBadge count={unreadComments[selectedConversationId ?? ""] ?? 0} /></button>
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${saleStatusTone(selectedUnit.sale_status).badge}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${saleStatusTone(selectedUnit.sale_status).dot}`} aria-hidden="true" />
                 {saleStatusLabel(selectedUnit.sale_status)}
@@ -2899,11 +2885,22 @@ export function SalesReservationWorkflow({
             <p className="mt-2 text-xs text-[#617169]">This sale uses the deal setup agreed at reservation. Building defaults may have changed since.</p>
           )}
 
+          <SaleConversationLayout userId={user.id} unitId={selectedUnit.id}
+            saleId={selectedConversationId} stageLinks={selectedConversationId === activeAttempt?.id}
+            targetComment={conversationTarget?.unit === selectedUnit.id ? conversationTarget.comment : undefined}
+            containerRef={conversationContainerRef} docked={conversationDocked} open={conversationOpen} onClose={() => setConversationIntent("closed")}
+            unread={unreadComments[conversationTarget?.unit === selectedUnit.id && conversationTarget.sale ? conversationTarget.sale : activeAttempt?.id ?? ""] ?? 0}
+            internal={role === "admin" || role === "developer"} onStage={(stage) => {
+              if (conversationTarget?.sale && conversationTarget.sale !== activeAttempt?.id) return;
+              setActiveUnitSection("progression"); setActiveWorkflowStage(stage as SaleWorkflowStage);
+              manuallySelectedWorkflowStageRef.current = stage as SaleWorkflowStage;
+            }}>
+          {conversationTarget?.sale && conversationTarget.sale !== activeAttempt?.id && <p className="mt-3 border-l-2 border-[#D6A23A] pl-3 text-sm">The conversation is for an earlier sale transaction. <button className="underline" onClick={() => setConversationTarget(null)}>Open current sale comments</button></p>}
           <SaleFileWorkspaceTabs activeWorkspace={activeUnitSection} onChange={changeUnitSection} />
 
           {activeUnitSection === "commercial" && (
-          <div id="unit-sale-commercial" role="tabpanel" aria-labelledby="sale-file-tab-commercial" className="min-w-0 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-5">
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div id="unit-sale-commercial" role="tabpanel" aria-labelledby="sale-file-tab-commercial" className={`min-w-0 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-5 ${styles.commercialSummary}`}>
+          <div className={styles.commercialCards} data-testid="commercial-summary-cards">
             <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
               <h4 className="font-bold text-[#0F3D2E]">Developer</h4>
               <p className="mt-1 text-sm text-[#617169]">Sale value, development-side deductions and net proceeds.</p>
@@ -3964,8 +3961,6 @@ export function SalesReservationWorkflow({
             </StageWorkspace>
           )}
 
-          {activeUnitSection === "progression" && <SaleActivity events={activeWorkflowEvents} actorName={actorName} />}
-
           {activeUnitSection === "progression" && failedAttempts.length > 0 && (
             <div className="mt-5 rounded-bw-card border border-[#d9ded6] bg-[#F7F5EF] p-4">
               <h4 className="text-base font-bold text-[#0F3D2E]">Reservation history</h4>
@@ -3981,6 +3976,7 @@ export function SalesReservationWorkflow({
                   return (
                     <div key={attempt.id} className="rounded-md border border-[#e2ded3] bg-white p-3 text-sm">
                       <p className="font-semibold text-[#34413a]">Attempt {attempt.attempt_number} ended {formatDate(attempt.fallen_through_at)}</p>
+                      <button className="mt-2 text-xs underline" onClick={() => { setConversationTarget({ unit: selectedUnit.id, sale: attempt.id }); setConversationIntent("open"); }}>Open this transaction’s comments</button>
                       <p className="mt-1 text-[#617169]">{attempt.fall_through_reason ?? "No reason recorded."}</p>
                       <dl className="mt-3 grid gap-2 border-t border-[#eef0eb] pt-3 sm:grid-cols-3">
                         <div>
@@ -4014,6 +4010,7 @@ export function SalesReservationWorkflow({
               Agent fees become available after the reservation is approved.
             </section>
           )}
+          </SaleConversationLayout>
         </section>
       )}
     </div>
