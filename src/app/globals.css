@@ -22,6 +22,25 @@
   --color-foreground: var(--foreground);
   --font-sans: Inter, Manrope, var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
+  --radius-bw-control: var(--bw-radius-control);
+  --radius-bw-button: var(--bw-radius-button);
+  --radius-bw-card: var(--bw-radius-card);
+  --radius-bw-panel: var(--bw-radius-panel);
+  --radius-bw-inset: var(--bw-radius-inset);
+}
+
+/* Geometry belongs to the signed-in portal. Shared public/auth components
+   keep their existing fallbacks; navigation pills and circles are explicit. */
+.portal-workspace {
+  --bw-radius-control: 4px;
+  --bw-radius-button: 6px;
+  --bw-radius-card: 6px;
+  --bw-radius-panel: 8px;
+  --bw-radius-inset: 4px;
+  --bw-radius-flat: 0px;
+  --bw-shadow: 0 4px 16px rgba(15, 61, 46, 0.06);
+  --bw-shadow-soft: 0 2px 8px rgba(31, 42, 36, 0.04);
+  --bw-button-shadow: 0 2px 4px rgba(15, 61, 46, 0.08);
 }
 
 * {
@@ -72,7 +91,7 @@ canvas {
 .field {
   min-height: 2.875rem;
   width: 100%;
-  border-radius: 0.625rem;
+  border-radius: var(--bw-radius-control, 0.625rem);
   border: 1px solid var(--bw-border-strong);
   background: var(--bw-surface);
   padding: 0 0.875rem;
@@ -116,7 +135,7 @@ textarea.field {
   display: grid;
   grid-template-columns: 1.25rem minmax(0, 1fr);
   align-items: center;
-  border-radius: 0.625rem;
+  border-radius: var(--bw-radius-control, 0.625rem);
   border: 1px solid var(--bw-border-strong);
   background: var(--bw-surface);
   padding: 0 0.875rem;
@@ -145,6 +164,7 @@ textarea.field {
   min-width: 0;
   width: 100%;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--foreground);
   font-size: 0.875rem;
@@ -168,7 +188,7 @@ textarea.field {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.625rem;
+  border-radius: var(--bw-radius-button, 0.625rem);
   padding: 0 1rem;
   font-size: 0.875rem;
   font-weight: 600;
@@ -186,7 +206,7 @@ textarea.field {
   border: 1px solid var(--bw-primary);
   background: var(--bw-primary);
   color: #ffffff;
-  box-shadow: 0 7px 16px rgba(15, 61, 46, 0.14);
+  box-shadow: var(--bw-button-shadow, 0 7px 16px rgba(15, 61, 46, 0.14));
 }
 
 .secondary {
@@ -214,7 +234,7 @@ textarea.field {
   align-items: center;
   justify-content: center;
   border: 1px solid #f1b8b2;
-  border-radius: 0.625rem;
+  border-radius: var(--bw-radius-button, 0.625rem);
   background: var(--bw-surface);
   color: #b42318;
   cursor: pointer;
@@ -233,7 +253,7 @@ textarea.field {
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid #f1b8b2;
-  border-radius: 0.625rem;
+  border-radius: var(--bw-radius-button, 0.625rem);
   background: #fff4f2;
   color: #b42318;
   padding: 0 1rem;
@@ -346,7 +366,7 @@ textarea.field {
 .panel,
 .card-surface {
   border: 1px solid var(--bw-border);
-  border-radius: 0.875rem;
+  border-radius: var(--bw-radius-panel, 0.875rem);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--bw-shadow-soft);
 }
@@ -365,7 +385,7 @@ textarea.field {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.25rem;
   border: 1px solid rgba(226, 222, 211, 0.95);
-  border-radius: 1.25rem;
+  border-radius: var(--bw-radius-panel, 1.25rem);
   background: rgba(255, 255, 255, 0.94);
   padding: 0.45rem;
   box-shadow: 0 18px 46px rgba(15, 61, 46, 0.18);
@@ -377,7 +397,7 @@ textarea.field {
   min-height: 3.2rem;
   place-items: center;
   gap: 0.1rem;
-  border-radius: 0.95rem;
+  border-radius: var(--bw-radius-button, 0.95rem);
   color: var(--bw-muted);
   font-size: 0.68rem;
   font-weight: 750;
@@ -415,7 +435,7 @@ textarea.field {
   max-height: min(82vh, 42rem);
   overflow: auto;
   border: 1px solid var(--bw-border);
-  border-radius: 1.25rem;
+  border-radius: var(--bw-radius-panel, 1.25rem);
   background: #ffffff;
   padding: 1rem;
   box-shadow: 0 24px 70px rgba(15, 61, 46, 0.24);
@@ -426,7 +446,7 @@ textarea.field {
   min-height: 2.85rem;
   align-items: center;
   gap: 0.75rem;
-  border-radius: 0.875rem;
+  border-radius: var(--bw-radius-button, 0.875rem);
   padding: 0 0.875rem;
   color: var(--foreground);
   font-size: 0.94rem;
@@ -443,7 +463,7 @@ textarea.field {
 
 .mobile-card {
   border: 1px solid var(--bw-border);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-card, 1rem);
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
   box-shadow: var(--bw-shadow-soft);
@@ -456,7 +476,7 @@ textarea.field {
 
 .mobile-empty {
   border: 1px dashed var(--bw-border-strong);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-inset, 1rem);
   background: rgba(255, 255, 255, 0.78);
   padding: 1.25rem;
   color: var(--bw-muted);
@@ -468,13 +488,13 @@ textarea.field {
   display: grid;
   gap: 1rem;
   border: 1px solid var(--bw-border);
-  border-radius: 1.25rem;
+  border-radius: var(--bw-radius-panel, 1.25rem);
   background:
     linear-gradient(135deg, rgba(15, 61, 46, 0.98), rgba(11, 46, 35, 0.94)),
     var(--bw-primary);
   padding: 1.25rem;
   color: #ffffff;
-  box-shadow: 0 18px 46px rgba(15, 61, 46, 0.18);
+  box-shadow: var(--bw-shadow);
 }
 
 .dashboard-hero h2,
@@ -489,7 +509,7 @@ textarea.field {
 .dashboard-action-card {
   border: 1px solid var(--bw-border);
   border-left: 4px solid var(--bw-accent);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-card, 1rem);
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
   text-align: left;
@@ -503,7 +523,7 @@ textarea.field {
 .dashboard-breakdown-row:hover,
 .dashboard-activity-card:hover {
   border-color: var(--bw-accent);
-  box-shadow: 0 14px 28px rgba(15, 61, 46, 0.1);
+  box-shadow: var(--bw-shadow);
   transform: translateY(-1px);
 }
 
@@ -524,7 +544,7 @@ textarea.field {
 .dashboard-breakdown-row,
 .dashboard-activity-card {
   border: 1px solid var(--bw-border);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-card, 1rem);
   background: rgba(255, 255, 255, 0.98);
   padding: 1rem;
   text-align: left;
@@ -558,7 +578,7 @@ textarea.field {
   place-items: center;
   gap: 0.25rem;
   border: 1px solid var(--bw-border);
-  border-radius: 0.9rem;
+  border-radius: var(--bw-radius-card, 0.9rem);
   background: #ffffff;
   color: var(--bw-muted);
   font-size: 0.72rem;
@@ -592,7 +612,7 @@ textarea.field {
 .signature-pad {
   overflow: hidden;
   border: 1px dashed var(--bw-border-strong);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-control, 1rem);
   background: #ffffff;
   touch-action: none;
 }
@@ -612,7 +632,7 @@ textarea.field {
   justify-content: flex-end;
   gap: 0.75rem;
   border: 1px solid rgba(226, 222, 211, 0.88);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-panel, 1rem);
   background: rgba(255, 255, 255, 0.94);
   padding: 0.75rem;
   box-shadow: 0 14px 34px rgba(15, 61, 46, 0.14);
@@ -635,7 +655,7 @@ textarea.field {
 
 .form-section {
   border: 1px solid var(--bw-border);
-  border-radius: 0.875rem;
+  border-radius: var(--bw-radius-inset, 0.875rem);
   background: var(--bw-surface-soft);
   padding: 1rem;
 }
@@ -657,7 +677,7 @@ textarea.field {
   align-items: center;
   gap: 0.65rem;
   border: 1px solid var(--bw-border);
-  border-radius: 0.75rem;
+  border-radius: var(--bw-radius-card, 0.75rem);
   background: #ffffff;
   padding: 0.7rem 0.8rem;
   color: var(--foreground);
@@ -690,7 +710,7 @@ textarea.field {
   justify-content: center;
   gap: 0.6rem;
   border: 1px dashed rgba(214, 162, 58, 0.8);
-  border-radius: 1rem;
+  border-radius: var(--bw-radius-card, 1rem);
   background: linear-gradient(180deg, #fffbf2, #f7f5ef);
   padding: 0 1rem;
   color: var(--bw-primary);
@@ -711,6 +731,68 @@ textarea.field {
   min-height: 2.75rem;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--bw-border-strong);
+  border-radius: var(--bw-radius-button);
+  background: var(--bw-surface-soft);
+}
+
+.segmented-control > .primary,
+.segmented-control > .secondary {
+  min-width: 0;
+  border: 0;
+  border-radius: var(--bw-radius-flat);
+  box-shadow: none;
+  transform: none;
+}
+
+.segmented-control > :first-child {
+  border-radius: var(--bw-radius-button) 0 0 var(--bw-radius-button);
+}
+
+.segmented-control > :last-child {
+  border-left: 1px solid var(--bw-border-strong);
+  border-radius: 0 var(--bw-radius-button) var(--bw-radius-button) 0;
+}
+
+.segmented-control > .primary {
+  background: #edf5f1;
+  color: var(--bw-primary);
+  box-shadow: inset 0 -3px 0 var(--bw-primary);
+}
+
+.segmented-control > .primary:hover:not(:disabled) {
+  background: #e3eee7;
+}
+
+.checkbox-row {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.checkbox-row input { accent-color: var(--bw-primary); }
+
+.portal-workspace :where(.primary, .secondary, .danger-button, .danger-icon-button, .camera-action, .dashboard-action-card, .dashboard-project-card):focus-visible,
+.portal-workspace .upload-target:has(input:focus-visible),
+.portal-workspace label.secondary:has(input:focus-visible) {
+  outline: 2px solid var(--bw-accent);
+  outline-offset: 2px;
+}
+
+.segmented-control > button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline-offset: -3px;
 }
 
 .developer-snag-media > * {
@@ -877,7 +959,7 @@ tbody tr:hover {
   }
 
   .panel {
-    border-radius: 1rem;
+    border-radius: var(--bw-radius-panel, 1rem);
     padding: 1rem;
   }
 

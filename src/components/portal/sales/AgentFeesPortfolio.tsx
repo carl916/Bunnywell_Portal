@@ -98,7 +98,7 @@ function invoiceStatusTone(state: AgentFeePortfolioInvoiceState) {
 
 function SummaryCard({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+    <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
       <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">{label}</p>
       <p className="numeric-value mt-2 text-2xl font-bold text-[#0F3D2E]">{value}</p>
       <p className="mt-1 text-xs text-[#617169]">{note}</p>
@@ -196,15 +196,15 @@ export function AgentFeesPortfolio({
         </div>
 
         {isLoading ? (
-          <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]" role="status">Loading Agent Fees portfolio…</div>
+          <div className="mt-5 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]" role="status">Loading Agent Fees portfolio…</div>
         ) : error ? (
-          <div className="mt-5 rounded-lg border border-[#e5c4be] bg-[#fff9f7] p-5" role="alert">
+          <div className="mt-5 rounded-bw-card border border-[#e5c4be] bg-[#fff9f7] p-5" role="alert">
             <p className="font-bold text-[#7a271a]">Agent Fees portfolio could not be loaded.</p>
             <p className="mt-1 text-sm text-[#617169]">{error}</p>
             <button className="secondary mt-4" type="button" onClick={() => void loadPortfolio()}>Try again</button>
           </div>
         ) : contextRows.length === 0 ? (
-          <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]">No active unit sales are available for {scopeLabel.toLowerCase()}.</div>
+          <div className="mt-5 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-6 text-sm text-[#617169]">No active unit sales are available for {scopeLabel.toLowerCase()}.</div>
         ) : (
           <>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -220,7 +220,7 @@ export function AgentFeesPortfolio({
               <label className="field-label">Milestone<select className="field" value={milestoneFilter} onChange={(event) => setMilestoneFilter(event.target.value as AgentFeePortfolioMilestoneFilter)}>{milestoneFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
             </div>
 
-            <div className="mt-5 overflow-x-auto rounded-lg border border-[#d9ded6]">
+            <div className="mt-5 overflow-x-auto rounded-bw-panel border border-[#d9ded6]">
               <table className="min-w-[52rem] w-full text-left text-sm">
                 <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                   <tr>

@@ -343,7 +343,7 @@ export function UnitAllocationWorkspace({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-y-3 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] py-2 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="mt-4 grid grid-cols-2 gap-y-3 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] py-2 sm:grid-cols-3 xl:grid-cols-6">
         <SummaryMetric label="Total units" value={summary.total} />
         <SummaryMetric label="Not released" value={summary.notReleased} />
         <SummaryMetric label="Sales route" value={summary.salesRoute} />
@@ -358,7 +358,7 @@ export function UnitAllocationWorkspace({
         <label className="field-label">Rental position<select className="field min-h-10 py-2" value={rentalFilter} onChange={(event) => { setRentalFilter(event.target.value as RentalFilter); setPage(1); }}>{rentalFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
       </div>
 
-      {selectedIds.length > 0 ? <div className="mt-4 rounded-lg border border-[#c8d3cc] bg-[#f4f8f5] p-3">
+      {selectedIds.length > 0 ? <div className="mt-4 rounded-bw-card border border-[#c8d3cc] bg-[#f4f8f5] p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="font-bold text-[#0F3D2E]">{selectedIds.length} unit{selectedIds.length === 1 ? "" : "s"} selected</p>
@@ -379,10 +379,10 @@ export function UnitAllocationWorkspace({
             })}
           </div>
         </div>
-        {validationError && <p className="mt-3 rounded-md border border-[#e5c4be] bg-[#fff9f7] p-3 text-sm text-[#7a271a]" role="alert">{validationError}</p>}
+        {validationError && <p className="mt-3 rounded-bw-inset border border-[#e5c4be] bg-[#fff9f7] p-3 text-sm text-[#7a271a]" role="alert">{validationError}</p>}
       </div> : <p className="mt-4 text-xs text-[#617169]">Select units to make bulk changes.</p>}
 
-      <div className="mt-4 hidden overflow-visible rounded-lg border border-[#d9ded6] xl:block">
+      <div className="mt-4 hidden overflow-visible rounded-bw-panel border border-[#d9ded6] xl:block">
         <table className="w-full table-fixed text-left text-sm">
           <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
             <tr>
@@ -435,7 +435,7 @@ export function UnitAllocationWorkspace({
       </div>
 
       <div className="mt-4 grid gap-2 xl:hidden">
-        {pagedUnits.length === 0 ? <p className="rounded-lg border border-[#d9ded6] p-5 text-center text-sm text-[#617169]">No units match the selected filters.</p> : pagedUnits.map((unit) => {
+        {pagedUnits.length === 0 ? <p className="rounded-bw-card border border-[#d9ded6] p-5 text-center text-sm text-[#617169]">No units match the selected filters.</p> : pagedUnits.map((unit) => {
           const attempt = attemptByUnit.get(unit.id);
           const rental = rentalStatus(unit);
           const workflowBlocksAllocation = isBlockingSaleWorkflow(attempt);
@@ -443,7 +443,7 @@ export function UnitAllocationWorkspace({
           const rentalAction = rental === "active" ? { kind: "rental" as const, target: "exited" as const } : { kind: "rental" as const, target: "active" as const };
           const rentalAvailability = unitAllocationActionAvailability([unit], attemptByUnit, rentalAction);
           return (
-            <article key={unit.id} className="rounded-lg border border-[#d9ded6] bg-white p-3">
+            <article key={unit.id} className="rounded-bw-card border border-[#d9ded6] bg-white p-3">
               <div className="flex items-center justify-between gap-3">
                 <label className="flex items-center gap-2 font-bold text-[#0F3D2E]"><input aria-label={`Select unit ${unit.unit_number}`} type="checkbox" checked={selectedIds.includes(unit.id)} onChange={() => toggleUnit(unit.id)} />{unit.unit_number}</label>
                 <span className="text-xs text-[#617169]">{unit.floor || "No floor"}</span>
@@ -482,10 +482,10 @@ export function UnitAllocationWorkspace({
 
       {pendingAction && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) setPendingAction(null); }}>
-          <div className="w-full max-w-lg rounded-xl border border-[#d9ded6] bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="allocation-confirm-title">
+          <div className="w-full max-w-lg rounded-bw-panel border border-[#d9ded6] bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="allocation-confirm-title">
             <h3 id="allocation-confirm-title" className="text-xl font-bold text-[#0F3D2E]">Confirm allocation change</h3>
             <p className="mt-2 text-sm text-[#34413a]">{actionDescription}</p>
-            <p className="mt-3 rounded-md bg-[#fbf8ef] p-3 text-xs text-[#765a18]">The full selection will succeed together or no units will be changed. One audit event will be recorded per changed unit.</p>
+            <p className="mt-3 rounded-bw-inset bg-[#fbf8ef] p-3 text-xs text-[#765a18]">The full selection will succeed together or no units will be changed. One audit event will be recorded per changed unit.</p>
             <div className="mt-5 flex justify-end gap-2"><button className="secondary" type="button" disabled={isSaving} onClick={() => setPendingAction(null)}>Cancel</button><button className="primary" type="button" disabled={isSaving} onClick={() => void applyAction()}>{isSaving ? "Applying…" : "Confirm change"}</button></div>
           </div>
         </div>

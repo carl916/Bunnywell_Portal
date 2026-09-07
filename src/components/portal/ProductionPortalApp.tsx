@@ -1635,7 +1635,7 @@ function Shell({
   }
 
   return (
-    <main className="app-shell pb-24 md:pb-0">
+    <main className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
       <header className="app-header">
         <EnvironmentBanner />
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -2162,7 +2162,7 @@ function Dashboard({
   return (
     <div className="grid gap-5">
       {pcConfirmationWarnings.length > 0 && (
-        <section className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
+        <section className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-bold">PC date requires confirmation</p>
@@ -2188,7 +2188,7 @@ function Dashboard({
           <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Developer snags</h2>
           <p className="mt-2 max-w-2xl text-sm text-[#66736B]">Current developer snag actions and today&apos;s movement across the buildings you can access.</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-3 divide-x divide-white/20 text-center">
           <HeroCount label="Total" value={model.totalDeveloperSnags} />
           <HeroCount label="Active" value={model.activeDeveloperSnags} />
           <HeroCount label="Changed today" value={model.changedToday} />
@@ -2217,7 +2217,7 @@ function Dashboard({
             ))}
           </div>
         ) : (
-          <p className="mobile-empty mt-4">No developer snag movement today yet.</p>
+          <p className="mt-4 border-t border-[#eef0eb] py-4 text-sm text-[#66736B]">No developer snag movement today yet.</p>
         )}
       </section>
 
@@ -2245,7 +2245,7 @@ function Dashboard({
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
                 <div className="h-full rounded-full bg-[#0F3D2E]" style={{ width: `${building.closedPercent}%` }} />
               </div>
-              <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="mt-4 grid grid-cols-4 divide-x divide-[#eef0eb] border-t border-[#eef0eb] pt-3 text-center text-xs">
                 <MiniStat label="Active" value={building.active} />
                 <MiniStat label="Review" value={building.readyForReview} />
                 <MiniStat label="Info" value={building.needsMoreInfo} />
@@ -2381,7 +2381,7 @@ function buildDashboardModel({
 
 function HeroCount({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[#E2DED3] bg-white/70 p-3">
+    <div className="min-w-0 px-3 py-3">
       <p className="text-2xl font-bold text-[#0F3D2E]">{value}</p>
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
     </div>
@@ -2410,7 +2410,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg bg-[#FBFAF6] p-2">
+    <div className="min-w-0 p-2">
       <p className="font-bold text-[#0F3D2E]">{value}</p>
       <p className="text-[#66736B]">{label}</p>
     </div>
@@ -3025,7 +3025,7 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
           </button>
         </div>
       </div>
-      {deleteWarning && <p className="mt-2 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
+      {deleteWarning && <p className="mt-2 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
     </div>
   );
 }
@@ -3277,7 +3277,7 @@ function UnitStructureCard({
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
                   </div>
-                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <div className="border-t border-[#d9ded6] pt-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
@@ -3309,7 +3309,7 @@ function UnitStructureCard({
                       <button className="secondary" onClick={stageRoom} disabled={!roomName.trim()}>Add room</button>
                     </div>
                   </div>
-                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <div className="border-t border-[#d9ded6] pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
@@ -3363,7 +3363,7 @@ function UnitStructureCard({
                   </div>
                 </div>
               )}
-              {!editing && deleteWarning && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
+              {!editing && deleteWarning && <p className="mt-3 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
             </article>
   );
 }
@@ -3717,13 +3717,13 @@ function AdminSetup({
               {editingSettingsSection !== "lifecycle" && <button className="snag-action-link" type="button" onClick={() => setEditingSettingsSection("lifecycle")}>Edit</button>}
             </div>
             {hasWarning && (
-              <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+              <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
                 PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
               </div>
             )}
 
             {editingSettingsSection === "lifecycle" ? (
-              <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+              <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="grid gap-3">
                     <label className="field-label">
@@ -3739,7 +3739,7 @@ function AdminSetup({
                     )}
                     {pcConfirmedValue && !canEditConfirmedPc && <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>Edit confirmed PC date</button>}
                     {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
-                      <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
                         <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
                         <button className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true })); setConfirmEditPcBuildingId(null); }}>Allow PC date editing</button>
                       </div>
@@ -4182,7 +4182,7 @@ function BuildingSalesSetup({
         {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+        <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <h4 className="font-bold text-[#0F3D2E]">Development information</h4>
           <label className="field-label mt-3">
             Build cost
@@ -4190,7 +4190,7 @@ function BuildingSalesSetup({
           </label>
         </div>
 
-        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+        <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h4 className="font-bold text-[#0F3D2E]">Default deal setup</h4>
@@ -4223,14 +4223,14 @@ function BuildingSalesSetup({
               </>
             )}
           </div>
-          <div className={`mt-4 rounded-md border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+          <div className={`mt-4 rounded-bw-inset border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Agent fee split</span>
               <strong className="numeric-value">{exchangeAgentFeePercent || "0"}% + {completionAgentFeePercent || "0"}%</strong>
             </div>
             <p className="mt-1 text-xs">{agentFeeStructure.error ?? "The milestone fees match the total sales agent fee."}</p>
           </div>
-          <div className={`mt-4 rounded-md border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+          <div className={`mt-4 rounded-bw-inset border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Completion balance</span>
               <strong className="numeric-value">{depositStructure.completionBalancePercent}%</strong>
@@ -4405,7 +4405,7 @@ function BuildingDeliveryTeam({
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name ?? "Not set"}</dd></div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? "None" : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
         </dl>
-      ) : <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+      ) : <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">
         <label className="field-label">
           Main contractor
@@ -4665,7 +4665,7 @@ function DeveloperSnagging({
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
           {buildingContextId ? (
-            <div className="rounded-xl border border-[#dfe5df] bg-[#f8faf7] px-3 py-2">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-bw-inset bg-[#f8faf7] px-3 py-2">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#66736B]">Building</p>
               <p className="mt-0.5 font-semibold text-[#0F3D2E]">{selectedBuilding?.name}</p>
             </div>
@@ -4682,7 +4682,7 @@ function DeveloperSnagging({
               {!draft.buildingId && <span className="text-xs text-[#66736B]">Choose a building to load its floors, units and communal areas.</span>}
             </label>
           )}
-          <div className="developer-snag-toggle grid grid-cols-2 gap-1.5" role="group" aria-label="Location type">
+          <div className="developer-snag-toggle segmented-control" role="group" aria-label="Location type">
             <button className={draft.locationType === "unit" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "unit"}>Unit</button>
             <button className={draft.locationType === "communal" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "communal"}>Communal</button>
           </div>
@@ -4709,7 +4709,7 @@ function DeveloperSnagging({
             {trades.length === 0 && <option value="" disabled>No trades configured</option>}
             {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
           </select>
-          <div className="rounded-md bg-[#f8faf7] px-3 py-2 text-sm">
+          <div className="border-t border-[#eef0eb] py-2 text-sm">
             <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="text-[#617169]">Assigned to:</span>
               <span className="min-w-0 flex-1 font-semibold text-[#0F3D2E]">{resolvedResponsibleOrganisation?.name ?? "Not assigned"}</span>
@@ -5303,7 +5303,7 @@ function AccessRequestReviewPanel({
   }
 
   return (
-    <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-[#d9ded6] bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">{isPending ? "Review access request" : "Access request"}</h3>
@@ -5337,7 +5337,7 @@ function AccessRequestReviewPanel({
           {request.requested_units.length === 0 && <p className="text-sm text-[#617169]">No flats requested.</p>}
         </div>
         {duplicateRequestedUnits.length > 0 && (
-          <p className="mt-3 rounded-md border border-[#E5C27B] bg-[#FFF8E8] px-3 py-2 text-sm text-[#7A5A1F]">
+          <p className="mt-3 rounded-bw-inset border border-[#E5C27B] bg-[#FFF8E8] px-3 py-2 text-sm text-[#7A5A1F]">
             {allRequestedUnitsAreDuplicates
               ? "This user already has access to every flat on this request."
               : "Some requested flats are already assigned to this user. Only new flats will be added."}
@@ -5649,7 +5649,7 @@ function UserEditPanel({
 
   return (
     <div className="bg-[#fff8ec] p-1">
-      <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
+      <div className="rounded-md border border-[#d9ded6] bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Edit user</h3>
@@ -7502,7 +7502,7 @@ function LeaseholderDefects({
         <div className="grid gap-3 md:grid-cols-[260px_minmax(0,1fr)]">
           <div className="grid gap-3">
             {hasSingleUnit ? (
-              <div className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
+              <div className="rounded-bw-inset border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
                 <p className="font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"}</p>
                 <p className="mt-1 text-[#34413a]">Unit {selectedUnit?.unit_number ?? "-"}</p>
               </div>
@@ -7539,7 +7539,7 @@ function LeaseholderDefects({
               Parking bay{(selectedUnit?.parking_bays?.length ?? 0) === 1 ? "" : "s"}: {formatParkingBays(selectedUnit?.parking_bays)}
             </p>
             {selectedUnit && (
-              <div className="mt-3 grid gap-3 rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3">
+              <div className="mt-3 grid gap-3 rounded-bw-card border border-[#d9ded6] bg-[#f8faf7] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-[#0F3D2E]">Flat status</p>
                   <span className={statusTone(existingHandover ? "handed_over" : selectedUnit.sale_status)}>{existingHandover ? "Handed Over" : statusLabel(selectedUnit.sale_status)}</span>
@@ -7574,14 +7574,14 @@ function LeaseholderDefects({
           )}
         </div>
         {selectedBuildingLifecycle === "dlp_closing" && selectedBuildingReportingEnd && (
-          <div className="mt-4 rounded-md border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
+          <div className="mt-4 rounded-bw-inset border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
             <p className="font-semibold text-[#5F4315]">The initial defects reporting period for this building is due to close on {formatDate(selectedBuildingReportingEnd)}.</p>
             <p className="mt-2">Please make sure any outstanding routine snagging items are submitted through the portal before this date.</p>
             <p className="mt-2">After this date, the portal will remain available as a record and document library, but new routine snag reports will no longer be accepted through the portal.</p>
           </div>
         )}
         {(selectedBuildingLifecycle === "post_dlp_readonly" || selectedBuildingLifecycle === "archived") && (
-          <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+          <div className="mt-4 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
             <p className="font-semibold text-[#0F3D2E]">The initial defects reporting period for this building has now closed.</p>
             <p className="mt-2">The Bunnywell portal remains available for handover records, useful homeowner documents and previous snag history.</p>
             <p className="mt-2">New routine snag reports can no longer be submitted through the portal.</p>
@@ -7590,7 +7590,7 @@ function LeaseholderDefects({
           </div>
         )}
         {selectedBuildingLifecycle === "pre_pc" && (
-          <div className="mt-4 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
+          <div className="mt-4 rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
             Residents cannot submit routine snags yet. Internal users can continue managing pre-PC snags where permitted.
           </div>
         )}
@@ -7873,7 +7873,7 @@ function SelectedUnitHandover({
 
   if (existingHandover) {
     return (
-      <div className="rounded-lg border border-[#d9ded6] bg-white p-3 text-sm">
+      <div className="rounded-bw-inset border border-[#d9ded6] bg-white p-3 text-sm">
         <p className="font-semibold text-[#0F3D2E]">Handover complete</p>
         <p className="mt-1 text-[#34413a]">Completed on {formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}.</p>
         {isResident ? (
@@ -7890,7 +7890,7 @@ function SelectedUnitHandover({
 
   if (selectedUnit.sale_status !== "completed") {
     return (
-      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
         {isResident
           ? "Handover is not ready yet."
           : ["for_sale", "reserved", "exchanged"].includes(selectedUnit.sale_status)
@@ -7902,7 +7902,7 @@ function SelectedUnitHandover({
 
   if (!handoverPcAllowed) {
     return (
-      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
         {isResident ? "Handover is not ready yet." : "Handover is available once PC has been confirmed."}
       </div>
     );
@@ -7915,7 +7915,7 @@ function SelectedUnitHandover({
   return (
     <div className="grid gap-3">
       {buildingLifecycle === "post_dlp_readonly" && (
-        <div className="rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
+        <div className="rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
           <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
           <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
           <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
@@ -7924,7 +7924,7 @@ function SelectedUnitHandover({
       {!showFlow ? (
         <button className="secondary min-h-10 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowFlow(true)}>{isResident ? "Complete handover" : "Start handover"}</button>
       ) : (
-        <div className="grid gap-4 rounded-xl border border-[#d9ded6] bg-white p-3">
+        <div className="grid gap-4 rounded-bw-panel border border-[#d9ded6] bg-white p-3">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="field-label">Full name<input className="field" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></label>
             <label className="field-label">Email address<input className="field" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} type="email" /></label>
@@ -7939,7 +7939,7 @@ function SelectedUnitHandover({
           <div className="grid gap-2">
             <p className="text-sm font-semibold text-[#0F3D2E]">Keys and fobs</p>
             {keyItems.map((item, index) => (
-              <div key={index} className="grid gap-2 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
+              <div key={index} className="grid gap-2 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
                 <select className="field" value={item.key_type} onChange={(event) => updateKeyItem(index, { key_type: event.target.value })}>
                   {["Front Door Key", "Post Box Key", "Window Key", "Meter Cupboard Key", "Communal Entrance Fob", "Parking Fob", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
@@ -7952,11 +7952,11 @@ function SelectedUnitHandover({
             <SimplePhotoInput value={keyPhoto} onChange={setKeyPhoto} label="Add or take keys/fobs photo" />
           </div>
           <div className="grid items-stretch gap-4 md:grid-cols-2">
-            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
               <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} /></label>
               <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} label="Add or take electricity meter photo" />
             </div>
-            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
               <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} /></label>
               <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} label="Add or take water meter photo" />
             </div>
@@ -8247,21 +8247,21 @@ function HandoverAndMeters({
           </label>
         </div>
         {selectedUnit && !handoverAllowed && !existingHandover && (
-          <div className="mt-4 rounded-xl border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
+          <div className="mt-4 rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
             {!buildingAllowsFlatHandover(selectedBuilding)
               ? "Handover is available once PC has been confirmed."
               : `Handover unavailable. This flat is currently marked as ${currentStatus}. Handover can only take place once the flat is marked Completed.`}
           </div>
         )}
         {selectedUnit && !existingHandover && handoverAllowed && selectedBuildingLifecycle === "post_dlp_readonly" && (
-          <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+          <div className="mt-4 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
             <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
             <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
             <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
           </div>
         )}
         {existingHandover && (
-          <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-4">
+          <div className="mt-4 rounded-bw-card border border-[#d9ded6] bg-[#f8faf7] p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-bold text-[#0F3D2E]">Handover completed</p>
@@ -8311,7 +8311,7 @@ function HandoverAndMeters({
               <SectionHeader title="Keys and fobs" subtitle="Record every item handed over, then photograph the set." />
               <div className="grid gap-3">
                 {keyItems.map((item, index) => (
-                  <div key={index} className="grid gap-2 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
+                  <div key={index} className="grid gap-2 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
                     <select className="field" value={item.key_type} onChange={(event) => updateKeyItem(index, { key_type: event.target.value })} disabled={!handoverAllowed}>
                       {["Front Door Key", "Post Box Key", "Window Key", "Meter Cupboard Key", "Communal Entrance Fob", "Parking Fob", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
@@ -8329,11 +8329,11 @@ function HandoverAndMeters({
             <div className="grid gap-4">
               <SectionHeader title="Meter readings" subtitle="Electricity and water readings need a value and photograph." />
               <div className="grid items-stretch gap-4 md:grid-cols-2">
-                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} disabled={!handoverAllowed} /></label>
                   <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} disabled={!handoverAllowed} label="Add or take electricity meter photo" />
                 </div>
-                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} disabled={!handoverAllowed} /></label>
                   <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} disabled={!handoverAllowed} label="Add or take water meter photo" />
                 </div>
@@ -8344,7 +8344,7 @@ function HandoverAndMeters({
           {step === 3 && (
             <div className="grid gap-4">
               <SectionHeader title="Declaration and signature" subtitle="The recipient confirms receipt and responsibility from the handover time." />
-              <div className="rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-4 text-sm text-[#34413a]">
+              <div className="rounded-bw-inset border border-[#E2DED3] bg-[#FBFAF6] p-4 text-sm text-[#34413a]">
                 The listed keys/fobs have been received. The meter readings recorded are correct to the best of the recipient's knowledge. The recipient accepts responsibility for the property from the handover date.
               </div>
               <label className="field-label">Handover date/time<input className="field" type="datetime-local" value={handoverDateTime} onChange={(event) => setHandoverDateTime(event.target.value)} disabled={!handoverAllowed} /></label>
@@ -9014,10 +9014,11 @@ function ReportsPanel({
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="segmented-control" role="group" aria-label="Report location type">
         <button
           className={locationType === "unit" ? "primary" : "secondary"}
           type="button"
+          aria-pressed={locationType === "unit"}
           onClick={() => {
             setLocationType("unit");
             resetSendState();
@@ -9029,6 +9030,7 @@ function ReportsPanel({
         <button
           className={locationType === "communal" ? "primary" : "secondary"}
           type="button"
+          aria-pressed={locationType === "communal"}
           onClick={() => {
             setLocationType("communal");
             resetSendState();
@@ -9063,14 +9065,14 @@ function ReportsPanel({
           ))}
         </select>
       )}
-      <label className="option-card min-h-10 px-3 py-2 text-sm">
+      <label className="checkbox-row">
         <input checked={includePhotos} onChange={(event) => {
           setIncludePhotos(event.target.checked);
           resetSendState();
         }} type="checkbox" />
         Include photos
       </label>
-      <label className="option-card min-h-10 px-3 py-2 text-sm">
+      <label className="checkbox-row">
         <input checked={includeClosedSnags} onChange={(event) => {
           setIncludeClosedSnags(event.target.checked);
           resetSendState();
@@ -9090,7 +9092,7 @@ function ReportsPanel({
         <p className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">Loading contractor recipients...</p>
       )}
       {canSendReport && sendState === "preview" && (
-        <div className="rounded-xl border border-[#d8ded8] bg-[#fbfaf6] p-4">
+        <div className="rounded-bw-card border border-[#d8ded8] bg-[#fbfaf6] p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-base font-semibold text-[#0f3d31]">Confirm contractor recipients</h3>
@@ -9419,7 +9421,7 @@ function SnagList({
   }
 
   return (
-    <section className="panel p-0">
+    <section className="panel min-w-0 p-0">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         {title && <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>}
         {showFilters && (
@@ -9486,7 +9488,7 @@ function SnagList({
             return (
               <article
                 key={snag.id}
-                className="rounded-xl border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
+                className="rounded-bw-card border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
               >
                 <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
@@ -9497,7 +9499,7 @@ function SnagList({
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
                     </div>
                   </div>
-                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-lg border border-[#E2DED3] bg-[#FBFAF6]">
+                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6]">
                     {photo?.file_url ? (
                       <SnagThumbnail photo={photo} onOpen={setPreviewPhoto} className="h-full w-full" width={240} height={240} />
                     ) : (
@@ -10078,7 +10080,7 @@ function SnagDetailPage({
           {activityTab === "timeline" && (
             <div className="mt-4 grid gap-3">
               {timelineItems.map((event) => (
-                <div key={event.id} className={`rounded-md border p-3 text-sm ${timelineCardClass(event.new_value)}`}>
+                <div key={event.id} className={`rounded-bw-inset border p-3 text-sm ${timelineCardClass(event.new_value)}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-[#0F3D2E]">{timelineHeading(event)}</p>
@@ -10231,7 +10233,7 @@ function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or t
 
   return (
     <div className="grid h-full gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
         {isPreparing ? "Preparing photo..." : value ? "Replace photo" : label}
         <input
@@ -10247,7 +10249,7 @@ function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or t
           }}
         />
       </label>
-      <div className="grid min-h-44 place-items-center rounded-xl border border-dashed border-[#d9ded6] bg-white p-2">
+      <div className="grid min-h-44 place-items-center rounded-bw-card border border-dashed border-[#d9ded6] bg-white p-2">
         {value ? (
           <img src={value} alt="" className="max-h-56 w-full rounded-md object-contain" />
         ) : (
@@ -10356,7 +10358,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
 
   return (
     <div className="grid gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
         {isPreparing ? "Preparing photo..." : value ? "Replace photo" : "Add or take photo"}
         <input
@@ -10478,7 +10480,7 @@ function VideoInput({ value, onChange, disabled = false, compactLabel = false }:
 
   return (
     <div className="grid gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Film size={18} aria-hidden />
         {status === "preparing" ? "Reducing video..." : status === "checking" ? "Checking video..." : value ? "Replace video" : compactLabel ? "Video" : "Add optional video"}
         <input

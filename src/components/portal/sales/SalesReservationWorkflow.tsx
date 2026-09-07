@@ -458,20 +458,20 @@ function hasRequiredBuyerInfo(attempt?: SaleAttempt | null) {
 
 function FieldValue({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
-    <div className="rounded-md border border-[#eef0eb] bg-white p-3">
+    <div className="min-w-0 border-b border-[#eef0eb] py-3">
       <span className="block text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">{label}</span>
-      <strong className="numeric-value mt-1 block whitespace-pre-line text-sm text-[#0F3D2E]">{value || "-"}</strong>
+      <strong className="numeric-value mt-1 block whitespace-pre-line text-sm text-[#0F3D2E] [overflow-wrap:anywhere]">{value || "-"}</strong>
     </div>
   );
 }
 
-function KeyValueList({ items }: { items: Array<{ label: string; value: ReactNode; nowrap?: boolean }> }) {
+function KeyValueList({ items }: { items: Array<{ label: string; value: ReactNode }> }) {
   return (
     <dl className="divide-y divide-[#eef0eb] text-sm text-[#34413a]">
       {items.map((item) => (
         <div key={item.label} className="grid gap-1 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)] sm:gap-4">
-          <dt className={`text-[#617169] ${item.nowrap ? "whitespace-nowrap" : ""}`}>{item.label}</dt>
-          <dd className="numeric-value min-w-0 break-words whitespace-pre-line font-bold text-[#0F3D2E] sm:text-right">{item.value || "-"}</dd>
+          <dt className="min-w-0 text-[#617169]">{item.label}</dt>
+          <dd className="numeric-value min-w-0 whitespace-pre-line font-bold text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-right">{item.value || "-"}</dd>
         </div>
       ))}
     </dl>
@@ -520,9 +520,9 @@ function SaleActivity({ events, actorName }: { events: SaleWorkflowEvent[]; acto
           <ChevronDown className="transition-transform group-open:rotate-180" size={16} aria-hidden />
         </span>
       </summary>
-      <div className="grid gap-2 border-t border-[#eef0eb] p-3">
+      <div className="divide-y divide-[#eef0eb] border-t border-[#eef0eb] px-3">
         {events.map((event) => (
-          <div key={event.id} className="rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm text-[#34413a]">
+          <div key={event.id} className="py-3 text-sm text-[#34413a] [overflow-wrap:anywhere]">
             <div className="flex flex-wrap justify-between gap-3">
               <strong>{event.summary}</strong>
               <span className="text-right text-[#617169]">
@@ -549,7 +549,7 @@ function CompletedActionSummary({
   items: Array<{ label: string; value: ReactNode }>;
 }) {
   return (
-    <div className="h-full rounded-lg border border-[#bedacb] bg-[#f7fbf8] p-4">
+    <div className="h-full rounded-bw-card border border-[#bedacb] bg-[#f7fbf8] p-4">
       <div className="flex items-start gap-3">
         <span className="rounded-full bg-[#e1f1e7] p-2 text-[#286348]"><CheckCircle2 size={18} aria-hidden /></span>
         <div>
@@ -557,7 +557,7 @@ function CompletedActionSummary({
           <p className="mt-1 text-sm text-[#617169]">{description}</p>
         </div>
       </div>
-      <div className="mt-4 rounded-md border border-[#dbe9df] bg-white p-3">
+      <div className="mt-4 border-t border-[#dbe9df] pt-3">
         <KeyValueList items={items} />
       </div>
     </div>
@@ -593,7 +593,7 @@ function StageWorkspace({
   }[statusTone];
 
   return (
-    <section id={id} className="mt-6 scroll-mt-6 rounded-xl bg-[#f3f5f1] px-4 py-6 sm:px-6 sm:py-7">
+    <section id={id} className="mt-6 scroll-mt-6 rounded-bw-panel bg-[#f3f5f1] px-4 py-6 sm:px-6 sm:py-7">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#d9ded6] pb-5">
         <div className="max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#617169]">Selected sales stage</p>
@@ -640,7 +640,7 @@ function PdfUploadBox({
 
   if (currentVersion && !file) {
     return (
-      <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+      <div className="min-w-0 py-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 max-w-full items-start gap-3">
             <span className="mt-1 shrink-0 rounded-full bg-[#EEF6F1] p-2 text-[#0F3D2E]"><FileText size={18} aria-hidden /></span>
@@ -661,7 +661,7 @@ function PdfUploadBox({
               <X size={14} aria-hidden /> Remove PDF
             </button>
           ) : (
-            <label className="secondary mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
+            <label className="secondary upload-target mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
               Replace PDF
               <input className="sr-only" type="file" accept="application/pdf" onChange={(event) => onFile(event.target.files?.[0] ?? null)} />
             </label>
@@ -673,7 +673,7 @@ function PdfUploadBox({
 
   return (
     <label
-      className={`block rounded-lg border border-dashed p-5 text-center transition ${disabled ? "cursor-not-allowed border-[#d9ded6] bg-[#f4f6f3] opacity-70" : "cursor-pointer border-[#cdbd9d] bg-white hover:border-[#0F3D2E]"}`}
+      className={`upload-target block rounded-bw-card border border-dashed p-5 text-center transition ${disabled ? "cursor-not-allowed border-[#d9ded6] bg-[#f4f6f3] opacity-70" : "cursor-pointer border-[#cdbd9d] bg-white hover:border-[#0F3D2E]"}`}
       htmlFor={id}
       onDragOver={(event) => {
         if (disabled) return;
@@ -691,7 +691,7 @@ function PdfUploadBox({
       <span className="mt-3 block font-bold text-[#0F3D2E]">{label}</span>
       <span className="mt-1 block text-sm text-[#617169]">Choose a file or drag and drop. PDF only, maximum 10 MB.</span>
       {selectedName && (
-        <span className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#0F3D2E]">
+        <span className="mt-3 inline-flex max-w-full items-center gap-2 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#0F3D2E]">
           <span className="min-w-0 [overflow-wrap:anywhere]">{selectedName}</span>
           <button
             type="button"
@@ -728,12 +728,12 @@ function DocumentVersionHistory({
   if (versions.length === 0) return null;
 
   return (
-    <div className="mt-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3">
+    <div className="mt-3 min-w-0 border-t border-[#eef0eb] pt-3">
       <h6 className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Document history</h6>
       <div className="mt-2 grid gap-2">
         {versions.map((version) => (
           <div key={version.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-[#34413a]">
-            <span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">
               Version {version.version_number}: {version.file_name} {fileSizeLabel(version.file_size_bytes)}
               {version.is_current ? " current" : ""}
             </span>
@@ -788,7 +788,7 @@ function AgentInvoiceSubmissionForm({
   return (
     <div className="mt-4 rounded-md border border-[#e2ded3] bg-white p-4">
       <h5 className="font-bold text-[#0F3D2E]">{isReplacement ? `Replace ${label} invoice` : `Submit ${label} invoice`}</h5>
-      <div className="mt-3 grid gap-2 rounded-md bg-[#F7F5EF] p-3 text-sm text-[#34413a] sm:grid-cols-4">
+      <div className="mt-3 grid gap-x-4 text-sm text-[#34413a] sm:grid-cols-4">
         <FieldValue label={`${label} fee`} value={formatPercentValue(feePercent)} />
         <FieldValue label="Expected net fee" value={money(expectedNetAmount)} />
         <FieldValue label="Expected VAT" value={money(expectedVatAmount)} />
@@ -889,7 +889,7 @@ function AgentInvoicePaymentSection({
         </div>
 
         {canRecord && position.paymentStatus !== "Paid" && showPaymentForm && (
-          <div className={`mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3 ${styles.paymentEntry}`}>
+          <div className={`mt-4 border-t border-[#d9ded6] pt-4 ${styles.paymentEntry}`}>
             <div className={styles.paymentEntryGrid}>
               <label className="field-label">Amount<GbpInput value={amount} onChange={onAmount} disabled={isSaving} aria-label="Agent fee payment amount" /></label>
               <label className="field-label">Payment date<input className="field" type="date" max={todayDate} value={paymentDate} onChange={(event) => onPaymentDate(event.target.value)} disabled={isSaving} /></label>
@@ -963,7 +963,7 @@ function AdditionalConditionsEditor({
       {cleanConditions.length > 0 && (
         <div className="grid gap-2">
           {cleanConditions.map((condition, index) => (
-            <div key={`${condition}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[#e5e9e4] bg-white px-3 py-2 text-sm text-[#34413a]">
+            <div key={`${condition}-${index}`} className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e5e9e4] py-2 text-sm text-[#34413a] [overflow-wrap:anywhere]">
               <span className="min-w-0 flex-1 break-words font-semibold">{condition}</span>
               <button
                 className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-bold text-[#b42318] hover:bg-[#fff4f2] disabled:cursor-not-allowed disabled:opacity-50"
@@ -2675,7 +2675,7 @@ export function SalesReservationWorkflow({
             <p className="mt-1 text-sm text-[#617169]">Forecast sales position for units currently in the sales route.</p>
           </div>
           <div className={`mt-5 grid gap-4 ${styles.financialOverviewGrid}`}>
-            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
+            <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Revenue view</h4>
               <p className="mt-1 text-sm text-[#617169]">Sales-route list-price baseline compared with the current forecast.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2684,7 +2684,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value text-right">{money(forecastRevenue - baselineGdv)}</strong></div>
               </div>
             </div>
-            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
+            <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Cost / debt view</h4>
               <p className="mt-1 text-sm text-[#617169]">Core assumptions will be set in forecasting.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2693,7 +2693,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Net sales proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(netSalesProceeds)}</strong></div>
               </div>
             </div>
-            <div className={`rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard} ${styles.profitCard}`}>
+            <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard} ${styles.profitCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Profit view</h4>
               <p className="mt-1 text-sm text-[#617169]">Profitability will appear once scheme costs and debt have been added.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2715,7 +2715,7 @@ export function SalesReservationWorkflow({
             {pipelineSummary.map((stage) => (
               <button
                 key={stage.status}
-                className={`rounded-lg border p-4 text-left transition ${salesStageFilter === stage.status ? "border-[#0F3D2E] bg-[#fbfcfa] shadow-sm" : "border-[#d9ded6] bg-[#fbfcfa] hover:border-[#0F3D2E]"}`}
+                className={`rounded-bw-card border p-4 text-left transition ${salesStageFilter === stage.status ? "border-[#0F3D2E] bg-[#fbfcfa] shadow-sm" : "border-[#d9ded6] bg-[#fbfcfa] hover:border-[#0F3D2E]"}`}
                 onClick={() => {
                   setSalesStageFilter(stage.status);
                   writeSalesUrl({ building: buildingId, unit: null, filter: stage.status });
@@ -2758,7 +2758,7 @@ export function SalesReservationWorkflow({
             </label>
           </div>
 
-          <div className="mt-5 overflow-x-auto rounded-lg border border-[#d9ded6]">
+          <div className="mt-5 overflow-x-auto rounded-bw-panel border border-[#d9ded6]">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                 <tr>
@@ -2821,7 +2821,7 @@ export function SalesReservationWorkflow({
               {showForecasting ? "Hide forecasting" : "Open forecasting"}
             </button>
           </div>
-          {!buildingId && <p className="mt-3 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-3 text-sm text-[#617169]">Select a building in the app header to use building-level forecasting.</p>}
+          {!buildingId && <p className="mt-3 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-3 text-sm text-[#617169]">Select a building in the app header to use building-level forecasting.</p>}
           {showForecasting && buildingId && (
             <div className="mt-5">
               <SalesForecastingModule
@@ -2902,9 +2902,9 @@ export function SalesReservationWorkflow({
           <SaleFileWorkspaceTabs activeWorkspace={activeUnitSection} onChange={changeUnitSection} />
 
           {activeUnitSection === "commercial" && (
-          <div id="unit-sale-commercial" role="tabpanel" aria-labelledby="sale-file-tab-commercial" className="min-w-0 rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-5">
+          <div id="unit-sale-commercial" role="tabpanel" aria-labelledby="sale-file-tab-commercial" className="min-w-0 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-5">
           <div className="grid gap-4 xl:grid-cols-3">
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
               <h4 className="font-bold text-[#0F3D2E]">Developer</h4>
               <p className="mt-1 text-sm text-[#617169]">Sale value, development-side deductions and net proceeds.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2917,7 +2917,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Net developer proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(selectedDeveloperNet)}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
               <h4 className="font-bold text-[#0F3D2E]">Agent</h4>
               <p className="mt-1 text-sm text-[#617169]">Forecast agent invoice after deductions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2929,7 +2929,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionDeductionLabel}</strong></div>
               </div>
             </div>
-            <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+            <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
               <h4 className="font-bold text-[#0F3D2E]">Buyer</h4>
               <p className="mt-1 text-sm text-[#617169]">Payment schedule and buyer-facing contributions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -2967,9 +2967,9 @@ export function SalesReservationWorkflow({
           </div>
 
           {showCommercialModel && (
-            <div className={`mt-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.commercialEditor}`} data-testid="commercial-model-editor">
+            <div className={`mt-5 border-t border-[#d9ded6] pt-5 ${styles.commercialEditor}`} data-testid="commercial-model-editor">
               <div className={styles.commercialEditorGrid}>
-                <div className={`rounded-lg border border-[#e2ded3] bg-white p-4 ${styles.commercialInputs}`}>
+                <div className={styles.commercialInputs}>
                   <h4 className="font-bold text-[#0F3D2E]">Deal inputs</h4>
                   <p className="mt-1 text-sm text-[#617169]">Developer-only modelling before commercial approval.</p>
                   <div className="mt-4 grid gap-3">
@@ -3026,7 +3026,7 @@ export function SalesReservationWorkflow({
                       </div>
                     </div>
                     {!showAdvancedDealSetup ? (
-                      <div className="rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
+                      <div className="text-sm text-[#34413a]">
                         <div className={styles.setupSummary}>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent, 4)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value">{formatPercentValue(previewExchangeAgentFeePercent, 4)}</strong></div>
@@ -3046,7 +3046,7 @@ export function SalesReservationWorkflow({
                         <label className="field-label">Exchange fee %<input className="field" inputMode="decimal" value={exchangeAgentFeePercent} onChange={(event) => setExchangeAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         </div>
-                        <div className={`mt-3 rounded-md px-3 py-2 text-sm ${previewAgentFeeStructure.isValid ? "bg-[#eaf6ee] text-[#18794e]" : "bg-[#fff8e7] text-[#7a5416]"}`} role="status" aria-live="polite" data-testid="agent-fee-validation">
+                        <div className={`mt-3 rounded-bw-inset px-3 py-2 text-sm ${previewAgentFeeStructure.isValid ? "bg-[#eaf6ee] text-[#18794e]" : "bg-[#fff8e7] text-[#7a5416]"}`} role="status" aria-live="polite" data-testid="agent-fee-validation">
                           {!invalidAgentFeeInput && <p className="numeric-value font-semibold">{formatPercentValue(previewExchangeAgentFeePercent, 4)} + {formatPercentValue(previewCompletionAgentFeePercent, 4)} = {formatPercentValue(previewAgentFeeSum, 4)}{previewAgentFeeStructure.isValid && <CheckCircle2 className="ml-2 inline-block" size={15} aria-label="Valid fee split" />}</p>}
                           {!previewAgentFeeStructure.isValid && <p>{invalidAgentFeeInput ? previewAgentFeeStructure.error : `Must equal total agent fee of ${formatPercentValue(previewAgentFeePercent, 4)}.`}</p>}
                         </div>
@@ -3081,7 +3081,7 @@ export function SalesReservationWorkflow({
                           <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!commercialModelEditable} />
                           Optional second deposit
                         </label>
-                        <div className={`mt-3 rounded-md border p-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] bg-[#F7F5EF] text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`} role="status" data-testid="payment-schedule-summary">
+                        <div className={`mt-3 border-t py-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] text-[#34413a]" : "rounded-bw-inset border-[#D6A23A] bg-[#fff8e7] px-3 text-[#5c4a1f]"}`} role="status" data-testid="payment-schedule-summary">
                           <div className={styles.feeRow}>
                             <div>Exchange deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
                             {previewDepositStructure.secondDepositEnabled && <div>Second deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
@@ -3097,7 +3097,7 @@ export function SalesReservationWorkflow({
                     </div>
                   </div>
                 <aside className={styles.previewRail} aria-label="Commercial preview">
-                <div className="rounded-lg border border-[#e2ded3] bg-white p-4">
+                <div className="rounded-bw-card border border-[#e2ded3] bg-white p-4">
                   <h4 className="font-bold text-[#0F3D2E]">Live preview</h4>
                   <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
                     <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net before</span><strong className="numeric-value text-right">{money(selectedDeveloperNet)}</strong></div>
@@ -3108,7 +3108,7 @@ export function SalesReservationWorkflow({
                     <div className="flex justify-between gap-4"><span>Exchange invoice difference</span><strong className="numeric-value text-right">{money(previewInvoice.expectedPayableAmount - selectedExchangeInvoice.expectedPayableAmount)}</strong></div>
                   </div>
                 </div>
-                <div className="rounded-lg border border-[#e2ded3] bg-white p-4">
+                <div className="rounded-bw-card border border-[#e2ded3] bg-white p-4">
                   <h4 className="font-bold text-[#0F3D2E]">Scheme impact</h4>
                   <p className="mt-1 text-sm text-[#617169]">Forecast impact across {forSaleUnits.length} For Sale units.</p>
                   <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
@@ -3136,7 +3136,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "progression" && (
-          <div id="unit-sale-progression" role="tabpanel" aria-labelledby="sale-file-tab-progression" className="rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-3 sm:p-4">
+          <div id="unit-sale-progression" role="tabpanel" aria-labelledby="sale-file-tab-progression" className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-3 sm:p-4">
             <div>
               <h4 className="text-lg font-bold text-[#0F3D2E]">Sales stages</h4>
               <p className="text-sm text-[#617169]">Track the legal sale lifecycle and select a stage to view its workspace.</p>
@@ -3164,7 +3164,7 @@ export function SalesReservationWorkflow({
                 return (
                   <button
                     key={stage.key}
-                    className={`flex min-h-24 min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-lg border p-4 text-left transition sm:p-5 ${cardTone} ${isSelected ? "ring-1 ring-[#0F3D2E] shadow-sm" : ""}`}
+                    className={`flex min-h-24 min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-bw-card border p-4 text-left transition sm:p-5 ${cardTone} ${isSelected ? "ring-1 ring-[#0F3D2E] shadow-sm" : ""}`}
                     onClick={() => {
                       if (!isLocked) {
                         manuallySelectedWorkflowStageRef.current = stage.key;
@@ -3201,9 +3201,9 @@ export function SalesReservationWorkflow({
 
               {reservationCanBeEdited && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
-                  <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+                  <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
                     {reservationState === "rejected" && (
-                      <div className="mb-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">
+                      <div className="mb-4 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">
                         <strong className="block">Reservation rejected</strong>
                         <span>{activeRejectionReason || "Developer rejected the reservation pack. Update and resubmit."}</span>
                         {activeAttempt?.reservation_rejected_at && (
@@ -3213,7 +3213,7 @@ export function SalesReservationWorkflow({
                     )}
                     <h5 className="font-bold text-[#0F3D2E]">Buyer and reservation form</h5>
                     <p className="mt-1 text-sm text-[#617169]">Commercial terms are read-only here and come from the saved deal model/building defaults.</p>
-                    <div className="mt-4 rounded-md border border-[#D6A23A] bg-[#fffaf0] p-4">
+                    <div className="mt-4 border-l-2 border-[#D6A23A] py-2 pl-4 [overflow-wrap:anywhere]">
                       <h5 className="font-bold text-[#0F3D2E]">Developer-approved commercial terms</h5>
                       <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
                         <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Developer contribution</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
@@ -3246,7 +3246,7 @@ export function SalesReservationWorkflow({
                         {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                       </div>
                     </div>
-                    <label className="mt-4 flex items-start gap-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm font-semibold text-[#34413a]">
+                    <label className="mt-4 flex min-h-10 cursor-pointer items-start gap-3 border-t border-[#eef0eb] py-3 text-sm font-semibold text-[#34413a]">
                       <input className="mt-1" type="checkbox" checked={reservationTermsChecked} onChange={(event) => setReservationTermsChecked(event.target.checked)} disabled={!reservationCanBeEdited} />
                       <span>I have checked that the reservation form reflects the developer-approved commercial terms.</span>
                     </label>
@@ -3257,16 +3257,18 @@ export function SalesReservationWorkflow({
                     </div>
                   </div>
 
-                  <div className="grid gap-4">
-                    <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+                  <div className="grid content-start gap-4">
+                    <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
                       <h5 className="font-bold text-[#0F3D2E]">Commercial terms</h5>
-                      <div className="mt-3 grid gap-2">
-                        <FieldValue label="Contract price" value={money(selectedContractValue)} />
-                        <FieldValue label="Reservation fee" value={money(displayReservationFee)} />
-                        <FieldValue label="Reservation fee holder" value={describeReservationFeeHolder(displayReservationFeeHolder)} />
-                        <FieldValue label="Exchange deposit" value={formatPercentValue(displayDepositStructure.exchangeDepositPercent)} />
-                        {displayDepositStructure.secondDepositEnabled && <FieldValue label="Second deposit" value={`${formatPercentValue(displayDepositStructure.secondDepositPercent)} after ${displayDepositStructure.secondDepositMonthsAfterExchange ?? 0} months`} />}
-                        <FieldValue label="Completion balance" value={formatPercentValue(displayDepositStructure.completionBalancePercent)} />
+                      <div className="mt-3">
+                        <KeyValueList items={[
+                          { label: "Contract price", value: money(selectedContractValue) },
+                          { label: "Reservation fee", value: money(displayReservationFee) },
+                          { label: "Reservation fee holder", value: describeReservationFeeHolder(displayReservationFeeHolder) },
+                          { label: "Exchange deposit", value: formatPercentValue(displayDepositStructure.exchangeDepositPercent) },
+                          ...(displayDepositStructure.secondDepositEnabled ? [{ label: "Second deposit", value: `${formatPercentValue(displayDepositStructure.secondDepositPercent)} after ${displayDepositStructure.secondDepositMonthsAfterExchange ?? 0} months` }] : []),
+                          { label: "Completion balance", value: formatPercentValue(displayDepositStructure.completionBalancePercent) },
+                        ]} />
                       </div>
                     </div>
                   </div>
@@ -3275,7 +3277,7 @@ export function SalesReservationWorkflow({
 
               {reservationState === "awaiting_approval" && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.85fr)]">
-                  <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+                  <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
                     <h5 className="font-bold text-[#0F3D2E]">Submitted reservation pack</h5>
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <FieldValue label="Buyer" value={buyerDisplay(activeAttempt)} />
@@ -3302,7 +3304,7 @@ export function SalesReservationWorkflow({
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-[#d9ded6] bg-white p-4">
+                  <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
                     <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
                     <span className="mt-2 inline-flex rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-xs font-bold uppercase text-[#617169]">Awaiting developer approval</span>
                     <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
@@ -3329,7 +3331,7 @@ export function SalesReservationWorkflow({
                       )}
                     </div>
                     {showRejectReservationConfirm && reservationCanBeReviewed && (
-                      <div className="mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3">
+                      <div className="mt-4 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-3">
                         <label className="field-label">
                           Rejection reason
                           <textarea className="field min-h-20" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} />
@@ -3349,7 +3351,7 @@ export function SalesReservationWorkflow({
 
               {reservationState === "approved" && (
                 <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
-                  <section className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+                  <section className="rounded-bw-card border border-[#d9ded6] bg-white p-4 sm:p-5">
                     <h5 className="font-bold text-[#0F3D2E]">Reservation</h5>
                     <div className="mt-4">
                       <KeyValueList items={[
@@ -3364,7 +3366,7 @@ export function SalesReservationWorkflow({
                     </div>
                     {showReservationDocumentHistory && <DocumentVersionHistory versions={reservationVersions} onOpen={(version) => void openDocumentVersion(version)} />}
                   </section>
-                  <section className={`rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5 ${styles.approvalHistoryCard}`}>
+                  <section className={`rounded-bw-card border border-[#d9ded6] bg-white p-4 sm:p-5 ${styles.approvalHistoryCard}`}>
                     <h5 className="font-bold text-[#0F3D2E]">Approval</h5>
                     <ApprovalEventHistory events={approvalHistoryEvents} />
                   </section>
@@ -3411,7 +3413,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "financials" && activeAttempt && reservationApproved && (
-            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="min-w-0 scroll-mt-4 rounded-b-xl border border-t-0 border-[#d9ded6] bg-white px-4 py-6 sm:px-6 sm:py-7">
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="min-w-0 scroll-mt-4 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white px-4 py-6 sm:px-6 sm:py-7">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e2ded3] pb-5">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#617169]">Sale workspace</p>
@@ -3424,11 +3426,11 @@ export function SalesReservationWorkflow({
                 </div>
               </div>
 
-              <div className="mt-5 rounded-lg bg-[#F7F5EF] p-4">
+              <div className="mt-5">
                 <h4 className="font-bold text-[#0F3D2E]">Agent fee summary</h4>
                 <p className="mt-1 text-xs text-[#617169]">Expected totals sum the independently penny-rounded Exchange and Completion tranches.</p>
                 <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  <section className="rounded-md bg-white p-4">
+                  <section className="border-t border-[#e2ded3] pt-4 lg:pr-4">
                     <h5 className="font-bold text-[#0F3D2E]">Fee agreement</h5>
                     <div className="mt-3">
                       <KeyValueList items={[
@@ -3441,7 +3443,7 @@ export function SalesReservationWorkflow({
                       ]} />
                     </div>
                   </section>
-                  <section className="rounded-md bg-white p-4">
+                  <section className="border-t border-[#e2ded3] pt-4 lg:border-l lg:pl-4">
                     <h5 className="font-bold text-[#0F3D2E]">Current position</h5>
                     <div className="mt-3">
                       <KeyValueList items={[
@@ -3450,7 +3452,7 @@ export function SalesReservationWorkflow({
                         { label: "Agent contribution credits", value: money(agentFeeSummary.agentContributionCredits) },
                         { label: "Cash payments recorded", value: money(agentFeeSummary.cashPayments) },
                         { label: "Total paid / credited", value: money(agentFeeSummary.totalPaidOrCredited) },
-                        { label: "Outstanding submitted invoices", value: money(agentFeeSummary.submittedInvoiceOutstanding), nowrap: true },
+                        { label: "Outstanding submitted invoices", value: money(agentFeeSummary.submittedInvoiceOutstanding) },
                         { label: "Remaining uninvoiced fee", value: money(agentFeeSummary.uninvoicedNetAmount) },
                       ]} />
                     </div>
@@ -3460,7 +3462,7 @@ export function SalesReservationWorkflow({
               </div>
 
               <div className="mt-5 grid gap-5">
-                <article id="exchange-fee" className="scroll-mt-6 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
+                <article id="exchange-fee" className="scroll-mt-6 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#617169]">Exchange milestone</p>
@@ -3498,7 +3500,7 @@ export function SalesReservationWorkflow({
                           </div>
                           <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(agentInvoiceVersion)}>Open invoice PDF</button>
                           {exchangeAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={exchangeAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
-                          {agentInvoiceNeedsCorrection && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{agentInvoiceDocument?.query_note ?? "A corrected invoice has been requested."}</p>}
+                          {agentInvoiceNeedsCorrection && <p className="mt-3 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{agentInvoiceDocument?.query_note ?? "A corrected invoice has been requested."}</p>}
                         </>
                       ) : <p className="mt-3 text-sm text-[#617169]">Invoice not yet received.</p>}
                     </div>
@@ -3532,7 +3534,7 @@ export function SalesReservationWorkflow({
                       <h5 className="font-bold text-[#0F3D2E]">Developer approval</h5>
                       <p className="mt-1 text-sm text-[#617169]">Review this invoice independently. Approval or rejection does not change the legal sale stage.</p>
                       {showRejectInvoiceConfirm && canRejectAgentInvoice && (
-                        <div ref={invoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-4">
+                        <div ref={invoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-4">
                           <label className="field-label">Reason for rejecting the invoice<input ref={invoiceRejectionInputRef} className="field" value={invoiceRejectionReason} onChange={(event) => setInvoiceRejectionReason(event.target.value)} /></label>
                           <div className="mt-3 flex flex-wrap justify-end gap-2">
                             <button className="secondary" onClick={() => { setShowRejectInvoiceConfirm(false); setInvoiceRejectionReason(""); }}>Cancel</button>
@@ -3567,7 +3569,7 @@ export function SalesReservationWorkflow({
                   )}
                 </article>
 
-                <article id="completion-fee" className="scroll-mt-6 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
+                <article id="completion-fee" className="scroll-mt-6 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div><p className="text-xs font-bold uppercase tracking-[0.1em] text-[#617169]">Completion milestone</p><h4 className="mt-1 text-lg font-bold text-[#0F3D2E]">Completion fee</h4></div>
                     <div className="flex flex-wrap gap-2">
@@ -3601,7 +3603,7 @@ export function SalesReservationWorkflow({
                           </div>
                           <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(completionAgentInvoiceVersion)}>Open Completion invoice PDF</button>
                           {completionAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={completionAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
-                          {completionInvoiceNeedsCorrection && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{completionAgentInvoiceDocument?.query_note ?? "A corrected Completion invoice has been requested."}</p>}
+                          {completionInvoiceNeedsCorrection && <p className="mt-3 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-3 text-sm text-[#7a271a]">{completionAgentInvoiceDocument?.query_note ?? "A corrected Completion invoice has been requested."}</p>}
                         </>
                       ) : <p className="mt-3 text-sm text-[#617169]">Invoice not yet received.</p>}
                     </div>
@@ -3639,7 +3641,7 @@ export function SalesReservationWorkflow({
                       <h5 className="font-bold text-[#0F3D2E]">Developer approval</h5>
                       <p className="mt-1 text-sm text-[#617169]">Review this invoice independently. Approval or rejection does not change the legal sale stage.</p>
                       {showRejectCompletionInvoiceConfirm && canRejectAgentInvoice && (
-                        <div ref={completionInvoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-md border border-[#f1b8b2] bg-[#fff4f2] p-4">
+                        <div ref={completionInvoiceRejectionPanelRef} className="active-panel-target active-panel-with-context mt-4 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] p-4">
                           <label className="field-label">Reason for rejecting the invoice<input ref={completionInvoiceRejectionInputRef} className="field" value={completionInvoiceRejectionReason} onChange={(event) => setCompletionInvoiceRejectionReason(event.target.value)} /></label>
                           <div className="mt-3 flex flex-wrap justify-end gap-2">
                             <button className="secondary" type="button" onClick={() => { setShowRejectCompletionInvoiceConfirm(false); setCompletionInvoiceRejectionReason(""); }}>Cancel</button>
@@ -3677,7 +3679,7 @@ export function SalesReservationWorkflow({
               </div>
 
               {paymentToVoid && canVoidAgentFeePayment && (
-                <div ref={paymentVoidPanelRef} className="active-panel-target active-panel-with-context mt-5 rounded-lg border border-[#e5c4be] bg-[#fff9f7] p-4 sm:p-5">
+                <div ref={paymentVoidPanelRef} className="active-panel-target active-panel-with-context mt-5 rounded-bw-card border border-[#e5c4be] bg-[#fff9f7] p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h4 className="font-bold text-[#7a271a]">Void payment</h4>
@@ -3687,7 +3689,7 @@ export function SalesReservationWorkflow({
                       {completionAgentInvoice?.id === paymentToVoid.invoice_id ? "Completion" : "Exchange"}
                     </span>
                   </div>
-                  <div className="mt-4 grid gap-2 rounded-md bg-white p-3 text-sm text-[#34413a] sm:grid-cols-3">
+                  <div className="mt-4 grid gap-x-4 text-sm text-[#34413a] sm:grid-cols-3">
                     <FieldValue label="Recorded by" value={paymentRecorderLabel(paymentToVoid, profiles, organisations)} />
                     <FieldValue label="Payment date" value={formatDate(paymentToVoid.paid_at)} />
                     <FieldValue label="Original amount" value={money(paymentToVoid.amount)} />
@@ -3778,7 +3780,7 @@ export function SalesReservationWorkflow({
                   ) : (
                     <section className="h-full rounded-md border border-[#e2ded3] bg-white p-4">
                         <h5 className="font-bold text-[#0F3D2E]">Exchange confirmation</h5>
-                        <label className="mt-3 flex items-start gap-3 rounded-md border border-[#eef0eb] bg-[#fbfcfa] p-3 text-sm font-semibold text-[#34413a]">
+                        <label className="mt-3 flex min-h-10 cursor-pointer items-start gap-3 border-t border-[#eef0eb] py-3 text-sm font-semibold text-[#34413a]">
                           <input className="mt-1" type="checkbox" checked={exchangeDepositConfirmed} onChange={(event) => setExchangeDepositConfirmed(event.target.checked)} disabled={!canRecordExchange} />
                           <span>I confirm the exchange deposit of {money(exchangeDepositDue)} has been received in line with the approved commercial terms.</span>
                         </label>
@@ -3965,7 +3967,7 @@ export function SalesReservationWorkflow({
           {activeUnitSection === "progression" && <SaleActivity events={activeWorkflowEvents} actorName={actorName} />}
 
           {activeUnitSection === "progression" && failedAttempts.length > 0 && (
-            <div className="mt-5 rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-4">
+            <div className="mt-5 rounded-bw-card border border-[#d9ded6] bg-[#F7F5EF] p-4">
               <h4 className="text-base font-bold text-[#0F3D2E]">Reservation history</h4>
               <div className="mt-3 grid gap-2">
                 {failedAttempts.map((attempt) => {
@@ -4008,7 +4010,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "financials" && (!activeAttempt || !reservationApproved) && (
-            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="rounded-b-lg border border-t-0 border-[#d9ded6] bg-white p-5 text-sm text-[#617169]">
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-5 text-sm text-[#617169]">
               Agent fees become available after the reservation is approved.
             </section>
           )}

@@ -54,9 +54,9 @@ export function SaleFileWorkspaceTabs({
             <button
               key={workspace.key}
               id={`sale-file-tab-${workspace.key}`}
-              className={`-mb-px flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center border border-t-[3px] px-3 py-1.5 text-center transition-colors ${
+              className={`-mb-px flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center border-b-[3px] px-3 py-1.5 text-center transition-colors ${
                 isActive
-                  ? "rounded-t-md border-x-[var(--bw-border-strong)] border-b-white border-t-[var(--bw-primary)] bg-white text-[var(--bw-primary)]"
+                  ? "border-b-[var(--bw-primary)] bg-white text-[var(--bw-primary)]"
                   : "border-transparent bg-transparent text-[#52645b] hover:border-b-[var(--bw-border-strong)] hover:bg-white/60 hover:text-[var(--bw-primary)]"
               } focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--bw-accent)]`}
               type="button"

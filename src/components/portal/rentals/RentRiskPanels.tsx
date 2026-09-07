@@ -74,7 +74,7 @@ export function PortfolioRentRiskSection({
     .filter((run) => !buildingId || run.building_id === buildingId)
     .sort((left, right) => (right.completed_at ?? "").localeCompare(left.completed_at ?? ""))[0] ?? null;
 
-  return <article className="rounded-lg border border-[#d2ddd5] bg-[#f8fbf9] p-4 lg:col-span-2">
+  return <article className="rounded-bw-card border border-[#d2ddd5] bg-[#f8fbf9] p-4 lg:col-span-2">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Rent risk</h4></div>
@@ -83,7 +83,7 @@ export function PortfolioRentRiskSection({
       {lastImport && <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">Data through {formatDate(lastImport.data_as_of)}</span>}
     </div>
     {loading ? <p className="mt-4 text-sm text-[#617169]" role="status">Loading rent-risk data…</p> : <>
-      <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#dfe6e1] overflow-hidden rounded-lg border border-[#d9ded6] bg-white lg:grid-cols-4 lg:divide-y-0">
+      <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#dfe6e1] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-white lg:grid-cols-4 lg:divide-y-0">
         <RiskMetric label="Current reported episodes" value={String(summary.currentReportedEpisodes)} />
         <RiskMetric label="Repeat-arrears tenancies" value={String(summary.repeatArrearsTenancies)} />
         <RiskMetric label="Current tenancy action required" value={String(summary.actionRequiredTenancies)} tone={summary.actionRequiredTenancies > 0 ? "attention" : "normal"} />
@@ -113,7 +113,7 @@ export function RentPerformancePanel({
   const currentMetrics = deriveTenancyRentRisk(currentTenancyId, tenancyEpisodes, asOfDate);
 
   if (tenancyEpisodes.length === 0) {
-    return <section className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+    return <section className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="flex items-start gap-2">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#286348]" />
         <div>
@@ -142,7 +142,7 @@ export function RentPerformancePanel({
       }} />
     </div>
 
-    <div className="mt-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+    <div className="mt-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Current position</p>
       {currentEpisode ? <>
         <p className="numeric-value mt-1 text-2xl font-bold text-[#0F3D2E]">Latest reported arrears {formatReportedArrears(currentEpisode.latest_reported_amount)}</p>
@@ -152,7 +152,7 @@ export function RentPerformancePanel({
       <p className="mt-3 text-xs leading-relaxed text-[#6b7770]">Reported balances may have changed since the source date. Robinson Jackson’s rent account remains the definitive current position.</p>
     </div>
 
-    <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-lg border border-[#d9ded6] bg-white lg:grid-cols-5 lg:divide-y-0">
+    <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-white lg:grid-cols-5 lg:divide-y-0">
       <RiskMetric label="Current reported position" value={currentMetrics.currentReportedArrears === null ? "No open report" : formatReportedArrears(currentMetrics.currentReportedArrears)} />
       <RiskMetric label="Rolling 12 months" value={`${currentMetrics.rolling12MonthEpisodes} episode${currentMetrics.rolling12MonthEpisodes === 1 ? "" : "s"}`} />
       <RiskMetric label="Historic episodes" value={String(currentMetrics.totalHistoricalEpisodes)} />
@@ -165,7 +165,7 @@ export function RentPerformancePanel({
       <div className="mt-3 grid gap-3">
         {tenancyEpisodes.map((episode) => {
           const eventCount = events.filter((event) => event.episode_id === episode.id).length;
-          return <details key={episode.id} className="group rounded-lg border border-[#d9ded6] bg-white p-4 open:bg-[#fbfcfa]">
+          return <details key={episode.id} className="group rounded-bw-card border border-[#d9ded6] bg-white p-4 open:bg-[#fbfcfa]">
             <summary className="cursor-pointer list-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0F3D2E]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">

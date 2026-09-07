@@ -17,6 +17,7 @@
 .commercialInputs {
   container: commercial-inputs / inline-size;
   min-width: 0;
+  padding: 0.25rem 0;
 }
 
 .previewRail {

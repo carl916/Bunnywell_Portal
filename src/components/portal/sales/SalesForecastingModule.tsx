@@ -347,7 +347,7 @@ export function SalesForecastingModule({
       </div>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+        <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <h3 className="font-bold text-[#0F3D2E]">Scenario inputs</h3>
           <p className="mt-1 text-sm text-[#617169]">
             {selectedBuilding?.name ?? "Selected building"} has {salesRouteUnits.length} units in the current sales route ({buildingUnits.length} total). {currentUnitValues.length} sales-route units currently have sale term values.
@@ -369,15 +369,15 @@ export function SalesForecastingModule({
             <label className="field-label">Development cost<GbpInput value={developmentCost} onChange={setDevelopmentCost} aria-label="Development cost" /></label>
             <label className="field-label md:col-span-2">Investor repayment<GbpInput value={investorRepayment} onChange={setInvestorRepayment} aria-label="Investor repayment" /></label>
           </div>
-          {totalScenarioUnits > buildingUnits.length && <p className="mt-3 rounded-md border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Scenario uses {totalScenarioUnits} units, but this building has {buildingUnits.length} units.</p>}
-          {salesRouteUnitOverflow && <p className="mt-3 rounded-md border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Sell units exceed the {salesRouteUnits.length} units currently in the sales route.</p>}
+          {totalScenarioUnits > buildingUnits.length && <p className="mt-3 rounded-bw-inset border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Scenario uses {totalScenarioUnits} units, but this building has {buildingUnits.length} units.</p>}
+          {salesRouteUnitOverflow && <p className="mt-3 rounded-bw-inset border border-[#f2c38b] bg-[#fff8ed] p-3 text-sm text-[#7a4a12]">Sell units exceed the {salesRouteUnits.length} units currently in the sales route.</p>}
           <div className="mt-4 flex justify-end">
             <button className="primary" onClick={() => void saveScenario()} disabled={isSaving || isLoading || totalScenarioUnits > buildingUnits.length || salesRouteUnitOverflow}>Save scenario</button>
           </div>
         </div>
 
         <div className="grid gap-4">
-          <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
             <h3 className="font-bold text-[#0F3D2E]">Live forecast</h3>
             <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
               <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Sale proceeds</span><strong className="numeric-value">{money(currentScenario.saleRevenue)}</strong></div>
@@ -392,7 +392,7 @@ export function SalesForecastingModule({
             <p className="mt-3 text-xs text-[#617169]">Initial estimate: per-unit allocation and tax/accounting treatment can be refined in later forecasting slices.</p>
           </div>
 
-          <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+          <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
             <h3 className="font-bold text-[#0F3D2E]">Saved scenario comparison</h3>
             {scenarios.length === 0 ? (
               <p className="mt-3 text-sm text-[#617169]">No saved scenarios yet.</p>

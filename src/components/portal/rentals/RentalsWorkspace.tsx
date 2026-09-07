@@ -171,7 +171,7 @@ function TenancyForm({ tenancy, unit, lettingAgents, isAdmin, onCancel, onSaved,
     } finally { setSaving(false); }
   }
 
-  return <div className="rounded-lg border border-[#d9ded6] bg-white p-4 sm:p-5">
+  return <div className="rounded-bw-card border border-[#d9ded6] bg-white p-4 sm:p-5">
     <h4 className="font-bold text-[#0F3D2E]">{tenancy ? "Edit tenancy" : "Add tenancy"}</h4>
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       <label className="field-label md:col-span-2">Tenant name(s)<input className="field" value={draft.tenantName} onChange={(event) => set("tenantName", event.target.value)} /></label>
@@ -263,14 +263,14 @@ function RentalFile({
     {!editingTenancyId && tab === "current" && <section className="panel">
       {current ? <>
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-xl font-bold text-[#0F3D2E]">Current tenancy</h3><p className="mt-1 text-sm text-[#617169]">The unit remains occupied until an actual tenancy end is recorded.</p></div><button className="secondary" onClick={() => setEditingTenancyId(current.id)}>Edit</button></div>
-        <dl className="mt-5 divide-y divide-[#e6e9e4] rounded-lg border border-[#dfe3dd] bg-[#fbfcfa] px-4">
+        <dl className="mt-5 divide-y divide-[#e6e9e4] rounded-bw-card border border-[#dfe3dd] bg-[#fbfcfa] px-4">
           <div className="py-4"><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Tenant</dt><dd className="mt-1 text-lg font-semibold text-[#26342d]">{current.tenant_name}</dd></div>
           <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Tenancy</dt><dd className="mt-1 font-semibold text-[#34413a]">{formatLongDate(current.tenancy_start_date)} – ongoing</dd><dd className="mt-1 text-sm text-[#617169]">Fixed term: {formatLongDate(current.fixed_term_end_date)}</dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Rent</dt><dd className="numeric-value mt-1 text-lg font-semibold text-[#34413a]">{formatGbp(current.monthly_rent)} pcm</dd><dd className="mt-1 text-sm text-[#617169]">Due: {ordinal(current.rent_due_day)}</dd></div></div>
           <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Deposit</dt><dd className="numeric-value mt-1 font-semibold text-[#34413a]">{current.deposit_amount === null ? "Not recorded" : formatGbp(current.deposit_amount)}</dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Letting agent</dt><dd className="mt-1 font-semibold text-[#34413a]">{lettingAgent?.name ?? "Not recorded"}</dd></div></div>
         </dl>
         {(current.source_reference || current.notes) && <div className="mt-4 grid gap-3 text-sm text-[#617169] sm:grid-cols-2">{current.source_reference && <div><p className="text-xs font-bold uppercase tracking-[0.06em]">Source / reference</p><p className="mt-1 break-words">{current.source_type.replace(/_/g, " ")} · {current.source_reference}</p></div>}{current.notes && <div><p className="text-xs font-bold uppercase tracking-[0.06em]">Notes</p><p className="mt-1 whitespace-pre-line">{current.notes}</p></div>}</div>}
-      </> : unit.rental_portfolio_status === "exited" ? <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-6"><h3 className="text-xl font-bold text-[#0F3D2E]">Exited rental portfolio</h3><p className="mt-2 text-sm text-[#617169]">Current occupancy is not tracked for exited units. Historical tenancy records remain available and editable.</p><button className="secondary mt-4" onClick={() => setTab("history")}>View tenancy history</button></div> : <div className="rounded-lg border border-[#ead8a7] bg-[#fffaf0] p-6"><h3 className="text-xl font-bold text-[#765a18]">Void</h3><p className="mt-2 text-sm text-[#617169]">{metrics.currentVoid?.days !== null ? `No active tenancy. ${metrics.currentVoid?.days ?? 0} current void days since ${formatDate(metrics.currentVoid?.startDate)}.` : next ? `No active tenancy yet. The first recorded tenancy starts ${formatDate(next.tenancy_start_date)}.` : "No tenancy has been recorded for this rental unit."}</p><button className="primary mt-4" onClick={() => setEditingTenancyId("new")}>Add tenancy</button></div>}
-      {next && <div className="mt-5 rounded-lg border border-[#bfd8df] bg-[#f4fbfc] p-4"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold uppercase text-[#315f6a]">Next tenancy</p><h4 className={`mt-1 font-bold text-[#0F3D2E] ${isRealTenantName(next.tenant_name) ? "" : "opacity-60"}`}>{next.tenant_name}</h4><p className="mt-1 text-sm text-[#617169]">Starts {formatDate(next.tenancy_start_date)} · {formatGbp(next.monthly_rent)} per month</p></div><button className="secondary" onClick={() => setEditingTenancyId(next.id)}>Edit</button></div></div>}
+      </> : unit.rental_portfolio_status === "exited" ? <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-6"><h3 className="text-xl font-bold text-[#0F3D2E]">Exited rental portfolio</h3><p className="mt-2 text-sm text-[#617169]">Current occupancy is not tracked for exited units. Historical tenancy records remain available and editable.</p><button className="secondary mt-4" onClick={() => setTab("history")}>View tenancy history</button></div> : <div className="rounded-bw-card border border-[#ead8a7] bg-[#fffaf0] p-6"><h3 className="text-xl font-bold text-[#765a18]">Void</h3><p className="mt-2 text-sm text-[#617169]">{metrics.currentVoid?.days !== null ? `No active tenancy. ${metrics.currentVoid?.days ?? 0} current void days since ${formatDate(metrics.currentVoid?.startDate)}.` : next ? `No active tenancy yet. The first recorded tenancy starts ${formatDate(next.tenancy_start_date)}.` : "No tenancy has been recorded for this rental unit."}</p><button className="primary mt-4" onClick={() => setEditingTenancyId("new")}>Add tenancy</button></div>}
+      {next && <div className="mt-5 rounded-bw-card border border-[#bfd8df] bg-[#f4fbfc] p-4"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold uppercase text-[#315f6a]">Next tenancy</p><h4 className={`mt-1 font-bold text-[#0F3D2E] ${isRealTenantName(next.tenant_name) ? "" : "opacity-60"}`}>{next.tenant_name}</h4><p className="mt-1 text-sm text-[#617169]">Starts {formatDate(next.tenancy_start_date)} · {formatGbp(next.monthly_rent)} per month</p></div><button className="secondary" onClick={() => setEditingTenancyId(next.id)}>Edit</button></div></div>}
     </section>}
 
     {!editingTenancyId && tab === "current" && <RentPerformancePanel
@@ -282,7 +282,7 @@ function RentalFile({
 
     {!editingTenancyId && tab === "history" && <section className="panel min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-xl font-bold text-[#0F3D2E]">Tenancy history</h3><p className="mt-1 text-sm text-[#617169]">Lifetime performance from the first recorded tenancy.</p></div><button className="primary" onClick={() => setEditingTenancyId("new")}>Add tenancy</button></div>
-      <div className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-lg border border-[#d9ded6] bg-[#fbfcfa] md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+      <div className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
         <PerformanceMetric label="Recorded tenancies" value={String(metrics.tenancyCount)} />
         <PerformanceMetric label="Recorded void" value={`${metrics.voidDays} days`} />
         <PerformanceMetric label="Estimated void loss" value={metrics.estimatedVoidLoss === null ? "Unknown" : formatGbp(metrics.estimatedVoidLoss)} />
@@ -290,12 +290,12 @@ function RentalFile({
         <PerformanceMetric label="Current rent" value={metrics.currentRent === null ? "—" : formatGbp(metrics.currentRent)} />
         <PerformanceMetric label="Rent movement" value={rentMovementText(metrics.currentVsFirstRent)} tone={(metrics.currentVsFirstRent?.amount ?? 0) < 0 ? "negative" : "normal"} />
       </div>
-      {history.length === 0 ? <p className="mt-5 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] px-4 py-8 text-center text-sm text-[#617169]">No tenancy history recorded.</p> : <>
+      {history.length === 0 ? <p className="mt-5 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] px-4 py-8 text-center text-sm text-[#617169]">No tenancy history recorded.</p> : <>
         <div className="mt-5 grid gap-3 md:hidden">
           {history.map(({ tenancy, rentChange: latestChange, voidDaysBefore }) => {
             const state = tenancyState(tenancy);
             const hasArrears = state === "ended" && arrearsTenancyIds.has(tenancy.id);
-            return <article key={tenancy.id} className="rounded-lg border border-[#d9ded6] bg-white p-4">
+            return <article key={tenancy.id} className="rounded-bw-card border border-[#d9ded6] bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h4 className={`font-semibold ${isRealTenantName(tenancy.tenant_name) ? "text-[#34413a]" : "text-[#89928d]"}`}>{tenancy.tenant_name}</h4>
@@ -314,7 +314,7 @@ function RentalFile({
             </article>;
           })}
         </div>
-        <div className="mt-5 hidden overflow-x-auto rounded-lg border border-[#d9ded6] md:block">
+        <div className="mt-5 hidden overflow-x-auto rounded-bw-panel border border-[#d9ded6] md:block">
           <table className="min-w-[64rem] w-full text-left text-sm">
             <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]"><tr>{["Tenant", "Start", "Fixed-term end", "Actual end", "Monthly rent", "Rent change", "Void before", "Letting agent", ""].map((heading) => <th key={heading} className="border-b border-[#d9ded6] px-3 py-3">{heading}</th>)}</tr></thead>
             <tbody>{history.map(({ tenancy, rentChange: latestChange, voidDaysBefore }) => {
@@ -555,14 +555,14 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
     <section className="panel min-w-0">
       <SectionHeading eyebrow="Current position" title="Portfolio today" description={`Position at ${formatLongDate(reportingDate)}`} />
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_1.45fr]">
-        <dl className="grid grid-cols-3 divide-x divide-[#dfe4de] overflow-hidden rounded-lg border border-[#d9ded6] bg-[#fbfcfa]"><PerformanceMetric label="Rental units" value={String(current.rentalUnits)} /><PerformanceMetric label="Occupied" value={`${current.occupied} / ${formatPercentage(current.occupancyPercentage)}`} /><PerformanceMetric label="Void" value={String(current.void)} tone={current.void > 0 ? "negative" : "normal"} /></dl>
-        <dl className="grid grid-cols-2 divide-x divide-[#cbd9d0] overflow-hidden rounded-lg border border-[#bdd0c4] bg-[#f1f7f3]"><PerformanceMetric label="Monthly rent roll" value={formatGbp(current.monthlyRentRoll)} detail="Active tenancies today" /><PerformanceMetric label="Annualised rent roll" value={formatGbp(current.annualisedRentRoll)} detail="Current monthly rent × 12" /></dl>
+        <dl className="grid grid-cols-3 divide-x divide-[#dfe4de] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa]"><PerformanceMetric label="Rental units" value={String(current.rentalUnits)} /><PerformanceMetric label="Occupied" value={`${current.occupied} / ${formatPercentage(current.occupancyPercentage)}`} /><PerformanceMetric label="Void" value={String(current.void)} tone={current.void > 0 ? "negative" : "normal"} /></dl>
+        <dl className="grid grid-cols-2 divide-x divide-[#cbd9d0] overflow-hidden rounded-bw-card border border-[#bdd0c4] bg-[#f1f7f3]"><PerformanceMetric label="Monthly rent roll" value={formatGbp(current.monthlyRentRoll)} detail="Active tenancies today" /><PerformanceMetric label="Annualised rent roll" value={formatGbp(current.annualisedRentRoll)} detail="Current monthly rent × 12" /></dl>
       </div>
     </section>
 
     <section className="panel">
       <SectionHeading eyebrow="Performance" title="Recorded performance" description="Calculated from recorded tenancy periods" action={<label className="field-label min-w-[15rem]">Reporting period<select aria-label="Reporting period" className="field" value={reportingPeriod} onChange={(event) => { setReportingPeriod(event.target.value as RentalReportingPeriod); setPage(1); }}><option value="lifetime">Since first recorded tenancy</option><option value="ytd">Year to date</option><option value="last_12_months">Last 12 months</option></select></label>} />
-      <div className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-lg border border-[#d9ded6] bg-[#fbfcfa] lg:grid-cols-5 lg:divide-y-0">
+      <div className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#e2e6e0] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] lg:grid-cols-5 lg:divide-y-0">
         <PerformanceMetric label="Historical occupancy" value={formatPercentage(historical.occupancyPercentage)} detail="Occupied days ÷ measured available days" />
         <PerformanceMetric label="Recorded void days" value={`${historical.voidDays} days`} detail="Excludes days before first recorded tenancy" />
         <PerformanceMetric label="Estimated void rent loss" value={historical.estimatedVoidLoss === null ? "Unknown" : formatGbp(historical.estimatedVoidLoss)} detail="Using rent immediately before each void" />
@@ -583,19 +583,19 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
           asOfDate={reportingDate}
           loading={loading}
         />
-        <article className="rounded-lg border border-[#d9ded6] p-4">
+        <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><Home className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Longest recorded void</h4></div>
           {attention.longestVoid ? <div className="mt-3"><p className="text-xl font-bold text-[#0F3D2E]">Unit {attention.longestVoid.unit.unit_number} · {attention.longestVoid.period.days} days</p><p className="mt-1 text-sm text-[#617169]">{formatDate(attention.longestVoid.period.startDate)} – {formatDate(attention.longestVoid.period.endDate)}</p><p className="mt-2 text-sm font-semibold text-[#34413a]">Estimated loss: {attention.longestVoid.period.estimatedLoss === null ? "Unknown" : formatGbp(attention.longestVoid.period.estimatedLoss)}</p></div> : <p className="mt-3 text-sm text-[#617169]">No recorded void periods in this reporting period.</p>}
         </article>
-        <article className="rounded-lg border border-[#d9ded6] p-4">
+        <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><TrendingDown className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Largest current rent reduction</h4></div>
           {attention.largestRentReduction ? <div className="mt-3"><p className="text-xl font-bold text-[#8d382d]">Unit {attention.largestRentReduction.unit.unit_number} · {rentMovementText(attention.largestRentReduction.movement)}</p><p className="mt-1 text-sm text-[#617169]">First achieved {formatGbp(attention.largestRentReduction.firstRent)} · current {formatGbp(attention.largestRentReduction.currentRent)}</p></div> : <p className="mt-3 text-sm text-[#617169]">No occupied unit is below its first achieved rent.</p>}
         </article>
-        <article className="rounded-lg border border-[#d9ded6] p-4">
+        <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Upcoming fixed-term dates</h4></div>
           {attention.upcomingFixedTerms.recorded > 0 ? <dl className="mt-3 grid grid-cols-3 divide-x divide-[#e2e6e0]"><PerformanceMetric label="30 days" value={String(attention.upcomingFixedTerms.within30Days)} /><PerformanceMetric label="60 days" value={String(attention.upcomingFixedTerms.within60Days)} /><PerformanceMetric label="90 days" value={String(attention.upcomingFixedTerms.within90Days)} /></dl> : <p className="mt-3 text-sm text-[#617169]">No future fixed-term dates are recorded for current tenancies.</p>}
         </article>
-        <article className="rounded-lg border border-[#d9ded6] p-4">
+        <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Current voids</h4></div>
           {attention.currentVoids.length === 0 ? <p className="mt-3 text-sm text-[#617169]">No current voids.</p> : <div className="mt-3 divide-y divide-[#e5e8e3]">{attention.currentVoids.map(({ unit, details, nextTenancy: scheduled }) => <div key={unit.id} className="py-2 first:pt-0"><p className="font-semibold text-[#34413a]">Unit {unit.unit_number} · {details.days === null ? "not yet measured" : `${details.days} days`}</p><p className="mt-0.5 text-sm text-[#617169]">Previous rent {details.previousMonthlyRent === null ? "unknown" : formatGbp(details.previousMonthlyRent)} · loss {details.estimatedLoss === null ? "unknown" : formatGbp(details.estimatedLoss)}{scheduled ? ` · next tenancy ${formatDate(scheduled.tenancy_start_date)}` : ""}</p></div>)}</div>}
         </article>
@@ -610,7 +610,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
         <label className="field-label">Performance / attention<select className="field" value={attentionFilter} onChange={(event) => { setAttentionFilter(event.target.value as AttentionFilter); setPage(1); }}><option value="all">All</option><option value="current_arrears">Current arrears</option><option value="repeat_arrears">Repeat arrears</option><option value="reconciliation_required">Reconciliation required</option><option value="current_voids">Current voids</option><option value="rent_below_first">Rent below first achieved</option><option value="ending_within_90">Tenancy ending within 90 days</option></select></label>
       </div>
       {loading ? <p className="mt-5 text-sm text-[#617169]" role="status">Loading rental portfolio…</p> : <>
-        <div className="mt-5 overflow-x-auto rounded-lg border border-[#d9ded6]"><table className="min-w-[72rem] w-full text-left text-sm">
+        <div className="mt-5 overflow-x-auto rounded-bw-panel border border-[#d9ded6]"><table className="min-w-[72rem] w-full text-left text-sm">
           <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]"><tr><th className="border-b border-[#d9ded6] px-3 py-3">Unit</th>{!buildingId && <th className="border-b border-[#d9ded6] px-3 py-3">Building</th>}{["Occupancy", "Attention", "Current rent", "Rent movement", "Current tenancy", "Tenancies", "Recorded void", "Next event"].map((heading) => <th key={heading} className="border-b border-[#d9ded6] px-3 py-3">{heading}</th>)}</tr></thead>
           <tbody>{pagedUnits.length === 0 ? <tr><td colSpan={buildingId ? 9 : 10} className="px-4 py-8 text-center text-[#617169]">No rental units match the selected filters.</td></tr> : pagedUnits.map((unit) => {
             const metrics = metricsByUnitId.get(unit.id) as RentalUnitPerformance;

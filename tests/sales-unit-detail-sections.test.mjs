@@ -103,11 +103,12 @@ test("selecting the Financials tab does not scroll to a fee milestone", () => {
   assert.doesNotMatch(body, /openAgentFees|scrollToPortalSection|hash:/);
 });
 
-test("sale file workspaces use a connected shared three-column tab rail", () => {
+test("sale file workspaces use a prominent three-column underline tab rail", () => {
   assert.match(workflowSource, /<SaleFileWorkspaceTabs activeWorkspace=/);
   assert.match(workspaceTabsSource, /min-w-\[24rem\] grid-cols-3 border-b/);
   assert.match(workspaceTabsSource, /min-h-\[3\.25rem\] min-w-0/);
-  assert.match(workspaceTabsSource, /border-b-white border-t-\[var\(--bw-primary\)\] bg-white/);
+  assert.match(workspaceTabsSource, /border-b-\[var\(--bw-primary\)\] bg-white/);
+  assert.doesNotMatch(workspaceTabsSource, /rounded-t-|border-x-|border-t-\[3px\]/);
   assert.doesNotMatch(workspaceTabsSource, /shadow-|bg-\[var\(--bw-primary\)\] text-white|<Check/);
   assert.match(workspaceTabsSource, /description: "Sale lifecycle"/);
   assert.match(workspaceTabsSource, /text-\[0\.68rem\] font-medium/);
