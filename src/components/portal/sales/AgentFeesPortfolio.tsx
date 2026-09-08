@@ -1,5 +1,7 @@
 "use client";
 
+import { SalesTableScroll } from "./SalesTableScroll";
+
 import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { formatGbp } from "@/lib/sales/currency";
@@ -220,14 +222,14 @@ export function AgentFeesPortfolio({
               <label className="field-label">Milestone<select className="field" value={milestoneFilter} onChange={(event) => setMilestoneFilter(event.target.value as AgentFeePortfolioMilestoneFilter)}>{milestoneFilters.map((filter) => <option key={filter.value} value={filter.value}>{filter.label}</option>)}</select></label>
             </div>
 
-            <div className="mt-5 overflow-x-auto rounded-bw-panel border border-[#d9ded6]">
+            <SalesTableScroll label="Agent fees" className="mt-5 rounded-bw-panel border border-[#d9ded6]">
               <table className="min-w-[52rem] w-full text-left text-sm">
                 <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                   <tr>
                     <th className="border-b border-[#d9ded6] px-4 py-3">Unit</th>
                     <th className="border-b border-[#d9ded6] px-4 py-3">Building</th>
-                    <th className="hidden border-b border-[#d9ded6] px-4 py-3 lg:table-cell">Agent</th>
-                    <th className="numeric-value hidden border-b border-[#d9ded6] px-4 py-3 text-right lg:table-cell">Sale price</th>
+                    <th className="border-b border-[#d9ded6] px-4 py-3">Agent</th>
+                    <th className="numeric-value border-b border-[#d9ded6] px-4 py-3 text-right">Sale price</th>
                     <th className="border-b border-[#d9ded6] px-4 py-3">Exchange invoice</th>
                     <th className="border-b border-[#d9ded6] px-4 py-3">Completion invoice</th>
                     <th className="numeric-value border-b border-[#d9ded6] px-4 py-3 text-right">Current outstanding</th>
@@ -252,8 +254,8 @@ export function AgentFeesPortfolio({
                     >
                       <td className="border-b border-[#eef0eb] px-4 py-3 font-bold text-[#0F3D2E]"><span className="inline-flex items-center gap-1">Unit {row.unitNumber}<ChevronRight size={15} aria-hidden /></span>{row.noLongerForSale && <span className="mt-1 block w-fit rounded-full border border-[#decda6] bg-[#fbf5e8] px-2 py-0.5 text-[11px] font-bold text-[#765a18]">No longer for sale</span>}</td>
                       <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{row.buildingName}</td>
-                      <td className="hidden border-b border-[#eef0eb] px-4 py-3 text-[#34413a] lg:table-cell">{row.agentName}</td>
-                      <td className="numeric-value hidden border-b border-[#eef0eb] px-4 py-3 text-right text-[#34413a] lg:table-cell">{formatGbp(row.salePrice)}</td>
+                      <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{row.agentName}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-4 py-3 text-right text-[#34413a]">{formatGbp(row.salePrice)}</td>
                       <td className="border-b border-[#eef0eb] px-4 py-3"><span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${invoiceStatusTone(row.exchange)}`}>{invoiceStatusLabel(row.exchange)}</span></td>
                       <td className="border-b border-[#eef0eb] px-4 py-3"><span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${invoiceStatusTone(row.completion)}`}>{invoiceStatusLabel(row.completion)}</span></td>
                       <td className="numeric-value border-b border-[#eef0eb] px-4 py-3 text-right font-bold text-[#0F3D2E]">{formatGbp(row.currentOutstanding)}</td>
@@ -261,7 +263,7 @@ export function AgentFeesPortfolio({
                   ))}
                 </tbody>
               </table>
-            </div>
+            </SalesTableScroll>
             <p className="mt-3 text-xs text-[#617169]">Current outstanding includes submitted or approved invoice balances. Future uninvoiced Completion fees are shown separately as net.</p>
           </>
         )}

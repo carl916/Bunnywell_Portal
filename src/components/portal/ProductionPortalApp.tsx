@@ -1564,9 +1564,9 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
 
   if (tabs.includes("dashboard")) items.push({ key: "dashboard", label: "Dashboard", tab: "dashboard", activeTabs: ["dashboard"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
-  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("sales")) items.push({ key: "sales", label: "Sales", tab: "sales", activeTabs: ["sales"], icon: <ClipboardCheck size={17} aria-hidden /> });
   if (tabs.includes("rentals")) items.push({ key: "rentals", label: "Rentals", tab: "rentals", activeTabs: ["rentals"], icon: <Building2 size={17} aria-hidden /> });
+  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1604,16 +1604,16 @@ function Shell({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const navItems = primaryNavItemsForTabs(tabs);
-  const mobilePrimaryItems = navItems.slice(0, 4);
-  const mobileMoreItems = navItems.slice(4);
+  const primaryItems = navItems.filter((item) => !["setup", "units"].includes(item.key)).slice(0, 4);
+  const secondaryItems = navItems.filter((item) => !primaryItems.includes(item));
   const mobileNavItems: Array<{ tab?: Tab; label: string; icon: React.ReactNode; isMore?: boolean; activeTabs?: Tab[] }> = [
-    ...mobilePrimaryItems.map((item) => ({
+    ...primaryItems.map((item) => ({
       tab: item.tab,
       label: item.label,
       icon: item.icon,
       activeTabs: item.activeTabs,
     })),
-    ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
+    { label: "More", icon: <Menu size={20} aria-hidden />, isMore: true },
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
   const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
@@ -1635,7 +1635,7 @@ function Shell({
   }
 
   return (
-    <main className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
+    <main data-portal-screen={profile ? tab : undefined} className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
       <header className="app-header">
         <EnvironmentBanner />
         <div className="portal-header-content mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -1703,14 +1703,14 @@ function Shell({
               )}
             </div>
             {hasMobileMenu && (
-              <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
+              <div className="md:hidden"><button className="secondary min-h-10 px-3" onClick={() => setMoreOpen(true)} aria-label="Open menu">
                 <Menu size={18} aria-hidden />
-              </button>
+              </button></div>
             )}
           </div>
           {tabs.length > 0 && (
-            <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex">
-              {navItems.map((item) => (
+            <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex" aria-label="Primary navigation">
+              {primaryItems.map((item) => (
                 <button
                   key={item.key}
                   onClick={() => chooseTab(item.tab)}
@@ -1720,6 +1720,9 @@ function Shell({
                   {item.label}
                 </button>
               ))}
+              <button className={`nav-pill ${moreOpen || secondaryItems.some((item) => item.activeTabs.includes(tab)) ? "nav-pill-active" : ""}`} onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen}>
+                <Menu size={17} aria-hidden />More
+              </button>
             </nav>
           )}
         </div>
@@ -1742,7 +1745,7 @@ function Shell({
           {mobileNavItems.map((item) => (
             <button
               key={item.isMore ? "more" : item.tab}
-              className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && moreOpen) ? "mobile-nav-item-active" : ""}`}
+              className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && (moreOpen || secondaryItems.some((link) => link.activeTabs.includes(tab)))) ? "mobile-nav-item-active" : ""}`}
               onClick={() => item.isMore ? setMoreOpen(true) : item.tab && chooseTab(item.tab)}
               type="button"
             >
@@ -1753,7 +1756,7 @@ function Shell({
         </nav>
       )}
       {hasMobileMenu && moreOpen && (
-        <div className="mobile-menu-backdrop md:hidden" onClick={() => setMoreOpen(false)}>
+        <div className="mobile-menu-backdrop" onClick={() => setMoreOpen(false)}>
           <aside className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 border-b border-[#E2DED3] pb-3">
               <div className="min-w-0">
@@ -1802,7 +1805,7 @@ function Shell({
               </div>
             )}
             <div className="mt-4 grid gap-2">
-              {[...mobileMoreItems, ...mobilePrimaryItems].map((item) => (
+              {[...primaryItems, ...secondaryItems].map((item) => (
                 <button key={item.key} className={`menu-row ${item.activeTabs.includes(tab) ? "menu-row-active" : ""}`} onClick={() => chooseTab(item.tab)}>
                   {item.icon}
                   <span>{item.label}</span>

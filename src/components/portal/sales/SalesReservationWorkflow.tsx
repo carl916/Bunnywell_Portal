@@ -1,5 +1,8 @@
 "use client";
 
+import { SalesTableScroll } from "./SalesTableScroll";
+import { isMissingSaleActorNames, salesLoadErrorMessage } from "@/lib/sales/load-errors";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CheckCircle2, FileText, UploadCloud, X } from "lucide-react";
@@ -17,7 +20,7 @@ import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
 import { SaleConversationLayout, SaleMentionsInbox, UnreadBadge, useSaleConversationLayout, useSaleUnread } from "./SaleConversation";
 import { useActivePanel } from "@/hooks/useActivePanel";
-import { historicalActorLabel } from "@/lib/sales/actor-identity";
+import { historicalActorLabel, workflowActorLabel, type ActorProfile, type SaleActorName } from "@/lib/sales/actor-identity";
 import { currentSalesTask, getCompletionDocumentState, getCompletionTasks, getExchangeTasks, getReservationTasks } from "@/lib/sales/stage-tasks";
 import { SalesStageTasks } from "./SalesStageTasks";
 import { parsePercentInput } from "@/lib/sales/percentages";
@@ -156,6 +159,8 @@ type SaleDocument = {
   updated_at: string;
 };
 
+type SaleActorProfile = ActorProfile & { organisation_id?: string | null };
+
 type SaleDocumentVersion = {
   id: string;
   document_id: string;
@@ -177,6 +182,7 @@ type SaleWorkflowEvent = {
   summary: string;
   metadata: Record<string, unknown> | null;
   created_by_user_id: string | null;
+  actor_name?: string | null;
   created_at: string;
 };
 
@@ -252,9 +258,12 @@ function SalesViewTabs({
   onChange: (view: SalesView) => void;
 }) {
   return (
-    <div className="mt-4 flex flex-wrap gap-2 border-t border-[#eef0eb] pt-4" role="tablist" aria-label="Sales views">
+    <div className={styles.headerControls}>
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-[#eef0eb] pt-4" role="tablist" aria-label="Sales views">
       <button className={activeView === "pipeline" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "pipeline"} onClick={() => onChange("pipeline")}>Sales overview</button>
       {canViewAgentFees && <button className={activeView === "agent_fees" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "agent_fees"} onClick={() => onChange("agent_fees")}>Agent Fees</button>}
+      </div>
+      <div className={styles.headerMentions}><SaleMentionsInbox /></div>
     </div>
   );
 }
@@ -277,14 +286,13 @@ function formatDateTime(value?: string | null) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function paymentRecorderLabel(payment: SaleInvoicePayment, profiles: Profile[], organisations: Organisation[]) {
+function paymentRecorderLabel(payment: SaleInvoicePayment, profiles: SaleActorProfile[]) {
   const profile = payment.recorded_by_user_id
     ? profiles.find((candidate) => candidate.id === payment.recorded_by_user_id)
     : undefined;
-  const organisationName = payment.recorded_by_organisation_name
-    ?? organisations.find((organisation) => organisation.id === profile?.organisation_id)?.name
-    ?? null;
+  const organisationName = payment.recorded_by_organisation_name;
   const actorName = payment.recorded_by_name
+    ?? profile?.display_name
     ?? profile?.full_name
     ?? profile?.name
     ?? payment.recorded_by_email
@@ -782,7 +790,6 @@ function AgentInvoicePaymentSection({
   position,
   payments,
   profiles,
-  organisations,
   canRecord,
   canVoid,
   isSaving,
@@ -796,8 +803,7 @@ function AgentInvoicePaymentSection({
 }: {
   position: ReturnType<typeof deriveInvoicePaymentPosition>;
   payments: SaleInvoicePayment[];
-  profiles: Profile[];
-  organisations: Organisation[];
+  profiles: SaleActorProfile[];
   canRecord: boolean;
   canVoid: boolean;
   isSaving: boolean;
@@ -873,7 +879,7 @@ function AgentInvoicePaymentSection({
             {sortedPayments.map((payment) => (
               <div key={payment.id} className={`py-2.5 text-sm ${payment.voided_at ? "text-[#617169]" : "text-[#34413a]"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-                  <span className="min-w-0">{formatDate(payment.paid_at)} · {paymentRecorderLabel(payment, profiles, organisations)}</span>
+                  <span className="min-w-0">{formatDate(payment.paid_at)} · {paymentRecorderLabel(payment, profiles)}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     {payment.voided_at && <span className="text-xs font-bold uppercase tracking-[0.06em] text-[#7a271a]">Voided</span>}
                     <strong className={`numeric-value ${payment.voided_at ? "line-through" : ""}`}>{money(payment.amount)}</strong>
@@ -971,7 +977,6 @@ export function SalesReservationWorkflow({
   user,
   profile,
   profiles: portalProfiles,
-  organisations,
   buildings,
   buildingFloors,
   units,
@@ -1006,8 +1011,11 @@ export function SalesReservationWorkflow({
     [buildingFloors, buildingId, units],
   );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
-  const [saleActorProfiles, setSaleActorProfiles] = useState<Profile[]>([]);
-  const profiles = [...portalProfiles, ...saleActorProfiles.filter((actor) => !portalProfiles.some((person) => person.id === actor.id))];
+  const [saleActorNames, setSaleActorNames] = useState<SaleActorName[]>([]);
+  const profiles: SaleActorProfile[] = [
+    ...portalProfiles.map((profile) => ({ ...profile, display_name: saleActorNames.find((actor) => actor.id === profile.id)?.display_name })),
+    ...saleActorNames.filter((actor) => !portalProfiles.some((person) => person.id === actor.id)),
+  ];
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
   const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
   const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
@@ -1178,32 +1186,25 @@ export function SalesReservationWorkflow({
   const completionReady = exchangeRecorded && completionDocumentsApproved;
   const completionRecorded = activeAttempt ? activeAttempt.workflow_status === "completed" || Boolean(activeAttempt.completed_at) : false;
 
-  function actorName(userId?: string | null) {
-    return historicalActorLabel({ userId, profiles, fallback: userId ? "Unknown user" : "Not recorded" });
-  }
-
-  const commercialApprovedBy = actorName(commercialApprovalEvent?.created_by_user_id ?? activeAttempt?.commercial_approved_by_user_id);
-  const exchangeRecordedBy = actorName(exchangeRecordedEvent?.created_by_user_id);
-  const completionDocumentsApprovedBy = actorName(
-    completionApprovalEvent?.created_by_user_id
-      ?? completionStatementDocument?.approved_by_user_id
-      ?? statementOfAccountDocument?.approved_by_user_id,
-  );
+  const commercialApprovedBy = workflowActorLabel(commercialApprovalEvent, profiles, activeAttempt?.commercial_approved_by_user_id);
+  const exchangeRecordedBy = workflowActorLabel(exchangeRecordedEvent, profiles);
+  const completionDocumentsApprovedBy = workflowActorLabel(completionApprovalEvent, profiles,
+    completionStatementDocument?.approved_by_user_id ?? statementOfAccountDocument?.approved_by_user_id);
   const completionDocumentsApprovedAt = completionApprovalEvent?.created_at
     ?? completionStatementDocument?.approved_at
     ?? statementOfAccountDocument?.approved_at;
-  const completionRecordedBy = actorName(completionRecordedEvent?.created_by_user_id);
+  const completionRecordedBy = workflowActorLabel(completionRecordedEvent, profiles);
   const taskActorName = (userId?: string | null) => historicalActorLabel({ userId, profiles, fallback: "" });
   const completionTasks = getCompletionTasks({
     exchangeRecorded, completionRecorded, documents: completionDocumentState,
     uploadedBy: taskActorName(completionDocumentState.uploadedByUserId),
-    approvedBy: taskActorName(completionApprovalEvent?.created_by_user_id ?? completionStatementDocument?.approved_by_user_id ?? statementOfAccountDocument?.approved_by_user_id),
-    recordedBy: taskActorName(completionRecordedEvent?.created_by_user_id),
+    approvedBy: completionDocumentsApprovedBy,
+    recordedBy: completionRecordedBy,
   });
   const exchangeTasks = getExchangeTasks({
     reservationApproved, commercialApproved, exchangeRecorded,
-    commercialApprovedBy: taskActorName(commercialApprovalEvent?.created_by_user_id ?? activeAttempt?.commercial_approved_by_user_id),
-    exchangeRecordedBy: taskActorName(exchangeRecordedEvent?.created_by_user_id),
+    commercialApprovedBy,
+    exchangeRecordedBy,
   });
   const persistedCompletionQuery = typeof completionQueryEvent?.metadata?.queryNote === "string"
     ? completionQueryEvent.metadata.queryNote : completionStatementDocument?.query_note ?? statementOfAccountDocument?.query_note;
@@ -1922,7 +1923,7 @@ export function SalesReservationWorkflow({
     let defaultsQuery = supabase.from("building_sale_defaults").select("*");
     if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
     const { data: defaultRows, error: defaultsError } = await defaultsQuery;
-    setSaleActorProfiles([]);
+    setSaleActorNames([]);
     if (defaultsError) onNotice(defaultsError.message);
     else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
 
@@ -1971,14 +1972,19 @@ export function SalesReservationWorkflow({
         supabase.rpc("sale_workflow_context", { p_sales: attemptIds }),
         supabase.rpc("sale_actor_names", { p_sales: attemptIds }),
       ]);
-      if (actorNamesResult.error) throw actorNamesResult.error;
-      setSaleActorProfiles((actorNamesResult.data ?? []) as Profile[]);
       if (termsResult.error) throw termsResult.error;
       if (scheduleResult.error) throw scheduleResult.error;
       if (documentsResult.error) throw documentsResult.error;
       if (invoicesResult.error) throw invoicesResult.error;
       if (invoicePaymentsResult.error) throw invoicePaymentsResult.error;
       if (workflowEventsResult.error) throw workflowEventsResult.error;
+
+      if (actorNamesResult.error && !isMissingSaleActorNames(actorNamesResult.error)) throw actorNamesResult.error;
+      setSaleActorNames((actorNamesResult.data ?? []) as SaleActorName[]);
+      if (actorNamesResult.error) {
+        console.warn("Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database.", actorNamesResult.error);
+        onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
+      }
 
       const loadedDocuments = (documentsResult.data ?? []) as SaleDocument[];
       setTerms((termsResult.data ?? []) as SaleTerms[]);
@@ -2002,7 +2008,7 @@ export function SalesReservationWorkflow({
       if (versionsError) throw versionsError;
       setVersions((versionRows ?? []) as SaleDocumentVersion[]);
     } catch (error) {
-      onNotice(error instanceof Error ? error.message : "Could not load sales data.");
+      onNotice(salesLoadErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -2626,7 +2632,6 @@ export function SalesReservationWorkflow({
             <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
             <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
             <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
-            <div className="mt-3"><SaleMentionsInbox /></div>
           </section>
           <AgentFeesPortfolio
             requesterId={profile?.id ?? user.id}
@@ -2652,7 +2657,6 @@ export function SalesReservationWorkflow({
             </div>
           </div>
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
-          <div className="mt-3"><SaleMentionsInbox /></div>
         </section>
 
         <section className={`panel ${styles.financialOverview}`}>
@@ -2744,7 +2748,7 @@ export function SalesReservationWorkflow({
             </label>
           </div>
 
-          <div className="mt-5 overflow-x-auto rounded-bw-panel border border-[#d9ded6]">
+          <SalesTableScroll label="Sales results" className="mt-5 rounded-bw-panel border border-[#d9ded6]">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-[#fbfcfa] text-xs uppercase text-[#617169]">
                 <tr>
@@ -2790,7 +2794,7 @@ export function SalesReservationWorkflow({
                 })}
               </tbody>
             </table>
-          </div>
+            </SalesTableScroll>
 
           <div className="mt-4 flex flex-col gap-3 text-sm text-[#617169] sm:flex-row sm:items-center sm:justify-between">
             <span>Showing {filteredSalesUnits.length === 0 ? 0 : (currentSalesPage - 1) * SALES_PAGE_SIZE + 1}-{Math.min(currentSalesPage * SALES_PAGE_SIZE, filteredSalesUnits.length)} of {filteredSalesUnits.length}</span>
@@ -2896,7 +2900,7 @@ export function SalesReservationWorkflow({
             targetComment={conversationTarget?.unit === selectedUnit.id ? conversationTarget.comment : undefined}
             containerRef={conversationContainerRef} docked={conversationDocked} open={conversationOpen} onClose={() => setConversationIntent("closed")}
             unread={unreadComments[conversationTarget?.unit === selectedUnit.id && conversationTarget.sale ? conversationTarget.sale : activeAttempt?.id ?? ""] ?? 0}
-            internal={role === "admin" || role === "developer"} onStage={(stage) => {
+            onStage={(stage) => {
               if (conversationTarget?.sale && conversationTarget.sale !== activeAttempt?.id) return;
               setActiveUnitSection("progression"); setActiveWorkflowStage(stage as SaleWorkflowStage);
               manuallySelectedWorkflowStageRef.current = stage as SaleWorkflowStage;
@@ -3557,7 +3561,6 @@ export function SalesReservationWorkflow({
                       position={invoicePaymentPosition}
                       payments={activeInvoicePayments}
                       profiles={profiles}
-                      organisations={organisations}
                       canRecord={canRecordAgentFeePayment}
                       canVoid={canVoidAgentFeePayment}
                       isSaving={isSaving}
@@ -3665,7 +3668,6 @@ export function SalesReservationWorkflow({
                       position={completionInvoicePaymentPosition}
                       payments={completionInvoicePayments}
                       profiles={profiles}
-                      organisations={organisations}
                       canRecord={canRecordAgentFeePayment}
                       canVoid={canVoidAgentFeePayment}
                       isSaving={isSaving}
@@ -3693,7 +3695,7 @@ export function SalesReservationWorkflow({
                     </span>
                   </div>
                   <div className="mt-4 grid gap-x-4 text-sm text-[#34413a] sm:grid-cols-3">
-                    <FieldValue label="Recorded by" value={paymentRecorderLabel(paymentToVoid, profiles, organisations)} />
+                    <FieldValue label="Recorded by" value={paymentRecorderLabel(paymentToVoid, profiles)} />
                     <FieldValue label="Payment date" value={formatDate(paymentToVoid.paid_at)} />
                     <FieldValue label="Original amount" value={money(paymentToVoid.amount)} />
                   </div>
@@ -3827,7 +3829,7 @@ export function SalesReservationWorkflow({
                   <div className={`mb-4 rounded-md border p-4 ${completionDocumentState.needsChanges ? "border-[#e7b7ae] bg-[#fbeeea]" : "border-[#e2ded3] bg-white"}`}>
                     <h5 className="font-bold text-[#0F3D2E]">{completionDocumentState.needsChanges ? "Completion documents need changes" : "Documents resubmitted for review"}</h5>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-[#7a271a]">{persistedCompletionQuery}</p>
-                    {completionQueryEvent && <p className="mt-2 text-xs text-[#617169]">Queried by {actorName(completionQueryEvent.created_by_user_id)} · {formatDateTime(completionQueryEvent.created_at)}</p>}
+                    {completionQueryEvent && <p className="mt-2 text-xs text-[#617169]">Queried by {workflowActorLabel(completionQueryEvent, profiles)} · {formatDateTime(completionQueryEvent.created_at)}</p>}
                     <p className="mt-2 text-sm text-[#617169]">{completionDocumentState.needsChanges ? "The solicitor must replace the relevant documents below. The developer will then review the document pack again." : "The developer must review the current documents and explicitly approve them before completion can be recorded."}</p>
                   </div>
                 )}

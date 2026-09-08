@@ -17,13 +17,96 @@ async function fixture(page: Page) {
       await route.fulfill({ json: result });
     } catch (error) { await route.fulfill({ status: 400, json: { message: (error as Error).message } }); }
   });
-  const seedComment = async (body: string) => { await f.as('agent'); return f.write(body, { p_sale: f.ids.sale }); };
+  const seedComment = async (body: string, extra: Record<string, unknown> = {}) => { await f.as('agent'); return f.write(body, { p_sale: f.ids.sale, ...extra }); };
   const reload = async (suffix = '') => { await page.goto(`/?screen=sales&building=${f.ids.building}&salesUnitId=${f.ids.unit}${suffix}`); await expect(page.getByRole('tab', { name: /^Progression/ })).toBeVisible(); };
   return { ...ui, sql: f, calls, seedComment, reload, loseResponse: () => { loseNextWriteResponse = true; } };
 }
 const panel = (page: Page) => page.locator('#sale-conversation');
 const composer = (page: Page) => page.getByRole('textbox', { name: 'Write an update', exact: true });
 const open = async (page: Page) => { if (!(await panel(page).isVisible())) await page.getByRole('button', { name: /^Comments/ }).first().click(); await expect(composer(page)).toBeVisible(); };
+
+test('continuous comments omit stage controls and payloads across desktop and mobile', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width:1920,height:1080 });
+  const f = await fixture(page);
+  try {
+    const stages = [null,'reservation','exchange','completion','handover'];
+    for (const [i,stage] of stages.entries()) await f.seedComment(`Earlier update ${i}`,{p_stage:stage});
+    await f.sql.as('developer');
+    const editable = await f.sql.write('My tagged update',{p_stage:'completion'});
+    const draftKey = `bunnywell:discussion:${userId}:${f.sql.ids.sale}`;
+    await page.evaluate(({key,clientId}) => sessionStorage.setItem(key,JSON.stringify({body:'Restored update',mentions:[],parent:null,stage:'exchange',clientId})), {key:draftKey,clientId:crypto.randomUUID()});
+    f.attempt.workflow_status = 'completed'; f.unit.sale_status = 'completed'; f.attempt.completed_at = '2026-08-30';
+    await f.reload(); await open(page);
+    await expect(composer(page)).toHaveValue('Restored update');
+    expect(JSON.parse((await page.evaluate(key=>sessionStorage.getItem(key),draftKey))!)).not.toHaveProperty('stage');
+    const feed = page.locator('#conversation-comments');
+    for (let i=0;i<stages.length;i++) await expect(feed.getByText(`Earlier update ${i}`,{exact:true})).toHaveCount(1);
+    await expect(feed.getByText(/· (Reservation|Exchange|Completion|Handover)$/)).toHaveCount(0);
+    for (const stage of ['Exchange','Completion','Reservation']) {
+      await page.getByRole('button',{name:new RegExp(`^${stage}\\b`)}).first().click();
+      await expect(composer(page)).toHaveValue('Restored update');
+      await expect(feed.locator('article')).toHaveCount(6);
+    }
+    for (const width of [1920,390]) {
+      await page.setViewportSize({width,height:width===390?844:1080});
+      if (width===390) await expect(panel(page)).toBeHidden();
+      await open(page);
+      await expect(panel(page)).toHaveAttribute('data-modal',String(width===390));
+      await expect(panel(page).getByText('Stage context',{exact:true})).toHaveCount(0);
+      await expect(panel(page).getByText('Whole sale',{exact:true})).toHaveCount(0);
+      await expect(panel(page).getByRole('combobox')).toHaveCount(0);
+      const form = panel(page).locator('form');
+      const inputBox = (await composer(page).boundingBox())!, formBox = (await form.boundingBox())!;
+      expect(inputBox.y-formBox.y).toBeLessThanOrEqual(14);
+      expect(inputBox.x+inputBox.width).toBeLessThanOrEqual(formBox.x+formBox.width);
+      await expect(composer(page)).toHaveAttribute('maxlength','5000');
+      await expect(form).toContainText('15 / 5,000');
+      await expect(form.getByRole('button',{name:'Send',exact:true})).toBeInViewport();
+      await panel(page).screenshot({path:testInfo.outputPath(`continuous-comments-${width}.png`)});
+    }
+    await composer(page).press('Control+Enter');
+    await expect(composer(page)).toHaveValue('');
+    await expect(feed.getByText('Restored update',{exact:true})).toHaveCount(1);
+    const ownComment = feed.locator(`[data-comment-id="${editable}"]`);
+    await ownComment.getByRole('button',{name:'Edit',exact:true}).click();
+    await composer(page).fill('Edited without context');
+    await panel(page).getByRole('button',{name:'Save edit',exact:true}).click();
+    await expect(ownComment.getByText('Edited without context',{exact:true})).toBeVisible();
+    const writes = f.calls.filter(c=>c.name==='sale_comment_write');
+    expect(writes).toHaveLength(2);
+    for (const {args} of writes) { expect(args).not.toHaveProperty('p_stage'); expect(args.p_sale).toBe(f.sql.ids.sale); }
+    await f.sql.owner();
+    expect((await f.sql.db.query<{stage:string|null}>('select stage from sale_comments where id=$1',[editable])).rows[0].stage).toBe('completion');
+    expect((await f.sql.db.query<{stage:string|null}>("select stage from sale_comments where body='Restored update'")).rows[0].stage).toBeNull();
+  } finally { await f.sql.db.close(); }
+});
+
+test('a replacement sale on the same unit has a separate thread and earlier comments stay historical', async ({ page }) => {
+  await page.setViewportSize({width:1920,height:1080}); const f = await fixture(page);
+  try {
+    const earlier = await f.seedComment('Original buyer conversation',{p_stage:'reservation'});
+    await f.reload(); await open(page);
+    await composer(page).fill('Draft for original buyer');
+    await f.sql.owner();
+    await f.sql.db.query("update unit_sale_attempts set is_active=false,workflow_status='fallen_through' where id=$1",[f.sql.ids.sale]);
+    await f.sql.as('developer');
+    const replacement = await f.sql.rpc('sale_discussion_start',{p_unit:f.sql.ids.unit});
+    await f.sql.write('Replacement buyer conversation',{p_sale:replacement});
+    f.attempt.is_active = false; f.attempt.workflow_status = 'fallen_through';
+    f.rows.unit_sale_attempts.push({...f.attempt,id:replacement,is_active:true,attempt_number:2,workflow_status:'draft',buyer_name:'Replacement Buyer',buyer_person_name:'Replacement Buyer'});
+    await f.reload(); await open(page);
+    await expect(panel(page).getByText('Replacement buyer conversation',{exact:true})).toBeVisible();
+    await expect(panel(page).getByText('Original buyer conversation',{exact:true})).toHaveCount(0);
+    await expect(composer(page)).toHaveValue('');
+    await f.reload(`&conversation=${f.sql.ids.sale}&comment=${earlier}`); await open(page);
+    await expect(panel(page).getByText('Original buyer conversation',{exact:true})).toBeVisible();
+    await expect(panel(page).getByText('Replacement buyer conversation',{exact:true})).toHaveCount(0);
+    await expect(composer(page)).toHaveValue('Draft for original buyer');
+    await page.getByRole('button',{name:'Open current sale comments',exact:true}).click();
+    await expect(panel(page).getByText('Replacement buyer conversation',{exact:true})).toBeVisible();
+    await expect(panel(page).getByText('Original buyer conversation',{exact:true})).toHaveCount(0);
+  } finally { await f.sql.db.close(); }
+});
 
 test('docking, drawer fallback, mobile, draft and unsaved commercial values survive presentation changes', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });

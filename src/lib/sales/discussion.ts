@@ -1,10 +1,10 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const COMMENT_LIMIT = 5000;
-export type SalePerson = { id: string; name: string; role: string; organisation: string | null; assigned: boolean };
+export type SalePerson = { id: string; name: string; role: string; organisation: string | null };
 export type SaleComment = {
   id: string; sale_attempt_id: string; sequence: number; author_id: string; author_name: string;
-  author_role: string | null; author_organisation: string | null; body: string; stage: string | null;
+  author_role: string | null; author_organisation: string | null; body: string;
   parent_id: string | null; mention_ids: string[]; created_at: string; edited_at: string | null; version: number; unread: boolean;
 };
 export type CommentPage = { comments: SaleComment[]; hasBefore: boolean; hasAfter: boolean };

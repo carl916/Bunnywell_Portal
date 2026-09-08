@@ -4,6 +4,47 @@ import { discussionDatabase, ids } from './helpers/discussion-database.mjs';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 const { activityPresentation, mergeComments, discussionDraftKey } = loadTypescriptModule('src/lib/sales/discussion.ts');
 
+test('mixed historical stages form one paginated sale thread; new writes and edits need no stage', async (t) => {
+  const f = await discussionDatabase(); t.after(() => f.db.close());
+  const stages = [null,'reservation','exchange','completion','handover'];
+  const commentIds = [];
+  for (let i=0; i<55; i++) commentIds.push(await f.write(`Earlier update ${i}`, { p_stage: stages[i % stages.length] }));
+  const p_client = crypto.randomUUID();
+  const neutral = await f.write('Continuous sale update', { p_client, p_mentions: [ids.solicitor] });
+  assert.equal(await f.write('Continuous sale update', { p_client, p_mentions: [ids.solicitor] }), neutral, 'retries remain idempotent without stage');
+  await f.rpc('sale_comment_write', { p_sale:ids.sale, p_body:'Edited earlier update', p_client:crypto.randomUUID(), p_comment:commentIds[1], p_version:1 });
+  assert.equal((await f.rpc('sale_comment_history', {p_sale:ids.sale,p_comment:commentIds[1]}))[0].body,'Earlier update 1');
+  await f.owner();
+  assert.deepEqual((await f.db.query('select stage from sale_comments where id=any($1::uuid[]) order by sequence', [[commentIds[1],neutral]])).rows.map(r=>r.stage), ['reservation',null], 'editing preserves old metadata; new updates store null');
+  for (const status of ['exchanged','completion_pending','completed']) {
+    await f.owner(); await f.db.query('update unit_sale_attempts set workflow_status=$1 where id=$2',[status,ids.sale]);
+    await f.as('solicitor');
+    const first = await f.rpc('sale_comment_page', {p_sale:ids.sale,p_after:0});
+    const second = await f.rpc('sale_comment_page', {p_sale:ids.sale,p_after:first.comments.at(-1).sequence});
+    assert.equal(first.hasAfter,true); assert.equal(second.hasAfter,false);
+    assert.deepEqual([...first.comments,...second.comments].map(c=>c.id),[...commentIds,neutral]);
+    assert.deepEqual(new Set(first.comments.map(c=>c.stage)),new Set(stages));
+    const before = await f.rpc('sale_comment_page', {p_sale:ids.sale,p_before:second.comments[0].sequence});
+    assert.deepEqual(before.comments.map(c=>c.id),commentIds.slice(0,50));
+    assert.equal((await f.rpc('sale_comment_unread',{p_sales:[ids.sale]}))[ids.sale],56);
+  }
+  assert.equal((await f.rpc('sale_mentions_inbox'))[0].comment_id,neutral);
+  await f.rpc('sale_comment_read',{p_sale:ids.sale,p_comments:[commentIds[1],neutral]});
+  assert.equal((await f.rpc('sale_comment_unread',{p_sales:[ids.sale]}))[ids.sale],54);
+  assert.deepEqual(await f.rpc('sale_mentions_inbox'),[]);
+  await f.owner();
+  await f.db.query("update unit_sale_attempts set is_active=false,workflow_status='fallen_through' where id=$1",[ids.sale]);
+  await f.as('agent');
+  const replacement = await f.rpc('sale_discussion_start',{p_unit:ids.unit});
+  assert.notEqual(replacement,ids.sale);
+  assert.deepEqual((await f.rpc('sale_comment_page',{p_sale:replacement,p_unit:ids.unit})).comments,[]);
+  const nextComment = await f.write('New buyer conversation',{p_sale:replacement});
+  assert.deepEqual((await f.rpc('sale_comment_page',{p_sale:replacement})).comments.map(c=>c.id),[nextComment]);
+  assert.deepEqual((await f.rpc('sale_comment_page',{p_sale:ids.sale,p_target:neutral})).comments.at(-1).id,neutral);
+  await assert.rejects(f.rpc('sale_comment_page',{p_sale:replacement,p_target:neutral}),/unavailable/);
+  await assert.rejects(f.rpc('sale_comment_read',{p_sale:replacement,p_comments:[neutral]}),/Invalid comment receipt/);
+});
+
 test('discussion migration and permission, history, isolation and unread contracts in PostgreSQL', async (t) => {
   const f = await discussionDatabase(); t.after(() => f.db.close());
   let original;
@@ -11,10 +52,10 @@ test('discussion migration and permission, history, isolation and unread contrac
     for (const actor of ['agent','developer','solicitor','outsider']) { await f.as(actor); const id = await f.write(`Update from ${actor}`); original ??= id; assert.ok((await f.rpc('sale_comment_page', { p_sale: ids.sale })).comments.some((c) => c.id === id)); }
     await f.owner(); await f.db.query('delete from user_building_access where user_id=$1', [ids.revoked]);
     await f.as('revoked');
-    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
-    await assert.rejects(f.write('intrusion'), /not assigned/);
+    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /Sale access denied/);
+    await assert.rejects(f.write('intrusion'), /Sale access denied/);
     assert.deepEqual((await f.db.query('select * from sale_comments')).rows, []);
-    await assert.rejects(f.rpc('sale_discussion_people', { p_sale: ids.sale }), /not assigned/);
+    await assert.rejects(f.rpc('sale_discussion_people', { p_sale: ids.sale }), /Sale access denied/);
   });
   await t.test('untouched organisation agents inherit access and lose it with building or account access', async () => {
     const agent = crypto.randomUUID(), org = crypto.randomUUID();
@@ -29,16 +70,16 @@ test('discussion migration and permission, history, isolation and unread contrac
     assert.ok((await f.rpc('sale_discussion_people', { p_sale: ids.sale })).some(p => p.id === agent));
     await f.rpc('sale_activity_page', { p_sale: ids.sale });
     await f.as('developer');
-    await assert.rejects(f.rpc('sale_discussion_assign', { p_sale: ids.sale, p_user: agent, p_assigned: false }), /building permissions/);
+    await assert.rejects(f.rpc('sale_discussion_assign', { p_sale: ids.sale, p_user: agent, p_assigned: false }), /does not exist/);
     await f.owner();
     await f.db.query('update profiles set active=false where id=$1', [agent]);
     await f.as(agent);
-    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /Sale access denied/);
     await f.owner();
     await f.db.query('update profiles set active=true where id=$1', [agent]);
     await f.db.query('update building_organisations set active=false where organisation_id=$1', [org]);
     await f.as(agent);
-    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /Sale access denied/);
     assert.deepEqual((await f.db.query('select * from sale_comments')).rows, []);
   });
   await t.test('mentions are eligible user IDs; retries deduplicate both comment and notification', async () => {
@@ -86,7 +127,7 @@ test('discussion migration and permission, history, isolation and unread contrac
   await t.test('revocation blocks comments, history, mentions, notifications and direct RLS reads', async () => {
     await f.owner(); await f.db.query('delete from user_building_access where user_id=$1', [ids.solicitor]);
     await f.as('solicitor');
-    for (const [fn, args] of [['sale_comment_page', { p_sale: ids.sale }], ['sale_comment_history', { p_sale: ids.sale, p_comment: original }], ['sale_comment_read', { p_sale: ids.sale, p_comments: [original] }], ['sale_discussion_people', { p_sale: ids.sale }], ['sale_activity_page', { p_sale: ids.sale }]]) await assert.rejects(f.rpc(fn, args), /not assigned/);
+    for (const [fn, args] of [['sale_comment_page', { p_sale: ids.sale }], ['sale_comment_history', { p_sale: ids.sale, p_comment: original }], ['sale_comment_read', { p_sale: ids.sale, p_comments: [original] }], ['sale_discussion_people', { p_sale: ids.sale }], ['sale_activity_page', { p_sale: ids.sale }]]) await assert.rejects(f.rpc(fn, args), /Sale access denied/);
     assert.deepEqual(await f.rpc('sale_mentions_inbox'), []); assert.equal((await f.db.query('select * from sale_comments')).rows.length, 0);
     await f.as('agent'); await assert.rejects(f.write('stale mention', { p_mentions: [ids.solicitor] }), /no longer has access/);
     await assert.rejects(f.rpc('sale_comment_write', { p_sale: ids.sale, p_comment: original, p_version: 2, p_body: 'Invalid edited mention', p_client: crypto.randomUUID(), p_mentions: [ids.solicitor] }), /no longer has access/);
@@ -118,9 +159,9 @@ test('discussion migration and permission, history, isolation and unread contrac
     await f.owner(); await f.db.query("update unit_sale_attempts set workflow_status='completed' where id=$1", [ids.sale]);
     await f.as('agent'); await f.write('Approved, exchanged and completed are discussion text only.');
     await f.owner(); await f.db.query('delete from user_building_access where user_id=$1', [ids.agent]);
-    await f.as('agent'); await assert.rejects(f.write('no building access'), /not assigned/);
+    await f.as('agent'); await assert.rejects(f.write('no building access'), /Sale access denied/);
     await f.owner(); await f.db.query('update profiles set active=false where id=$1', [ids.developer]);
-    await f.as('developer'); await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    await f.as('developer'); await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /Sale access denied/);
   });
 });
 
@@ -189,8 +230,8 @@ test('sale actor names resolve historical staff for both external roles without 
     await f.as(actor);
     const names = await f.rpc('sale_actor_names', { p_sales: [ids.sale] });
     const developer = names.find(p => p.id === ids.developer);
-    assert.equal(developer.full_name,'Test developer');
-    assert.deepEqual(Object.keys(developer).sort(),['full_name','id','name','role']);
+    assert.equal(developer.display_name,'Test developer');
+    assert.deepEqual(Object.keys(developer).sort(),['display_name','id']);
     assert.ok(!names.some(p => p.id === ids.outsider), 'unrelated sale actors stay hidden');
     await f.owner();
     await f.db.query('delete from user_building_access where user_id=$1', [ids[actor]]);

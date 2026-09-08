@@ -10,8 +10,8 @@ import styles from "./SaleConversation.module.css";
 const time = (value: string) => new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 const day = (value: string) => new Date(value).toLocaleDateString("en-GB", { dateStyle: "long" });
 const refreshUnread = () => window.dispatchEvent(new Event("sale-discussion-changed"));
-type Draft = { body: string; mentions: SalePerson[]; parent: SaleComment | null; stage: string; clientId: string };
-const emptyDraft = (): Draft => ({ body: "", mentions: [], parent: null, stage: "", clientId: crypto.randomUUID() });
+type Draft = { body: string; mentions: SalePerson[]; parent: SaleComment | null; clientId: string };
+const emptyDraft = (): Draft => ({ body: "", mentions: [], parent: null, clientId: crypto.randomUUID() });
 
 export function useSaleUnread(saleIds: string[]) {
   const key = [...saleIds].sort().join(",");
@@ -87,16 +87,16 @@ export function useSaleConversationLayout() {
     open: docked !== null && (intent === "open" || (intent === "default" && docked)) };
 }
 
-export function SaleConversationLayout({ children, saleId, unitId, userId, containerRef, docked, open, onClose, unread, internal, onStage, targetComment, stageLinks = true }: {
+export function SaleConversationLayout({ children, saleId, unitId, userId, containerRef, docked, open, onClose, unread, onStage, targetComment, stageLinks = true }: {
   children: ReactNode; saleId?: string; unitId: string; userId: string; containerRef: RefCallback<HTMLDivElement>; docked: boolean; open: boolean; onClose: () => void;
-  unread: number; internal: boolean; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean;
+  unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean;
 }) {
   const [started, setStarted] = useState<{ unit: string; id: string } | null>(null);
   const identity = saleId ?? (started?.unit === unitId ? started.id : undefined);
   return <div ref={containerRef} className={styles.layout} data-docked={open && docked} data-presentation={open ? docked ? "inline" : "overlay" : "collapsed"}>
     <div className={styles.workspace}>{children}</div>
     <SaleConversation key={`${userId}:${identity ?? unitId}`} saleId={identity} unitId={unitId} userId={userId} open={open} modal={!docked}
-      onClose={onClose} unread={unread} internal={internal} onStage={onStage} targetComment={targetComment}
+      onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment}
       onStarted={(id) => setStarted({ unit: unitId, id })} stageLinks={stageLinks} />
   </div>;
 }
@@ -107,8 +107,8 @@ function PlainText({ body }: { body: string }) {
     ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a> : part)}</>;
 }
 
-function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread, internal, onStage, targetComment, onStarted, stageLinks }: {
-  saleId?: string; unitId: string; userId: string; open: boolean; modal: boolean; onClose: () => void; unread: number; internal: boolean;
+function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread, onStage, targetComment, onStarted, stageLinks }: {
+  saleId?: string; unitId: string; userId: string; open: boolean; modal: boolean; onClose: () => void; unread: number;
   onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean;
 }) {
   const panel = useRef<HTMLElement>(null);
@@ -127,9 +127,15 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
   const [tab, setTab] = useState<"comments" | "activity">("comments");
   const [comments, setComments] = useState<SaleComment[]>([]);
   const [people, setPeople] = useState<SalePerson[]>([]);
-  const [candidates, setCandidates] = useState<SalePerson[] | null>(null);
   const [draft, setDraft] = useState<Draft>(() => {
-    try { const saved = saleId && sessionStorage.getItem(discussionDraftKey(userId, saleId)); if (saved) return JSON.parse(saved); } catch { /* session storage may be unavailable */ }
+    try {
+      const saved = saleId && sessionStorage.getItem(discussionDraftKey(userId, saleId));
+      if (saved) {
+        // Restore the update while discarding obsolete context from older drafts.
+        const { body, mentions, parent, clientId } = JSON.parse(saved) as Draft;
+        return { body, mentions, parent, clientId };
+      }
+    } catch { /* session storage may be unavailable */ }
     return emptyDraft();
   });
   const [editing, setEditing] = useState<SaleComment | null>(null);
@@ -171,8 +177,8 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
     if (!alive.current) return;
     const message = reason instanceof Error ? reason.message : "Could not load this conversation. Retry.";
     setError(message);
-    if (/not assigned|access has ended|permission denied|access denied/i.test(message)) {
-      setDenied(true); setComments([]); commentsRef.current = []; setPeople([]); setActivity([]); setHistory(null); setCandidates(null);
+    if (/access has ended|permission denied|access denied/i.test(message)) {
+      setDenied(true); setComments([]); commentsRef.current = []; setPeople([]); setActivity([]); setHistory(null);
     }
   }, []);
 
@@ -363,7 +369,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
     inFlight.current = true; setBusy(true); setSending(true); setError("");
     try {
       const id = await discussionRpc<string>("sale_comment_write", { p_sale: saleId, p_body: text, p_client: draft.clientId,
-        p_parent: editing?.parent_id ?? draft.parent?.id ?? null, p_stage: editing?.stage ?? (draft.stage || null),
+        p_parent: editing?.parent_id ?? draft.parent?.id ?? null,
         p_mentions: selectedMentions.map((person) => person.id), p_comment: editing?.id ?? null, p_version: editing?.version ?? null });
       if (!alive.current) return;
       if (editing) { setEditing(null); setEditText(""); setHistory(null); } else setDraft(emptyDraft());
@@ -384,11 +390,6 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
     } catch (reason) { fail(reason); }
   }
 
-  async function managePeople() {
-    if (candidates) { setCandidates(null); return; }
-    try { setCandidates(await discussionRpc<SalePerson[]>("sale_discussion_people", { p_sale: saleId, p_candidates: true })); } catch (reason) { fail(reason); }
-  }
-
   return <>
     {open && modal && <div data-conversation-backdrop className={styles.backdrop} onClick={onClose} />}
     <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal={modal} role={modal ? "dialog" : "complementary"} aria-modal={modal && open ? true : undefined} aria-label="Sale comments and activity">
@@ -403,11 +404,6 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
         </div>
       </header>
       {error && <div className={styles.error} role="alert">{error} <button className={styles.link} onClick={() => { setDenied(false); void load(); }}>Retry</button></div>}
-      {internal && saleId && !denied && <div className="px-4 pt-2 text-xs"><button className={styles.link} onClick={managePeople} aria-expanded={!!candidates}>Sale participants</button></div>}
-      {candidates && <div className={styles.people}><p className={styles.meta}>Sales agents and conveyancers have access through the building.</p>{candidates.map((person) => <div key={person.id} className={styles.person}><span>{person.name}<span className="block text-xs">{personRole(person.role)}{person.organisation ? ` · ${person.organisation}` : ""}</span></span>
-        {["sales_agent", "conveyancer"].includes(person.role) ? <span className={styles.meta}>Building access</span> : ["admin", "developer"].includes(person.role) ? <span className={styles.meta}>Portal access</span> : <button className={styles.link} onClick={async () => {
-          try { await discussionRpc("sale_discussion_assign", { p_sale: saleId, p_user: person.id, p_assigned: !person.assigned }); setCandidates(await discussionRpc("sale_discussion_people", { p_sale: saleId, p_candidates: true })); setPeople(await discussionRpc("sale_discussion_people", { p_sale: saleId })); } catch (reason) { fail(reason); }
-        }}>{person.assigned ? "Revoke" : "Assign"}</button>}</div>)}</div>}
       <div ref={feed} className={styles.feed} hidden={tab !== "comments"} role="tabpanel" id="conversation-comments" aria-labelledby="conversation-tab-comments" onScroll={() => { const node = feed.current!; atBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 60; if (atBottom.current) setNewMessages(false); }}>
         {!saleId && <div className={styles.empty}><p>Start the shared conversation for this sale file before submitting a reservation.</p><button className="secondary mt-3" disabled={busy} onClick={async () => { setBusy(true); try { onStarted(await discussionRpc<string>("sale_discussion_start", { p_unit: unitId })); } catch (reason) { fail(reason); setBusy(false); } }}>Start conversation</button></div>}
         {!loaded && saleId && !denied && !error && <p className={styles.empty} role="status">Loading conversation…</p>}
@@ -419,12 +415,12 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
             <span className={styles.avatar} aria-hidden>{comment.author_name.split(/\s+/).map((word) => word[0]).slice(0, 2).join("")}</span>
             <div><span className={styles.author}>{comment.author_name}</span>{comment.unread && <span className={styles.badge}>New</span>}
               <p className={styles.meta}>{[comment.author_organisation, personRole(comment.author_role)].filter(Boolean).join(" · ")}</p>
-              <p className={styles.meta}><time dateTime={comment.created_at}>{time(comment.created_at)}</time>{comment.edited_at && <> · <button className={styles.link} onClick={async () => { try { setHistory({ id: comment.id, revisions: await discussionRpc("sale_comment_history", { p_sale: saleId, p_comment: comment.id }) }); } catch (reason) { fail(reason); } }}>Edited</button></>}{comment.stage && ` · ${personRole(comment.stage)}`}</p>
+              <p className={styles.meta}><time dateTime={comment.created_at}>{time(comment.created_at)}</time>{comment.edited_at && <> · <button className={styles.link} onClick={async () => { try { setHistory({ id: comment.id, revisions: await discussionRpc("sale_comment_history", { p_sale: saleId, p_comment: comment.id }) }); } catch (reason) { fail(reason); } }}>Edited</button></>}</p>
               {comment.parent_id && <button className={styles.reply} onClick={() => reveal(comment.parent_id!)}>Reply to {comments.find((c) => c.id === comment.parent_id)?.author_name ?? "earlier comment"}<span className="block line-clamp-2">{comments.find((c) => c.id === comment.parent_id)?.body ?? "View original message"}</span></button>}
               <p className={styles.body}><PlainText body={comment.body} /></p>
               <span data-read-comment={comment.id} className="block h-px" aria-hidden />
               <div className={styles.actions}><button onClick={() => { setDraft((old) => ({ ...old, parent: comment })); setEditing(null); input.current?.focus(); }}>Reply</button>
-                {comment.author_id === userId && <button onClick={() => { setEditing(comment); setEditText(comment.body); setEditMentions(comment.mention_ids.map((id) => people.find((person) => person.id === id) ?? { id, name: "Former participant", role: "", organisation: null, assigned: false })); input.current?.focus(); }}>Edit</button>}
+                {comment.author_id === userId && <button onClick={() => { setEditing(comment); setEditText(comment.body); setEditMentions(comment.mention_ids.map((id) => people.find((person) => person.id === id) ?? { id, name: "Former colleague", role: "", organisation: null })); input.current?.focus(); }}>Edit</button>}
               </div>
               {history?.id === comment.id && <div className={styles.history}><div className={styles.context}><strong>Revision history</strong><button onClick={() => setHistory(null)}>Close</button></div>{history.revisions.map((revision) => <div key={revision.version}><p className={styles.meta}>Version {revision.version} · {time(revision.recorded_at)}</p><p className={styles.body}><PlainText body={revision.body} /></p></div>)}</div>}
             </div>
@@ -450,7 +446,6 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
       {tab === "comments" && saleId && !denied && <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); void send(); }}>
         {editing ? <div className={styles.context}>Editing your comment <button type="button" onClick={() => { setEditing(null); setMentionQuery(null); }}>Cancel edit</button></div>
           : draft.parent && <div className={styles.context}><span>Replying to {draft.parent.author_name}</span><button type="button" onClick={() => setDraft((old) => ({ ...old, parent: null }))}>Cancel reply</button></div>}
-        {!editing && <label className={styles.context}>Stage context <select value={draft.stage} onChange={(event) => setDraft((old) => ({ ...old, stage: event.target.value }))}><option value="">Whole sale</option>{["reservation", "exchange", "completion", "handover"].map((stage) => <option key={stage} value={stage}>{personRole(stage)}</option>)}</select></label>}
         {suggestions.length > 0 && <div className={styles.suggestions} role="listbox" id="sale-mention-suggestions" aria-label="Mention sale participant">{suggestions.map((person, index) => <button type="button" role="option" id={`mention-${person.id}`} aria-selected={index === mentionIndex} key={person.id} onMouseDown={(event) => event.preventDefault()} onClick={() => chooseMention(person)}>{person.name}<span className="block text-xs">{personRole(person.role)}{person.organisation ? ` · ${person.organisation}` : ""}</span></button>)}</div>}
         <label className="sr-only" htmlFor="sale-comment-composer">Write an update</label>
         <textarea ref={input} id="sale-comment-composer" value={text} placeholder="Write an update…" maxLength={COMMENT_LIMIT} disabled={sending} aria-describedby="sale-comment-shortcut" aria-controls={suggestions.length ? "sale-mention-suggestions" : undefined} aria-activedescendant={suggestions[mentionIndex] ? `mention-${suggestions[mentionIndex].id}` : undefined}

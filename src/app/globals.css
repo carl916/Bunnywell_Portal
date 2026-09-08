@@ -1009,3 +1009,21 @@ tbody tr:hover {
     box-shadow: 0 14px 28px rgba(15, 61, 46, 0.2);
   }
 }
+
+/* Keep Sales grids shrinkable so wide tables scroll inside their own viewport. */
+[data-portal-screen="sales"] .portal-content,
+[data-portal-screen="sales"] .portal-content .grid,
+[data-portal-screen="sales"] .portal-content .grid > *,
+[data-portal-screen="sales"] .panel { min-width: 0; }
+@media (max-width: 767px) {
+  .app-shell { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
+  .mobile-bottom-nav { bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 639px) {
+  [data-portal-screen="sales"] > .portal-content { padding-inline: clamp(0.5rem, 2.5vw, 1rem); }
+  [data-portal-screen="sales"] .panel { padding: clamp(0.75rem, 3vw, 1rem); }
+}
+@media (min-width: 768px) {
+  .mobile-menu-backdrop { align-items: flex-start; justify-content: flex-end; padding-top: 8rem; }
+  .mobile-menu-panel { width: min(26rem, 100%); max-height: calc(100dvh - 9rem); }
+}
