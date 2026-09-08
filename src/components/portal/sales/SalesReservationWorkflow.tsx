@@ -970,7 +970,7 @@ function AdditionalConditionsEditor({
 export function SalesReservationWorkflow({
   user,
   profile,
-  profiles,
+  profiles: portalProfiles,
   organisations,
   buildings,
   buildingFloors,
@@ -1006,6 +1006,8 @@ export function SalesReservationWorkflow({
     [buildingFloors, buildingId, units],
   );
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
+  const [saleActorProfiles, setSaleActorProfiles] = useState<Profile[]>([]);
+  const profiles = [...portalProfiles, ...saleActorProfiles.filter((actor) => !portalProfiles.some((person) => person.id === actor.id))];
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
   const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
   const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
@@ -1920,6 +1922,7 @@ export function SalesReservationWorkflow({
     let defaultsQuery = supabase.from("building_sale_defaults").select("*");
     if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
     const { data: defaultRows, error: defaultsError } = await defaultsQuery;
+    setSaleActorProfiles([]);
     if (defaultsError) onNotice(defaultsError.message);
     else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
 
@@ -1959,14 +1962,17 @@ export function SalesReservationWorkflow({
         return;
       }
 
-      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, workflowEventsResult] = await Promise.all([
+      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, workflowEventsResult, actorNamesResult] = await Promise.all([
         supabase.from("unit_sale_terms").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_payment_schedule").select("*").in("sale_attempt_id", attemptIds).order("sequence_no"),
         supabase.from("unit_sale_documents").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoices").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", attemptIds),
         supabase.rpc("sale_workflow_context", { p_sales: attemptIds }),
+        supabase.rpc("sale_actor_names", { p_sales: attemptIds }),
       ]);
+      if (actorNamesResult.error) throw actorNamesResult.error;
+      setSaleActorProfiles((actorNamesResult.data ?? []) as Profile[]);
       if (termsResult.error) throw termsResult.error;
       if (scheduleResult.error) throw scheduleResult.error;
       if (documentsResult.error) throw documentsResult.error;

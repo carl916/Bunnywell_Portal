@@ -49,7 +49,7 @@ export async function discussionDatabase(overrides = {}) {
   }
   await db.query('insert into unit_sale_attempts(id,building_id,unit_id,created_by_user_id,buyer_name) values($1,$2,$3,$4,$5)', [ids.sale, ids.building, ids.unit, ids.agent, 'Original Buyer']);
   await db.query('insert into unit_sale_attempts(id,building_id,unit_id,created_by_user_id) values($1,$2,$3,$4)', [ids.replacement, ids.building, ids.otherUnit, ids.outsider]);
-  for (const name of ['20260907_sale_discussions.sql','20260907b_sale_activity_projection.sql']) await db.exec(readFileSync(`supabase/migrations/${name}`, 'utf8'));
+  for (const name of ['20260907_sale_discussions.sql','20260907b_sale_activity_projection.sql','20260908_sale_discussion_building_agents.sql','20260908b_sale_actor_names.sql']) await db.exec(readFileSync(`supabase/migrations/${name}`, 'utf8'));
   async function as(user) {
     await db.exec('reset role');
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [ids[user] ?? user]);
@@ -62,6 +62,6 @@ export async function discussionDatabase(overrides = {}) {
     return (await db.query(sql, entries.map(([,value]) => value))).rows[0].result;
   }
   async function write(body, extra = {}) { return rpc('sale_comment_write', { p_sale: ids.sale, p_body: body, p_client: crypto.randomUUID(), ...extra }); }
-  await as('developer'); await rpc('sale_discussion_assign', { p_sale: ids.sale, p_user: ids.solicitor, p_assigned: true });
+  await as('developer');
   return { db, as, owner, rpc, write, ids };
 }

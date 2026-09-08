@@ -394,7 +394,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
     <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal={modal} role={modal ? "dialog" : "complementary"} aria-modal={modal && open ? true : undefined} aria-label="Sale comments and activity">
       <header className={styles.header}>
         <div className={styles.heading}><h4>{tab === "comments" ? "Comments" : "Activity"}</h4><button type="button" onClick={onClose} aria-label="Close comments panel"><X size={18} /></button></div>
-        <p className={styles.audience}>Shared with the agent, developer and solicitor assigned to this sale.</p>
+        <p className={styles.audience}>Shared with developers and all sales agents and conveyancers who have building access.</p>
         <div className={styles.tabs} role="tablist" aria-label="Conversation views">
           {(["comments", "activity"] as const).map((view, index) => <button key={view} id={`conversation-tab-${view}`} type="button" role="tab" aria-selected={tab === view} aria-controls={`conversation-${view}`} tabIndex={tab === view ? 0 : -1} onClick={() => setTab(view)}
             onKeyDown={(event) => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); const next = event.key === "Home" ? "comments" : event.key === "End" ? "activity" : index === 0 ? "activity" : "comments"; setTab(next); document.getElementById(`conversation-tab-${next}`)?.focus(); } }}>
@@ -404,8 +404,8 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
       </header>
       {error && <div className={styles.error} role="alert">{error} <button className={styles.link} onClick={() => { setDenied(false); void load(); }}>Retry</button></div>}
       {internal && saleId && !denied && <div className="px-4 pt-2 text-xs"><button className={styles.link} onClick={managePeople} aria-expanded={!!candidates}>Sale participants</button></div>}
-      {candidates && <div className={styles.people}><p className={styles.meta}>Assign individual agents and solicitors to this transaction.</p>{candidates.map((person) => <div key={person.id} className={styles.person}><span>{person.name}<span className="block text-xs">{personRole(person.role)}{person.organisation ? ` · ${person.organisation}` : ""}</span></span>
-        {["admin", "developer"].includes(person.role) ? <span className={styles.meta}>Portal access</span> : <button className={styles.link} onClick={async () => {
+      {candidates && <div className={styles.people}><p className={styles.meta}>Sales agents and conveyancers have access through the building.</p>{candidates.map((person) => <div key={person.id} className={styles.person}><span>{person.name}<span className="block text-xs">{personRole(person.role)}{person.organisation ? ` · ${person.organisation}` : ""}</span></span>
+        {["sales_agent", "conveyancer"].includes(person.role) ? <span className={styles.meta}>Building access</span> : ["admin", "developer"].includes(person.role) ? <span className={styles.meta}>Portal access</span> : <button className={styles.link} onClick={async () => {
           try { await discussionRpc("sale_discussion_assign", { p_sale: saleId, p_user: person.id, p_assigned: !person.assigned }); setCandidates(await discussionRpc("sale_discussion_people", { p_sale: saleId, p_candidates: true })); setPeople(await discussionRpc("sale_discussion_people", { p_sale: saleId })); } catch (reason) { fail(reason); }
         }}>{person.assigned ? "Revoke" : "Assign"}</button>}</div>)}</div>}
       <div ref={feed} className={styles.feed} hidden={tab !== "comments"} role="tabpanel" id="conversation-comments" aria-labelledby="conversation-tab-comments" onScroll={() => { const node = feed.current!; atBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 60; if (atBottom.current) setNewMessages(false); }}>

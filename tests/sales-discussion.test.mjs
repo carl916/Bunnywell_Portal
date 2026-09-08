@@ -7,13 +7,39 @@ const { activityPresentation, mergeComments, discussionDraftKey } = loadTypescri
 test('discussion migration and permission, history, isolation and unread contracts in PostgreSQL', async (t) => {
   const f = await discussionDatabase(); t.after(() => f.db.close());
   let original;
-  await t.test('assigned agent, developer and solicitor share one sale; another sale agent is denied', async () => {
-    for (const actor of ['agent','developer','solicitor']) { await f.as(actor); const id = await f.write(`Update from ${actor}`); original ??= id; assert.ok((await f.rpc('sale_comment_page', { p_sale: ids.sale })).comments.some((c) => c.id === id)); }
-    await f.as('outsider');
+  await t.test('building agents and building conveyancer share one sale; agents without building access are denied', async () => {
+    for (const actor of ['agent','developer','solicitor','outsider']) { await f.as(actor); const id = await f.write(`Update from ${actor}`); original ??= id; assert.ok((await f.rpc('sale_comment_page', { p_sale: ids.sale })).comments.some((c) => c.id === id)); }
+    await f.owner(); await f.db.query('delete from user_building_access where user_id=$1', [ids.revoked]);
+    await f.as('revoked');
     await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
     await assert.rejects(f.write('intrusion'), /not assigned/);
     assert.deepEqual((await f.db.query('select * from sale_comments')).rows, []);
     await assert.rejects(f.rpc('sale_discussion_people', { p_sale: ids.sale }), /not assigned/);
+  });
+  await t.test('untouched organisation agents inherit access and lose it with building or account access', async () => {
+    const agent = crypto.randomUUID(), org = crypto.randomUUID();
+    await f.owner();
+    await f.db.query("insert into organisations values($1,'Agency')", [org]);
+    await f.db.query("insert into profiles(id,role,organisation_id) values($1,'sales_agent',$2)", [agent,org]);
+    await f.db.query("insert into building_organisations values($1,$2,'sales_agent',true)", [ids.building,org]);
+    await f.as(agent);
+    assert.ok((await f.rpc('sale_comment_page', { p_sale: ids.sale })).comments.length > 0);
+    assert.ok((await f.db.query('select * from sale_comments')).rows.length > 0);
+    assert.ok((await f.rpc('sale_comment_unread', { p_sales: [ids.sale] }))[ids.sale] > 0);
+    assert.ok((await f.rpc('sale_discussion_people', { p_sale: ids.sale })).some(p => p.id === agent));
+    await f.rpc('sale_activity_page', { p_sale: ids.sale });
+    await f.as('developer');
+    await assert.rejects(f.rpc('sale_discussion_assign', { p_sale: ids.sale, p_user: agent, p_assigned: false }), /building permissions/);
+    await f.owner();
+    await f.db.query('update profiles set active=false where id=$1', [agent]);
+    await f.as(agent);
+    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    await f.owner();
+    await f.db.query('update profiles set active=true where id=$1', [agent]);
+    await f.db.query('update building_organisations set active=false where organisation_id=$1', [org]);
+    await f.as(agent);
+    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    assert.deepEqual((await f.db.query('select * from sale_comments')).rows, []);
   });
   await t.test('mentions are eligible user IDs; retries deduplicate both comment and notification', async () => {
     await f.as('agent'); const p_client = crypto.randomUUID();
@@ -21,7 +47,7 @@ test('discussion migration and permission, history, isolation and unread contrac
     const first = await f.write('@Test solicitor please review', args);
     assert.equal(await f.write('@Test solicitor please review', args), first);
     await assert.rejects(f.write('Revised after a lost response', args), /already sent/);
-    await assert.rejects(f.write('wrong recipient', { p_mentions: [ids.outsider] }), /no longer has access/);
+    await assert.rejects(f.write('wrong recipient', { p_mentions: [ids.revoked] }), /no longer has access/);
     assert.deepEqual(await f.rpc('sale_mentions_inbox'), []);
     await f.as('solicitor'); assert.equal((await f.rpc('sale_mentions_inbox')).length, 1);
     await f.as('agent'); await f.rpc('sale_comment_write', { p_sale: ids.sale, p_body: '@Test solicitor please review again', p_client: crypto.randomUUID(), p_comment: first, p_version: 1, p_mentions: [ids.solicitor] });
@@ -34,7 +60,7 @@ test('discussion migration and permission, history, isolation and unread contrac
     await assert.rejects(f.rpc('sale_comment_write', { p_sale: ids.sale, p_comment: reply, p_version: 1, p_body: 'Conflict', p_client: crypto.randomUUID() }), /another device/);
     await f.as('solicitor'); await assert.rejects(f.rpc('sale_comment_write', { p_sale: ids.sale, p_comment: reply, p_version: 2, p_body: 'Not mine', p_client: crypto.randomUUID() }), /Only the author/);
     await f.as('outsider'); await assert.rejects(f.write('Cross-sale reply', { p_sale: ids.replacement, p_parent: reply }), /Reply must refer/);
-    await assert.rejects(f.rpc('sale_comment_history', { p_sale: ids.sale, p_comment: reply }), /not assigned/);
+    assert.equal((await f.rpc('sale_comment_history', { p_sale: ids.sale, p_comment: reply })).length, 1);
   });
   await t.test('reads acknowledge only presented IDs; own comments excluded, edits do not increase unread', async () => {
     await f.as('developer'); const before = (await f.rpc('sale_comment_unread', { p_sales: [ids.sale] }))[ids.sale];
@@ -58,7 +84,7 @@ test('discussion migration and permission, history, isolation and unread contrac
     await assert.rejects(f.rpc('sale_discussion_access', { p_sale: ids.sale, p_user: ids.developer }), /permission denied/);
   });
   await t.test('revocation blocks comments, history, mentions, notifications and direct RLS reads', async () => {
-    await f.as('developer'); await f.rpc('sale_discussion_assign', { p_sale: ids.sale, p_user: ids.solicitor, p_assigned: false });
+    await f.owner(); await f.db.query('delete from user_building_access where user_id=$1', [ids.solicitor]);
     await f.as('solicitor');
     for (const [fn, args] of [['sale_comment_page', { p_sale: ids.sale }], ['sale_comment_history', { p_sale: ids.sale, p_comment: original }], ['sale_comment_read', { p_sale: ids.sale, p_comments: [original] }], ['sale_discussion_people', { p_sale: ids.sale }], ['sale_activity_page', { p_sale: ids.sale }]]) await assert.rejects(f.rpc(fn, args), /not assigned/);
     assert.deepEqual(await f.rpc('sale_mentions_inbox'), []); assert.equal((await f.db.query('select * from sale_comments')).rows.length, 0);
@@ -72,7 +98,7 @@ test('discussion migration and permission, history, isolation and unread contrac
     assert.notEqual(sale, ids.sale); assert.equal(await f.rpc('sale_discussion_start', { p_unit: ids.unit }), sale);
     assert.deepEqual((await f.rpc('sale_comment_page', { p_sale: sale })).comments, []);
     await f.write('Before reservation', { p_sale: sale });
-    await assert.rejects(f.rpc('sale_comment_page', { p_sale: ids.sale }), /not assigned/);
+    assert.ok((await f.rpc('sale_comment_page', { p_sale: ids.sale })).comments.length > 0);
     await f.owner(); const row = (await f.db.query('select workflow_status,is_system_baseline from unit_sale_attempts where id=$1', [sale])).rows[0];
     assert.equal(row.workflow_status, 'draft'); assert.equal(row.is_system_baseline, false);
     assert.equal((await f.db.query('select sale_status from units where id=$1', [ids.unit])).rows[0].sale_status, 'for_sale');
@@ -151,5 +177,24 @@ test('document deep links recheck current discussion access, transaction and doc
     const call=signedDocumentVersionUrl(client,{id:ids.agent,role:'sales_agent',organisation_id:null},'version',ids.sale);
     if(scenario==='allowed'){assert.equal((await call).fileName,'synthetic.pdf');assert.ok(signed);}
     else {await assert.rejects(call,/access|belong/);assert.equal(signed,false);}
+  }
+});
+
+test('sale actor names resolve historical staff for both external roles without exposing profiles', async (t) => {
+  const f = await discussionDatabase(); t.after(() => f.db.close());
+  await f.owner();
+  await f.db.query("update profiles set active=false,email='private@example.test' where id=$1", [ids.developer]);
+  await f.db.query("insert into unit_sale_workflow_events(sale_attempt_id,event_type,created_by_user_id) values($1,'completion_recorded',$2)", [ids.sale,ids.developer]);
+  for (const actor of ['agent','solicitor']) {
+    await f.as(actor);
+    const names = await f.rpc('sale_actor_names', { p_sales: [ids.sale] });
+    const developer = names.find(p => p.id === ids.developer);
+    assert.equal(developer.full_name,'Test developer');
+    assert.deepEqual(Object.keys(developer).sort(),['full_name','id','name','role']);
+    assert.ok(!names.some(p => p.id === ids.outsider), 'unrelated sale actors stay hidden');
+    await f.owner();
+    await f.db.query('delete from user_building_access where user_id=$1', [ids[actor]]);
+    await f.as(actor);
+    assert.deepEqual(await f.rpc('sale_actor_names', { p_sales: [ids.sale] }), []);
   }
 });
