@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefCallback } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefCallback } from "react";
 import { CheckCircle2, FileText, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { activityPresentation, COMMENT_LIMIT, discussionDraftKey, discussionRpc, mentionLink, mergeComments, personRole,
@@ -39,6 +39,31 @@ export function useSaleUnread(saleIds: string[]) {
 export function SaleMentionsInbox() {
   const [items, setItems] = useState<MentionNotification[]>([]);
   const [open, setOpen] = useState(false);
+  const id = useId();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const popover = useRef<HTMLDivElement>(null);
+  const positionPopover = useCallback(() => {
+    if (!trigger.current || !popover.current) return;
+    const bounds = trigger.current.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    const width = Math.min(400, viewportWidth - 24);
+    const below = window.innerHeight - bounds.bottom - 20;
+    const above = bounds.top - 20;
+    const useAbove = below < 160 && above > below;
+    Object.assign(popover.current.style, {
+      width: `${width}px`,
+      left: `${Math.max(12, Math.min(bounds.right - width, viewportWidth - width - 12))}px`,
+      top: useAbove ? "auto" : `${bounds.bottom + 8}px`,
+      bottom: useAbove ? `${window.innerHeight - bounds.top + 8}px` : "auto",
+      maxHeight: `${Math.max(0, Math.min(480, useAbove ? above : below))}px`,
+    });
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("resize", positionPopover);
+    window.addEventListener("scroll", positionPopover, true);
+    return () => { window.removeEventListener("resize", positionPopover); window.removeEventListener("scroll", positionPopover, true); };
+  }, [open, positionPopover]);
   useEffect(() => {
     let active = true;
     const refresh = async () => {
@@ -51,16 +76,28 @@ export function SaleMentionsInbox() {
     return () => { active = false; clearInterval(timer); document.removeEventListener("visibilitychange", refresh); window.removeEventListener("sale-discussion-changed", refresh); };
   }, []);
   return <div className="text-sm">
-    <button className="secondary" onClick={() => setOpen(!open)} aria-expanded={open}>@ Mentions {items.length > 0 && <UnreadBadge count={items.length} />}</button>
-    {open && <div className="mt-2 border border-[#d9ded6] bg-white p-3">
-      {items.length === 0 ? <p>No unread mentions.</p> : items.map((item) => <a className="block border-b border-[#eef0eb] py-2 underline" key={item.id} href={mentionLink(item)}>
-        {item.author_name} mentioned you · Unit {item.unit_number}, {item.building_name}<span className="block text-xs text-[#617169]">{time(item.created_at)}</span>
-      </a>)}
-    </div>}
+    <button ref={trigger} className={styles.mentionsTrigger} type="button" popoverTarget={id} popoverTargetAction="toggle"
+      aria-haspopup="dialog" aria-controls={id} aria-expanded={open}>@ Mentions <UnreadBadge count={items.length} label="unread mentions" /></button>
+    {/* The native top layer escapes card clipping and handles outside clicks,
+        Escape, trigger toggling and the invoker's keyboard focus order. */}
+    <div ref={popover} id={id} popover="auto" role="dialog" aria-label="Unread mentions" tabIndex={-1} className={styles.mentionsPopover}
+      onBeforeToggle={(event) => { if (event.newState === "open") positionPopover(); }}
+      onToggle={(event) => {
+        const visible = event.newState === "open";
+        setOpen(visible);
+        if (visible) (popover.current?.querySelector("a") ?? popover.current)?.focus({ preventScroll: true });
+      }}>
+      <h3 className={styles.mentionsTitle}>Mentions</h3>
+      {items.length === 0 ? <p className={styles.mentionsEmpty}>No unread mentions</p> : <ul className={styles.mentionsList}>{items.map((item) => <li key={item.id}>
+        <a className={styles.mentionItem} href={mentionLink(item)} onClick={() => popover.current?.hidePopover()}>
+          <span>{item.author_name} mentioned you</span><span>Unit {item.unit_number} · {item.building_name}</span><time dateTime={item.created_at}>{time(item.created_at)}</time>
+        </a>
+      </li>)}</ul>}
+    </div>
   </div>;
 }
 
-export function UnreadBadge({ count }: { count: number }) { return count > 0 ? <span className={styles.badge} aria-label={`${count} unread comments`}>{count}</span> : null; }
+export function UnreadBadge({ count, label = "unread comments" }: { count: number; label?: string }) { return count > 0 ? <span className={styles.badge} aria-label={`${count} ${label}`}>{count}</span> : null; }
 
 // Intent survives workspace switches and resizing. Automatic desktop visibility
 // never grants permission to open a modal or to move focus into Comments.

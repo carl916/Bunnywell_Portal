@@ -22,6 +22,19 @@
 .tabs button { padding: 7px 0; border-bottom: 2px solid transparent; font-weight: 600; }
 .tabs button[aria-selected=true] { color: #0f3d2e; border-color: #0f3d2e; }
 .badge { display: inline-flex; min-width: 20px; justify-content: center; margin-left: 5px; padding: 0 5px; border-radius: 10px; background: #0f3d2e; color: white; font-size: 11px; font-weight: 600; }
+.mentionsTrigger { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; width: max-content; padding: 0 10px; border: 1px solid #d9ded6; border-radius: 6px; background: #fbfcfa; color: #0f3d2e; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.mentionsTrigger:hover, .mentionsTrigger[aria-expanded=true] { background: #edf3ea; border-color: #a4b8a8; }
+.mentionsTrigger:focus-visible, .mentionItem:focus-visible { outline: 2px solid #0f3d2e; outline-offset: 3px; }
+.mentionsPopover { position: fixed; inset: auto; margin: 0; padding: 16px; max-width: calc(100vw - 24px); overflow-y: auto; overscroll-behavior: contain; border: 1px solid #d9ded6; border-radius: 8px; background: white; color: #34413a; box-shadow: 0 12px 32px #0f3d2e26; font-size: 14px; }
+.mentionsPopover::backdrop { background: transparent; }
+.mentionsTitle { margin: 0 0 8px; color: #0f3d2e; font-size: 15px; font-weight: 700; }
+.mentionsEmpty { margin: 0; color: #617169; }
+.mentionsList { margin: 0; padding: 0; list-style: none; }
+.mentionItem { display: flex; flex-direction: column; gap: 4px; min-height: 44px; padding: 12px 4px; border-bottom: 1px solid #eef0eb; border-radius: 3px; overflow-wrap: anywhere; }
+.mentionItem:hover { background: #f5f8f2; }
+.mentionItem > span:first-child { color: #0f3d2e; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.mentionItem > span:nth-child(2), .mentionItem time { color: #617169; font-size: 12px; }
+.mentionsList li:last-child .mentionItem { border-bottom: 0; }
 .feed { overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; padding: 0 16px 16px; scroll-padding-block: 15px; }
 .date { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #617169; margin: 18px 0 12px; }
 .date::after { content: ''; flex: 1; border-top: 1px solid #e8ece6; }

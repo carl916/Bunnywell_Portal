@@ -16,6 +16,7 @@ export function PdfUploadBox({
   onRemoveCurrent,
   emptyPrompt,
   helperText = "PDF only, maximum 10 MB",
+  onFiles,
 }: {
   id: string;
   label: string;
@@ -28,6 +29,7 @@ export function PdfUploadBox({
   onRemoveCurrent?: () => void;
   emptyPrompt?: string;
   helperText?: string;
+  onFiles?: (files: File[]) => void;
 }) {
   if (file) {
     return <div className="min-w-0 rounded-bw-card border border-[#9bb5a6] bg-[#EEF6F1] p-5" aria-live="polite">
@@ -88,7 +90,8 @@ export function PdfUploadBox({
       onDrop={(event) => {
         if (disabled) return;
         event.preventDefault();
-        onFile(event.dataTransfer.files?.[0] ?? null);
+        if (onFiles) onFiles(Array.from(event.dataTransfer.files));
+        else onFile(event.dataTransfer.files?.[0] ?? null);
       }}
     >
       <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF6F1] text-[#0F3D2E]">
@@ -102,8 +105,9 @@ export function PdfUploadBox({
         className="sr-only"
         type="file"
         accept="application/pdf"
+        multiple={Boolean(onFiles)}
         disabled={disabled}
-        onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }}
+        onChange={(event) => { if (onFiles) onFiles(Array.from(event.target.files ?? [])); else onFile(event.target.files?.[0] ?? null); event.target.value = ""; }}
       />
     </label>
   );

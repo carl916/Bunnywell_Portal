@@ -39,9 +39,10 @@ export function activityPresentation(event: SaleActivity) {
   const meta = event.metadata ?? {};
   const subject = meta.documentType === "completion_statement" ? "Completion statement" : meta.documentType === "statement_of_account" ? "Statement of account" : null;
   const outcome = type.endsWith("approved") ? "approved" : /rejected|query_raised/.test(type) ? "rejected" : type.endsWith("replaced") ? "replaced" : type.endsWith("uploaded") ? "uploaded" : null;
-  const title = subject && outcome ? `${subject} ${outcome}` : type === "completion_recorded" ? "Sale completed" : type === "exchange_recorded" ? "Exchange recorded" : event.summary;
+  const title = meta.packageWorkflow ? event.summary : subject && outcome ? `${subject} ${outcome}` : type === "completion_recorded" ? "Sale completed" : type === "exchange_recorded" ? "Exchange recorded" : event.summary;
   const stage = /completion|statement_of_account/.test(type) ? "completion" : /exchange|authority/.test(type) ? "exchange" : /reservation/.test(type) ? "reservation" : null;
   const details: string[] = [];
+  if (Array.isArray(meta.documents)) for (const document of meta.documents) if (typeof document?.fileName === "string") details.push(document.fileName);
   if (typeof meta.fileName === "string") details.push(meta.fileName + (typeof meta.versionNumber === "number" ? ` · Version ${meta.versionNumber}` : ""));
   else if (typeof meta.versionNumber === "number") details.push(`Version ${meta.versionNumber}`);
   if (typeof meta.queryNote === "string") details.push(`Reason: ${meta.queryNote}`);

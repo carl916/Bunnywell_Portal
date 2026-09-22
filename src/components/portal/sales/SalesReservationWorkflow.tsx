@@ -3,6 +3,7 @@
 import { PdfUploadBox } from "./PdfUploadBox";
 import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
+import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
 import { isMissingSaleActorNames, salesLoadErrorMessage } from "@/lib/sales/load-errors";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -229,7 +230,6 @@ type ApprovalHistoryEvent = {
   actor: string;
 };
 
-const SALES_PAGE_SIZE = 12;
 const SALES_STAGE_FILTERS: Array<{ value: SalesStageFilter; label: string }> = [
   { value: "for_sale", label: "For sale" },
   { value: "reserved", label: "Reserved" },
@@ -250,7 +250,7 @@ function SalesViewTabs({
 }) {
   return (
     <div className={styles.headerControls}>
-      <div className="mt-4 flex flex-wrap gap-2 border-t border-[#eef0eb] pt-4" role="tablist" aria-label="Sales views">
+      <div className={styles.headerTabs} role="tablist" aria-label="Sales views">
       <button className={activeView === "pipeline" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "pipeline"} onClick={() => onChange("pipeline")}>Sales overview</button>
       {canViewAgentFees && <button className={activeView === "agent_fees" ? "primary" : "secondary"} type="button" role="tab" aria-selected={activeView === "agent_fees"} onClick={() => onChange("agent_fees")}>Agent Fees</button>}
       </div>
@@ -874,6 +874,7 @@ export function SalesReservationWorkflow({
     ...saleActorNames.filter((actor) => !portalProfiles.some((person) => person.id === actor.id)),
   ];
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
+  const [depositReceiptSales, setDepositReceiptSales] = useState<string[]>([]);
   const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
   const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
   const [conversationTarget, setConversationTarget] = useState<{ unit: string; sale?: string; comment?: string } | null>(null);
@@ -949,7 +950,6 @@ export function SalesReservationWorkflow({
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState("");
   const [salesStageFilter, setSalesStageFilter] = useState<SalesStageFilter>("all");
   const [salesSearch, setSalesSearch] = useState("");
-  const [salesPage, setSalesPage] = useState(1);
   const [activeWorkflowStage, setActiveWorkflowStage] = useState<SaleWorkflowStage>("reservation");
   const [activeSalesView, setActiveSalesView] = useState<SalesView>("pipeline");
   const [activeUnitSection, setActiveUnitSection] = useState<UnitSaleSection>("progression");
@@ -1311,7 +1311,7 @@ export function SalesReservationWorkflow({
     {
       key: "exchange" as const,
       label: "Exchange",
-      status: exchangeRecorded ? "Exchanged" : reservationApproved ? "Authority to exchange" : "Locked",
+      status: exchangeRecorded ? depositReceiptSales.includes(activeAttempt?.id ?? "") ? "Exchanged · Deposit received" : "Exchanged · Deposit confirmation outstanding" : reservationApproved ? "Authority to exchange" : "Locked",
     },
     {
       key: "completion" as const,
@@ -1419,8 +1419,7 @@ export function SalesReservationWorkflow({
     const matchesSearch = unit.unit_number.toLowerCase().includes(searchValue) || buildingName.toLowerCase().includes(searchValue);
     return matchesStatus && matchesSearch;
   });
-  const salesPageCount = Math.max(1, Math.ceil(filteredSalesUnits.length / SALES_PAGE_SIZE));
-  const currentSalesPage = Math.min(salesPage, salesPageCount);
+  const { currentPage: currentSalesPage, setPage: setSalesPage } = useSalesPagination(filteredSalesUnits.length, JSON.stringify([buildingId, salesSearch, salesStageFilter]));
   const pagedSalesUnits = filteredSalesUnits.slice((currentSalesPage - 1) * SALES_PAGE_SIZE, currentSalesPage * SALES_PAGE_SIZE);
 
   function nextActionForUnit(unit: Unit) {
@@ -1568,10 +1567,6 @@ export function SalesReservationWorkflow({
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
-
-  useEffect(() => {
-    setSalesPage(1);
-  }, [buildingId, salesSearch, salesStageFilter]);
 
   // Opening a unit initialises its selected stage. Refetching lifecycle data
   // must preserve the stage the user is currently reviewing.
@@ -1781,19 +1776,22 @@ export function SalesReservationWorkflow({
         return;
       }
 
-      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, actorNamesResult] = await Promise.all([
+      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, actorNamesResult, depositReceiptsResult] = await Promise.all([
         supabase.from("unit_sale_terms").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_payment_schedule").select("*").in("sale_attempt_id", attemptIds).order("sequence_no"),
         supabase.from("unit_sale_documents").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoices").select("*").in("sale_attempt_id", attemptIds),
         supabase.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", attemptIds),
         supabase.rpc("sale_actor_names", { p_sales: attemptIds }),
+        supabase.from("sale_exchange_deposit_receipts").select("sale_attempt_id").in("sale_attempt_id", attemptIds),
       ]);
       if (termsResult.error) throw termsResult.error;
       if (scheduleResult.error) throw scheduleResult.error;
       if (documentsResult.error) throw documentsResult.error;
       if (invoicesResult.error) throw invoicesResult.error;
       if (invoicePaymentsResult.error) throw invoicePaymentsResult.error;
+      if (depositReceiptsResult.error) throw depositReceiptsResult.error;
+      setDepositReceiptSales([...new Set((depositReceiptsResult.data ?? []).map((receipt) => receipt.sale_attempt_id as string))]);
 
       if (actorNamesResult.error && !isMissingSaleActorNames(actorNamesResult.error)) throw actorNamesResult.error;
       setSaleActorNames((actorNamesResult.data ?? []) as SaleActorName[]);
@@ -2341,6 +2339,7 @@ export function SalesReservationWorkflow({
             requesterId={profile?.id ?? user.id}
             buildingContextId={buildingId}
             buildingContextName={scopeBuilding?.name ?? "Selected building"}
+            refreshKey={units}
             onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
           />
         </div>
@@ -2500,13 +2499,7 @@ export function SalesReservationWorkflow({
             </table>
             </SalesTableScroll>
 
-          <div className="mt-4 flex flex-col gap-3 text-sm text-[#617169] sm:flex-row sm:items-center sm:justify-between">
-            <span>Showing {filteredSalesUnits.length === 0 ? 0 : (currentSalesPage - 1) * SALES_PAGE_SIZE + 1}-{Math.min(currentSalesPage * SALES_PAGE_SIZE, filteredSalesUnits.length)} of {filteredSalesUnits.length}</span>
-            <div className="flex justify-end gap-2">
-              <button className="secondary" onClick={() => setSalesPage((page) => Math.max(1, page - 1))} disabled={currentSalesPage <= 1}>Previous</button>
-              <button className="secondary" onClick={() => setSalesPage((page) => Math.min(salesPageCount, page + 1))} disabled={currentSalesPage >= salesPageCount}>Next</button>
-            </div>
-          </div>
+          <SalesPagination total={filteredSalesUnits.length} currentPage={currentSalesPage} onPageChange={setSalesPage} />
         </section>
 
         <section className="panel">

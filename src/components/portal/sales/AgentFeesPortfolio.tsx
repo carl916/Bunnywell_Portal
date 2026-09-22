@@ -1,6 +1,7 @@
 "use client";
 
 import { SalesTableScroll } from "./SalesTableScroll";
+import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
@@ -123,11 +124,14 @@ export function AgentFeesPortfolio({
   requesterId,
   buildingContextId,
   buildingContextName,
+  refreshKey,
   onOpenSale,
 }: {
   requesterId: string;
   buildingContextId: string;
   buildingContextName: string;
+  // The parent supplies its unit data reference so the portal Refresh also reloads fees.
+  refreshKey?: unknown;
   onOpenSale: (unitId: string, buildingId: string) => void;
 }) {
   const [rows, setRows] = useState<AgentFeePortfolioRow[]>([]);
@@ -154,7 +158,7 @@ export function AgentFeesPortfolio({
     let cancelled = false;
     void queryAgentFeePortfolio(requesterId)
       .then((loadedRows) => {
-        if (!cancelled) setRows(loadedRows);
+        if (!cancelled) { setRows(loadedRows); setError(""); }
       })
       .catch((loadError: unknown) => {
         if (!cancelled) {
@@ -168,7 +172,7 @@ export function AgentFeesPortfolio({
     return () => {
       cancelled = true;
     };
-  }, [requesterId]);
+  }, [requesterId, refreshKey]);
 
   const contextRows = useMemo(
     () => buildingContextId ? rows.filter((row) => row.buildingId === buildingContextId) : rows,
@@ -183,6 +187,8 @@ export function AgentFeesPortfolio({
     milestone: milestoneFilter,
   }), [agentFilter, contextRows, milestoneFilter, statusFilter]);
   const summary = useMemo(() => summariseAgentFeePortfolio(filteredRows), [filteredRows]);
+  const { currentPage, setPage } = useSalesPagination(filteredRows.length, JSON.stringify([buildingContextId, agentFilter, statusFilter, milestoneFilter]));
+  const pagedRows = filteredRows.slice((currentPage - 1) * SALES_PAGE_SIZE, currentPage * SALES_PAGE_SIZE);
   const scopeLabel = buildingContextId ? buildingContextName : "All buildings";
 
   return (
@@ -238,7 +244,7 @@ export function AgentFeesPortfolio({
                 <tbody>
                   {filteredRows.length === 0 ? (
                     <tr><td className="px-4 py-8 text-center text-[#617169]" colSpan={7}>No sales match the selected filters.</td></tr>
-                  ) : filteredRows.map((row) => (
+                  ) : pagedRows.map((row) => (
                     <tr
                       key={row.saleAttemptId}
                       className="cursor-pointer bg-white transition-colors hover:bg-[#fbfcfa] focus-within:bg-[#fbfcfa]"
@@ -264,6 +270,7 @@ export function AgentFeesPortfolio({
                 </tbody>
               </table>
             </SalesTableScroll>
+            <SalesPagination total={filteredRows.length} currentPage={currentPage} onPageChange={setPage} />
             <p className="mt-3 text-xs text-[#617169]">Current outstanding includes submitted or approved invoice balances. Future uninvoiced Completion fees are shown separately as net.</p>
           </>
         )}

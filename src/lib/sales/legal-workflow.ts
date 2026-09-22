@@ -31,6 +31,7 @@ export type LegalEmail = {
   to_recipients: string[]; cc_recipients: string[]; issued_at: string;
   expires_at: string | null; proposed_completion_date: string | null;
   approved_by: string; revoked_at: string | null; replaced_by: string | null;
+  sent_at?: string | null;
   revocation_reason?: string | null;
   exchanged_at: string | null; delivery_status: string; resend_message_id: string | null;
 };

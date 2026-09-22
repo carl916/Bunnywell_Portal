@@ -36,20 +36,22 @@ export async function GET(request: Request) {
     if (snapshot.error) throw snapshot.error;
     const expiry = await client.rpc("sales_legal_expire", { p_sale: sale, p_actor: actor });
     if (expiry.error) throw expiry.error;
-    const [attempt, emails, documents, events] = await Promise.all([
+    const [attempt, emails, documents, events, deposit, completionPackage] = await Promise.all([
       client.from("unit_sale_attempts").select("id,workflow_status,exchanged_at,completed_at,authority_requested_at,contractual_completion_date,completion_notice_issued_at,legal_completed_at,completion_authority_requested_at,completion_authority_requested_by,completion_authority_given_at,completion_authority_given_by,completion_arrangements_confirmed_at,completion_arrangements_confirmed_by,completion_legacy_stage").eq("id", sale).single(),
       client.from("sale_legal_emails").select("*").eq("sale_attempt_id", sale).order("issued_at", { ascending: false }),
-      client.from("unit_sale_documents").select("*,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(*)").eq("sale_attempt_id", sale).in("document_type", ["completion_statement", "statement_of_account", "completion_correspondence"]).is("redacted_at", null).is("superseded_at", null),
-      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,actor_role,created_by_user_id,created_at").eq("sale_attempt_id", sale).in("event_type", ["exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_arrangements_confirmed", "authority_notice_requested", "authority_notice_given", "completion_arrangements_dates_corrected"]).order("created_at", { ascending: false }),
+      client.from("unit_sale_documents").select("*,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(*)").eq("sale_attempt_id", sale).in("document_type", ["completion_statement", "draft_statement_of_account", "statement_of_account", "completion_correspondence"]).is("redacted_at", null).is("superseded_at", null),
+      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,actor_role,created_by_user_id,created_at").eq("sale_attempt_id", sale).in("event_type", ["authority_requested", "exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_arrangements_confirmed", "authority_notice_requested", "authority_notice_given", "completion_arrangements_dates_corrected"]).order("created_at", { ascending: false }),
+      client.rpc("sales_exchange_deposit_context", { p_sale: sale, p_actor: actor }),
+      client.rpc("sales_completion_package_context", { p_sale: sale, p_actor: actor }),
     ]);
-    for (const result of [attempt, emails, documents, events]) if (result.error) throw result.error;
-    const actorIds = [...new Set([...(events.data ?? []).map((event) => event.created_by_user_id), ...(documents.data ?? []).map((document) => document.approved_by_user_id)].filter(Boolean))];
+    for (const result of [attempt, emails, documents, events, deposit, completionPackage]) if (result.error) throw result.error;
+    const actorIds = [...new Set([...(events.data ?? []).map((event) => event.created_by_user_id), ...(documents.data ?? []).map((document) => document.approved_by_user_id), ...(documents.data ?? []).flatMap((document) => document.unit_sale_document_versions.map((version: { uploaded_by_user_id: string | null }) => version.uploaded_by_user_id))].filter(Boolean))];
     const actors = actorIds.length ? await client.from("profiles").select("id,full_name,name").in("id", actorIds) : { data: [], error: null };
     if (actors.error) throw actors.error;
     const visibleDocuments = (documents.data ?? []).map((document) => ({ ...document,
       unit_sale_document_versions: document.unit_sale_document_versions.filter((version: { redacted_at: string | null }) => !version.redacted_at),
     }));
-    return NextResponse.json({ snapshot: snapshot.data, attempt: attempt.data, emails: emails.data, documents: visibleDocuments, events: events.data, actors: actors.data }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ snapshot: snapshot.data, attempt: attempt.data, emails: emails.data, documents: visibleDocuments, events: events.data, actors: actors.data, deposit: deposit.data, completionPackage: completionPackage.data }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return fail(error); }
 }
 
@@ -62,6 +64,43 @@ export async function POST(request: Request) {
       const sale = String(form.get("sale") || "");
       const type = String(form.get("documentType") || "");
       const action = String(form.get("action") || "");
+      if (action === "upload_completion_documents") {
+        const files = form.getAll("files");
+        const assignments = JSON.parse(String(form.get("assignments") || "[]")) as { type: string; expectedVersionId: string | null }[];
+        const requestId = String(form.get("requestId") || "");
+        if (!/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(requestId)) throw new Error("A submission reference is required.");
+        if (files.length < 1 || files.length > 2 || !Array.isArray(assignments) || assignments.length !== files.length || new Set(assignments.map(item => item?.type)).size !== files.length || assignments.some(item => !["completion_statement", "draft_statement_of_account"].includes(item?.type))) throw new Error("Assign one or two PDFs to different completion document types.");
+        const prepared = await Promise.all(files.map(async (file, index) => {
+          if (!(file instanceof File) || noticeFileError(file)) throw new Error("Choose PDFs up to 10 MB each.");
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("Every selected file must be a PDF.");
+          return { bytes, name: file.name, size: file.size, mime: "application/pdf", type: assignments[index].type, expectedVersionId: assignments[index].expectedVersionId };
+        }));
+        const snapshot = await client.rpc("sales_legal_snapshot", { p_sale: sale, p_actor: actor });
+        if (snapshot.error) throw snapshot.error;
+        const uploaded: { type: string; expectedVersionId: string | null; path: string; name: string; size: number; mime: string }[] = [];
+        async function removeUnregistered(paths: string[]) {
+          for (const path of paths) {
+            const saved = await client.from("unit_sale_document_versions").select("id").eq("storage_path", path);
+            if (!saved.error && saved.data?.length === 0) await client.storage.from("sale-documents").remove([path]);
+          }
+        }
+        try {
+          for (const { bytes, ...file } of prepared) {
+            const path = `${snapshot.data.building.id}/${sale}/completion-${crypto.randomUUID()}.pdf`;
+            const result = await client.storage.from("sale-documents").upload(path, bytes, { contentType: "application/pdf", upsert: false });
+            if (result.error) throw result.error;
+            uploaded.push({ ...file, path });
+          }
+          const result = await client.rpc("sales_completion_upload", { p_sale: sale, p_actor: actor, p_request: requestId, p_files: uploaded });
+          if (result.error) throw result.error;
+          await removeUnregistered(uploaded.map(file => file.path));
+          return NextResponse.json({ documents: result.data });
+        } catch (error) {
+          await removeUnregistered(uploaded.map(file => file.path));
+          throw error;
+        }
+      }
       const noticeSubmission = action === "confirm_notice" || action === "replace_notice";
       if (type === "completion_correspondence" && !noticeSubmission) throw new Error("Submit both dates and the notice PDF together.");
       if (noticeSubmission && type !== "completion_correspondence") throw new Error("Choose the notice PDF.");
@@ -161,8 +200,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ email: result.data });
     }
     const permission = action === "request_authority" || action === "request_notice_authority" ? "request_exchange_approval" : action === "confirm_exchange" ? "record_exchange"
+      : action === "confirm_exchange_deposit" || action === "correct_exchange_deposit_date" ? "confirm_exchange_deposit"
       : action === "correct_completion_dates" ? "confirm_completion_arrangements" : action === "confirm_completion" ? "record_completion"
-      : action === "revoke_authority" || action === "cancel_instruction" || action === "cancel_notice_authority" ? "approve_exchange" : action === "approve_statement" || action === "query_statement" ? "approve_completion_documents" : null;
+      : action === "revoke_authority" || action === "cancel_instruction" || action === "cancel_notice_authority" ? "approve_exchange" : ["approve_statement", "query_statement", "approve_completion_package", "query_completion_package"].includes(action) ? "approve_completion_documents" : null;
     if (!permission || !canPerformSalesAction(role, permission)) throw new Error("Your role cannot perform this legal action.");
     const result = await client.rpc("sales_legal_action", { p_sale: sale, p_actor: actor, p_action: action, p_payload: payload });
     if (result.error) throw result.error;

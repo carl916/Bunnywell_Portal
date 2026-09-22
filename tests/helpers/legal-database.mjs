@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { discussionDatabase } from './discussion-database.mjs';
 
-export async function legalDatabase({ beforeNotice } = {}) {
+export async function legalDatabase({ beforeNotice, beforeDeposit, beforePackage } = {}) {
   const f = await discussionDatabase();
   await f.owner();
   await f.db.exec(`
@@ -39,6 +39,11 @@ export async function legalDatabase({ beforeNotice } = {}) {
   if (beforeNotice) await beforeNotice(f);
   await f.db.exec(readFileSync('supabase/migrations/20260922b_completion_notice_authority.sql','utf8'));
   await f.db.exec(readFileSync('supabase/migrations/20260922c_legal_email_presentation.sql','utf8'));
+  if (beforeDeposit) await beforeDeposit(f);
+  await f.db.exec(readFileSync('supabase/migrations/20260922d_exchange_deposit_receipts.sql','utf8'));
+  await f.db.exec(readFileSync('supabase/migrations/20260922e_authority_renewal_requests.sql','utf8'));
+  if (beforePackage) await beforePackage(f);
+  await f.db.exec(readFileSync('supabase/migrations/20260922f_completion_document_package.sql','utf8'));
   const solicitorOrg=crypto.randomUUID(),agentOrg=crypto.randomUUID();
   await f.db.query("insert into organisations(id,name,type,shared_system_email) values($1,'Legal Team','conveyancer','legal@example.test'),($2,'Agent Team','sales_agent','sales@example.test')",[solicitorOrg,agentOrg]);
   await f.db.query("update buildings set conveyancer_organisation_id=$1,sales_agent_organisation_id=$2,seller_name='Seller SPV Ltd' where id=$3",[solicitorOrg,agentOrg,f.ids.building]);
@@ -54,10 +59,25 @@ export async function legalDatabase({ beforeNotice } = {}) {
   }
   async function sent(email) { await service(); await f.rpc('sales_legal_dispatch',{p_id:email.id,p_actor:f.ids.developer,p_status:'sending'}); return f.rpc('sales_legal_dispatch',{p_id:email.id,p_actor:f.ids.developer,p_status:'sent',p_message_id:`resend-${email.id}`}); }
   async function action(user,action,payload={}) { await service(user); return f.rpc('sales_legal_action',{p_sale:f.ids.sale,p_actor:f.ids[user],p_action:action,p_payload:payload}); }
-  async function upload(type='completion_statement') { await service('solicitor'); return f.rpc('sales_legal_register_document',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_type:type,p_file:{path:`test/${crypto.randomUUID()}.pdf`,name:'statement.pdf',size:100}}); }
+  async function uploadFiles(types=['completion_statement','draft_statement_of_account'], overrides={}) {
+    await service('solicitor');const files=[];
+    for(const type of types) {
+      const current=(await f.db.query('select v.id from unit_sale_document_versions v join unit_sale_documents d on d.id=v.document_id where d.sale_attempt_id=$1 and d.document_type=$2 and v.is_current',[f.ids.sale,type])).rows[0];
+      files.push({type,expectedVersionId:current?.id ?? null,path:f.ids.building+'/'+f.ids.sale+'/'+crypto.randomUUID()+'.pdf',name:type+'.pdf',size:100,mime:'application/pdf'});
+    }
+    return f.rpc('sales_completion_upload',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_request:crypto.randomUUID(),p_files:files,...overrides});
+  }
+  async function upload(type='completion_statement') {
+    if(['completion_statement','draft_statement_of_account'].includes(type))return (await uploadFiles([type]))[0].versionId;
+    await service('solicitor');return f.rpc('sales_legal_register_document',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_type:type,p_file:{path:'test/'+crypto.randomUUID()+'.pdf',name:'statement.pdf',size:100}});
+  }
+  async function packageVersions() {
+    await service();const rows=(await f.db.query('select d.document_type,v.id from unit_sale_documents d join unit_sale_document_versions v on v.document_id=d.id and v.is_current where d.sale_attempt_id=$1',[f.ids.sale])).rows;
+    return {statementVersionId:rows.find(row=>row.document_type==='completion_statement')?.id,accountVersionId:rows.find(row=>row.document_type==='draft_statement_of_account')?.id};
+  }
   async function notice({user='solicitor',request=crypto.randomUUID(),noticeDate='2026-09-01',dueDate='2026-09-15',replace=false,expected=null,file={}}={}) {
     await service(user);
     return f.rpc('sales_legal_submit_notice',{p_sale:f.ids.sale,p_actor:f.ids[user],p_request:request,p_file:{path:f.ids.building+'/'+f.ids.sale+'/'+crypto.randomUUID()+'.pdf',name:'notice.pdf',size:100,mime:'application/pdf',...file},p_notice:noticeDate,p_due:dueDate,p_replace:replace,p_expected:expected});
   }
-  return {...f,as,service,snapshot,prepare,sent,action,upload,notice,solicitorOrg,agentOrg};
+  return {...f,as,service,snapshot,prepare,sent,action,upload,uploadFiles,packageVersions,notice,solicitorOrg,agentOrg};
 }

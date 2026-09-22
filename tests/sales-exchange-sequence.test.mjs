@@ -16,7 +16,7 @@ function functionBody(source, name) {
 
 test("exchange panel contains legal-readiness activities only", () => {
   assert.match(workflowSource, /<SalesLegalWorkflow/);
-  assert.match(legalSource, /1\. Authority requested/);
+  assert.match(legalSource, /1\. Authority request/);
   assert.match(legalSource, /2\. Authority issued/);
   assert.match(legalSource, /3\. Exchange confirmed/);
   assert.doesNotMatch(legalSource, /Agent invoice|invoice approval|invoice payment/i);
@@ -85,13 +85,12 @@ test("developer can reject an agent invoice with a reason and request a replacem
   assert.match(workflowSource, /Upload \$\{isReplacement \? "corrected " : ""\}\$\{label\} invoice PDF/);
 });
 
-test("exchange requires deposit confirmation and keeps agent fee payment separate", () => {
+test("exchange no longer requires deposit confirmation and keeps agent fee payment separate", () => {
   const clientExchangeBody = legalSource;
   const routeExchangeBody = legalActionSql("confirm_exchange");
   const paymentBody = functionBody(workflowSource, "recordAgentFeePayment");
 
-  assert.match(clientExchangeBody, /depositConfirmed: deposit/);
-  assert.match(routeExchangeBody, /p_payload->>'depositConfirmed' is distinct from 'true'/);
+  assert.doesNotMatch(clientExchangeBody, /depositConfirmed:/);
   assert.match(routeExchangeBody, /e\.expires_at<=now\(\)/);
   assert.match(paymentBody, /action: "record_agent_fee_payment"/);
   assert.match(paymentBody, /paymentClientReference/);

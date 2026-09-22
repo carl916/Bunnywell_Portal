@@ -50,8 +50,8 @@ test('request notifies developers; stale preview, expiry, revoke, reissue and ro
   await f.action('agent','request_authority');
   await f.service(); assert.equal((await f.db.query('select count(*)::int n from sale_mention_notifications where recipient_id=$1',[f.ids.developer])).rows[0].n,1);
   await f.action('solicitor','request_authority');
-  await assert.rejects(f.action('developer','request_authority'),/role/);
-  await assert.rejects(f.action('agent','confirm_exchange',{date:today(),depositConfirmed:true}),/role/);
+  await assert.rejects(f.action('developer','request_authority'),/role|access denied/);
+  await assert.rejects(f.action('agent','confirm_exchange',{date:today(),depositConfirmed:true}),/role|access denied/);
   await assert.rejects(f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true}),/unexpired/);
   const stale=await f.snapshot();
   await f.owner(); await f.db.query("update unit_sale_terms set contract_price=260000 where sale_attempt_id=$1",[f.ids.sale]);
@@ -59,7 +59,7 @@ test('request notifies developers; stale preview, expiry, revoke, reissue and ro
   await assert.rejects(f.prepare({date:new Date(Date.now()-1000).toISOString()}),/future/);
   const one=await f.sent(await f.prepare());
   assert.equal(legal.authorityStatus(one,Date.parse(one.expires_at)+1),'Authority expired');
-  await assert.rejects(f.action('agent','revoke_authority',{emailId:one.id,reason:'Change'}),/role/);
+  await assert.rejects(f.action('agent','revoke_authority',{emailId:one.id,reason:'Change'}),/role|access denied/);
   await f.owner(); await assert.rejects(f.db.query('update unit_sale_terms set contract_price=270000 where sale_attempt_id=$1',[f.ids.sale]),/locked/);
   await f.action('developer','revoke_authority',{emailId:one.id,reason:'Revised terms'});
   await assert.rejects(f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true}),/unexpired/);
@@ -67,7 +67,7 @@ test('request notifies developers; stale preview, expiry, revoke, reissue and ro
   const two=await f.sent(await f.prepare()); assert.equal(two.version,2); assert.equal(two.snapshot.terms.contract_price,270000);
   await f.service(); const history=(await f.db.query('select * from sale_legal_emails order by version')).rows;
   assert.equal(history[0].snapshot.terms.contract_price,260000); assert.ok(history[0].revoked_at);
-  await assert.rejects(f.action('developer','confirm_exchange',{date:today(),depositConfirmed:true}),/role/);
+  await assert.rejects(f.action('developer','confirm_exchange',{date:today(),depositConfirmed:true}),/role|access denied/);
   await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});
   await f.owner(); await assert.rejects(f.db.query('update unit_sale_terms set contract_price=280000 where sale_attempt_id=$1',[f.ids.sale]),/locked/);
   await assert.rejects(f.action('developer','revoke_authority',{emailId:two.id,reason:'Too late'}),/unexchanged/);
@@ -81,25 +81,25 @@ test('completion instructions, current version approval, replacement and legal h
   await f.notice({noticeDate:today(),dueDate:today()});
   await assert.rejects(f.notice({user:'developer'}),/access denied/);
   await assert.rejects(f.upload('statement_of_account'),/Final accounts/);
-  const one=await f.upload();
-  await assert.rejects(f.action('solicitor','approve_statement',{versionId:one}),/role/);
-  await f.action('developer','query_statement',{versionId:one,reason:'Correct balance'});
-  await f.action('developer','approve_statement',{versionId:one});
+  const one=await f.upload();await f.upload('draft_statement_of_account');const pair=await f.packageVersions();
+  await assert.rejects(f.action('solicitor','approve_completion_package',pair),/role|access denied/);
+  await f.action('developer','query_completion_package',{...pair,documentTypes:['completion_statement'],reason:'Correct balance'});
+  await f.action('developer','approve_completion_package',pair);
   const two=await f.upload(); assert.notEqual(one,two);
-  await assert.rejects(f.action('developer','approve_statement',{versionId:one}),/version changed/);
-  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/current completion statement/);
+  await assert.rejects(f.action('developer','approve_completion_package',pair),/documents changed/);
+  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current completion documents/);
   await f.owner(); await assert.rejects(f.db.query("update units set sale_status='completed' where id=$1",[f.ids.unit]),/legal completion/);
   await assert.rejects(f.db.query("update unit_sale_attempts set completed_at=current_date where id=$1",[f.ids.sale]),/legal workflow/);
-  await f.action('developer','approve_statement',{versionId:two});
-  await assert.rejects(f.action('developer','confirm_completion',{dateTime:new Date().toISOString()}),/role/);
+  await f.action('developer','approve_completion_package',await f.packageVersions());
+  await assert.rejects(f.action('developer','confirm_completion',{dateTime:new Date().toISOString()}),/role|access denied/);
   await f.action('solicitor','confirm_completion',{dateTime:new Date(Date.now()-1000).toISOString()});
   await f.service(); const sale=(await f.db.query('select * from unit_sale_attempts where id=$1',[f.ids.sale])).rows[0];
   assert.ok(sale.legal_completed_at); assert.equal(sale.legal_completed_by,f.ids.solicitor);
   assert.equal((await f.db.query('select sale_status from units where id=$1',[f.ids.unit])).rows[0].sale_status,'completed');
   await f.upload('statement_of_account');
-  await assert.rejects(f.upload(),/precede it/);
+  await assert.rejects(f.upload(),/awaiting completion/);
   const approvals=(await f.db.query("select metadata from unit_sale_workflow_events where event_type='completion_documents_approved' order by created_at")).rows;
-  assert.deepEqual(approvals.map(row=>row.metadata.versionId),[one,two]);
+  assert.deepEqual(approvals.map(row=>row.metadata.documents[0].versionId),[one,two]);
 });
 
 test('expiry blocks exchange in PostgreSQL and records one immutable activity at the expiry time',async t=>{

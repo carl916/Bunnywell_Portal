@@ -8,6 +8,7 @@ const workflowSource = readFileSync("src/components/portal/sales/SalesReservatio
 const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");
 const workspaceTabsSource = readFileSync("src/components/portal/sales/SaleFileWorkspaceTabs.tsx", "utf8");
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
+const packageSource = readFileSync("src/components/portal/sales/CompletionDocuments.tsx", "utf8");
 const legalSource = readFileSync("src/components/portal/sales/SalesLegalWorkflow.tsx", "utf8");
 
 function functionBody(source, name) {
@@ -148,7 +149,7 @@ test("sale activity and legal milestone summaries identify their actors", () => 
   assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /event\.actor_name/);
   assert.match(legalSource, /Approved by \{email.snapshot.approver.name\}/);
   assert.match(legalSource, /Recorded by \{actorLabel\("exchange_recorded"\)\}/);
-  assert.match(legalSource, /Approved by \{actorLabel\("completion_documents_approved"/);
+  assert.match(packageSource, /Approved by \{packageState.approval.approved_by_name\}/);
   assert.match(legalSource, /Completed by \{actorLabel\("completion_recorded"\)\}/);
 });
 
@@ -182,7 +183,7 @@ test("legacy reservation actor IDs resolve to profile names and never render as 
 test("completion uses styled PDF pickers and replaces completed controls with summaries", () => {
   const completionPanel = legalSource;
   assert.match(completionPanel, /<PdfUploadBox/);
-  assert.match(completionPanel, /Historical completion statement approved/);
+  assert.match(packageSource, /Historical completion statement approved/);
   assert.match(completionPanel, /Handover and key release are available/);
   assert.doesNotMatch(completionPanel, /className="field" type="file"/);
 });

@@ -5,6 +5,9 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { authorityStatus, authorityTerms, legalDateTime, resolveSalesRecipients, SalesRecipientError, type LegalEmail, type LegalSnapshot } from "@/lib/sales/legal-workflow";
 import { canPerformSalesAction } from "@/lib/sales/permissions";
 import { PdfUploadBox, type UploadVersion } from "./PdfUploadBox";
+import { CompletionDocuments, currentCompletionVersion, type CompletionPackage } from "./CompletionDocuments";
+import { ExchangeDepositReceipt, type ExchangeDepositContext } from "./ExchangeDepositReceipt";
+import { authorityBadge, exchangeAuthorityState } from "@/lib/sales/authority-state";
 import { workflowActorLabel, type ActorProfile } from "@/lib/sales/actor-identity";
 import { addWorkingDays, completionNoticeState, noticeFileError, validNoticeDates, type CompletionNoticeState } from "@/lib/sales/completion-notice";
 
@@ -12,6 +15,8 @@ type Version = UploadVersion & { id: string; version_number: number; is_current:
 type Document = { id: string; document_type: string; status: string; query_note: string | null; approved_version_id: string | null; approved_by_user_id?: string | null; approved_at: string | null; unit_sale_document_versions: Version[] };
 type Context = {
   snapshot: LegalSnapshot; emails: LegalEmail[]; documents: Document[];
+  deposit?: ExchangeDepositContext;
+  completionPackage?: CompletionPackage;
   events?: { event_type: string; actor_name?: string | null; created_by_user_id: string | null; created_at: string }[];
   actors?: ActorProfile[];
   attempt: CompletionNoticeState & { workflow_status: string; exchanged_at: string | null; completed_at: string | null; authority_requested_at: string | null; contractual_completion_date: string | null; completion_notice_issued_at: string | null; legal_completed_at: string | null;
@@ -43,21 +48,22 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
 }) {
   const [context, setContext] = useState<Context | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
+  const [noticeReviewFailure, setNoticeReviewFailure] = useState<Failure | null>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
   const [expiry, setExpiry] = useState(() => localTime(Date.now() + 48 * 3600000));
   const [expiryEdited, setExpiryEdited] = useState(false);
   const [exchangeDate, setExchangeDate] = useState("");
-  const [deposit, setDeposit] = useState(false);
   const [completedTime, setCompletedTime] = useState("");
   const [legalConfirmed, setLegalConfirmed] = useState(false);
   const [reason, setReason] = useState("");
-  const [query, setQuery] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [approvedPreview, setApprovedPreview] = useState(false);
   const requestId = useRef("");
   const [now, setNow] = useState(Date.now);
   const previewRef = useRef<HTMLDivElement>(null);
+  const noticeReviewButtonRef = useRef<HTMLButtonElement>(null);
+  const noticePreviewId = `notice-authority-preview-${saleId}`;
   const load = useCallback(async () => {
     const result = await legalRequest<Context>(saleId);
     setContext(result);
@@ -68,47 +74,65 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
 
   async function run(body: Record<string, unknown> | FormData, message: string) {
     if (inFlight.current) return false;
-    inFlight.current = true; setBusy(true); setFailure(null);
+    inFlight.current = true; setBusy(true); setFailure(null); setNoticeReviewFailure(null);
     try {
       await legalRequest(saleId, body);
       setPreview(null); setApprovedPreview(false);
       await load(); await onChanged(); onNotice(message);
       return true;
     } catch (error) {
-      setFailure(error instanceof Error ? error : { message: "Legal action failed." });
+      const problem = error instanceof Error ? error : { message: "Legal action failed." };
+      if (!(body instanceof FormData) && body.action === "send" && body.kind === "notice_authority") setNoticeReviewFailure(problem);
+      else setFailure(problem);
       await load().catch(() => {});
       return false;
     } finally { inFlight.current = false; setBusy(false); }
   }
   async function showPreview() {
     if (inFlight.current) return;
-    inFlight.current = true; setBusy(true); setFailure(null); setApprovedPreview(false);
+    inFlight.current = true; setBusy(true); setFailure(null); setNoticeReviewFailure(null); setApprovedPreview(false);
     try {
       const date = stage === "exchange" ? expiryEdited ? new Date(expiry).toISOString() : new Date(Date.now() + 48 * 3600000).toISOString() : "";
       if (stage === "exchange" && !expiryEdited) setExpiry(localTime(Date.parse(date)));
       const result = await legalRequest<Preview>(saleId, { action: "preview", kind: stage === "exchange" ? "authority" : "notice_authority", date });
       requestId.current = crypto.randomUUID(); setPreview(result);
-    } catch (error) { setFailure(error instanceof Error ? error : { message: "Email preview could not be loaded." }); }
+    } catch (error) { (stage === "completion" ? setNoticeReviewFailure : setFailure)(error instanceof Error ? error : { message: "Email preview could not be loaded." }); }
     finally { inFlight.current = false; setBusy(false); }
+  }
+
+  function closePreview() {
+    setPreview(null); setApprovedPreview(false); setNoticeReviewFailure(null);
+    if (stage === "completion") noticeReviewButtonRef.current?.focus();
   }
 
   if (!context?.attempt) return <section className="border-t border-[#d9ded6] py-5" aria-live="polite">{failure ? <p role="alert">{failure.message} <button className="secondary" onClick={() => void load().catch(setFailure)}>Retry</button></p> : "Loading legal workflow…"}</section>;
   const { attempt, snapshot, emails, documents } = context;
-  const latestAuthority = emails.find((email) => email.kind === "authority");
-  const authorityState = attempt.exchanged_at ? "Exchanged" : latestAuthority ? authorityStatus(latestAuthority, now) : attempt.authority_requested_at ? "Authority requested" : "Authority not requested";
+  const exchanged = Boolean(attempt.exchanged_at) || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
+  const authority = exchangeAuthorityState(emails, context.events ?? [], attempt.authority_requested_at, exchanged, now);
+  const latestAuthority = authority.current;
+  const authorityState = attempt.exchanged_at || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status) ? context.deposit?.receipt ? "Exchanged · Deposit received" : "Exchanged · Deposit confirmation outstanding" : latestAuthority ? authorityStatus(latestAuthority, now) : attempt.authority_requested_at ? "Authority requested" : "Authority not requested";
   const canIssue = canPerformSalesAction(role, "approve_exchange");
   const conveyancer = canPerformSalesAction(role, "record_exchange");
   const reservationApproved = ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
-  const exchanged = Boolean(attempt.exchanged_at) || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
   const completed = Boolean(attempt.completed_at) || attempt.workflow_status === "completed";
-  const statement = documents.find((document) => document.document_type === "completion_statement");
-  const currentVersion = statement?.unit_sale_document_versions.find((version) => version.is_current && !version.redacted_at);
-  const statementApproved = Boolean(currentVersion && statement?.status === "approved" && statement.approved_version_id === currentVersion.id);
+  const statementVersion = currentCompletionVersion(documents.find(document => document.document_type === "completion_statement"));
+  const accountVersion = currentCompletionVersion(documents.find(document => document.document_type === "draft_statement_of_account"));
+  const packageApproved = Boolean(context.completionPackage?.approved && context.completionPackage.approval?.statement_version_id === statementVersion?.id && context.completionPackage.approval?.account_version_id === accountVersion?.id);
   const actorLabel = (type: string, fallback?: string | null) => workflowActorLabel(context.events?.find((event) => event.event_type === type), context.actors ?? [], fallback);
   const noticeState = completionNoticeState(attempt);
   let routingProblem: SalesRecipientError | null = null;
   try { resolveSalesRecipients(snapshot, stage === "exchange" ? "authority" : "notice_authority"); }
   catch (error) { if (error instanceof SalesRecipientError) routingProblem = error; }
+
+  const previewPanel = preview && <div ref={previewRef} id={preview.kind === "notice_authority" ? noticePreviewId : undefined} tabIndex={-1} className="my-5 min-w-0 max-w-full border-y-2 border-[#D6A23A] bg-[#fffdf7] p-4" role="region" aria-label="Final confirmation and email preview">
+      <h4 className="font-bold">Final confirmation and email preview</h4>
+      <p className="mt-2 text-sm text-[#617169]">Preview only – this authority has not been issued.</p>
+      {preview.kind === "authority" && <p className="mt-2 text-sm font-semibold">Valid until {legalDateTime(preview.date)}</p>}
+      <dl className="mt-3 grid gap-2 text-sm">{[["From", preview.from], ["To", preview.to.join(", ")], ["CC", preview.cc.join(", ") || "None"], ["Subject", preview.subject], ["Building", preview.snapshot.building.name], ["Plot", preview.snapshot.plot], ["Buyer", preview.snapshot.buyer]].map(([label, value]) => <div key={label} className="grid gap-1 sm:grid-cols-[6rem_1fr]"><dt className="font-semibold">{label}</dt><dd className="min-w-0 [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
+      <EmailBodyPreview body={preview.body} html={preview.html} />
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={approvedPreview} onChange={(event) => setApprovedPreview(event.target.checked)} />I have reviewed the email and recipients and approve issuing this authority.</label>
+      <div className="mt-4 flex flex-wrap gap-2"><button className="secondary" disabled={busy} onClick={closePreview}>Cancel</button><button className="primary" disabled={busy || !approvedPreview} onClick={() => void run({ action: "send", kind: preview.kind, date: preview.date, token: preview.token, requestId: requestId.current }, preview.kind === "authority" ? "Authority to exchange issued." : "Authority to serve notice given.")}>{preview.kind === "authority" ? "Issue authority to exchange" : "Give authority to serve notice"}</button></div>
+    </div>;
 
   return <section id={`sales-stage-${stage}`} className="min-w-0 border-t border-[#d9ded6] py-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-xl font-bold text-[#0F3D2E]">{stage === "exchange" ? "Exchange" : "Completion"}</h3><span className="text-sm font-semibold">{stage === "exchange" ? authorityState : completed ? "Legally completed" : "Completion arrangements"}</span></div>
@@ -116,13 +140,21 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
     {failure && <p className="my-4 text-sm text-red-800" role="alert">{failure.message} {failure.settingsUrl && <a className="underline" href={failure.settingsUrl}>Open settings</a>}</p>}
     {routingProblem && canIssue && !completed && <p className="my-4 text-sm text-amber-800">{routingProblem.message} <a className="underline" href={routingProblem.settingsUrl}>Open settings</a></p>}
     {stage === "exchange" ? <ol className="mt-5 divide-y divide-[#d9ded6]" aria-label="Exchange tasks">
-      <li className="py-5"><h4 className="font-bold">1. Authority requested</h4><p className="mt-1 text-sm">A sales agent or conveyancer requests developer review. A request does not authorise exchange.</p>
-        {attempt.authority_requested_at && <p className="mt-2 text-sm">Requested {legalDateTime(attempt.authority_requested_at)}</p>}
-        {!exchanged && !attempt.authority_requested_at && canPerformSalesAction(role, "request_exchange_approval") && <button className="secondary mt-3" disabled={busy || !reservationApproved} onClick={() => void run({ action: "request_authority" }, "Exchange authority requested. The developer has been notified.")}>Request authority to exchange</button>}
+      <li className="py-5"><h4 className="font-bold">1. Authority request</h4>
+        {authority.requestDate ? <p className="mt-2 text-sm">Requested by {workflowActorLabel(authority.request, context.actors ?? [])} on {legalDateTime(authority.requestDate)}</p>
+          : authority.issued ? <p className="mt-2 text-sm">Not requested – authority given directly</p>
+          : <p className="mt-1 text-sm">A sales agent or conveyancer can request developer review. The developer can also issue authority directly.</p>}
+        {authority.canRequest && canPerformSalesAction(role, "request_exchange_approval") && <button className="secondary mt-3" disabled={busy || !reservationApproved} onClick={() => void run({ action: "request_authority" }, "Exchange authority requested. The developer has been notified.")}>{authority.renewal ? "Request renewed authority" : "Request authority to exchange"}</button>}
       </li>
-      <li className="py-5"><h4 className="font-bold">2. Authority issued</h4><p className="mt-1 text-sm">{exchanged ? "The terms authorised for exchange are retained below." : "The developer reviews the agreed sale terms and issues time-limited authority."}</p>
-        <dl className="mt-4 divide-y divide-[#eef0eb]">{authorityTerms(exchanged && latestAuthority ? latestAuthority.snapshot : snapshot).map(([label, value], index) => <div className="grid gap-1 py-2 text-sm sm:grid-cols-[13rem_1fr]" key={`${label}-${index}`}><dt className="text-[#617169]">{label}</dt><dd className="min-w-0 whitespace-pre-wrap font-medium [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
-        {latestAuthority && <p className="mt-3 text-sm">Version {latestAuthority.version} · {authorityStatus(latestAuthority, now)} · Expires {latestAuthority.expires_at && legalDateTime(latestAuthority.expires_at)}</p>}
+      <li className="py-5"><h4 className="font-bold">2. Authority issued</h4>
+        {latestAuthority ? <div className="mt-3 rounded-xl border border-[#d9ded6] bg-[#f5f7f3] p-4 text-sm" aria-label="Authority status">
+          <div className="flex flex-wrap items-center gap-3"><span className={`rounded-full border bg-white px-3 py-1 font-semibold ${authority.badge === "Active" ? "border-[#cbd5ca] text-[#0F3D2E]" : authority.badge === "Revoked" ? "border-red-200 text-red-800" : authority.badge === "Expired" ? "border-amber-200 text-amber-800" : "border-[#d9ded6] text-[#617169]"}`}>{authority.badge}</span><span className="font-semibold">Version {latestAuthority.version}</span></div>
+          <p className="mt-3">{authority.issued ? "Issued" : "Prepared"} by {latestAuthority.snapshot.approver.name} on {legalDateTime(latestAuthority.issued_at)}</p>
+          {latestAuthority.expires_at && <p className="mt-1">Valid until {legalDateTime(latestAuthority.expires_at)}</p>}
+          <p className="mt-2">Email delivery: {latestAuthority.delivery_status.replaceAll("_", " ")}</p>
+          <p className="mt-1 [overflow-wrap:anywhere]">To: {latestAuthority.to_recipients.join(", ")} · CC: {latestAuthority.cc_recipients.join(", ") || "None"}</p>
+        </div> : !exchanged && <p className="mt-1 text-sm">The developer reviews the agreed sale terms and issues time-limited authority.</p>}
+        <dl className="mt-4 divide-y divide-[#eef0eb]">{authorityTerms(latestAuthority ? latestAuthority.snapshot : snapshot).map(([label, value], index) => <div className="grid gap-1 py-2 text-sm sm:grid-cols-[13rem_1fr]" key={`${label}-${index}`}><dt className="text-[#617169]">{label}</dt><dd className="min-w-0 whitespace-pre-wrap font-medium [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
         {exchanged && !latestAuthority && <p className="mt-3 text-sm">Exchange predates versioned authority records. Existing sale dates and approval history are retained.</p>}
         {!exchanged && canIssue && <div className="mt-4 grid gap-3">
           <label className="field-label">Authority expiry date and time (your local time)<input className="field max-w-md" type="datetime-local" value={expiry} onChange={(event) => { setExpiry(event.target.value); setExpiryEdited(true); setPreview(null); }} /></label>
@@ -133,49 +165,42 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
       <li className="py-5"><h4 className="font-bold">3. Exchange confirmed</h4>{exchanged ? <p className="mt-2 text-sm">Actual exchange date: {shortDate(attempt.exchanged_at)} · Recorded by {actorLabel("exchange_recorded")}</p> : <>
         <p className="mt-1 text-sm">The conveyancer confirms exchange against the current, unexpired authority.</p>
         {conveyancer && <div className="mt-3 grid gap-3"><label className="field-label">Actual exchange date<input className="field max-w-md" type="date" value={exchangeDate} max={new Date().toISOString().slice(0, 10)} onChange={(event) => setExchangeDate(event.target.value)} /></label>
-          <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={deposit} onChange={(event) => setDeposit(event.target.checked)} />I confirm the exchange deposit has been received in line with the authorised terms.</label>
-          <button className="primary w-fit" disabled={busy || !deposit || !exchangeDate || authorityState !== "Authority issued"} onClick={() => void run({ action: "confirm_exchange", date: exchangeDate, depositConfirmed: deposit }, "Exchange confirmed.")}>Confirm exchange</button></div>}
+          <button className="primary w-fit" disabled={busy || !exchangeDate || authorityState !== "Authority issued"} onClick={() => void run({ action: "confirm_exchange", date: exchangeDate }, "Exchange confirmed.")}>Confirm exchange</button></div>}
       </>}</li>
+      <ExchangeDepositReceipt key={saleId} deposit={context.deposit} exchanged={exchanged} editable={canPerformSalesAction(role, "confirm_exchange_deposit")} busy={busy} run={run} />
     </ol> : <ol className="mt-5 divide-y divide-[#d9ded6]" aria-label="Completion tasks">
       <li className="py-5"><h4 className="font-bold">1. Request authority to serve notice</h4><p className="mt-1 text-sm">A sales agent or conveyancer can request developer authority. The developer can also give authority directly.</p>
         {attempt.completion_authority_requested_at ? <p className="mt-2 text-sm">Requested by {actorLabel("authority_notice_requested", attempt.completion_authority_requested_by)} · {legalDateTime(attempt.completion_authority_requested_at)}</p>
           : noticeState.authorised && <p className="mt-2 text-sm">{attempt.completion_authority_given_at ? "Not requested – authority given directly" : "Existing completion record – request not recorded"}</p>}
         {!noticeState.authorised && !attempt.completion_authority_requested_at && canPerformSalesAction(role, "request_exchange_approval") && <button className="secondary mt-3" disabled={busy || !exchanged} onClick={() => void run({ action: "request_notice_authority" }, "Authority to serve notice requested. The developer has been notified.")}>Request authority to serve notice</button>}
       </li>
-      <li className="py-5"><h4 className="font-bold">2. Authority to serve notice</h4><p className="mt-1 text-sm">The developer authorises the conveyancer to serve notice under the contract.</p>
+      <li className="min-w-0 py-5" id="notice-authority-step"><h4 className="font-bold">2. Authority to serve notice</h4>{!noticeState.authorised && <p className="mt-1 text-sm">The developer authorises the conveyancer to serve notice under the contract.</p>}
         {attempt.completion_authority_given_at ? <p className="mt-2 text-sm">Authority given by {actorLabel("authority_notice_given", attempt.completion_authority_given_by)} · {legalDateTime(attempt.completion_authority_given_at)}</p>
           : noticeState.authorised && <p className="mt-2 text-sm">This completion record predates the authority gate. Existing dates, documents and history are retained; developer authority details were not recorded.</p>}
-        {canIssue && !noticeState.authorised && !completed && <button className="primary mt-3" disabled={busy || !exchanged || Boolean(routingProblem)} onClick={() => void showPreview()}>Review authority to serve notice and email</button>}
+        {canIssue && !noticeState.authorised && !completed && <button ref={noticeReviewButtonRef} className="primary mt-3 max-w-full whitespace-normal" aria-expanded={preview?.kind === "notice_authority"} aria-controls={noticePreviewId} disabled={busy || !exchanged || Boolean(routingProblem)} onClick={() => preview?.kind === "notice_authority" ? closePreview() : void showPreview()}>Review authority to serve notice and email</button>}
+        {preview?.kind === "notice_authority" && previewPanel}
+        {noticeReviewFailure && <p className="mt-3 text-sm text-red-800 [overflow-wrap:anywhere]" role="alert">{noticeReviewFailure.message} {noticeReviewFailure.settingsUrl && <a className="underline" href={noticeReviewFailure.settingsUrl}>Open settings</a>}</p>}
         {!exchanged && <p className="mt-2 text-sm text-amber-800">Confirm exchange before starting completion arrangements.</p>}
       </li>
       <li className="py-5"><h4 className="font-bold">3. Notice issued and completion due date</h4>
         <NoticeArrangements saleId={saleId} attempt={attempt} document={documents.find((item) => item.document_type === "completion_correspondence")} editable={conveyancer && exchanged && !completed} busy={busy} run={run} actor={actorLabel("completion_arrangements_confirmed", attempt.completion_arrangements_confirmed_by)} confirmedAt={context.events?.find((event) => event.event_type === "completion_arrangements_confirmed")?.created_at} />
       </li>
-      <li className="py-5"><h4 className="font-bold">4. Completion statement</h4><p className="mt-1 text-sm">The developer approves a specific document version. A replacement always needs fresh approval.</p>
-        {!noticeState.confirmed && <p className="mt-2 text-sm text-amber-800">Confirm completion arrangements before continuing.</p>}
-        <LegalDocument saleId={saleId} type="completion_statement" label="Draft completion statement" document={statement} editable={conveyancer && exchanged && noticeState.confirmed && !completed} busy={busy} run={run} />
-        {statement?.query_note && <p className="mt-3 whitespace-pre-wrap text-sm text-red-800">Developer query: {statement.query_note}</p>}
-        {(statementApproved || completed && statement?.status === "approved") && <p className="mt-3 text-sm font-semibold">{statementApproved ? `Version ${currentVersion?.version_number} approved` : "Historical completion statement approved"} · Approved by {actorLabel("completion_documents_approved", statement?.approved_by_user_id)}{statement?.approved_at ? ` · ${legalDateTime(statement.approved_at)}` : ""}</p>}
-        {canIssue && currentVersion && noticeState.confirmed && !completed && <div className="mt-3 grid gap-3"><label className="field-label">Query or rejection comments<textarea className="field" value={query} onChange={(event) => setQuery(event.target.value)} /></label><div className="flex flex-wrap gap-2"><button className="danger-button" disabled={busy || !query.trim()} onClick={() => void run({ action: "query_statement", versionId: currentVersion.id, reason: query }, "Completion statement queried.")}>Query / reject version {currentVersion.version_number}</button><button className="primary" disabled={busy || statementApproved} onClick={() => void run({ action: "approve_statement", versionId: currentVersion.id }, "Completion statement version approved.")}>Approve version {currentVersion.version_number}</button></div></div>}
-      </li>
-      <li className="py-5"><h4 className="font-bold">5. Legal completion</h4>{completed ? <p className="mt-2 text-sm">Legal completion: {attempt.legal_completed_at ? legalDateTime(attempt.legal_completed_at) : `${shortDate(attempt.completed_at)} (historical date; time not recorded)`} · Completed by {actorLabel("completion_recorded")}. Handover and key release are available.</p> : <>
+      <CompletionDocuments key={saleId} saleId={saleId} documents={documents} packageState={context.completionPackage} uploadAllowed={conveyancer && exchanged && noticeState.confirmed && !completed} reviewAllowed={canIssue && noticeState.confirmed && !completed} arrangementsConfirmed={noticeState.confirmed} completed={completed} busy={busy} actors={context.actors ?? []} historicalApproval={completed && !packageApproved && documents.find(document => document.document_type === "completion_statement")?.status === "approved" ? { name: actorLabel("completion_documents_approved", documents.find(document => document.document_type === "completion_statement")?.approved_by_user_id), date: documents.find(document => document.document_type === "completion_statement")?.approved_at ?? null } : undefined} run={run} open={async (versionId) => {
+        try { const response = await fetch(`/api/sales/reservations?versionId=${versionId}`, { headers: await headers() }); const result = await response.json(); if (!response.ok) throw new Error(result.error); window.open(result.signedUrl,"_blank","noopener,noreferrer"); }
+        catch (error) { setFailure(error instanceof Error ? error : {message:"Document could not be opened."}); }
+      }} />
+      <li className="py-5"><h4 className="font-bold">6. Legal completion</h4>{completed ? <p className="mt-2 text-sm">Legal completion: {attempt.legal_completed_at ? legalDateTime(attempt.legal_completed_at) : `${shortDate(attempt.completed_at)} (historical date; time not recorded)`} · Completed by {actorLabel("completion_recorded")}. Handover and key release are available.</p> : !packageApproved ? <p className="mt-2 text-sm text-[#617169]">Available once the current completion documents have been approved by the developer.</p> : <>
         <p className="mt-1 text-sm">Handover and keys remain locked until the conveyancer confirms legal completion.</p>
-        {conveyancer && exchanged && noticeState.confirmed && <div className="mt-3 grid gap-3"><label className="field-label">Actual legal completion date and time (your local time)<input className="field max-w-md" type="datetime-local" value={completedTime} onChange={(event) => setCompletedTime(event.target.value)} /></label><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={legalConfirmed} onChange={(event) => setLegalConfirmed(event.target.checked)} />I confirm legal completion has taken place and keys may be released.</label><button className="primary w-fit" disabled={busy || !statementApproved || !attempt.contractual_completion_date || !completedTime || !legalConfirmed} onClick={() => void run({ action: "confirm_completion", dateTime: new Date(completedTime).toISOString() }, "Legal completion confirmed. Handover is now available.")}>Confirm legal completion</button></div>}
+        {conveyancer && exchanged && noticeState.confirmed && <div className="mt-3 grid gap-3"><label className="field-label">Actual legal completion date and time (your local time)<input className="field max-w-md" type="datetime-local" value={completedTime} onChange={(event) => setCompletedTime(event.target.value)} /></label><label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={legalConfirmed} onChange={(event) => setLegalConfirmed(event.target.checked)} />I confirm legal completion has taken place and keys may be released.</label><button className="primary w-fit" disabled={busy || !packageApproved || !attempt.contractual_completion_date || !completedTime || !legalConfirmed} onClick={() => void run({ action: "confirm_completion", dateTime: new Date(completedTime).toISOString() }, "Legal completion confirmed. Handover is now available.")}>Confirm legal completion</button></div>}
       </>}
-        <LegalDocument saleId={saleId} type="statement_of_account" label="Final statement of account" document={documents.find((item) => item.document_type === "statement_of_account")} editable={conveyancer && completed} busy={busy} run={run} />
+        {completed && <LegalDocument saleId={saleId} type="statement_of_account" label="Final statement of account" document={documents.find((item) => item.document_type === "statement_of_account")} editable={conveyancer && completed} busy={busy} run={run} />}
       </li>
     </ol>}
 
-    {preview && <div ref={previewRef} tabIndex={-1} className="my-5 border-y-2 border-[#D6A23A] bg-[#fffdf7] p-4" role="region" aria-label="Final confirmation and email preview">
-      <h4 className="font-bold">Final confirmation and email preview</h4>
-      <dl className="mt-3 grid gap-2 text-sm">{[["From", preview.from], ["To", preview.to.join(", ")], ["CC", preview.cc.join(", ") || "None"], ["Subject", preview.subject], ["Building", preview.snapshot.building.name], ["Plot", preview.snapshot.plot], ["Buyer", preview.snapshot.buyer]].map(([label, value]) => <div key={label} className="grid gap-1 sm:grid-cols-[6rem_1fr]"><dt className="font-semibold">{label}</dt><dd className="min-w-0 [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
-      <EmailBodyPreview body={preview.body} html={preview.html} />
-      <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={approvedPreview} onChange={(event) => setApprovedPreview(event.target.checked)} />I have reviewed the email and recipients and approve issuing this authority.</label>
-      <div className="mt-4 flex flex-wrap gap-2"><button className="secondary" disabled={busy} onClick={() => setPreview(null)}>Cancel</button><button className="primary" disabled={busy || !approvedPreview} onClick={() => void run({ action: "send", kind: preview.kind, date: preview.date, token: preview.token, requestId: requestId.current }, preview.kind === "authority" ? "Authority to exchange issued." : "Authority to serve notice given.")}>{preview.kind === "authority" ? "Issue authority to exchange" : "Give authority to serve notice"}</button></div>
-    </div>}
+    {stage === "exchange" && preview?.kind === "authority" && previewPanel}
     {emails.length > 0 && <details className="mt-4 border-t border-[#d9ded6] py-4"><summary className="cursor-pointer font-bold">Instruction and email history ({emails.length})</summary><ol className="divide-y divide-[#d9ded6]">{emails.map((email) => <li key={email.id} className="py-4 text-sm">
       <p className="font-semibold">{email.kind === "authority" ? "Authority" : email.kind === "notice_authority" ? "Authority to serve notice" : "Historic completion instruction"} · Version {email.version} · {email.delivery_status}</p><p>Approved by {email.snapshot.approver.name} · {legalDateTime(email.issued_at)}</p>
-      {email.kind === "authority" && <p>{authorityStatus(email, now)} · Expires {email.expires_at && legalDateTime(email.expires_at)}</p>}
+      {email.kind === "authority" && <p>{authorityBadge(email, now)} · Valid until {email.expires_at && legalDateTime(email.expires_at)}</p>}
       {email.revoked_at && <p>Revoked {legalDateTime(email.revoked_at)}{email.revocation_reason ? ` · ${email.revocation_reason}` : ""}</p>}{email.exchanged_at && <p>Actual exchange: {shortDate(email.exchanged_at)}</p>}
       <p className="break-all">To: {email.to_recipients.join(", ")} · CC: {email.cc_recipients.join(", ") || "None"}</p>
       <details className="mt-2"><summary className="cursor-pointer underline">View saved email and authorised terms</summary><p className="mt-2 break-all">From: {email.sending_address}</p><p>{email.subject}</p><EmailBodyPreview body={email.body} html={email.html_body} />{email.resend_message_id && <p className="mt-2 break-all">Resend message: {email.resend_message_id}</p>}</details>

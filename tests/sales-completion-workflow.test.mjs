@@ -7,11 +7,11 @@ async function apiFixture(t) {
   const f=await legalDatabase(); t.after(()=>f.db.close());
   let user='developer';
   const calls=[];
-  const storage=new Map(); let uploadFailure=false; let loseNoticeResponse=false;
+  const storage=new Map(); let uploadFailure=false; let loseNoticeResponse=false; let uploadCount=0;let failUploadAt=0;let losePackageResponse=false;
   const client={
-    storage:{from:()=>({upload:async(path,bytes)=>{if(uploadFailure)return {error:new Error('Upload failed')};storage.set(path,bytes);return {error:null};},remove:async(paths)=>{for(const path of paths)storage.delete(path);return {error:null};}})},
+    storage:{from:()=>({upload:async(path,bytes)=>{if(uploadFailure||++uploadCount===failUploadAt)return {error:new Error('Upload failed')};storage.set(path,bytes);return {error:null};},remove:async(paths)=>{for(const path of paths)storage.delete(path);return {error:null};}})},
     auth:{getUser:async()=>({data:{user:{id:f.ids[user]}},error:null})},
-    rpc:async(name,args)=>{await f.service(user);try{const data=await f.rpc(name,args);if(name==='sales_legal_submit_notice'&&loseNoticeResponse)return {error:new Error('Response interrupted')};return {data,error:null};}catch(error){return {data:null,error};}},
+    rpc:async(name,args)=>{await f.service(user);try{const data=await f.rpc(name,args);if(name==='sales_legal_submit_notice'&&loseNoticeResponse||name==='sales_completion_upload'&&losePackageResponse)return {error:new Error('Response interrupted')};return {data,error:null};}catch(error){return {data:null,error};}},
     from(table){
       const conditions=[],values=[];let single=false;
       const query={
@@ -35,8 +35,20 @@ async function apiFixture(t) {
     const form=new FormData();for(const [key,value]of Object.entries({sale:f.ids.sale,action,documentType:'completion_correspondence',noticeDate,date,requestId,expectedVersionId:expected}))form.set(key,value);
     if(file)form.set('file',file);return form;
   }
-  return {...f,calls,post,preview,storage,noticeForm,failUpload:value=>{uploadFailure=value;},loseNoticeResponse:value=>{loseNoticeResponse=value;},asUser:name=>{user=name;},respond:fn=>{response=fn;}};
+  return {...f,calls,post,preview,storage,noticeForm,failUploadAt:value=>{uploadCount=0;failUploadAt=value;},losePackageResponse:value=>{losePackageResponse=value;},failUpload:value=>{uploadFailure=value;},loseNoticeResponse:value=>{loseNoticeResponse=value;},asUser:name=>{user=name;},respond:fn=>{response=fn;}};
 }
+
+test('deposit API authorises conveyancers and records only the frozen full amount',async t=>{
+  const f=await apiFixture(t);await f.sent(await f.prepare());
+  f.asUser('solicitor');
+  const exchanged=await f.post({action:'confirm_exchange',date:new Date().toISOString().slice(0,10)});assert.equal(exchanged.status,200);
+  await f.service('solicitor');const {source}=await f.rpc('sales_exchange_deposit_context',{p_sale:f.ids.sale,p_actor:f.ids.solicitor});
+  const payload={action:'confirm_exchange_deposit',sourceId:source.id,date:'2026-09-01',confirmed:true};
+  for(const user of ['agent','developer','outsider']) {f.asUser(user);assert.equal((await f.post(payload)).status,400);}
+  f.asUser('solicitor');assert.match((await f.post({...payload,date:''})).error,/date/);assert.match((await f.post({...payload,receivedAmount:1})).error,/set by the legal workflow/);
+  const result=await f.post(payload);assert.equal(result.status,200);assert.equal(result.received_amount,25000);assert.equal(result.recorded_by,f.ids.solicitor);assert.equal(result.source_id,source.id);
+  assert.equal((await f.post(payload)).id,result.id);assert.equal(f.calls.length,0);
+});
 
 test('server preview uses live contacts and rejects stale approval after recipient edits',async t=>{
   const f=await apiFixture(t);const preview=await f.preview();
@@ -93,6 +105,23 @@ test('API rejects cross-role actions and preserves the database permission check
 
 const noticeTools=loadTypescriptModule('src/lib/sales/completion-notice.ts');
 const today=()=>new Date().toISOString().slice(0,10);
+function completionForm(f,{files=[new File(['%PDF-1.7\nstatement'],'completion.pdf',{type:'application/pdf'}),new File(['%PDF-1.7\naccount'],'account.pdf',{type:'application/pdf'})],assignments=[{type:'completion_statement',expectedVersionId:null},{type:'draft_statement_of_account',expectedVersionId:null}],requestId=crypto.randomUUID()}={}) {
+  const form=new FormData();form.set('sale',f.ids.sale);form.set('action','upload_completion_documents');form.set('requestId',requestId);form.set('assignments',JSON.stringify(assignments));files.forEach(file=>form.append('files',file));return form;
+}
+test('completion batch API validates every file and assignment, cleans partial storage, and reconciles a lost response',async t=>{
+  const f=await apiFixture(t);await authorise(f);await f.notice({noticeDate:today(),dueDate:today()});f.asUser('solicitor');
+  for(const assignments of [[{type:''},{type:'draft_statement_of_account'}],[{type:'completion_statement'},{type:'completion_statement'}],[]])assert.equal((await f.post(completionForm(f,{assignments}))).status,400);
+  for(const bad of [new File(['invalid'],'fake.pdf',{type:'application/pdf'}),new File([],'empty.pdf',{type:'application/pdf'}),new File(['%PDF-'],'file.txt',{type:'text/plain'}),new File([new Uint8Array(10485761)],'large.pdf',{type:'application/pdf'})])assert.equal((await f.post(completionForm(f,{files:[new File(['%PDF-1.7'],'valid.pdf',{type:'application/pdf'}),bad]}))).status,400);
+  assert.equal(f.storage.size,0);
+  f.failUploadAt(2);assert.match((await f.post(completionForm(f))).error,/Upload failed/);assert.equal(f.storage.size,0);f.failUploadAt(0);
+  for(const user of ['agent','developer','outsider']){f.asUser(user);assert.equal((await f.post(completionForm(f))).status,400);}f.asUser('solicitor');
+  const form=completionForm(f,{assignments:[{type:'completion_statement',expectedVersionId:null,name:'forged.pdf',bytes:[1],size:1},{type:'draft_statement_of_account',expectedVersionId:null}]});
+  f.losePackageResponse(true);assert.match((await f.post(form)).error,/Response interrupted/);assert.equal(f.storage.size,2);
+  f.losePackageResponse(false);const saved=await f.post(form);assert.equal(saved.status,200);assert.equal(saved.documents.length,2);assert.equal(f.storage.size,2);
+  await f.service();const versions=(await f.db.query("select v.* from unit_sale_document_versions v join unit_sale_documents d on d.id=v.document_id where d.document_type in ('completion_statement','draft_statement_of_account')")).rows;
+  assert.equal(versions.length,2);assert.ok(versions.find(version=>version.file_name==='completion.pdf'&&version.file_size_bytes>1));
+  assert.equal(f.calls.length,0);
+});
 async function exchange(f) {await f.sent(await f.prepare());await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});}
 async function authorise(f) {await exchange(f);return f.sent(await f.prepare({kind:'notice_authority',date:''}));}
 
@@ -133,8 +162,8 @@ test('backend blocks roles, forged state, old endpoints and later actions before
   await assert.rejects(f.notice(),/Awaiting developer authority/);
   await assert.rejects(f.upload(),/Confirm completion arrangements/);
   await assert.rejects(f.upload('completion_correspondence'),/notice submission/);
-  await assert.rejects(f.action('developer','approve_statement',{versionId:crypto.randomUUID()}),/Confirm completion arrangements/);
-  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/Confirm completion arrangements/);
+  await assert.rejects(f.action('developer','approve_completion_package',{}),/Confirm completion arrangements/);
+  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current completion documents/);
   await assert.rejects(f.action('developer','request_notice_authority'),/access denied/);
   for(const user of ['agent','solicitor']) {
     await f.service(user);await assert.rejects(f.rpc('sales_legal_prepare_email',{p_sale:f.ids.sale,p_actor:f.ids[user],p_id:crypto.randomUUID(),p_kind:'notice_authority',p_snapshot:await f.snapshot(user),p_email:{},p_date:''}),/access denied/);

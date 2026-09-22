@@ -43,10 +43,11 @@ export async function salesFixture(page: Page, initialPath?: string) {
     await route.fulfill({ json: single ? result[0] ?? null : result });
   });
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
+  const completionPackage = {approved:false,approval:null as null | {statement_version_id:string;account_version_id:string;approved_by_name:string;approved_at:string}};
   await page.route("**/api/sales/legal?*", (route) => route.fulfill({ json: {
     snapshot: { sale_id: attemptId, building: { id: buildingId, name: "Workflow Test House", seller_name: "Fixture Seller Ltd", completion_information: null }, plot: "101", buyer: attempt.buyer_name,
       terms: rows.unit_sale_terms?.[0] ?? {}, schedule: [], conveyancer: null, sales_agent: null, approver: { id: profile.id, name: profile.full_name } },
-    attempt, emails: rows.sale_legal_emails ?? [],
+    attempt, completionPackage, emails: rows.sale_legal_emails ?? [],
     documents: rows.unit_sale_documents.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) })),
     events: rows.unit_sale_workflow_events, actors: rows.sale_actor_names ?? rows.profiles,
   } }));
@@ -61,8 +62,8 @@ export async function salesFixture(page: Page, initialPath?: string) {
   await page.goto(salePath);
   await expect(page.getByRole("list", { name: "Reservation tasks", exact: true })).toBeVisible();
   const event = (event_type: string, day: number, metadata = {}) => ({ id: `${event_type}-${day}`, sale_attempt_id: attemptId, event_type, created_at: at(day), created_by_user_id: userId, metadata, summary: event_type.replaceAll("_", " ") });
-  const documents = () => {
-    rows.unit_sale_documents = ["completion_statement", "statement_of_account"].map((document_type, index) => ({ id: `doc-${index}`, sale_attempt_id: attemptId, document_type, status: "uploaded", updated_at: at(2) }));
+  const documents = (draftAccount = false) => {
+    rows.unit_sale_documents = ["completion_statement", draftAccount ? "draft_statement_of_account" : "statement_of_account"].map((document_type, index) => ({ id: `doc-${index}`, sale_attempt_id: attemptId, document_type, status: "uploaded", updated_at: at(2) }));
     rows.unit_sale_document_versions = rows.unit_sale_documents.map((doc, index) => ({ id: `version-${index}`, document_id: doc.id, version_number: 1, is_current: true, file_name: `${doc.document_type}.pdf`, file_size_bytes: 1024, uploaded_at: at(index + 1), uploaded_by_user_id: userId }));
   };
   const reloadStage = async (stage: string) => {
@@ -72,5 +73,5 @@ export async function salesFixture(page: Page, initialPath?: string) {
     await button.click();
     await expect(page.getByRole("list", { name: `${stage} tasks`, exact: true })).toBeVisible();
   };
-  return { profile, rows, unit, attempt, event, documents, reloadStage };
+  return { profile, rows, unit, attempt, event, documents, reloadStage, completionPackage };
 }
