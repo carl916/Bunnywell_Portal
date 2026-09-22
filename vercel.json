@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/completion-uploads",
-      "schedule": "15 * * * *"
+      "schedule": "15 3 * * *"
     },
     {
       "path": "/api/cron/snag-digest",
