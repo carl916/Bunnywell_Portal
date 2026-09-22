@@ -76,10 +76,10 @@ test('request notifies developers; stale preview, expiry, revoke, reissue and ro
 test('completion instructions, current version approval, replacement and legal handover gate',async t=>{
   const f=await legalDatabase(); t.after(()=>f.db.close());
   await f.sent(await f.prepare()); await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});
-  await assert.rejects(f.action('solicitor','confirm_arrangements',{date:today()}),/instructions first/);
-  const instruction=await f.sent(await f.prepare({kind:'completion_instruction',date:today()})); assert.deepEqual(instruction.cc_recipients,[]);
-  await f.action('solicitor','confirm_arrangements',{date:today(),noticeDate:today()});
-  await assert.rejects(f.action('developer','confirm_arrangements',{date:today()}),/role/);
+  await assert.rejects(f.action('solicitor','confirm_arrangements',{date:today()}),/notice PDF together/);
+  const instruction=await f.sent(await f.prepare({kind:'notice_authority',date:''})); assert.deepEqual(instruction.cc_recipients,['sales@example.test']);
+  await f.notice({noticeDate:today(),dueDate:today()});
+  await assert.rejects(f.notice({user:'developer'}),/access denied/);
   await assert.rejects(f.upload('statement_of_account'),/Final accounts/);
   const one=await f.upload();
   await assert.rejects(f.action('solicitor','approve_statement',{versionId:one}),/role/);

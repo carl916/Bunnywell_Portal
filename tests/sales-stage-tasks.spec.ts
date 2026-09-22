@@ -7,6 +7,23 @@ async function expectSteps(page: Page, stage: string, labels: string[]) {
   for (const [index, label] of labels.entries()) await expect(cards.nth(index).getByText(label, { exact: true })).toBeVisible();
 }
 
+test("Reservation remains selected after approval and unlocks Exchange", async ({page}) => {
+  const f=await fixture(page);
+  f.attempt.workflow_status="awaiting_approval";f.attempt.reservation_submitted_at=at(1);f.attempt.reservation_submitted_by_user_id=userId;
+  f.rows.unit_sale_documents=[{id:"reservation-doc",sale_attempt_id:f.attempt.id,document_type:"reservation_form",status:"uploaded"}];
+  f.rows.unit_sale_document_versions=[{id:"reservation-version",document_id:"reservation-doc",version_number:1,is_current:true,file_name:"reservation.pdf",uploaded_at:at(1),file_size_bytes:100}];
+  await page.route("**/api/sales/reservations",async route=>{
+    const body=route.request().postDataJSON();expect(body.action).toBe("approve_reservation");
+    f.attempt.workflow_status="approved";f.attempt.reservation_approved_at=at(2);f.attempt.reservation_approved_by_user_id=userId;f.unit.sale_status="reserved";
+    await route.fulfill({json:{saleAttemptId:f.attempt.id}});
+  });
+  await page.reload();await page.getByRole("button",{name:"Approve reservation",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Approval record",exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:/^Reservation\b/})).toHaveAttribute("aria-current","step");
+  await expect(page.getByRole("button",{name:/^Exchange\b/})).toBeEnabled();
+  await expect(page.getByRole("list",{name:"Exchange tasks",exact:true})).toHaveCount(0);
+});
+
 test("reservation and exchange show their saved milestones, rejection and completed history", async ({ page }) => {
   const f = await fixture(page);
   await expectSteps(page, "Reservation", ["Current", "Locked"]);
@@ -51,14 +68,15 @@ test("completion survives reload through upload, query, replacement, approval an
   f.attempt.workflow_status = "exchanged";
   f.attempt.exchanged_at = "2026-08-01";
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   f.documents();
+  f.attempt.completion_legacy_stage="arrangements";
   const second = f.rows.unit_sale_document_versions.pop()!;
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   f.rows.unit_sale_document_versions.push(second);
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await expect(page.getByRole("button", { name: "Approve version 1", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Query / reject version 1", exact: true })).toBeDisabled();
   await page.getByLabel("Query or rejection comments").fill("Correct the completion balance.");
@@ -68,7 +86,7 @@ test("completion survives reload through upload, query, replacement, approval an
   f.rows.unit_sale_workflow_events.push(f.event("completion_documents_query_raised", 3, { queryNote: "Correct the completion balance." }));
   f.profile.role = "conveyancer";
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await expect(page.getByText("Developer query: Correct the completion balance.", { exact: true })).toBeVisible();
   await expect(page.getByText("Replace PDF", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve version 1" })).toHaveCount(0);
@@ -76,7 +94,7 @@ test("completion survives reload through upload, query, replacement, approval an
   f.rows.unit_sale_document_versions[0].is_current = false;
   f.rows.unit_sale_document_versions.push({ ...f.rows.unit_sale_document_versions[0], id: "replacement", is_current: true, version_number: 2, uploaded_at: at(4) });
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await expect(page.getByRole("button", { name: "Confirm legal completion", exact: true })).toBeDisabled();
   f.rows.unit_sale_documents.forEach((doc) => Object.assign(doc, { status: "approved", approved_at: at(5), approved_by_user_id: userId, query_note: null }));
   f.rows.unit_sale_workflow_events.push(f.event("completion_documents_approved", 5));
@@ -84,17 +102,17 @@ test("completion survives reload through upload, query, replacement, approval an
   f.attempt.contractual_completion_date = "2026-08-06";
   f.attempt.workflow_status = "completion_pending";
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await page.getByLabel("Actual legal completion date and time (your local time)").fill("2026-08-06T12:00");
   await page.getByRole("checkbox", { name: /I confirm legal completion/ }).check();
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await expect(page.getByRole("button", { name: "Confirm legal completion" })).toBeEnabled();
   f.attempt.workflow_status = "completed";
   f.attempt.completed_at = "2026-08-06";
   f.unit.sale_status = "completed";
   f.rows.unit_sale_workflow_events.push(f.event("completion_recorded", 6));
   await f.reloadStage("Completion");
-  await expectSteps(page, "Completion", ["1. Completion arrangements", "2. Completion date confirmed", "3. Completion statement", "4. Legal completion"]);
+  await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion statement", "5. Legal completion"]);
   await expect(page.getByText(/Handover and key release are available/)).toBeVisible();
   await page.getByRole("button", { name: /^Comments/ }).first().click();
   await page.locator('#sale-conversation').getByRole("tab", { name: "Activity", exact: true }).click();

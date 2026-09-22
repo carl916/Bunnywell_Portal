@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { discussionDatabase } from './discussion-database.mjs';
 
-export async function legalDatabase() {
+export async function legalDatabase({ beforeNotice } = {}) {
   const f = await discussionDatabase();
   await f.owner();
   await f.db.exec(`
@@ -36,6 +36,9 @@ export async function legalDatabase() {
   // Existing completed sale is deliberately untouched by migration.
   await f.db.query("update unit_sale_attempts set workflow_status='completed',completed_at='2026-08-01',exchanged_at='2026-07-01' where id=$1",[f.ids.replacement]);
   await f.db.exec(readFileSync('supabase/migrations/20260922_sales_legal_workflow.sql','utf8'));
+  if (beforeNotice) await beforeNotice(f);
+  await f.db.exec(readFileSync('supabase/migrations/20260922b_completion_notice_authority.sql','utf8'));
+  await f.db.exec(readFileSync('supabase/migrations/20260922c_legal_email_presentation.sql','utf8'));
   const solicitorOrg=crypto.randomUUID(),agentOrg=crypto.randomUUID();
   await f.db.query("insert into organisations(id,name,type,shared_system_email) values($1,'Legal Team','conveyancer','legal@example.test'),($2,'Agent Team','sales_agent','sales@example.test')",[solicitorOrg,agentOrg]);
   await f.db.query("update buildings set conveyancer_organisation_id=$1,sales_agent_organisation_id=$2,seller_name='Seller SPV Ltd' where id=$3",[solicitorOrg,agentOrg,f.ids.building]);
@@ -52,5 +55,9 @@ export async function legalDatabase() {
   async function sent(email) { await service(); await f.rpc('sales_legal_dispatch',{p_id:email.id,p_actor:f.ids.developer,p_status:'sending'}); return f.rpc('sales_legal_dispatch',{p_id:email.id,p_actor:f.ids.developer,p_status:'sent',p_message_id:`resend-${email.id}`}); }
   async function action(user,action,payload={}) { await service(user); return f.rpc('sales_legal_action',{p_sale:f.ids.sale,p_actor:f.ids[user],p_action:action,p_payload:payload}); }
   async function upload(type='completion_statement') { await service('solicitor'); return f.rpc('sales_legal_register_document',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_type:type,p_file:{path:`test/${crypto.randomUUID()}.pdf`,name:'statement.pdf',size:100}}); }
-  return {...f,as,service,snapshot,prepare,sent,action,upload,solicitorOrg,agentOrg};
+  async function notice({user='solicitor',request=crypto.randomUUID(),noticeDate='2026-09-01',dueDate='2026-09-15',replace=false,expected=null,file={}}={}) {
+    await service(user);
+    return f.rpc('sales_legal_submit_notice',{p_sale:f.ids.sale,p_actor:f.ids[user],p_request:request,p_file:{path:f.ids.building+'/'+f.ids.sale+'/'+crypto.randomUUID()+'.pdf',name:'notice.pdf',size:100,mime:'application/pdf',...file},p_notice:noticeDate,p_due:dueDate,p_replace:replace,p_expected:expected});
+  }
+  return {...f,as,service,snapshot,prepare,sent,action,upload,notice,solicitorOrg,agentOrg};
 }

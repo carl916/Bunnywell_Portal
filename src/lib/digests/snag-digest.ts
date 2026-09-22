@@ -1,3 +1,5 @@
+import { escapeHtml } from "@/lib/email/layout";
+import { portalBaseUrl } from "@/lib/portal-url";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppRole, Area, Building, BuildingOrganisation, ProductionSnag, SnagEvent, Trade, Unit } from "@/lib/data/production";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -151,15 +153,7 @@ function localParts(date: Date) {
 }
 
 function appUrl(origin?: string) {
-  const configured =
-    process.env.DIGEST_APP_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    origin;
-
-  if (!configured) return "https://staging.bunnywell.co.uk";
-  if (configured.startsWith("http://") || configured.startsWith("https://")) return configured.replace(/\/$/, "");
-  return `https://${configured.replace(/\/$/, "")}`;
+  return portalBaseUrl(origin || "https://staging.bunnywell.co.uk");
 }
 
 function snagsUrl(origin?: string) {
@@ -354,14 +348,6 @@ function contractorCanReceiveSnag(snag: ProductionSnag, recipient: DigestRecipie
   return !snag.assigned_to_organisation_id || snag.assigned_to_organisation_id === recipient.organisationId;
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function renderSection(section: DigestSection) {
   const extraCount = Math.max(section.count - section.items.length, 0);

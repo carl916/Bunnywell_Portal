@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient, requiredEnv } from "@/lib/supabase/admin";
 import { renderLegalEmail, SalesRecipientError, type LegalEmail, type LegalEmailKind, type LegalSnapshot } from "@/lib/sales/legal-workflow";
 import { canPerformSalesAction } from "@/lib/sales/permissions";
+import { noticeFileError, validNoticeDates } from "@/lib/sales/completion-notice";
 
 const fail = (error: unknown) => NextResponse.json({
   error: error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String(error.message) : "Legal workflow could not be completed.",
@@ -36,10 +37,10 @@ export async function GET(request: Request) {
     const expiry = await client.rpc("sales_legal_expire", { p_sale: sale, p_actor: actor });
     if (expiry.error) throw expiry.error;
     const [attempt, emails, documents, events] = await Promise.all([
-      client.from("unit_sale_attempts").select("id,workflow_status,exchanged_at,completed_at,authority_requested_at,contractual_completion_date,completion_notice_issued_at,legal_completed_at").eq("id", sale).single(),
+      client.from("unit_sale_attempts").select("id,workflow_status,exchanged_at,completed_at,authority_requested_at,contractual_completion_date,completion_notice_issued_at,legal_completed_at,completion_authority_requested_at,completion_authority_requested_by,completion_authority_given_at,completion_authority_given_by,completion_arrangements_confirmed_at,completion_arrangements_confirmed_by,completion_legacy_stage").eq("id", sale).single(),
       client.from("sale_legal_emails").select("*").eq("sale_attempt_id", sale).order("issued_at", { ascending: false }),
       client.from("unit_sale_documents").select("*,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(*)").eq("sale_attempt_id", sale).in("document_type", ["completion_statement", "statement_of_account", "completion_correspondence"]).is("redacted_at", null).is("superseded_at", null),
-      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,created_by_user_id,created_at").eq("sale_attempt_id", sale).in("event_type", ["exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_arrangements_confirmed"]).order("created_at", { ascending: false }),
+      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,actor_role,created_by_user_id,created_at").eq("sale_attempt_id", sale).in("event_type", ["exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_arrangements_confirmed", "authority_notice_requested", "authority_notice_given", "completion_arrangements_dates_corrected"]).order("created_at", { ascending: false }),
     ]);
     for (const result of [attempt, emails, documents, events]) if (result.error) throw result.error;
     const actorIds = [...new Set([...(events.data ?? []).map((event) => event.created_by_user_id), ...(documents.data ?? []).map((document) => document.approved_by_user_id)].filter(Boolean))];
@@ -60,8 +61,17 @@ export async function POST(request: Request) {
       const form = await request.formData();
       const sale = String(form.get("sale") || "");
       const type = String(form.get("documentType") || "");
+      const action = String(form.get("action") || "");
+      const noticeSubmission = action === "confirm_notice" || action === "replace_notice";
+      if (type === "completion_correspondence" && !noticeSubmission) throw new Error("Submit both dates and the notice PDF together.");
+      if (noticeSubmission && type !== "completion_correspondence") throw new Error("Choose the notice PDF.");
+      const noticeDate = String(form.get("noticeDate") || "");
+      const dueDate = String(form.get("date") || "");
+      if (action === "confirm_notice" && !validNoticeDates(noticeDate, dueDate)) throw new Error("Enter both dates. Completion due date cannot be earlier than the notice issue date.");
+      const submissionId = String(form.get("requestId") || "");
+      if (noticeSubmission && !/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(submissionId)) throw new Error("A submission reference is required.");
       const file = form.get("file");
-      if (!(file instanceof File) || file.size === 0 || file.size > 10 * 1024 * 1024 || !file.name.toLowerCase().endsWith(".pdf") || file.type && file.type !== "application/pdf") throw new Error("Choose a PDF up to 10 MB.");
+      if (!(file instanceof File) || noticeFileError(file)) throw new Error("Choose a PDF up to 10 MB.");
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("The selected file is not a PDF.");
       const snapshot = await client.rpc("sales_legal_snapshot", { p_sale: sale, p_actor: actor });
@@ -69,12 +79,20 @@ export async function POST(request: Request) {
       const path = `${snapshot.data.building.id}/${sale}/legal-${crypto.randomUUID()}.pdf`;
       const upload = await client.storage.from("sale-documents").upload(path, bytes, { contentType: "application/pdf", upsert: false });
       if (upload.error) throw upload.error;
-      const registered = await client.rpc("sales_legal_register_document", { p_sale: sale, p_actor: actor, p_type: type, p_file: { path, name: file.name, size: file.size } });
+      const fileDetails = { path, name: file.name, size: file.size, mime: "application/pdf" };
+      const registered = noticeSubmission
+        ? await client.rpc("sales_legal_submit_notice", { p_sale: sale, p_actor: actor, p_request: submissionId, p_file: fileDetails,
+          p_notice: noticeDate || null, p_due: dueDate || null, p_replace: action === "replace_notice", p_expected: String(form.get("expectedVersionId") || "") || null })
+        : await client.rpc("sales_legal_register_document", { p_sale: sale, p_actor: actor, p_type: type, p_file: fileDetails });
       if (registered.error) {
-        await client.storage.from("sale-documents").remove([path]);
+        // A lost RPC response may follow a committed transaction. Never delete a
+        // file that a saved version references; uncertain cleanup stays private.
+        const saved = await client.from("unit_sale_document_versions").select("id").eq("storage_path", path);
+        if (!saved.error && saved.data?.length === 0) await client.storage.from("sale-documents").remove([path]);
         throw registered.error;
       }
-      return NextResponse.json({ versionId: registered.data });
+      if (noticeSubmission && registered.data.path !== path) await client.storage.from("sale-documents").remove([path]);
+      return NextResponse.json(noticeSubmission ? registered.data : { versionId: registered.data });
     }
     const payload = await request.json();
     const sale = String(payload.sale || "");
@@ -103,8 +121,8 @@ export async function POST(request: Request) {
         if (result.error) throw result.error;
         email = result.data as LegalEmail;
       } else {
-        const kind: LegalEmailKind = payload.kind === "authority" ? "authority" : payload.kind === "completion_instruction" ? "completion_instruction" : (() => { throw new Error("Choose an instruction type."); })();
-        const date = String(payload.date || (kind === "authority" ? new Date(Date.now() + 48 * 3600000).toISOString() : ""));
+        const kind: LegalEmailKind = payload.kind === "authority" ? "authority" : payload.kind === "notice_authority" ? "notice_authority" : (() => { throw new Error("Choose an instruction type."); })();
+        const date = kind === "notice_authority" ? "" : String(payload.date || new Date(Date.now() + 48 * 3600000).toISOString());
         const rendered = renderLegalEmail(snapshot, kind, date);
         const from = process.env.SALES_FROM_EMAIL || process.env.DIGEST_FROM_EMAIL || "Bunnywell Portal <no-reply@bunnywell.co.uk>";
         const preview = { sale, kind, date, snapshot, ...rendered, from };
@@ -125,7 +143,7 @@ export async function POST(request: Request) {
       try {
         response = await fetch("https://api.resend.com/emails", {
           method: "POST", headers: { Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}`, "Content-Type": "application/json", "Idempotency-Key": `sales-legal/${email.id}` },
-          body: JSON.stringify({ from: email.sending_address, to: email.to_recipients, cc: email.cc_recipients, subject: email.subject, text: email.body }), signal: AbortSignal.timeout(25000),
+          body: JSON.stringify({ from: email.sending_address, to: email.to_recipients, cc: email.cc_recipients, subject: email.subject, text: email.body, ...(email.html_body ? { html: email.html_body } : {}) }), signal: AbortSignal.timeout(25000),
         });
       } catch {
         const result = await client.rpc("sales_legal_dispatch", { p_id: email.id, p_actor: actor, p_status: "unknown" });
@@ -142,9 +160,9 @@ export async function POST(request: Request) {
       if (result.error) throw new Error("Resend accepted this email, but its receipt could not be saved. Retry the recorded email to reconcile it without sending a duplicate.");
       return NextResponse.json({ email: result.data });
     }
-    const permission = action === "request_authority" ? "request_exchange_approval" : action === "confirm_exchange" ? "record_exchange"
-      : action === "confirm_arrangements" ? "confirm_completion_arrangements" : action === "confirm_completion" ? "record_completion"
-      : action === "revoke_authority" || action === "cancel_instruction" ? "approve_exchange" : action === "approve_statement" || action === "query_statement" ? "approve_completion_documents" : null;
+    const permission = action === "request_authority" || action === "request_notice_authority" ? "request_exchange_approval" : action === "confirm_exchange" ? "record_exchange"
+      : action === "correct_completion_dates" ? "confirm_completion_arrangements" : action === "confirm_completion" ? "record_completion"
+      : action === "revoke_authority" || action === "cancel_instruction" || action === "cancel_notice_authority" ? "approve_exchange" : action === "approve_statement" || action === "query_statement" ? "approve_completion_documents" : null;
     if (!permission || !canPerformSalesAction(role, permission)) throw new Error("Your role cannot perform this legal action.");
     const result = await client.rpc("sales_legal_action", { p_sale: sale, p_actor: actor, p_action: action, p_payload: payload });
     if (result.error) throw result.error;

@@ -1,8 +1,8 @@
 "use client";
-import { FileText, UploadCloud, X } from "lucide-react";
+import { FileCheck2, FileText, UploadCloud, X } from "lucide-react";
 export type UploadVersion = { file_name: string; uploaded_at: string; file_size_bytes: number | null };
 const formatDate = (date: string) => new Date(date).toLocaleDateString("en-GB");
-const fileSizeLabel = (size: number | null) => size ? (size / 1024 / 1024).toFixed(1) + " MB" : "";
+const fileSizeLabel = (size: number | null) => size == null ? "" : size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${(size / 1024).toFixed(1)} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`;
 
 export function PdfUploadBox({
   id,
@@ -14,6 +14,8 @@ export function PdfUploadBox({
   onFile,
   onClear,
   onRemoveCurrent,
+  emptyPrompt,
+  helperText = "PDF only, maximum 10 MB",
 }: {
   id: string;
   label: string;
@@ -24,8 +26,23 @@ export function PdfUploadBox({
   onFile: (file: File | null) => void;
   onClear: () => void;
   onRemoveCurrent?: () => void;
+  emptyPrompt?: string;
+  helperText?: string;
 }) {
-  const selectedName = file?.name ?? null;
+  if (file) {
+    return <div className="min-w-0 rounded-bw-card border border-[#9bb5a6] bg-[#EEF6F1] p-5" aria-live="polite">
+      <div className="flex min-w-0 items-start gap-3">
+        <FileCheck2 className="mt-1 shrink-0 text-[#0F3D2E]" size={24} aria-hidden />
+        <div className="min-w-0"><p className="font-bold text-[#0F3D2E] [overflow-wrap:anywhere]">{file.name}</p><p className="mt-1 text-sm text-[#617169]">{fileSizeLabel(file.size)}</p><p className="mt-2 text-sm font-semibold text-[#0F3D2E]">Selected – ready to submit</p></div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <label className={`secondary upload-target inline-flex items-center ${disabled ? "opacity-60" : "cursor-pointer"}`}>
+          Replace<input id={id} aria-label={label} className="sr-only" type="file" accept="application/pdf,.pdf" disabled={disabled} onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+        </label>
+        <button type="button" className="secondary" disabled={disabled} onClick={onClear}>Remove</button>
+      </div>
+    </div>;
+  }
 
   if (currentVersion && !file) {
     return (
@@ -52,7 +69,7 @@ export function PdfUploadBox({
           ) : (
             <label className="secondary upload-target mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
               Replace PDF
-              <input className="sr-only" type="file" accept="application/pdf" onChange={(event) => onFile(event.target.files?.[0] ?? null)} />
+              <input className="sr-only" aria-label={`Replace ${label}`} type="file" accept="application/pdf" onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
             </label>
           )
         )}
@@ -77,31 +94,16 @@ export function PdfUploadBox({
       <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF6F1] text-[#0F3D2E]">
         <UploadCloud size={20} aria-hidden />
       </span>
-      <span className="mt-3 block font-bold text-[#0F3D2E]">{label}</span>
-      <span className="mt-1 block text-sm text-[#617169]">Choose a file or drag and drop. PDF only, maximum 10 MB.</span>
-      {selectedName && (
-        <span className="mt-3 inline-flex max-w-full items-center gap-2 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-sm font-semibold text-[#0F3D2E]">
-          <span className="min-w-0 [overflow-wrap:anywhere]">{selectedName}</span>
-          <button
-            type="button"
-            className="rounded-full p-0.5 text-[#617169] hover:bg-white"
-            onClick={(event) => {
-              event.preventDefault();
-              onClear();
-            }}
-            aria-label="Remove selected PDF"
-          >
-            <X size={14} aria-hidden />
-          </button>
-        </span>
-      )}
+      <span className="mt-3 block font-bold text-[#0F3D2E]">{emptyPrompt ?? label}</span>
+      <span className="mt-1 block text-sm text-[#617169]">{emptyPrompt ? helperText : `Choose a file or drag and drop. ${helperText}.`}</span>
       <input
         id={id}
+        aria-label={label}
         className="sr-only"
         type="file"
         accept="application/pdf"
         disabled={disabled}
-        onChange={(event) => onFile(event.target.files?.[0] ?? null)}
+        onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }}
       />
     </label>
   );

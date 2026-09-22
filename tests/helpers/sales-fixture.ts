@@ -7,7 +7,7 @@ const attemptId = "40000000-0000-4000-8000-000000000001";
 export const at = (day: number) => `2026-08-${String(day).padStart(2, "0")}T12:00:00Z`;
 type Row = Record<string, unknown>;
 
-export async function salesFixture(page: Page) {
+export async function salesFixture(page: Page, initialPath?: string) {
   const profile = { id: userId, email: "sales-ui@example.test", full_name: "Jane Alexandra Smith-Worthington", role: "developer", active: true, organisation_id: null };
   const unit: Row = { id: unitId, building_id: buildingId, unit_number: "101", floor: "Ground", sale_status: "for_sale", rental_portfolio_status: "not_in_portfolio", parking_bays: [] };
   const attempt: Row = { id: attemptId, building_id: buildingId, unit_id: unitId, attempt_number: 1, is_active: true, workflow_status: "draft", created_at: at(1), buyer_name: "Example Buyer", buyer_person_name: "Example Buyer", buyer_email: "buyer@example.test", buyer_phone: "07000000000", buyer_solicitor_name: "Example Solicitors", reservation_date: "2026-08-01", reservation_terms_checked: true };
@@ -50,12 +50,15 @@ export async function salesFixture(page: Page) {
     documents: rows.unit_sale_documents.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) })),
     events: rows.unit_sale_workflow_events, actors: rows.sale_actor_names ?? rows.profiles,
   } }));
-  await page.goto(`/?screen=sales&building=${buildingId}&salesUnitId=${unitId}`);
+  const salePath = initialPath ?? `/?screen=sales&building=${buildingId}&salesUnitId=${unitId}`;
+  await page.goto(salePath);
   await page.getByLabel("Email", { exact: true }).fill(profile.email);
   await page.getByLabel("Password", { exact: true }).fill("fixture-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
-  await page.goto(`/?screen=sales&building=${buildingId}&salesUnitId=${unitId}`);
+  // The login form authenticates in place: the original sale URL must survive.
+  if (initialPath) await expect(page).toHaveURL(new RegExp(`salesUnitId=${unitId}.*conversation=${attemptId}`));
+  await page.goto(salePath);
   await expect(page.getByRole("list", { name: "Reservation tasks", exact: true })).toBeVisible();
   const event = (event_type: string, day: number, metadata = {}) => ({ id: `${event_type}-${day}`, sale_attempt_id: attemptId, event_type, created_at: at(day), created_by_user_id: userId, metadata, summary: event_type.replaceAll("_", " ") });
   const documents = () => {

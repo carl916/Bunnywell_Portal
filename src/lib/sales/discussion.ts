@@ -1,3 +1,4 @@
+import { saleFilePath } from "@/lib/portal-url";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const COMMENT_LIMIT = 5000;
@@ -58,5 +59,5 @@ export function activityPresentation(event: SaleActivity) {
 }
 
 export function mentionLink(item: MentionNotification) {
-  return `/?${new URLSearchParams({ screen: "sales", building: item.building_id, salesUnitId: item.unit_id, conversation: item.sale_attempt_id, comment: item.comment_id })}`;
+  return saleFilePath(item);
 }

@@ -1573,11 +1573,8 @@ export function SalesReservationWorkflow({
     setSalesPage(1);
   }, [buildingId, salesSearch, salesStageFilter]);
 
-  useEffect(() => {
-    if (!selectedSaleUnitId || !selectedUnit) return;
-    if (manuallySelectedWorkflowStageRef.current === activeWorkflowStage) return;
-    setActiveWorkflowStage(selectedWorkflowStage);
-  }, [activeWorkflowStage, selectedSaleUnitId, selectedUnit, selectedWorkflowStage]);
+  // Opening a unit initialises its selected stage. Refetching lifecycle data
+  // must preserve the stage the user is currently reviewing.
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
