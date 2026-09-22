@@ -1,3 +1,5 @@
+import { completionUploadAction } from "@/lib/sales/completion-upload-server";
+import { SalesServerTiming } from "@/lib/sales/server-performance";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createSupabaseServiceRoleClient, requiredEnv } from "@/lib/supabase/admin";
@@ -16,8 +18,8 @@ function signature(value: unknown) {
 function sameSignature(actual: string, expected: string) {
   return /^[a-f0-9]{64}$/.test(actual) && timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
 }
-async function session(request: Request) {
-  const client = createSupabaseServiceRoleClient();
+async function session(request: Request, timing: SalesServerTiming) {
+  const client = createSupabaseServiceRoleClient(timing.fetch);
   const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
   if (!token) throw new Error("Sign in to use the legal workflow.");
   const { data, error } = await client.auth.getUser(token);
@@ -28,8 +30,12 @@ async function session(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const timing = new SalesServerTiming();
+  return timing.response(await getLegal(request, timing));
+}
+async function getLegal(request: Request, timing: SalesServerTiming) {
   try {
-    const { client, actor } = await session(request);
+    const { client, actor } = await session(request, timing);
     const sale = new URL(request.url).searchParams.get("sale");
     if (!sale) throw new Error("Select a sale file.");
     const snapshot = await client.rpc("sales_legal_snapshot", { p_sale: sale, p_actor: actor });
@@ -56,50 +62,21 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const timing = new SalesServerTiming();
+  return timing.response(await postLegal(request, timing));
+}
+async function postLegal(request: Request, timing: SalesServerTiming) {
   try {
-    const { client, actor, role } = await session(request);
+    const { client, actor, role } = await session(request, timing);
     if (request.headers.get("content-type")?.includes("multipart/form-data")) {
       if (!canPerformSalesAction(role, "submit_completion_documents")) throw new Error("Only conveyancers can upload legal completion documents.");
-      const form = await request.formData();
+      if (Number(request.headers.get("content-length")) > 4 * 1024 * 1024) throw new Error("This upload is too large for the legacy endpoint. Reload the page.");
+      const form = await timing.measure("multipart_parse", () => request.formData());
       const sale = String(form.get("sale") || "");
       const type = String(form.get("documentType") || "");
       const action = String(form.get("action") || "");
       if (action === "upload_completion_documents") {
-        const files = form.getAll("files");
-        const assignments = JSON.parse(String(form.get("assignments") || "[]")) as { type: string; expectedVersionId: string | null }[];
-        const requestId = String(form.get("requestId") || "");
-        if (!/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(requestId)) throw new Error("A submission reference is required.");
-        if (files.length < 1 || files.length > 2 || !Array.isArray(assignments) || assignments.length !== files.length || new Set(assignments.map(item => item?.type)).size !== files.length || assignments.some(item => !["completion_statement", "draft_statement_of_account"].includes(item?.type))) throw new Error("Assign one or two PDFs to different completion document types.");
-        const prepared = await Promise.all(files.map(async (file, index) => {
-          if (!(file instanceof File) || noticeFileError(file)) throw new Error("Choose PDFs up to 10 MB each.");
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("Every selected file must be a PDF.");
-          return { bytes, name: file.name, size: file.size, mime: "application/pdf", type: assignments[index].type, expectedVersionId: assignments[index].expectedVersionId };
-        }));
-        const snapshot = await client.rpc("sales_legal_snapshot", { p_sale: sale, p_actor: actor });
-        if (snapshot.error) throw snapshot.error;
-        const uploaded: { type: string; expectedVersionId: string | null; path: string; name: string; size: number; mime: string }[] = [];
-        async function removeUnregistered(paths: string[]) {
-          for (const path of paths) {
-            const saved = await client.from("unit_sale_document_versions").select("id").eq("storage_path", path);
-            if (!saved.error && saved.data?.length === 0) await client.storage.from("sale-documents").remove([path]);
-          }
-        }
-        try {
-          for (const { bytes, ...file } of prepared) {
-            const path = `${snapshot.data.building.id}/${sale}/completion-${crypto.randomUUID()}.pdf`;
-            const result = await client.storage.from("sale-documents").upload(path, bytes, { contentType: "application/pdf", upsert: false });
-            if (result.error) throw result.error;
-            uploaded.push({ ...file, path });
-          }
-          const result = await client.rpc("sales_completion_upload", { p_sale: sale, p_actor: actor, p_request: requestId, p_files: uploaded });
-          if (result.error) throw result.error;
-          await removeUnregistered(uploaded.map(file => file.path));
-          return NextResponse.json({ documents: result.data });
-        } catch (error) {
-          await removeUnregistered(uploaded.map(file => file.path));
-          throw error;
-        }
+        throw new Error("This upload method has been retired. Reload the page to use resumable uploads.");
       }
       const noticeSubmission = action === "confirm_notice" || action === "replace_notice";
       if (type === "completion_correspondence" && !noticeSubmission) throw new Error("Submit both dates and the notice PDF together.");
@@ -111,7 +88,7 @@ export async function POST(request: Request) {
       if (noticeSubmission && !/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(submissionId)) throw new Error("A submission reference is required.");
       const file = form.get("file");
       if (!(file instanceof File) || noticeFileError(file)) throw new Error("Choose a PDF up to 10 MB.");
-      const bytes = new Uint8Array(await file.arrayBuffer());
+      const bytes = new Uint8Array(await timing.measure("file_prepare", () => file.arrayBuffer()));
       if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("The selected file is not a PDF.");
       const snapshot = await client.rpc("sales_legal_snapshot", { p_sale: sale, p_actor: actor });
       if (snapshot.error) throw snapshot.error;
@@ -134,6 +111,9 @@ export async function POST(request: Request) {
       return NextResponse.json(noticeSubmission ? registered.data : { versionId: registered.data });
     }
     const payload = await request.json();
+    if (["prepare_completion_upload", "finalize_completion_upload"].includes(payload.action)) {
+      return NextResponse.json(await completionUploadAction(client, actor, payload), { headers: { "Cache-Control": "no-store" } });
+    }
     const sale = String(payload.sale || "");
     const action = String(payload.action || "");
     // This RPC applies the existing building access rule, also for service calls.
@@ -147,7 +127,7 @@ export async function POST(request: Request) {
         if (found.error) throw found.error;
         const email = found.data as LegalEmail;
         if (!email.resend_message_id) throw new Error("No Resend message ID is recorded yet. Retry the original email to reconcile an interrupted send.");
-        const response = await fetch(`https://api.resend.com/emails/${encodeURIComponent(email.resend_message_id)}`, { headers: { Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}` }, signal: AbortSignal.timeout(20000) });
+        const response = await timing.fetch(`https://api.resend.com/emails/${encodeURIComponent(email.resend_message_id)}`, { headers: { Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}` }, signal: AbortSignal.timeout(20000) });
         if (!response.ok) throw new Error("Resend delivery status could not be retrieved.");
         const result = await response.json();
         const update = await client.rpc("sales_legal_dispatch", { p_id: email.id, p_actor: actor, p_status: result.last_event ?? "sent", p_message_id: email.resend_message_id });
@@ -180,7 +160,7 @@ export async function POST(request: Request) {
       if (claimed.data.resend_message_id) return NextResponse.json({ email: claimed.data });
       let response: Response;
       try {
-        response = await fetch("https://api.resend.com/emails", {
+        response = await timing.fetch("https://api.resend.com/emails", {
           method: "POST", headers: { Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}`, "Content-Type": "application/json", "Idempotency-Key": `sales-legal/${email.id}` },
           body: JSON.stringify({ from: email.sending_address, to: email.to_recipients, cc: email.cc_recipients, subject: email.subject, text: email.body, ...(email.html_body ? { html: email.html_body } : {}) }), signal: AbortSignal.timeout(25000),
         });

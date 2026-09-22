@@ -1,0 +1,17 @@
+✔ server metadata validation accepts boundary and rejects invalid count, type, size, names and versions (0.8409ms)
+✔ sale-scoped private session checks access, state and exact manifest before any transfer (950.8908ms)
+✔ one/two PDFs, interrupted upload, retry and duplicate finalisation preserve exact versions and audit (699.6089ms)
+✔ expired sessions cannot finalize; cleanup retains committed versions and rejects late finalisation (657.916ms)
+✔ stale versions, changed access and foreign sale references cannot finalise a pending session (659.1644ms)
+✔ server verifies actual objects, rejects forged PDFs, and reconciles a lost finalisation response (696.8197ms)
+✔ cleanup removes expired private files, preserves referenced versions and retries Storage failures (34.8118ms)
+✔ client sends metadata only, resumes interrupted transfer, skips completed files and reports progress (9.9202ms)
+✔ cleanup HTTP endpoint requires an explicitly configured cron secret (3.1065ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3953.6838

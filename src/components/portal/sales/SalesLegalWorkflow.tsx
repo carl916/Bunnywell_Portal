@@ -10,6 +10,7 @@ import { ExchangeDepositReceipt, type ExchangeDepositContext } from "./ExchangeD
 import { authorityBadge, exchangeAuthorityState } from "@/lib/sales/authority-state";
 import { workflowActorLabel, type ActorProfile } from "@/lib/sales/actor-identity";
 import { addWorkingDays, completionNoticeState, noticeFileError, validNoticeDates, type CompletionNoticeState } from "@/lib/sales/completion-notice";
+import { beginSalesMeasurement, legalPerformanceAction, salesNavigationReady, type SalesMeasurement } from "@/lib/sales/performance";
 
 type Version = UploadVersion & { id: string; version_number: number; is_current: boolean; redacted_at: string | null };
 type Document = { id: string; document_type: string; status: string; query_note: string | null; approved_version_id: string | null; approved_by_user_id?: string | null; approved_at: string | null; unit_sale_document_versions: Version[] };
@@ -23,7 +24,7 @@ type Context = {
     completion_authority_requested_at?: string | null; completion_authority_requested_by?: string | null; completion_authority_given_by?: string | null; completion_arrangements_confirmed_by?: string | null };
 };
 type Preview = { kind: "authority" | "notice_authority"; date: string; to: string[]; cc: string[]; subject: string; body: string; html?: string; from: string; token: string; snapshot: LegalSnapshot };
-type Run = (body: Record<string, unknown> | FormData, message: string) => Promise<boolean>;
+type Run = (body: Record<string, unknown> | FormData, message: string, measurement?: SalesMeasurement) => Promise<boolean>;
 type Failure = { message: string; settingsUrl?: string };
 const localTime = (value: number) => { const date = new Date(value); return new Date(value - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 const shortDate = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB") : "Not recorded";
@@ -33,24 +34,27 @@ async function headers() {
   if (error || !data.session) throw new Error("Sign in again to continue.");
   return { Authorization: `Bearer ${data.session.access_token}` };
 }
-async function legalRequest<T>(sale: string, body?: Record<string, unknown> | FormData): Promise<T> {
+async function legalRequest<T>(sale: string, body?: Record<string, unknown> | FormData, measurement?: SalesMeasurement): Promise<T> {
+  const authorization = await headers();
+  measurement?.mark("request_started");
   const response = await fetch(`/api/sales/legal${body ? "" : `?sale=${encodeURIComponent(sale)}`}`, {
-    method: body ? "POST" : "GET", headers: { ...await headers(), ...(body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}) },
+    method: body ? "POST" : "GET", headers: { ...authorization, ...(body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}) },
     body: body instanceof FormData ? body : body ? JSON.stringify({ ...body, sale }) : undefined,
   });
-  const result = await response.json();
+  const result = await response.json().finally(() => measurement?.mark("request_completed"));
   if (!response.ok) throw Object.assign(new Error(result.error || "Legal action failed."), { settingsUrl: result.settingsUrl });
   return result as T;
 }
 
 export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }: {
-  saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: () => Promise<void>;
+  saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: (measurement?: SalesMeasurement) => Promise<void>;
 }) {
   const [context, setContext] = useState<Context | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [noticeReviewFailure, setNoticeReviewFailure] = useState<Failure | null>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const measurementRef = useRef<SalesMeasurement | null>(null);
   const [expiry, setExpiry] = useState(() => localTime(Date.now() + 48 * 3600000));
   const [expiryEdited, setExpiryEdited] = useState(false);
   const [exchangeDate, setExchangeDate] = useState("");
@@ -71,33 +75,42 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
   useEffect(() => { let active = true; legalRequest<Context>(saleId).then((result) => { if (active) setContext(result); }).catch((error) => { if (active) setFailure(error); }); return () => { active = false; }; }, [saleId]);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
   useEffect(() => { if (preview) previewRef.current?.focus(); }, [preview]);
+  useEffect(() => { if (busy) measurementRef.current?.painted("pending_visible"); }, [busy]);
+  useEffect(() => { if (context) salesNavigationReady(); }, [context, stage]);
 
-  async function run(body: Record<string, unknown> | FormData, message: string) {
+  async function run(body: Record<string, unknown> | FormData, message: string, measurement?: SalesMeasurement, prepare?: () => Promise<void>) {
     if (inFlight.current) return false;
+    const timing = measurement ?? beginSalesMeasurement(legalPerformanceAction(body instanceof FormData ? body.get("action") : body.action));
+    measurementRef.current = timing;
     inFlight.current = true; setBusy(true); setFailure(null); setNoticeReviewFailure(null);
     try {
-      await legalRequest(saleId, body);
+      await prepare?.();
+      await legalRequest(saleId, body, timing);
       setPreview(null); setApprovedPreview(false);
-      await load(); await onChanged(); onNotice(message);
+      timing.mark("context_reload_started");
+      await load(); timing.mark("context_reload_completed");
+      await onChanged(timing); timing.mark("refresh_completed"); onNotice(message);
       return true;
     } catch (error) {
+      timing.mark("error");
       const problem = error instanceof Error ? error : { message: "Legal action failed." };
       if (!(body instanceof FormData) && body.action === "send" && body.kind === "notice_authority") setNoticeReviewFailure(problem);
       else setFailure(problem);
       await load().catch(() => {});
       return false;
-    } finally { inFlight.current = false; setBusy(false); }
+    } finally { inFlight.current = false; setBusy(false); timing.finish(); }
   }
   async function showPreview() {
     if (inFlight.current) return;
+    const timing = beginSalesMeasurement("authority.preview_open"); measurementRef.current = timing;
     inFlight.current = true; setBusy(true); setFailure(null); setNoticeReviewFailure(null); setApprovedPreview(false);
     try {
       const date = stage === "exchange" ? expiryEdited ? new Date(expiry).toISOString() : new Date(Date.now() + 48 * 3600000).toISOString() : "";
       if (stage === "exchange" && !expiryEdited) setExpiry(localTime(Date.parse(date)));
-      const result = await legalRequest<Preview>(saleId, { action: "preview", kind: stage === "exchange" ? "authority" : "notice_authority", date });
+      const result = await legalRequest<Preview>(saleId, { action: "preview", kind: stage === "exchange" ? "authority" : "notice_authority", date }, timing);
       requestId.current = crypto.randomUUID(); setPreview(result);
-    } catch (error) { (stage === "completion" ? setNoticeReviewFailure : setFailure)(error instanceof Error ? error : { message: "Email preview could not be loaded." }); }
-    finally { inFlight.current = false; setBusy(false); }
+    } catch (error) { timing.mark("error"); (stage === "completion" ? setNoticeReviewFailure : setFailure)(error instanceof Error ? error : { message: "Email preview could not be loaded." }); }
+    finally { inFlight.current = false; setBusy(false); timing.finish(); }
   }
 
   function closePreview() {

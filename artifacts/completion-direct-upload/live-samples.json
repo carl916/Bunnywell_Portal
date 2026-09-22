@@ -1,0 +1,387 @@
+{
+  "originKind": "local-production-build/staging-storage",
+  "samples": [
+    {
+      "profile": "desktop",
+      "label": "one-1MiB",
+      "count": 1,
+      "size": 1048576,
+      "totalMs": 5931,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 575,
+          "requestBytes": 276
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 1843,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 1597,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 450,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "desktop",
+      "label": "two-1MiB",
+      "count": 2,
+      "size": 1048576,
+      "totalMs": 8517,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 646,
+          "requestBytes": 444
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 1470,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 1480,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 2563,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 557,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "desktop",
+      "label": "two-5MiB",
+      "count": 2,
+      "size": 5242880,
+      "totalMs": 17616,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 610,
+          "requestBytes": 478
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 6131,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 6096,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 2779,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 538,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "desktop",
+      "label": "two-exact-10MiB",
+      "count": 2,
+      "size": 10485760,
+      "totalMs": 31472,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 498,
+          "requestBytes": 480
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 7156,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "PATCH",
+          "status": 204,
+          "durationMs": 4975,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 7437,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "PATCH",
+          "status": 204,
+          "durationMs": 5006,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 3680,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 699,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "mobile-throttled",
+      "label": "one-1MiB",
+      "count": 1,
+      "size": 1048576,
+      "totalMs": 17372,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 454,
+          "requestBytes": 276
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 11705,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 1541,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 479,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "mobile-throttled",
+      "label": "two-1MiB",
+      "count": 2,
+      "size": 1048576,
+      "totalMs": 30250,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 590,
+          "requestBytes": 444
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 11631,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 11611,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 2826,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 521,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "mobile-throttled",
+      "label": "two-5MiB",
+      "count": 2,
+      "size": 5242880,
+      "totalMs": 119391,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 556,
+          "requestBytes": 478
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 56374,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 56407,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 2680,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 672,
+          "requestBytes": 0
+        }
+      ]
+    },
+    {
+      "profile": "mobile-throttled",
+      "label": "two-exact-10MiB",
+      "count": 2,
+      "size": 10485760,
+      "totalMs": 236717,
+      "outcome": true,
+      "finalStatus": 200,
+      "requests": [
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 616,
+          "requestBytes": 480
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 67700,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "PATCH",
+          "status": 204,
+          "durationMs": 45361,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "POST",
+          "status": 201,
+          "durationMs": 67521,
+          "requestBytes": null
+        },
+        {
+          "category": "storage",
+          "method": "PATCH",
+          "status": 204,
+          "durationMs": 45387,
+          "requestBytes": null
+        },
+        {
+          "category": "legal",
+          "method": "POST",
+          "status": 200,
+          "durationMs": 4529,
+          "requestBytes": 136
+        },
+        {
+          "category": "legal",
+          "method": "GET",
+          "status": 200,
+          "durationMs": 937,
+          "requestBytes": 0
+        }
+      ]
+    }
+  ]
+}

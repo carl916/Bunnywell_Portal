@@ -108,19 +108,9 @@ const today=()=>new Date().toISOString().slice(0,10);
 function completionForm(f,{files=[new File(['%PDF-1.7\nstatement'],'completion.pdf',{type:'application/pdf'}),new File(['%PDF-1.7\naccount'],'account.pdf',{type:'application/pdf'})],assignments=[{type:'completion_statement',expectedVersionId:null},{type:'draft_statement_of_account',expectedVersionId:null}],requestId=crypto.randomUUID()}={}) {
   const form=new FormData();form.set('sale',f.ids.sale);form.set('action','upload_completion_documents');form.set('requestId',requestId);form.set('assignments',JSON.stringify(assignments));files.forEach(file=>form.append('files',file));return form;
 }
-test('completion batch API validates every file and assignment, cleans partial storage, and reconciles a lost response',async t=>{
-  const f=await apiFixture(t);await authorise(f);await f.notice({noticeDate:today(),dueDate:today()});f.asUser('solicitor');
-  for(const assignments of [[{type:''},{type:'draft_statement_of_account'}],[{type:'completion_statement'},{type:'completion_statement'}],[]])assert.equal((await f.post(completionForm(f,{assignments}))).status,400);
-  for(const bad of [new File(['invalid'],'fake.pdf',{type:'application/pdf'}),new File([],'empty.pdf',{type:'application/pdf'}),new File(['%PDF-'],'file.txt',{type:'text/plain'}),new File([new Uint8Array(10485761)],'large.pdf',{type:'application/pdf'})])assert.equal((await f.post(completionForm(f,{files:[new File(['%PDF-1.7'],'valid.pdf',{type:'application/pdf'}),bad]}))).status,400);
-  assert.equal(f.storage.size,0);
-  f.failUploadAt(2);assert.match((await f.post(completionForm(f))).error,/Upload failed/);assert.equal(f.storage.size,0);f.failUploadAt(0);
-  for(const user of ['agent','developer','outsider']){f.asUser(user);assert.equal((await f.post(completionForm(f))).status,400);}f.asUser('solicitor');
-  const form=completionForm(f,{assignments:[{type:'completion_statement',expectedVersionId:null,name:'forged.pdf',bytes:[1],size:1},{type:'draft_statement_of_account',expectedVersionId:null}]});
-  f.losePackageResponse(true);assert.match((await f.post(form)).error,/Response interrupted/);assert.equal(f.storage.size,2);
-  f.losePackageResponse(false);const saved=await f.post(form);assert.equal(saved.status,200);assert.equal(saved.documents.length,2);assert.equal(f.storage.size,2);
-  await f.service();const versions=(await f.db.query("select v.* from unit_sale_document_versions v join unit_sale_documents d on d.id=v.document_id where d.document_type in ('completion_statement','draft_statement_of_account')")).rows;
-  assert.equal(versions.length,2);assert.ok(versions.find(version=>version.file_name==='completion.pdf'&&version.file_size_bytes>1));
-  assert.equal(f.calls.length,0);
+test('legacy completion multipart transport is retired without storing files',async t=>{
+  const f=await apiFixture(t);f.asUser('solicitor');
+  const result=await f.post(completionForm(f));assert.equal(result.status,400);assert.match(result.error,/retired/);assert.equal(f.storage.size,0);
 });
 async function exchange(f) {await f.sent(await f.prepare());await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});}
 async function authorise(f) {await exchange(f);return f.sent(await f.prepare({kind:'notice_authority',date:''}));}

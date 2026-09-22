@@ -1,0 +1,16 @@
+{
+  "environment": "staging",
+  "building": "Forum House",
+  "verifiedAfterJourneys": true,
+  "units": [
+    {"unit": 102, "status": "completed", "exchangeAuthorityVersions": 1, "noticeAuthorityVersions": 1, "documentVersions": 5, "completionEvents": 1},
+    {"unit": 103, "status": "completed", "exchangeAuthorityVersions": 1, "noticeAuthorityVersions": 1, "documentVersions": 5, "completionEvents": 1},
+    {"unit": 104, "status": "completed", "exchangeAuthorityVersions": 1, "noticeAuthorityVersions": 1, "documentVersions": 5, "completionEvents": 1},
+    {"unit": 105, "status": "completed", "exchangeAuthorityVersions": 1, "noticeAuthorityVersions": 1, "documentVersions": 5, "completionEvents": 1},
+    {"unit": 106, "status": "completed", "exchangeAuthorityVersions": 1, "noticeAuthorityVersions": 1, "documentVersions": 5, "completionEvents": 1},
+    {"unit": 107, "status": "draft", "exchangeAuthorityVersions": 0, "noticeAuthorityVersions": 0, "documentVersions": 0, "completionEvents": 0},
+    {"unit": 108, "status": "draft", "exchangeAuthorityVersions": 0, "noticeAuthorityVersions": 0, "documentVersions": 0, "completionEvents": 0},
+    {"unit": 109, "status": "draft", "exchangeAuthorityVersions": 0, "noticeAuthorityVersions": 0, "documentVersions": 0, "completionEvents": 0},
+    {"unit": 110, "status": "draft", "exchangeAuthorityVersions": 0, "noticeAuthorityVersions": 0, "documentVersions": 0, "completionEvents": 0}
+  ]
+}

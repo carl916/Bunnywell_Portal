@@ -1,0 +1,48 @@
+{
+  "environment": "staging",
+  "building": "Forum House",
+  "verifiedAt": "2026-09-22T20:04:00Z",
+  "reused": false,
+  "units": [
+    {
+      "unit": 102,
+      "status": "completed",
+      "exchangeAuthorityVersions": 1,
+      "noticeAuthorityVersions": 1,
+      "documentVersions": 5,
+      "completionEvents": 1
+    },
+    {
+      "unit": 103,
+      "status": "completed",
+      "exchangeAuthorityVersions": 1,
+      "noticeAuthorityVersions": 1,
+      "documentVersions": 5,
+      "completionEvents": 1
+    },
+    {
+      "unit": 104,
+      "status": "completed",
+      "exchangeAuthorityVersions": 1,
+      "noticeAuthorityVersions": 1,
+      "documentVersions": 5,
+      "completionEvents": 1
+    },
+    {
+      "unit": 105,
+      "status": "completed",
+      "exchangeAuthorityVersions": 1,
+      "noticeAuthorityVersions": 1,
+      "documentVersions": 5,
+      "completionEvents": 1
+    },
+    {
+      "unit": 106,
+      "status": "completed",
+      "exchangeAuthorityVersions": 1,
+      "noticeAuthorityVersions": 1,
+      "documentVersions": 5,
+      "completionEvents": 1
+    }
+  ]
+}

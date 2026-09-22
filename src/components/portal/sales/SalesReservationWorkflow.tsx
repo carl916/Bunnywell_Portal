@@ -5,6 +5,7 @@ import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
 import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
 import { isMissingSaleActorNames, salesLoadErrorMessage } from "@/lib/sales/load-errors";
+import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -1454,6 +1455,7 @@ export function SalesReservationWorkflow({
   }
 
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
+    beginSalesMeasurement("sale.open");
     setConversationTarget(null);
     manuallySelectedWorkflowStageRef.current = null;
     pendingAgentFeesScrollRef.current = focusAgentFees ? "exchange" : null;
@@ -1830,6 +1832,10 @@ export function SalesReservationWorkflow({
     void loadSalesData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId, units.length]);
+
+  useEffect(() => {
+    if (!isLoading && selectedSaleUnitId && activeWorkflowStage !== "exchange" && activeWorkflowStage !== "completion") salesNavigationReady();
+  }, [isLoading, selectedSaleUnitId, activeWorkflowStage]);
 
   function resetCommercialModelDraft() {
     setCommercialSetupChanged(false);
@@ -2871,6 +2877,8 @@ export function SalesReservationWorkflow({
                     className={`flex min-h-24 min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-bw-card border p-4 text-left transition sm:p-5 ${cardTone} ${isSelected ? "ring-1 ring-[#0F3D2E] shadow-sm" : ""}`}
                     onClick={() => {
                       if (!isLocked) {
+                        beginSalesMeasurement("progression.stage_change");
+                        if (stage.key === "completion") beginSalesMeasurement("completion.open");
                         manuallySelectedWorkflowStageRef.current = stage.key;
                         pendingWorkflowStageScrollRef.current = stage.key;
                         setActiveWorkflowStage(stage.key);
@@ -3410,7 +3418,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "progression" && (activeWorkflowStage === "exchange" || activeWorkflowStage === "completion") && activeAttempt && (
-            <SalesLegalWorkflow key={activeAttempt.id} saleId={activeAttempt.id} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async () => { await loadSalesData(); await reloadPortalData(); }} />
+            <SalesLegalWorkflow key={activeAttempt.id} saleId={activeAttempt.id} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async (measurement) => { await loadSalesData(); measurement?.mark("sales_reload_completed"); await reloadPortalData(); measurement?.mark("portal_reload_completed"); }} />
           )}
 
           {activeUnitSection === "progression" && activeWorkflowStage === "handover" && (

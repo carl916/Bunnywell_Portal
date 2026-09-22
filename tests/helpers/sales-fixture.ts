@@ -56,7 +56,7 @@ export async function salesFixture(page: Page, initialPath?: string) {
   await page.getByLabel("Email", { exact: true }).fill(profile.email);
   await page.getByLabel("Password", { exact: true }).fill("fixture-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign out", exact: true }).or(page.getByRole("button", { name: "Open menu", exact: true }))).toBeVisible();
   // The login form authenticates in place: the original sale URL must survive.
   if (initialPath) await expect(page).toHaveURL(new RegExp(`salesUnitId=${unitId}.*conversation=${attemptId}`));
   await page.goto(salePath);

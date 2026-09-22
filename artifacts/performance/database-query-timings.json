@@ -1,0 +1,222 @@
+{
+  "rpc": [
+    {
+      "calls": 280,
+      "queryid": "782122789352178187",
+      "operation": "sales_legal_snapshot",
+      "max_exec_ms": 21.53,
+      "mean_exec_ms": 6.04,
+      "database_role": "service_role",
+      "total_exec_ms": 1689.85
+    },
+    {
+      "calls": 186,
+      "queryid": "2942205656549611064",
+      "operation": "sales_legal_expire",
+      "max_exec_ms": 11.04,
+      "mean_exec_ms": 2.28,
+      "database_role": "service_role",
+      "total_exec_ms": 423.26
+    },
+    {
+      "calls": 90,
+      "queryid": "6155820267536305708",
+      "operation": "sales_completion_package_context",
+      "max_exec_ms": 8.63,
+      "mean_exec_ms": 3.42,
+      "database_role": "service_role",
+      "total_exec_ms": 307.42
+    },
+    {
+      "calls": 18,
+      "queryid": "5382841473551450190",
+      "operation": "sales_legal_action",
+      "max_exec_ms": 33.06,
+      "mean_exec_ms": 14.34,
+      "database_role": "service_role",
+      "total_exec_ms": 258.11
+    },
+    {
+      "calls": 16,
+      "queryid": "-8363546248553411130",
+      "operation": "sales_legal_prepare_email",
+      "max_exec_ms": 26.58,
+      "mean_exec_ms": 13.29,
+      "database_role": "service_role",
+      "total_exec_ms": 212.69
+    },
+    {
+      "calls": 90,
+      "queryid": "-2422711243518754294",
+      "operation": "sales_exchange_deposit_context",
+      "max_exec_ms": 9.44,
+      "mean_exec_ms": 1.91,
+      "database_role": "service_role",
+      "total_exec_ms": 171.87
+    },
+    {
+      "calls": 16,
+      "queryid": "-4180124335361400657",
+      "operation": "sales_legal_dispatch",
+      "max_exec_ms": 14.59,
+      "mean_exec_ms": 8.17,
+      "database_role": "service_role",
+      "total_exec_ms": 130.74
+    },
+    {
+      "calls": 11,
+      "queryid": "6711286130712038985",
+      "operation": "sales_legal_action",
+      "max_exec_ms": 21.5,
+      "mean_exec_ms": 10.49,
+      "database_role": "service_role",
+      "total_exec_ms": 115.4
+    },
+    {
+      "calls": 8,
+      "queryid": "8882123810062629358",
+      "operation": "sales_completion_upload",
+      "max_exec_ms": 13.63,
+      "mean_exec_ms": 10.57,
+      "database_role": "service_role",
+      "total_exec_ms": 84.57
+    },
+    {
+      "calls": 16,
+      "queryid": "533267536807258851",
+      "operation": "sales_legal_dispatch",
+      "max_exec_ms": 9.09,
+      "mean_exec_ms": 5.04,
+      "database_role": "service_role",
+      "total_exec_ms": 80.61
+    },
+    {
+      "calls": 5,
+      "queryid": "-3385385201535317317",
+      "operation": "sales_legal_submit_notice",
+      "max_exec_ms": 23.26,
+      "mean_exec_ms": 14.87,
+      "database_role": "service_role",
+      "total_exec_ms": 74.36
+    },
+    {
+      "calls": 5,
+      "queryid": "8122483985505457144",
+      "operation": "sales_legal_register_document",
+      "max_exec_ms": 14.51,
+      "mean_exec_ms": 11.87,
+      "database_role": "service_role",
+      "total_exec_ms": 59.36
+    },
+    {
+      "calls": 1,
+      "queryid": "4031811368505410270",
+      "operation": "sales_legal_action",
+      "max_exec_ms": 18.74,
+      "mean_exec_ms": 18.74,
+      "database_role": "service_role",
+      "total_exec_ms": 18.74
+    },
+    {
+      "calls": 1,
+      "queryid": "1869607713135286611",
+      "operation": "sales_legal_register_document",
+      "max_exec_ms": 16.3,
+      "mean_exec_ms": 16.3,
+      "database_role": "service_role",
+      "total_exec_ms": 16.3
+    }
+  ],
+  "reads": [
+    {
+      "calls": 652,
+      "queryid": "974553335667187863",
+      "operation": "unit_sale_payment_schedule",
+      "max_exec_ms": 671.33,
+      "mean_exec_ms": 130.9,
+      "database_role": "authenticated",
+      "total_exec_ms": 85349.89,
+      "shared_blks_hit": 629131,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 510,
+      "queryid": "8368201375633199557",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 325.39,
+      "mean_exec_ms": 90.57,
+      "database_role": "authenticated",
+      "total_exec_ms": 46192.64,
+      "shared_blks_hit": 258082,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 243,
+      "queryid": "8669688438123704398",
+      "operation": "unit_sale_documents",
+      "max_exec_ms": 201.56,
+      "mean_exec_ms": 58.28,
+      "database_role": "authenticated",
+      "total_exec_ms": 14161.18,
+      "shared_blks_hit": 64881,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 258,
+      "queryid": "-8760926568830373644",
+      "operation": "unit_sale_workflow_events",
+      "max_exec_ms": 190.66,
+      "mean_exec_ms": 50.97,
+      "database_role": "authenticated",
+      "total_exec_ms": 13151.01,
+      "shared_blks_hit": 112208,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 266,
+      "queryid": "6329297679653605544",
+      "operation": "unit_sale_documents",
+      "max_exec_ms": 186.94,
+      "mean_exec_ms": 31.39,
+      "database_role": "authenticated",
+      "total_exec_ms": 8348.97,
+      "shared_blks_hit": 68368,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 382,
+      "queryid": "-1468110974897532409",
+      "operation": "unit_sale_document_versions",
+      "max_exec_ms": 92.36,
+      "mean_exec_ms": 17.28,
+      "database_role": "authenticated",
+      "total_exec_ms": 6600.64,
+      "shared_blks_hit": 118196,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 431,
+      "queryid": "5279656841490926395",
+      "operation": "unit_sale_invoice_payments",
+      "max_exec_ms": 61.22,
+      "mean_exec_ms": 14.58,
+      "database_role": "authenticated",
+      "total_exec_ms": 6282.01,
+      "shared_blks_hit": 78526,
+      "shared_blks_read": 0
+    },
+    {
+      "calls": 151,
+      "queryid": "914663533671846305",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 173.53,
+      "mean_exec_ms": 39.34,
+      "database_role": "authenticated",
+      "total_exec_ms": 5939.89,
+      "shared_blks_hit": 92346,
+      "shared_blks_read": 0
+    }
+  ],
+  "captured_at": "2026-09-22T19:26:35.309723+00:00",
+  "stats_reset": "2026-06-20T08:08:47.865935+00:00"
+}

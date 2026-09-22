@@ -1,0 +1,381 @@
+
+> bunnywell-portal@0.1.0 lint
+> eslint
+
+[BABEL] Note: The code generator has deoptimised the styling of C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx as it exceeds the max of 500KB.
+
+C:\GitHub\Bunnywell_Portal\scripts\one-off-forum-house-unit-prices.mjs
+  59:10  warning  'number' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\PortalApp.tsx
+   59:10  warning  'flatFor' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  100:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\PortalApp.tsx:100:7
+   98 |
+   99 |     if (saved) {
+> 100 |       setSnags(JSON.parse(saved) as Snag[]);
+      |       ^^^^^^^^ Avoid calling setState() directly within an effect
+  101 |     }
+  102 |   }, [supabaseEnabled]);
+  103 |  react-hooks/set-state-in-effect
+  138:6   warning  React Hook useEffect has a missing dependency: 'loadSupabaseData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+  216:6   warning  React Hook useMemo has a missing dependency: 'findFlat'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  981:6   warning  React Hook useEffect has missing dependencies: 'redraw' and 'strokes'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  985:6   warning  React Hook useEffect has a missing dependency: 'redraw'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx
+    647:10   warning  'entityLabel' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    842:10   warning  'handoverPhotos' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+    939:7    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:939:7
+  937 |   useEffect(() => {
+  938 |     if (!supabaseEnabled) {
+> 939 |       setNotice("Supabase is not configured. Add environment variables to use the production schema UI.");
+      |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  940 |       setIsLoading(false);
+  941 |       return;
+  942 |     }                                                                                                                                                                        react-hooks/set-state-in-effect
+   1014:6    warning  React Hook useEffect has a missing dependency: 'loadAll'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+   1647:15   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+   2957:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:2957:5
+  2955 |
+  2956 |   useEffect(() => {
+> 2957 |     setName(area.name);
+       |     ^^^^^^^ Avoid calling setState() directly within an effect
+  2958 |     setFloor(area.floor ?? "");
+  2959 |     setDeleteWarning("");
+  2960 |   }, [area.floor, area.name]);                                                                                                                                                                                                                                         react-hooks/set-state-in-effect
+   3094:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:3094:5
+  3092 |
+  3093 |   useEffect(() => {
+> 3094 |     setEditNumber(unit.unit_number);
+       |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  3095 |     setEditFloor(unit.floor ?? "");
+  3096 |     setEditSizeSqm(unit.size_sqm?.toString() ?? "");
+  3097 |     setEditUnitPrice(unitPrice?.toString() ?? "");                                                                                                                                                                   react-hooks/set-state-in-effect
+   6377:3    warning  'userBuildingAccess' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   6928:38   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:6928:38
+  6926 |
+  6927 |   useEffect(() => {
+> 6928 |     if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
+       |                                      ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  6929 |     if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
+  6930 |   }, [buildingId, buildings]);
+  6931 |                                                                                      react-hooks/set-state-in-effect
+   7146:7    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:7146:7
+  7144 |   useEffect(() => {
+  7145 |     if (hasSingleUnit && userUnits[0]?.id && unitId !== userUnits[0].id) {
+> 7146 |       setUnitId(userUnits[0].id);
+       |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  7147 |       setAreaId("");
+  7148 |       return;
+  7149 |     }                                                                                                                                                                                                react-hooks/set-state-in-effect
+   8049:10   warning  'HandoverAndMeters' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   8118:7    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:8118:7
+  8116 |     );
+  8117 |     if (nextUnits.length > 0 && !nextUnits.some((unit) => unit.id === unitId)) {
+> 8118 |       setUnitId(nextUnits[0].id);
+       |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  8119 |     }
+  8120 |   }, [buildingFloors, buildingId, unitId, units]);
+  8121 |                                                                                                                                                                                       react-hooks/set-state-in-effect
+   8362:126  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/no-unescaped-entities
+   8396:25   warning  'value' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   8476:3    warning  'user' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   8546:37   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:8546:37
+  8544 |     if (locationType === "unit") {
+  8545 |       if (!sortedBuildingUnits.some((unit) => unit.id === unitId)) {
+> 8546 |         if (sortedBuildingUnits[0]) setUnitId(sortedBuildingUnits[0].id);
+       |                                     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  8547 |         else if (buildingCommunalAreas.length > 0) setLocationType("communal");
+  8548 |       }
+  8549 |     }                                                           react-hooks/set-state-in-effect
+   8577:14   warning  'addFittedImage' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   9343:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:9343:5
+  9341 |
+  9342 |   useEffect(() => {
+> 9343 |     setUnitFilter("");
+       |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  9344 |   }, [buildingContextId]);
+  9345 |
+  9346 |   useEffect(() => {                                                                                                                                                                                                                                                                              react-hooks/set-state-in-effect
+   9348:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:9348:5
+  9346 |   useEffect(() => {
+  9347 |     if (!requestedFilters) return;
+> 9348 |     setUnitFilter(requestedFilters.unitFilter ?? "");
+       |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  9349 |     setStatusFilter(requestedFilters.statusFilter ?? "");
+  9350 |     setTradeFilter(requestedFilters.tradeFilter ?? "");
+  9351 |     setQuickFilter(requestedFilters.quickFilter ?? "");                                                                                 react-hooks/set-state-in-effect
+   9355:5    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:9355:5
+  9353 |
+  9354 |   useEffect(() => {
+> 9355 |     setPage(1);
+       |     ^^^^^^^ Avoid calling setState() directly within an effect
+  9356 |   }, [buildingContextId, unitFilter, activeStatusFilter, tradeFilter, quickFilter, pageSize]);
+  9357 |
+  9358 |   useEffect(() => {                                                                                                                                                                                                                       react-hooks/set-state-in-effect
+   9359:28   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:9359:28
+  9357 |
+  9358 |   useEffect(() => {
+> 9359 |     if (page > totalPages) setPage(totalPages);
+       |                            ^^^^^^^ Avoid calling setState() directly within an effect
+  9360 |   }, [page, totalPages]);
+  9361 |
+  9362 |   useEffect(() => {                                                                                                                                                                                                                                    react-hooks/set-state-in-effect
+   9655:10   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+   9727:9    warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+  10007:23   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+  10016:19   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+  10163:23   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+  10268:11   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+  10298:7    error    Error: Cannot access variable before it is declared
+
+`redraw` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:10298:7
+  10296 |     image.onload = () => {
+  10297 |       imageRef.current = image;
+> 10298 |       redraw(strokes, image);
+        |       ^^^^^^ `redraw` accessed before it is declared
+  10299 |     };
+  10300 |     image.src = baseImage;
+  10301 |   }, [baseImage]);
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\ProductionPortalApp.tsx:10318:3
+  10316 |   }
+  10317 |
+> 10318 |   function redraw(nextStrokes = strokes, image = imageRef.current) {
+        |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10319 |     const canvas = canvasRef.current;
+        | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10320 |     if (!canvas || !image) return;
+        …
+        | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10342 |     onChange(canvas.toDataURL("image/jpeg", 0.82));
+        | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10343 |   }
+        | ^^^^ `redraw` is declared here
+  10344 |
+  10345 |   async function loadFile(file?: File) {
+  10346 |     if (!file || disabled) return;  react-hooks/immutability
+  10301:6    warning  React Hook useEffect has missing dependencies: 'redraw' and 'strokes'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  10305:6    warning  React Hook useEffect has a missing dependency: 'redraw'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  10408:17   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @next/next/no-img-element
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\RequestAccessPage.tsx
+  285:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesForecastingModule.tsx
+  198:38  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesForecastingModule.tsx:198:38
+  196 |
+  197 |   useEffect(() => {
+> 198 |     if (!buildingId && buildings[0]) setBuildingId(buildings[0].id);
+      |                                      ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  199 |     if (buildingId && !buildings.some((building) => building.id === buildingId)) setBuildingId(buildings[0]?.id ?? "");
+  200 |   }, [buildingId, buildings]);
+  201 |                                                                                                                                                                                react-hooks/set-state-in-effect
+  204:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesForecastingModule.tsx:204:7
+  202 |   useEffect(() => {
+  203 |     if (initialBuildingId && initialBuildingId !== buildingId && buildings.some((building) => building.id === initialBuildingId)) {
+> 204 |       setBuildingId(initialBuildingId);
+      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  205 |     }
+  206 |   }, [buildingId, buildings, initialBuildingId]);
+  207 |                                                                                                                                                                                                        react-hooks/set-state-in-effect
+  255:10  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesForecastingModule.tsx:255:10
+  253 |
+  254 |   useEffect(() => {
+> 255 |     void loadForecastingData();
+      |          ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  256 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  257 |   }, [buildingId, canViewForecasting, salesRouteUnits.length]);
+  258 |                                                                                                                                                                                                                                                                      react-hooks/set-state-in-effect
+  260:51  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesForecastingModule.tsx:260:51
+  258 |
+  259 |   useEffect(() => {
+> 260 |     if (!sellUnits && salesRouteUnits.length > 0) setSellUnits(salesRouteUnits.filter((unit) => unit.sale_status !== "completed" && unit.sale_status !== "handed_over").length.toString());
+      |                                                   ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  261 |     if (!averageSaleValue && derivedAverageValue > 0) setAverageSaleValue(Math.round(derivedAverageValue).toString());
+  262 |   }, [averageSaleValue, derivedAverageValue, salesRouteUnits, sellUnits]);
+  263 |  react-hooks/set-state-in-effect
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesReservationWorkflow.tsx
+  1520:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesReservationWorkflow.tsx:1520:9
+  1518 |       const comment = params.get("comment");
+  1519 |       if (conversation || comment) {
+> 1520 |         setConversationTarget({ unit: urlUnitId, sale: conversation ?? undefined, comment: comment ?? undefined });
+       |         ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1521 |         setConversationIntent("open");
+  1522 |       }
+  1523 |       const urlUnit = units.find((unit) => unit.id === urlUnitId);  react-hooks/set-state-in-effect
+  1547:6   warning  React Hook useEffect has a missing dependency: 'workflowStageForUnit'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+  1591:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesReservationWorkflow.tsx:1591:7
+  1589 |   useEffect(() => {
+  1590 |     if (!activeAttempt) {
+> 1591 |       setBuyerPersonName("");
+       |       ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1592 |       setBuyerCompanyName("");
+  1593 |       setBuyerEmail("");
+  1594 |       setBuyerPhone("");                                                                                                                                                                  react-hooks/set-state-in-effect
+  1832:10  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\GitHub\Bunnywell_Portal\src\components\portal\sales\SalesReservationWorkflow.tsx:1832:10
+  1830 |
+  1831 |   useEffect(() => {
+> 1832 |     void loadSalesData();
+       |          ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  1833 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  1834 |   }, [buildingId, units.length]);
+  1835 |                                                                                                                                                                                    react-hooks/set-state-in-effect
+
+✖ 47 problems (21 errors, 26 warnings)
+

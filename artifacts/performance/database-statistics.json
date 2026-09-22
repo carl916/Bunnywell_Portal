@@ -1,0 +1,373 @@
+{
+  "tables": [
+    {
+      "relname": "areas",
+      "idx_scan": 2330,
+      "seq_scan": 8789,
+      "n_dead_tup": 228,
+      "n_live_tup": 1073,
+      "schemaname": "public",
+      "seq_tup_read": 8799862
+    },
+    {
+      "relname": "snag_events",
+      "idx_scan": 1,
+      "seq_scan": 3502,
+      "n_dead_tup": 0,
+      "n_live_tup": 431,
+      "schemaname": "public",
+      "seq_tup_read": 828409
+    },
+    {
+      "relname": "unit_sale_payment_schedule",
+      "idx_scan": 10408,
+      "seq_scan": 182,
+      "n_dead_tup": 86,
+      "n_live_tup": 185,
+      "schemaname": "public",
+      "seq_tup_read": 22556
+    },
+    {
+      "relname": "unit_sale_workflow_events",
+      "idx_scan": 3865,
+      "seq_scan": 7453,
+      "n_dead_tup": 8,
+      "n_live_tup": 175,
+      "schemaname": "public",
+      "seq_tup_read": 375910
+    },
+    {
+      "relname": "audit_events",
+      "idx_scan": 3038,
+      "seq_scan": 1432,
+      "n_dead_tup": 25,
+      "n_live_tup": 169,
+      "schemaname": "public",
+      "seq_tup_read": 166341
+    },
+    {
+      "relname": "units",
+      "idx_scan": 1742150,
+      "seq_scan": 3586,
+      "n_dead_tup": 39,
+      "n_live_tup": 150,
+      "schemaname": "public",
+      "seq_tup_read": 534113
+    },
+    {
+      "relname": "unit_sale_attempts",
+      "idx_scan": 275025,
+      "seq_scan": 878,
+      "n_dead_tup": 24,
+      "n_live_tup": 64,
+      "schemaname": "public",
+      "seq_tup_read": 55499
+    },
+    {
+      "relname": "unit_sale_terms",
+      "idx_scan": 15060,
+      "seq_scan": 664,
+      "n_dead_tup": 45,
+      "n_live_tup": 64,
+      "schemaname": "public",
+      "seq_tup_read": 41985
+    },
+    {
+      "relname": "unit_sale_document_versions",
+      "idx_scan": 2335,
+      "seq_scan": 228,
+      "n_dead_tup": 10,
+      "n_live_tup": 48,
+      "schemaname": "public",
+      "seq_tup_read": 7157
+    },
+    {
+      "relname": "unit_sale_documents",
+      "idx_scan": 13447,
+      "seq_scan": 1651,
+      "n_dead_tup": 8,
+      "n_live_tup": 43,
+      "schemaname": "public",
+      "seq_tup_read": 37022
+    },
+    {
+      "relname": "profiles",
+      "idx_scan": 3497848,
+      "seq_scan": 9980515,
+      "n_dead_tup": 18,
+      "n_live_tup": 12,
+      "schemaname": "public",
+      "seq_tup_read": 42681043
+    },
+    {
+      "relname": "sale_legal_emails",
+      "idx_scan": 505,
+      "seq_scan": 4,
+      "n_dead_tup": 9,
+      "n_live_tup": 11,
+      "schemaname": "public",
+      "seq_tup_read": 10
+    },
+    {
+      "relname": "unit_sale_invoice_payments",
+      "idx_scan": 15,
+      "seq_scan": 10785,
+      "n_dead_tup": 7,
+      "n_live_tup": 8,
+      "schemaname": "public",
+      "seq_tup_read": 34601
+    },
+    {
+      "relname": "unit_sale_invoices",
+      "idx_scan": 159,
+      "seq_scan": 18275,
+      "n_dead_tup": 14,
+      "n_live_tup": 6,
+      "schemaname": "public",
+      "seq_tup_read": 45220
+    },
+    {
+      "relname": "unit_sale_notes",
+      "idx_scan": 20028,
+      "seq_scan": 20,
+      "n_dead_tup": 0,
+      "n_live_tup": 4,
+      "schemaname": "public",
+      "seq_tup_read": 68
+    },
+    {
+      "relname": "sale_completion_package_approvals",
+      "idx_scan": 47,
+      "seq_scan": 2,
+      "n_dead_tup": 0,
+      "n_live_tup": 2,
+      "schemaname": "public",
+      "seq_tup_read": 0
+    }
+  ],
+  "queries": [
+    {
+      "rows": 557,
+      "calls": 557,
+      "queryid": "974553335667187863",
+      "operation": "unit_sale_payment_schedule",
+      "max_exec_ms": 671.33,
+      "mean_exec_ms": 120.46,
+      "total_exec_ms": 67097.2,
+      "shared_blks_hit": 538514,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 415,
+      "calls": 415,
+      "queryid": "8368201375633199557",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 325.39,
+      "mean_exec_ms": 89.19,
+      "total_exec_ms": 37014.17,
+      "shared_blks_hit": 226568,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 258,
+      "calls": 258,
+      "queryid": "-8760926568830373644",
+      "operation": "unit_sale_workflow_events",
+      "max_exec_ms": 190.66,
+      "mean_exec_ms": 50.97,
+      "total_exec_ms": 13151.01,
+      "shared_blks_hit": 112208,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 266,
+      "calls": 266,
+      "queryid": "6329297679653605544",
+      "operation": "unit_sale_documents",
+      "max_exec_ms": 186.94,
+      "mean_exec_ms": 31.39,
+      "total_exec_ms": 8348.97,
+      "shared_blks_hit": 68368,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 149,
+      "calls": 149,
+      "queryid": "8669688438123704398",
+      "operation": "unit_sale_documents",
+      "max_exec_ms": 201.56,
+      "mean_exec_ms": 45.29,
+      "total_exec_ms": 6747.91,
+      "shared_blks_hit": 40254,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 382,
+      "calls": 382,
+      "queryid": "-1468110974897532409",
+      "operation": "unit_sale_document_versions",
+      "max_exec_ms": 92.36,
+      "mean_exec_ms": 17.28,
+      "total_exec_ms": 6600.64,
+      "shared_blks_hit": 118196,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 151,
+      "calls": 151,
+      "queryid": "914663533671846305",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 173.53,
+      "mean_exec_ms": 39.34,
+      "total_exec_ms": 5939.89,
+      "shared_blks_hit": 92346,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 336,
+      "calls": 336,
+      "queryid": "5279656841490926395",
+      "operation": "unit_sale_invoice_payments",
+      "max_exec_ms": 61.22,
+      "mean_exec_ms": 14.14,
+      "total_exec_ms": 4750.66,
+      "shared_blks_hit": 73267,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 83,
+      "calls": 83,
+      "queryid": "-5125878772664958517",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 170.11,
+      "mean_exec_ms": 56.31,
+      "total_exec_ms": 4673.9,
+      "shared_blks_hit": 46207,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 415,
+      "calls": 415,
+      "queryid": "884639169511335920",
+      "operation": "unit_sale_invoices",
+      "max_exec_ms": 44.55,
+      "mean_exec_ms": 10.6,
+      "total_exec_ms": 4400.09,
+      "shared_blks_hit": 84128,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 147,
+      "calls": 147,
+      "queryid": "973969470449461593",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 79.65,
+      "mean_exec_ms": 21.34,
+      "total_exec_ms": 3137.1,
+      "shared_blks_hit": 22570,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 126,
+      "calls": 126,
+      "queryid": "4738922048189374644",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 95.56,
+      "mean_exec_ms": 23.05,
+      "total_exec_ms": 2903.77,
+      "shared_blks_hit": 28104,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 76,
+      "calls": 76,
+      "queryid": "-4698582430899651708",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 104.16,
+      "mean_exec_ms": 30.72,
+      "total_exec_ms": 2334.62,
+      "shared_blks_hit": 26199,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 197,
+      "calls": 197,
+      "queryid": "-3665992037629257470",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 25.43,
+      "mean_exec_ms": 11,
+      "total_exec_ms": 2167.89,
+      "shared_blks_hit": 37224,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 63,
+      "calls": 63,
+      "queryid": "6044460910816283618",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 180,
+      "mean_exec_ms": 28.86,
+      "total_exec_ms": 1818.35,
+      "shared_blks_hit": 18199,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 57,
+      "calls": 57,
+      "queryid": "-6549669319921448400",
+      "operation": "unit_sale_document_versions",
+      "max_exec_ms": 130.96,
+      "mean_exec_ms": 31.55,
+      "total_exec_ms": 1798.42,
+      "shared_blks_hit": 25595,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 40,
+      "calls": 40,
+      "queryid": "8158345639752491587",
+      "operation": "unit_sale_terms",
+      "max_exec_ms": 75.38,
+      "mean_exec_ms": 42.63,
+      "total_exec_ms": 1705.1,
+      "shared_blks_hit": 16910,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 74,
+      "calls": 74,
+      "queryid": "-5969761454226225528",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 84.78,
+      "mean_exec_ms": 21.5,
+      "total_exec_ms": 1591.08,
+      "shared_blks_hit": 21051,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 205,
+      "calls": 205,
+      "queryid": "782122789352178187",
+      "operation": "sales_legal_snapshot",
+      "max_exec_ms": 21.53,
+      "mean_exec_ms": 6.63,
+      "total_exec_ms": 1358.78,
+      "shared_blks_hit": 175025,
+      "shared_blks_read": 0
+    },
+    {
+      "rows": 27,
+      "calls": 27,
+      "queryid": "7747297121680664008",
+      "operation": "unit_sale_attempts",
+      "max_exec_ms": 86.63,
+      "mean_exec_ms": 30.17,
+      "total_exec_ms": 814.57,
+      "shared_blks_hit": 5957,
+      "shared_blks_read": 0
+    }
+  ],
+  "tracking": "top",
+  "captured_at": "2026-09-22T19:13:17.384664+00:00",
+  "function_tracking": "none"
+}
