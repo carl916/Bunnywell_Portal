@@ -266,6 +266,7 @@ test("reservation approval uses the form date and developer reject action", () =
   assert.match(approveBody, /reservation_date:\s*reservationDate/);
   assert.match(approveBody, /reservationDateTimestamp\(reservationDate\)/);
   assert.match(approveBody, /rpc: "sales_workflow_mark_unit_reserved"/);
+  assert.match(approveBody, /unit_sale_documents!unit_sale_document_versions_document_id_fkey!inner/);
   assert.match(approveBody, /update\(\{ reservation_date: reservationDate \}\)/);
   assert.match(rejectBody, /workflow_status:\s*"rejected"/);
   assert.match(rejectBody, /reservation_rejection_reason:\s*rejectionReason/);
@@ -278,7 +279,7 @@ test("reservation approval uses the form date and developer reject action", () =
 test("reservation UI keeps document and activity history visible", () => {
   assert.match(workflowSource, /DocumentVersionHistory/);
   assert.match(workflowSource, /unit_sale_document_versions"\)\s+\.select\("\*"\)\s+\.in\("document_id", documentIds\)\s+\.order\("version_number"/);
-  assert.match(workflowSource, /sale_workflow_context/);
+  assert.match(workflowSource, /<SalesLegalWorkflow/);
   assert.match(workflowSource, /<SaleConversationLayout/);
   assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /Load older activity/);
   assert.doesNotMatch(workflowSource, /Activity \{activeWorkflowEvents\.length\}/);

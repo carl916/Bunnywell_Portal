@@ -1,121 +1,74 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { legalDatabase } from './helpers/legal-database.mjs';
+import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 
-const actions = loadTypescriptModule("src/app/api/sales/reservations/route.ts", {
-  overrides: { "@/lib/supabase/admin": { createSupabaseServiceRoleClient() { throw new Error("Live database access is forbidden in this test"); } } },
-  exports: ["uploadCompletionDocument", "approveCompletionDocuments", "queryCompletionDocuments", "recordCompletion"],
-});
-const developer = { id: "developer", role: "developer" };
-const solicitor = { id: "solicitor", role: "conveyancer" };
-const payload = { saleAttemptId: "attempt", completionDate: "2026-08-05" };
-
-function database() {
-  const rows = {
-    unit_sale_attempts: [{ id: "attempt", building_id: "building", unit_id: "unit", workflow_status: "exchanged" }],
-    unit_sale_documents: ["completion_statement", "statement_of_account"].map((document_type, index) => ({ id: `doc-${index}`, sale_attempt_id: "attempt", document_type, status: "uploaded", approved_at: null })),
-    unit_sale_document_versions: [0, 1].map((index) => ({ id: `version-${index}`, document_id: `doc-${index}`, is_current: true, version_number: 1, uploaded_at: "2026-08-01T12:00:00Z" })),
-    unit_sale_workflow_events: [], unit_sale_notes: [],
-    user_building_access: [{ user_id: solicitor.id, building_id: "building" }],
-  };
-  const rpcCalls = [];
-  const client = {
-    rpc: async (name) => { rpcCalls.push(name); return { error: null }; },
-    storage: { listBuckets: async () => ({ data: [{ name: "sale-documents" }], error: null }), from: () => ({ upload: async () => ({ error: null }) }) },
-    from(table) {
-      assert.ok(Object.hasOwn(rows, table), `Unexpected table: ${table}`);
-      const filters = []; let update; let inserts; let single = false; let limit; let order;
-      const query = {
-        select() { return query; },
-        eq(key, value) { filters.push((row) => row[key] === value); return query; },
-        is(key, value) { filters.push((row) => (row[key] ?? null) === value); return query; },
-        in(key, values) { filters.push((row) => values.includes(row[key])); return query; },
-        order(key, options) { order = { key, ...options }; return query; },
-        limit(value) { limit = value; return query; },
-        maybeSingle() { single = true; return query; },
-        single() { single = true; return query; },
-        update(value) { update = value; return query; },
-        insert(value) { inserts = Array.isArray(value) ? value : [value]; return query; },
-        then(resolve) {
-          if (inserts) rows[table].push(...inserts.map((row) => ({ id: crypto.randomUUID(), created_at: new Date().toISOString(), uploaded_at: new Date().toISOString(), ...row })));
-          let result = rows[table].filter((row) => filters.every((filter) => filter(row)));
-          if (update) result.forEach((row) => Object.assign(row, update));
-          if (order) result.sort((a, b) => String(a[order.key]).localeCompare(String(b[order.key])) * (order.ascending ? 1 : -1));
-          if (limit) result = result.slice(0, limit);
-          return Promise.resolve({ data: structuredClone(single ? result[0] ?? null : result), error: null }).then(resolve);
-        },
-      };
-      return query;
+async function apiFixture(t) {
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  let user='developer';
+  const calls=[];
+  const client={
+    auth:{getUser:async()=>({data:{user:{id:f.ids[user]}},error:null})},
+    rpc:async(name,args)=>{await f.service(user);try{return {data:await f.rpc(name,args),error:null};}catch(error){return {data:null,error};}},
+    from(table){
+      const conditions=[],values=[];let single=false;
+      const query={
+        select(){return query;},
+        eq(key,value){values.push(value);conditions.push(`"${key}"=$${values.length}`);return query;},
+        single(){single=true;return query;},
+        then(resolve,reject){return (async()=>{await f.service(user);const rows=(await f.db.query(`select * from "${table}"${conditions.length?' where '+conditions.join(' and '):''}`,values)).rows;return {data:single?rows[0]:rows,error:null};})().then(resolve,reject);},
+      };return query;
     },
   };
-  return { client, rows, rpcCalls };
+  const env={SUPABASE_SERVICE_ROLE_KEY:process.env.SUPABASE_SERVICE_ROLE_KEY,RESEND_API_KEY:process.env.RESEND_API_KEY,DIGEST_DRY_RUN_EMAIL:process.env.DIGEST_DRY_RUN_EMAIL};
+  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-signing-key';process.env.RESEND_API_KEY='synthetic-resend-key';delete process.env.DIGEST_DRY_RUN_EMAIL;
+  t.after(()=>{for(const[k,v]of Object.entries(env))if(v===undefined)delete process.env[k];else process.env[k]=v;});
+  let response=()=>Response.json({id:'synthetic-resend-message'});
+  t.mock.method(globalThis,'fetch',async(url,init)=>{assert.equal(url,'https://api.resend.com/emails');calls.push(init);return response();});
+  const route=loadTypescriptModule('src/app/api/sales/legal/route.ts',{overrides:{'@/lib/supabase/admin':{createSupabaseServiceRoleClient:()=>client,requiredEnv:name=>{if(!process.env[name])throw new Error(`${name} missing`);return process.env[name];}}}});
+  async function post(payload){const result=await route.POST(new Request('http://localhost/api/sales/legal',{method:'POST',headers:{authorization:'Bearer synthetic','content-type':'application/json'},body:JSON.stringify({sale:f.ids.sale,...payload})}));return {status:result.status,...await result.json()};}
+  async function preview(){return post({action:'preview',kind:'authority',date:new Date(Date.now()+172800000).toISOString()});}
+  return {...f,calls,post,preview,asUser:name=>{user=name;},respond:fn=>{response=fn;}};
 }
 
-function uploadForm() {
-  const form = new FormData();
-  form.set("saleAttemptId", "attempt"); form.set("documentType", "completion_statement");
-  form.set("file", new File(["%PDF-1.4 test"], "corrected.pdf", { type: "application/pdf" }));
-  return form;
-}
-
-test("query, replacement, fresh approval and completion preserve audit and enforce the sequence", async (t) => {
-  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-08-05T12:00:00Z") });
-  const { client, rows, rpcCalls } = database();
-  await actions.queryCompletionDocuments(client, developer, { ...payload, completionQueryNote: "Correct the completion balance." });
-  assert.ok(rows.unit_sale_documents.every((doc) => doc.status === "query_raised" && doc.query_note === "Correct the completion balance."));
-  assert.equal(rows.unit_sale_notes[0].body, "Correct the completion balance.");
-  await assert.rejects(actions.approveCompletionDocuments(client, developer, payload), /corrected documents/);
-  await assert.rejects(actions.recordCompletion(client, solicitor, payload), /approved/);
-  t.mock.timers.tick(1000);
-  await actions.uploadCompletionDocument(client, solicitor, uploadForm());
-  assert.equal(rows.unit_sale_document_versions.filter((version) => version.document_id === "doc-0").length, 2);
-  assert.equal(rows.unit_sale_documents[0].approved_at, null);
-  assert.equal(rows.unit_sale_attempts[0].workflow_status, "exchanged");
-  await assert.rejects(actions.recordCompletion(client, solicitor, payload), /approved/);
-  t.mock.timers.tick(1000);
-  await actions.approveCompletionDocuments(client, developer, payload);
-  assert.ok(rows.unit_sale_documents.every((doc) => doc.status === "approved" && doc.approved_by_user_id === "developer"));
-  assert.equal(rows.unit_sale_attempts[0].workflow_status, "completion_pending");
-  await actions.recordCompletion(client, solicitor, payload);
-  assert.equal(rows.unit_sale_attempts[0].workflow_status, "completed");
-  assert.equal(rows.unit_sale_attempts[0].completed_at, "2026-08-05");
-  assert.deepEqual(rpcCalls, ["sales_workflow_mark_unit_completed"]);
-  // Document events now run inside real PostgreSQL triggers. Their exact titles,
-  // subjects, versions and query reasons are exercised in sales-discussion.test.mjs.
-  // This lightweight route adapter must not fabricate those database events.
-  assert.deepEqual(rows.unit_sale_workflow_events.map((event) => [event.event_type, event.created_by_user_id]), [["completion_recorded", "solicitor"]]);
-  assert.equal((await actions.recordCompletion(client, solicitor, payload)).alreadyCompleted, true);
+test('server preview uses live contacts and rejects stale approval after recipient edits',async t=>{
+  const f=await apiFixture(t);const preview=await f.preview();
+  assert.equal(preview.status,200);assert.equal(f.calls.length,0);
+  assert.deepEqual(preview.to,['legal@example.test']);assert.deepEqual(preview.cc,['sales@example.test']);
+  assert.match(preview.subject,/Authority to Exchange/);assert.match(preview.body,/Seller SPV Ltd/);assert.match(preview.body,/Test developer/);
+  assert.match(preview.body,/expire automatically/);assert.match(preview.body,/£250,000/);
+  await f.owner();await f.db.query("update organisations set shared_system_email='updated@example.test' where id=$1",[f.solicitorOrg]);
+  const stale=await f.post({action:'send',kind:preview.kind,date:preview.date,token:preview.token,requestId:crypto.randomUUID()});
+  assert.match(stale.error,/fresh preview/);assert.equal(f.calls.length,0);
+  const current=await f.post({action:'preview',kind:'authority',date:preview.date});assert.deepEqual(current.to,['updated@example.test']);
+  await f.owner();await f.db.query('update organisations set shared_system_email=null where id=$1',[f.solicitorOrg]);
+  const missing=await f.preview();assert.equal(missing.status,400);assert.match(missing.settingsUrl,/organisation-/);assert.match(missing.error,/shared system email/);
 });
 
-test("an overall completion_pending status cannot bypass unapproved or missing current documents", async () => {
-  for (const state of ["uploaded", "query_raised", "missing", "stale"]) {
-    const { client, rows, rpcCalls } = database();
-    rows.unit_sale_attempts[0].workflow_status = "completion_pending";
-    rows.unit_sale_documents.forEach((doc) => { doc.status = state === "missing" || state === "stale" ? "approved" : state; doc.approved_at = "2026-07-01T12:00:00Z"; });
-    if (state === "missing") rows.unit_sale_document_versions = [];
-    await assert.rejects(actions.recordCompletion(client, solicitor, payload), /approve the current/);
-    assert.deepEqual(rpcCalls, []);
-    assert.equal(rows.unit_sale_attempts[0].workflow_status, "completion_pending");
-  }
+test('send persists exact rendering and repeat confirmation does not duplicate the email',async t=>{
+  const f=await apiFixture(t);const preview=await f.preview();const payload={action:'send',kind:preview.kind,date:preview.date,token:preview.token,requestId:crypto.randomUUID()};
+  const sent=await f.post(payload);assert.equal(sent.status,200);assert.equal(sent.email.resend_message_id,'synthetic-resend-message');
+  assert.equal(sent.email.body,preview.body);assert.equal(sent.email.subject,preview.subject);assert.deepEqual(sent.email.to_recipients,preview.to);assert.deepEqual(sent.email.cc_recipients,preview.cc);
+  assert.equal(JSON.parse(f.calls[0].body).from,sent.email.sending_address);
+  assert.equal((await f.post(payload)).status,200);assert.equal(f.calls.length,1);
 });
 
-test("completion actions reject unauthorised roles and out-of-building solicitors", async () => {
-  const { client } = database();
-  for (const role of ["sales_agent", "resident", "contractor", "user"]) {
-    const requester = { id: role, role };
-    await assert.rejects(actions.uploadCompletionDocument(client, requester, uploadForm()), /cannot upload/);
-    await assert.rejects(actions.approveCompletionDocuments(client, requester, payload), /Only developers/);
-    await assert.rejects(actions.queryCompletionDocuments(client, requester, { ...payload, completionQueryNote: "Fix" }), /Only developers/);
-    await assert.rejects(actions.recordCompletion(client, requester, payload), /Only developers or conveyancers/);
-  }
-  await assert.rejects(actions.approveCompletionDocuments(client, solicitor, payload), /Only developers/);
-  await assert.rejects(actions.uploadCompletionDocument(client, { id: "other-solicitor", role: "conveyancer" }, uploadForm()), /sales access/);
+test('uncertain sends retry the exact saved message with the same Resend idempotency key',async t=>{
+  const f=await apiFixture(t);const preview=await f.preview();const requestId=crypto.randomUUID();
+  f.respond(()=>new Response('unavailable',{status:503}));
+  const failed=await f.post({action:'send',kind:preview.kind,date:preview.date,token:preview.token,requestId});assert.equal(failed.status,400);
+  await f.service();assert.equal((await f.db.query('select delivery_status from sale_legal_emails where id=$1',[requestId])).rows[0].delivery_status,'unknown');
+  f.respond(()=>Response.json({id:'reconciled-message'}));
+  const retry=await f.post({action:'retry_email',emailId:requestId});assert.equal(retry.status,200);
+  assert.equal(f.calls[0].headers['Idempotency-Key'],f.calls[1].headers['Idempotency-Key']);assert.equal(f.calls[0].body,f.calls[1].body);
 });
 
-test("review requires both current documents and a query requires a reason", async () => {
-  const { client, rows } = database();
-  rows.unit_sale_document_versions.pop();
-  await assert.rejects(actions.approveCompletionDocuments(client, developer, payload), /statement of account/);
-  await assert.rejects(actions.queryCompletionDocuments(client, developer, { ...payload, completionQueryNote: "  " }), /query note/);
-  assert.equal(rows.unit_sale_workflow_events.length, 0);
+test('API rejects cross-role actions and preserves the database permission checks',async t=>{
+  const f=await apiFixture(t);
+  for(const role of ['agent','solicitor']) {f.asUser(role);assert.match((await f.preview()).error,/authorised developer/);}
+  f.asUser('developer');assert.match((await f.post({action:'confirm_completion',dateTime:new Date().toISOString()})).error,/role/);
+  f.asUser('agent');assert.match((await f.post({action:'approve_statement',versionId:crypto.randomUUID()})).error,/role/);
+  await f.owner();await f.db.query('delete from user_building_access where user_id=$1',[f.ids.agent]);
+  assert.match((await f.post({action:'request_authority'})).error,/access denied/);
+  assert.equal(f.calls.length,0);
 });

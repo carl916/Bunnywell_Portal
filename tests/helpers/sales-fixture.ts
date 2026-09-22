@@ -43,6 +43,13 @@ export async function salesFixture(page: Page) {
     await route.fulfill({ json: single ? result[0] ?? null : result });
   });
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
+  await page.route("**/api/sales/legal?*", (route) => route.fulfill({ json: {
+    snapshot: { sale_id: attemptId, building: { id: buildingId, name: "Workflow Test House", seller_name: "Fixture Seller Ltd", completion_information: null }, plot: "101", buyer: attempt.buyer_name,
+      terms: rows.unit_sale_terms?.[0] ?? {}, schedule: [], conveyancer: null, sales_agent: null, approver: { id: profile.id, name: profile.full_name } },
+    attempt, emails: rows.sale_legal_emails ?? [],
+    documents: rows.unit_sale_documents.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) })),
+    events: rows.unit_sale_workflow_events, actors: rows.sale_actor_names ?? rows.profiles,
+  } }));
   await page.goto(`/?screen=sales&building=${buildingId}&salesUnitId=${unitId}`);
   await page.getByLabel("Email", { exact: true }).fill(profile.email);
   await page.getByLabel("Password", { exact: true }).fill("fixture-password");

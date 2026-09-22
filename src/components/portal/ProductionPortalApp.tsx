@@ -1,5 +1,8 @@
 "use client";
 
+import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
+import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
+
 import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
@@ -1710,7 +1713,7 @@ function Shell({
           </div>
           {tabs.length > 0 && (
             <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex" aria-label="Primary navigation">
-              {primaryItems.map((item) => (
+              {navItems.map((item) => (
                 <button
                   key={item.key}
                   onClick={() => chooseTab(item.tab)}
@@ -1720,9 +1723,6 @@ function Shell({
                   {item.label}
                 </button>
               ))}
-              <button className={`nav-pill ${moreOpen || secondaryItems.some((item) => item.activeTabs.includes(tab)) ? "nav-pill-active" : ""}`} onClick={() => setMoreOpen(!moreOpen)} aria-expanded={moreOpen}>
-                <Menu size={17} aria-hidden />More
-              </button>
             </nav>
           )}
         </div>
@@ -3790,6 +3790,8 @@ function AdminSetup({
             onNotice={onNotice}
             reload={reload}
           />
+
+          <BuildingSalesContacts key={`${selectedBuilding.id}-sales-contacts`} building={selectedBuilding} organisations={organisations} onNotice={onNotice} reload={reload} />
 
           <div className="border-t border-[#e5e9e4] pt-5">
             <BuildingStructureView
@@ -6184,6 +6186,8 @@ function OrganisationManagement({
   const [editingId, setEditingId] = useState("");
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("contractor");
+  const [systemEmail, setSystemEmail] = useState("");
+  const [editSystemEmail, setEditSystemEmail] = useState("");
   const organisationTypeLabel = (value: string) => organisationTypes.find((item) => item.value === value)?.label ?? statusLabel(value);
   const normaliseOrganisationName = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
   const organisationNameExists = (value: string, excludeId?: string) => {
@@ -6193,13 +6197,14 @@ function OrganisationManagement({
 
   async function createOrganisation() {
     if (!name) return;
+    if (!validSharedSystemEmail(systemEmail.trim())) { onNotice("Enter a valid shared system email."); return; }
     const trimmedName = name.trim().replace(/\s+/g, " ");
     if (organisationNameExists(trimmedName)) {
       onNotice(`An organisation called "${trimmedName}" already exists.`);
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase.from("organisations").insert({ name: trimmedName, type }).select("id").single();
+    const { data, error } = await supabase.from("organisations").insert({ name: trimmedName, type, shared_system_email: systemEmail.trim() || null }).select("id").single();
     if (error) onNotice(error.message);
     else {
       await recordAudit({
@@ -6211,6 +6216,7 @@ function OrganisationManagement({
       });
       setName("");
       setType("contractor");
+      setSystemEmail("");
       onNotice("");
       await reload();
     }
@@ -6220,17 +6226,19 @@ function OrganisationManagement({
     setEditingId(organisation.id);
     setEditName(organisation.name);
     setEditType(organisation.type);
+    setEditSystemEmail(organisation.shared_system_email ?? "");
   }
 
   async function saveOrganisation() {
     if (!editingId || !editName) return;
+    if (!validSharedSystemEmail(editSystemEmail.trim())) { onNotice("Enter a valid shared system email."); return; }
     const trimmedName = editName.trim().replace(/\s+/g, " ");
     if (organisationNameExists(trimmedName, editingId)) {
       onNotice(`An organisation called "${trimmedName}" already exists.`);
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("organisations").update({ name: trimmedName, type: editType }).eq("id", editingId);
+    const { error } = await supabase.from("organisations").update({ name: trimmedName, type: editType, shared_system_email: editSystemEmail.trim() || null }).eq("id", editingId);
     if (error) onNotice(error.message);
     else {
       await recordAudit({
@@ -6301,17 +6309,19 @@ function OrganisationManagement({
         <select className="field" value={type} onChange={(event) => setType(event.target.value)}>
           {organisationTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
+        <label className="field-label">Shared system email<input className="field" type="email" value={systemEmail} onChange={(event) => setSystemEmail(event.target.value)} placeholder="team@example.com" /><span className="text-xs font-normal text-[#617169]">Optional group inbox for automated correspondence.</span></label>
         <button className="primary" onClick={createOrganisation} disabled={!name}>Create organisation</button>
       </div>
       <div className="mt-4 divide-y divide-[#e5e9e4]">
         {organisations.map((organisation) => (
-          <div key={organisation.id} className="grid gap-2 py-3 text-sm">
+          <div key={organisation.id} id={`organisation-${organisation.id}`} className="grid scroll-mt-24 gap-2 py-3 text-sm">
             {editingId === organisation.id ? (
               <>
                 <input className="field" value={editName} onChange={(event) => setEditName(event.target.value)} />
                 <select className="field" value={editType} onChange={(event) => setEditType(event.target.value)}>
                   {organisationTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
+                <label className="field-label">Shared system email<input className="field" type="email" value={editSystemEmail} onChange={(event) => setEditSystemEmail(event.target.value)} /><span className="text-xs font-normal text-[#617169]">Used for future system emails. Previously sent recipients remain in the history.</span></label>
                 <div className="flex flex-wrap gap-2">
                   <button className="secondary" onClick={saveOrganisation} disabled={!editName}>Save</button>
                   <button className="secondary" onClick={() => setEditingId("")}>Cancel</button>
@@ -6322,6 +6332,7 @@ function OrganisationManagement({
                 <div>
                   <p className="font-medium">{organisation.name}</p>
                   <p className="text-xs text-[#617169]">{organisationTypeLabel(organisation.type)}</p>
+                  <p className="mt-1 break-all text-sm">Shared system email: {organisation.shared_system_email || "Not configured"}</p>
                 </div>
                 <div className="flex gap-2">
                   <button

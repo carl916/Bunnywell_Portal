@@ -100,8 +100,8 @@ test("responsibilities use existing role permissions, including internal adminis
   for (const [role, expected] of [
     ["sales_agent", [true, false, false, false, false]],
     ["conveyancer", [false, false, true, false, true]],
-    ["developer", [true, true, true, true, true]],
-    ["admin", [true, true, true, true, true]],
+    ["developer", [true, true, false, true, false]],
+    ["admin", [true, true, false, true, false]],
     ...["resident", "contractor", "user", "developer_representative"].map((role) => [role, [false, false, false, false, false]]),
   ]) assert.deepEqual(actions.map((action) => canPerformSalesAction(role, action)), expected, role);
 });

@@ -3,7 +3,7 @@ import { salesFixture, at } from './helpers/sales-fixture';
 
 const approver = '70000000-0000-4000-8000-000000000001';
 const completer = '70000000-0000-4000-8000-000000000002';
-const value = (page: Page, label: string) => page.locator('#sales-stage-completion dt').filter({ hasText: new RegExp(`^${label}$`) }).locator('..').locator('dd');
+const value = (page: Page, label: string) => page.locator('#sales-stage-completion p').filter({ hasText: label });
 
 async function completedSale(page: Page) {
   const f = await salesFixture(page);
@@ -23,21 +23,22 @@ for (const role of ['sales_agent','conveyancer']) {
     const f = await completedSale(page);
     f.profile.role = role;
     let resolverCalls = 0;
+    f.rows.sale_actor_names = [{ id: approver, display_name: 'Historical Approver' }, { id: completer, display_name: 'Historical Completer' }];
     await page.route('**/rest/v1/rpc/sale_actor_names', async route => {
       resolverCalls++;
       expect(route.request().postDataJSON().p_sales).toContain(f.attempt.id);
       await route.fulfill({ json: [{ id: approver, display_name: 'Historical Approver' }, { id: completer, display_name: 'Historical Completer' }] });
     });
     await f.reloadStage('Completion');
-    await expect(value(page,'Approved by')).toHaveText('Historical Approver');
-    await expect(value(page,'Completed by')).toHaveText('Historical Completer');
+    await expect(value(page,'Approved by')).toContainText('Historical Approver');
+    await expect(value(page,'Completed by')).toContainText('Historical Completer');
     expect(resolverCalls).toBeGreaterThan(0);
     await expect(page.getByRole('button',{name:'Approve completion documents',exact:true})).toHaveCount(0);
     await expect(page.getByRole('button',{name:'Sale participants',exact:true})).toHaveCount(0);
     // A legacy sale may have the document approver but no approval event.
     f.rows.unit_sale_workflow_events.shift();
     await f.reloadStage('Completion');
-    await expect(value(page,'Approved by')).toHaveText('Historical Approver');
+    await expect(value(page,'Approved by')).toContainText('Historical Approver');
   });
 }
 
@@ -47,11 +48,11 @@ test('Completion uses workflow names without a profile lookup and keeps null IDs
   f.rows.unit_sale_workflow_events[1].actor_name = 'Completion Snapshot';
   // The fixture returns no names from the resolver and only the viewer profile.
   await f.reloadStage('Completion');
-  await expect(value(page,'Approved by')).toHaveText('Approval Snapshot');
-  await expect(value(page,'Completed by')).toHaveText('Completion Snapshot');
+  await expect(value(page,'Approved by')).toContainText('Approval Snapshot');
+  await expect(value(page,'Completed by')).toContainText('Completion Snapshot');
   f.rows.unit_sale_workflow_events.forEach(e => Object.assign(e,{created_by_user_id:null,actor_name:null}));
   f.rows.unit_sale_documents.forEach(doc => { doc.approved_by_user_id = null; });
   await f.reloadStage('Completion');
-  await expect(value(page,'Approved by')).toHaveText('Unknown user');
-  await expect(value(page,'Completed by')).toHaveText('Unknown user');
+  await expect(value(page,'Approved by')).toContainText('Unknown user');
+  await expect(value(page,'Completed by')).toContainText('Unknown user');
 });

@@ -39,13 +39,21 @@ export function activityPresentation(event: SaleActivity) {
   const subject = meta.documentType === "completion_statement" ? "Completion statement" : meta.documentType === "statement_of_account" ? "Statement of account" : null;
   const outcome = type.endsWith("approved") ? "approved" : /rejected|query_raised/.test(type) ? "rejected" : type.endsWith("replaced") ? "replaced" : type.endsWith("uploaded") ? "uploaded" : null;
   const title = subject && outcome ? `${subject} ${outcome}` : type === "completion_recorded" ? "Sale completed" : type === "exchange_recorded" ? "Exchange recorded" : event.summary;
-  const stage = /completion|statement_of_account/.test(type) ? "completion" : /exchange/.test(type) ? "exchange" : /reservation/.test(type) ? "reservation" : null;
+  const stage = /completion|statement_of_account/.test(type) ? "completion" : /exchange|authority/.test(type) ? "exchange" : /reservation/.test(type) ? "reservation" : null;
   const details: string[] = [];
   if (typeof meta.fileName === "string") details.push(meta.fileName + (typeof meta.versionNumber === "number" ? ` · Version ${meta.versionNumber}` : ""));
+  else if (typeof meta.versionNumber === "number") details.push(`Version ${meta.versionNumber}`);
   if (typeof meta.queryNote === "string") details.push(`Reason: ${meta.queryNote}`);
   if (typeof meta.rejectionReason === "string") details.push(`Reason: ${meta.rejectionReason}`);
   if (typeof meta.exchangeDate === "string") details.push(`Actual exchange date: ${meta.exchangeDate}`);
-  if (typeof meta.completionDate === "string") details.push(`Actual completion date: ${meta.completionDate}`);
+  if (typeof meta.completionDate === "string") details.push(`${type === "completion_arrangements_confirmed" ? "Contractual" : "Actual"} completion date: ${meta.completionDate}`);
+  if (typeof meta.noticeDate === "string" && meta.noticeDate) details.push(`Notice or confirmation issued: ${meta.noticeDate}`);
+  if (typeof meta.expiresAt === "string") details.push(`Authority expires: ${new Date(meta.expiresAt).toLocaleString("en-GB", { timeZone: "Europe/London", timeZoneName: "short" })}`);
+  if (typeof meta.proposedCompletionDate === "string") details.push(`Proposed completion date: ${meta.proposedCompletionDate}`);
+  if (typeof meta.reason === "string") details.push(`Reason: ${meta.reason}`);
+  if (typeof meta.deliveryStatus === "string") details.push(`Delivery: ${meta.deliveryStatus}`);
+  if (Array.isArray(meta.to)) details.push(`To: ${meta.to.join(", ")}`);
+  if (Array.isArray(meta.cc) && meta.cc.length) details.push(`CC: ${meta.cc.join(", ")}`);
   return { title, stage, details, kind: outcome === "rejected" ? "rejected" : /document|statement|invoice|form/.test(type) ? "document" : "event" };
 }
 

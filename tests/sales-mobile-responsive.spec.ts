@@ -20,7 +20,7 @@ test('Sales tables, tabs, spacing and navigation across mobile, tablet and deskt
     await expect(page.getByRole('region', { name: 'Sales results', exact: true }).locator('tbody tr')).toHaveCount(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'page width at '+width).toBe(true);
     if (width >= 768) {
-      await expect(page.getByRole('navigation', { name: 'Primary navigation', exact: true }).getByRole('button')).toHaveText(['Dashboard','Snags','Sales','Rentals','More']);
+      await expect(page.getByRole('navigation', { name: 'Primary navigation', exact: true }).getByRole('button')).toHaveText(['Dashboard','Snags','Sales','Rentals','Setup']);
       await expect(page.getByRole('button', { name: 'Open menu', exact: true })).toBeHidden();
     }
     if ([360,390,412,430,768,1440].includes(width)) await page.screenshot({path:testInfo.outputPath('sales-overview-'+width+'.png'),fullPage:true});

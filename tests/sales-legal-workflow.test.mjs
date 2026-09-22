@@ -1,0 +1,131 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { legalDatabase } from './helpers/legal-database.mjs';
+import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
+const legal = loadTypescriptModule('src/lib/sales/legal-workflow.ts');
+const today = () => new Date().toISOString().slice(0,10);
+
+test('shared email validation and existing organisation type filtering', () => {
+  for(const email of [null,'','team@example.com','legal+sales@example.co.uk']) assert.equal(legal.validSharedSystemEmail(email),true,email);
+  for(const email of ['person','a@b','a@@b.com',' a@b.com','a@b.com\nBcc: b@c.com','a@-b.com','.a@b.com','a.@b.com','a..b@c.com']) assert.equal(legal.validSharedSystemEmail(email),false,email);
+  const organisations=[{id:'1',type:'conveyancer'},{id:'2',type:'sales_agent'},{id:'3',type:'contractor'}];
+  assert.deepEqual(legal.salesContactOptions(organisations,'conveyancer').map(o=>o.id),['1']);
+  assert.deepEqual(legal.salesContactOptions(organisations,'sales_agent').map(o=>o.id),['2']);
+});
+
+test('migration, routing, changed inboxes, immutable emails and no routing access grant', async t => {
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  const snap=await f.snapshot();
+  await f.as('agent');
+  assert.deepEqual((await f.db.query('select id from organisations order by id')).rows.map(row=>row.id).sort(),[f.solicitorOrg,f.agentOrg].sort());
+  assert.deepEqual(legal.resolveSalesRecipients(snap,'authority'),{to:['legal@example.test'],cc:['sales@example.test']});
+  assert.deepEqual(legal.resolveSalesRecipients(snap,'completion_instruction'),{to:['legal@example.test'],cc:[]});
+  for(const bad of [{...snap,conveyancer:null},{...snap,conveyancer:{...snap.conveyancer,shared_system_email:null}}]) assert.throws(()=>legal.resolveSalesRecipients(bad,'authority'),/conveyancer|shared system email/i);
+  const email=await f.sent(await f.prepare());
+  await f.owner();
+  await assert.rejects(f.db.query("update organisations set shared_system_email='invalid' where id=$1",[f.solicitorOrg]),/check constraint/);
+  await assert.rejects(f.db.query('update buildings set conveyancer_organisation_id=$1 where id=$2',[f.agentOrg,f.ids.building]),/conveyancer/);
+  await assert.rejects(f.db.query("update organisations set type='contractor' where id=$1",[f.solicitorOrg]),/Sales contacts/);
+  await f.db.query("update organisations set shared_system_email='new@example.test' where id=$1",[f.solicitorOrg]);
+  assert.equal((await f.snapshot()).conveyancer.shared_system_email,'new@example.test');
+  await f.service();
+  const saved=(await f.db.query('select * from sale_legal_emails where id=$1',[email.id])).rows[0];
+  assert.deepEqual(saved.to_recipients,['legal@example.test']);
+  assert.equal(saved.snapshot.conveyancer.shared_system_email,'legal@example.test');
+  await assert.rejects(f.db.query("update sale_legal_emails set body='changed' where id=$1",[email.id]),/legal workflow/);
+  await f.owner(); await f.db.query('delete from user_building_access where user_id=$1',[f.ids.outsider]);
+  await f.db.query('update profiles set organisation_id=$1 where id=$2',[f.agentOrg,f.ids.outsider]);
+  await f.as('outsider');
+  assert.equal(await f.rpc('can_access_sale_attempt',{target_sale_attempt_id:f.ids.sale}),false);
+  assert.deepEqual((await f.db.query('select * from sale_legal_emails')).rows,[]);
+  await assert.rejects(f.rpc('sales_legal_snapshot',{p_sale:f.ids.sale,p_actor:f.ids.developer}),/Actor access denied/);
+  await f.as('agent');
+  await assert.rejects(f.rpc('sales_legal_prepare_email',{p_sale:f.ids.sale,p_actor:f.ids.agent,p_id:crypto.randomUUID(),p_kind:'authority',p_snapshot:snap,p_email:{},p_date:new Date(Date.now()+60000).toISOString()}),/permission denied/);
+  const legacy=(await f.db.query('select * from unit_sale_attempts where id=$1',[f.ids.replacement])).rows[0];
+  assert.equal(legacy.completed_at.toISOString().slice(0,10),'2026-08-01'); assert.equal(legacy.legal_completed_at,null);
+});
+
+test('request notifies developers; stale preview, expiry, revoke, reissue and role enforcement',async t=>{
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  await f.action('agent','request_authority');
+  await f.service(); assert.equal((await f.db.query('select count(*)::int n from sale_mention_notifications where recipient_id=$1',[f.ids.developer])).rows[0].n,1);
+  await f.action('solicitor','request_authority');
+  await assert.rejects(f.action('developer','request_authority'),/role/);
+  await assert.rejects(f.action('agent','confirm_exchange',{date:today(),depositConfirmed:true}),/role/);
+  await assert.rejects(f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true}),/unexpired/);
+  const stale=await f.snapshot();
+  await f.owner(); await f.db.query("update unit_sale_terms set contract_price=260000 where sale_attempt_id=$1",[f.ids.sale]);
+  await assert.rejects(f.prepare({snap:stale}),/Refresh the email preview/);
+  await assert.rejects(f.prepare({date:new Date(Date.now()-1000).toISOString()}),/future/);
+  const one=await f.sent(await f.prepare());
+  assert.equal(legal.authorityStatus(one,Date.parse(one.expires_at)+1),'Authority expired');
+  await assert.rejects(f.action('agent','revoke_authority',{emailId:one.id,reason:'Change'}),/role/);
+  await f.owner(); await assert.rejects(f.db.query('update unit_sale_terms set contract_price=270000 where sale_attempt_id=$1',[f.ids.sale]),/locked/);
+  await f.action('developer','revoke_authority',{emailId:one.id,reason:'Revised terms'});
+  await assert.rejects(f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true}),/unexpired/);
+  await f.owner(); await f.db.query('update unit_sale_terms set contract_price=270000 where sale_attempt_id=$1',[f.ids.sale]);
+  const two=await f.sent(await f.prepare()); assert.equal(two.version,2); assert.equal(two.snapshot.terms.contract_price,270000);
+  await f.service(); const history=(await f.db.query('select * from sale_legal_emails order by version')).rows;
+  assert.equal(history[0].snapshot.terms.contract_price,260000); assert.ok(history[0].revoked_at);
+  await assert.rejects(f.action('developer','confirm_exchange',{date:today(),depositConfirmed:true}),/role/);
+  await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});
+  await f.owner(); await assert.rejects(f.db.query('update unit_sale_terms set contract_price=280000 where sale_attempt_id=$1',[f.ids.sale]),/locked/);
+  await assert.rejects(f.action('developer','revoke_authority',{emailId:two.id,reason:'Too late'}),/unexchanged/);
+});
+
+test('completion instructions, current version approval, replacement and legal handover gate',async t=>{
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  await f.sent(await f.prepare()); await f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true});
+  await assert.rejects(f.action('solicitor','confirm_arrangements',{date:today()}),/instructions first/);
+  const instruction=await f.sent(await f.prepare({kind:'completion_instruction',date:today()})); assert.deepEqual(instruction.cc_recipients,[]);
+  await f.action('solicitor','confirm_arrangements',{date:today(),noticeDate:today()});
+  await assert.rejects(f.action('developer','confirm_arrangements',{date:today()}),/role/);
+  await assert.rejects(f.upload('statement_of_account'),/Final accounts/);
+  const one=await f.upload();
+  await assert.rejects(f.action('solicitor','approve_statement',{versionId:one}),/role/);
+  await f.action('developer','query_statement',{versionId:one,reason:'Correct balance'});
+  await f.action('developer','approve_statement',{versionId:one});
+  const two=await f.upload(); assert.notEqual(one,two);
+  await assert.rejects(f.action('developer','approve_statement',{versionId:one}),/version changed/);
+  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/current completion statement/);
+  await f.owner(); await assert.rejects(f.db.query("update units set sale_status='completed' where id=$1",[f.ids.unit]),/legal completion/);
+  await assert.rejects(f.db.query("update unit_sale_attempts set completed_at=current_date where id=$1",[f.ids.sale]),/legal workflow/);
+  await f.action('developer','approve_statement',{versionId:two});
+  await assert.rejects(f.action('developer','confirm_completion',{dateTime:new Date().toISOString()}),/role/);
+  await f.action('solicitor','confirm_completion',{dateTime:new Date(Date.now()-1000).toISOString()});
+  await f.service(); const sale=(await f.db.query('select * from unit_sale_attempts where id=$1',[f.ids.sale])).rows[0];
+  assert.ok(sale.legal_completed_at); assert.equal(sale.legal_completed_by,f.ids.solicitor);
+  assert.equal((await f.db.query('select sale_status from units where id=$1',[f.ids.unit])).rows[0].sale_status,'completed');
+  await f.upload('statement_of_account');
+  await assert.rejects(f.upload(),/precede it/);
+  const approvals=(await f.db.query("select metadata from unit_sale_workflow_events where event_type='completion_documents_approved' order by created_at")).rows;
+  assert.deepEqual(approvals.map(row=>row.metadata.versionId),[one,two]);
+});
+
+test('expiry blocks exchange in PostgreSQL and records one immutable activity at the expiry time',async t=>{
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  const email=await f.sent(await f.prepare({date:new Date(Date.now()+1500).toISOString()}));
+  await new Promise(resolve=>setTimeout(resolve,1600));
+  await assert.rejects(f.action('solicitor','confirm_exchange',{date:today(),depositConfirmed:true}),/unexpired authority/);
+  await f.service();
+  for(let i=0;i<2;i++)await f.rpc('sales_legal_expire',{p_sale:f.ids.sale,p_actor:f.ids.developer});
+  const expired=(await f.db.query("select * from unit_sale_workflow_events where event_type='authority_expired'")).rows;
+  assert.equal(expired.length,1);assert.equal(expired[0].created_at.toISOString(),new Date(email.expires_at).toISOString());
+  await assert.rejects(f.db.query("update unit_sale_workflow_events set summary='changed' where id=$1",[expired[0].id]),/immutable/);
+  await f.as('agent');
+  const activity=await f.rpc('sale_activity_page',{p_sale:f.ids.sale});assert.equal(activity.find(event=>event.event_type==='authority_expired').actor_name,'System');
+});
+
+test('reissue replaces the preceding authority without changing snapshots and dispatch claims prevent duplicate sends',async t=>{
+  const f=await legalDatabase();t.after(()=>f.db.close());
+  const one=await f.sent(await f.prepare());
+  const two=await f.prepare();await f.service();
+  await f.rpc('sales_legal_dispatch',{p_id:two.id,p_actor:f.ids.developer,p_status:'sending'});
+  await assert.rejects(f.rpc('sales_legal_dispatch',{p_id:two.id,p_actor:f.ids.developer,p_status:'sending'}),/already in progress/);
+  await f.rpc('sales_legal_dispatch',{p_id:two.id,p_actor:f.ids.developer,p_status:'sent',p_message_id:'second-message'});
+  const previous=(await f.db.query('select * from sale_legal_emails where id=$1',[one.id])).rows[0];
+  assert.equal(previous.replaced_by,two.id);assert.deepEqual(previous.snapshot,one.snapshot);
+  assert.equal((await f.db.query("select count(*)::int n from unit_sale_workflow_events where event_type='authority_reissued'")).rows[0].n,1);
+  await f.as('agent');await assert.rejects(f.db.query("insert into unit_sale_workflow_events(sale_attempt_id,event_type) values($1,'authority_issued')",[f.ids.sale]),/permission denied|legal workflow/);
+  await f.owner();await assert.rejects(f.db.query('delete from sale_legal_emails where id=$1',[one.id]),/immutable/);
+});

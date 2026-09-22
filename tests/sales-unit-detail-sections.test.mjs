@@ -1,3 +1,4 @@
+import { legalSql, legalActionSql } from "./helpers/legal-sql.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,6 +8,7 @@ const workflowSource = readFileSync("src/components/portal/sales/SalesReservatio
 const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");
 const workspaceTabsSource = readFileSync("src/components/portal/sales/SaleFileWorkspaceTabs.tsx", "utf8");
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
+const legalSource = readFileSync("src/components/portal/sales/SalesLegalWorkflow.tsx", "utf8");
 
 function functionBody(source, name) {
   const start = source.indexOf(`async function ${name}`);
@@ -51,14 +53,14 @@ test("approved Reservation uses grouped key value lists", () => {
 });
 
 test("legal Exchange can be recorded with no Exchange invoice", () => {
-  const body = functionBody(routeSource, "recordExchange");
-  assert.match(body, /workflow_status: "exchanged"/);
+  const body = legalActionSql("confirm_exchange");
+  assert.match(body, /workflow_status='exchanged'/);
   assert.doesNotMatch(body, /loadMilestoneInvoice|unit_sale_invoices|agent_invoice/);
 });
 
 test("legal Completion can be recorded with no Completion invoice", () => {
-  const body = functionBody(routeSource, "recordCompletion");
-  assert.match(body, /workflow_status: "completed"/);
+  const body = legalActionSql("confirm_completion");
+  assert.match(body, /workflow_status='completed'/);
   assert.doesNotMatch(body, /unit_sale_invoices|completion_agent_invoice|unit_sale_invoice_payments/);
 });
 
@@ -83,8 +85,8 @@ test("invoice approval and rejection do not change legal sale status", () => {
 });
 
 test("commercial confirmation no longer requires or approves an invoice", () => {
-  const body = functionBody(routeSource, "approveCommercialPackage");
-  assert.match(body, /workflow_status: "ready_for_exchange"/);
+  const body = legalSql.slice(legalSql.indexOf("create function public.sales_legal_dispatch"), legalSql.indexOf("create function public.sales_legal_action"));
+  assert.match(body, /workflow_status='ready_for_exchange'/);
   assert.doesNotMatch(body, /loadMilestoneInvoice|requireCurrentInvoiceVersion|markMilestoneInvoiceApproved/);
 });
 
@@ -144,15 +146,15 @@ test("sale file workspace tabs expose selection and keyboard navigation", () => 
 
 test("sale activity and legal milestone summaries identify their actors", () => {
   assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /event\.actor_name/);
-  assert.match(workflowSource, /label: "Confirmed by", value: commercialApprovedBy/);
-  assert.match(workflowSource, /label: "Recorded by", value: exchangeRecordedBy/);
-  assert.match(workflowSource, /label: "Approved by", value: completionDocumentsApprovedBy/);
-  assert.match(workflowSource, /label: "Completed by", value: completionRecordedBy/);
+  assert.match(legalSource, /Approved by \{email.snapshot.approver.name\}/);
+  assert.match(legalSource, /Recorded by \{actorLabel\("exchange_recorded"\)\}/);
+  assert.match(legalSource, /Approved by \{actorLabel\("completion_documents_approved"/);
+  assert.match(legalSource, /Completed by \{actorLabel\("completion_recorded"\)\}/);
 });
 
 test("approved Reservation uses a structured, responsive event history", () => {
   const approvedPanel = workflowSource.slice(workflowSource.indexOf('{reservationState === "approved" && ('), workflowSource.indexOf("</StageWorkspace>", workflowSource.indexOf('{reservationState === "approved" && (')));
-  const eventHistory = workflowSource.slice(workflowSource.indexOf("function ApprovalEventHistory"), workflowSource.indexOf("function CompletedActionSummary"));
+  const eventHistory = workflowSource.slice(workflowSource.indexOf("function ApprovalEventHistory"), workflowSource.indexOf("function StageWorkspace"));
   assert.match(approvedPanel, /<ApprovalEventHistory events=\{approvalHistoryEvents\}/);
   assert.match(workflowSource, /label: "Reservation submitted"[\s\S]*label: "Approved"/);
   assert.match(eventHistory, /<ol[\s\S]*events\.map/);
@@ -178,20 +180,19 @@ test("legacy reservation actor IDs resolve to profile names and never render as 
 });
 
 test("completion uses styled PDF pickers and replaces completed controls with summaries", () => {
-  const completionPanel = workflowSource.slice(workflowSource.indexOf('id="sales-stage-completion"'), workflowSource.indexOf('id="sales-stage-handover"'));
+  const completionPanel = legalSource;
   assert.match(completionPanel, /<PdfUploadBox/);
-  assert.match(completionPanel, /Completion documents approved/);
-  assert.match(completionPanel, /Sale completed/);
+  assert.match(completionPanel, /Historical completion statement approved/);
+  assert.match(completionPanel, /Handover and key release are available/);
   assert.doesNotMatch(completionPanel, /className="field" type="file"/);
 });
 
 test("completion review and completion recording are idempotent", () => {
-  const approvalBody = functionBody(routeSource, "approveCompletionDocuments");
-  const completionBody = functionBody(routeSource, "recordCompletion");
-  assert.match(approvalBody, /alreadyApproved: true/);
-  assert.match(completionBody, /alreadyCompleted: true/);
-  assert.match(workflowSource, /completionReviewSubmissionInFlightRef\.current/);
-  assert.match(workflowSource, /completionRecordSubmissionInFlightRef\.current/);
+  const approvalBody = legalSql;
+  const completionBody = legalActionSql("confirm_completion");
+  assert.match(approvalBody, /'alreadyApproved',true/);
+  assert.match(completionBody, /'alreadyCompleted',true/);
+  assert.match(legalSource, /if \(inFlight.current\) return/);
 });
 
 test("tabs and key value lists collapse without ordinary horizontal overflow", () => {

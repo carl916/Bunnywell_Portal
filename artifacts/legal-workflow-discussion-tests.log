@@ -1,0 +1,29 @@
+✔ one building rule opens every sale and its comments without assignments (1191.0561ms)
+✔ historical actors resolve through stored IDs with minimal output and record visibility (818.0835ms)
+✔ Completion labels use snapshots, resolved display names and document approval IDs, never the viewer (0.3421ms)
+✔ payment attribution uses the recorded organisation, never the current profile organisation (418.5618ms)
+✔ mixed historical stages form one paginated sale thread; new writes and edits need no stage (1270.7878ms)
+▶ discussion migration and permission, history, isolation and unread contracts in PostgreSQL
+  ✔ building agents and building conveyancer share one sale; agents without building access are denied (20.3525ms)
+  ✔ untouched organisation agents inherit access and lose it with building or account access (15.9554ms)
+  ✔ mentions are eligible user IDs; retries deduplicate both comment and notification (13.1586ms)
+  ✔ same-sale replies, author-only edits, revision retention and optimistic edit conflicts (6.962ms)
+  ✔ reads acknowledge only presented IDs; own comments excluded, edits do not increase unread (12.7069ms)
+  ✔ server enforces limits and forbids raw mutation / audit payload access (4.8335ms)
+  ✔ revocation blocks comments, history, mentions, notifications and direct RLS reads (4.5412ms)
+  ✔ replacement buyer has a new identity; draft discussion does not record a reservation (12.2034ms)
+  ✔ stable pagination retains more than the initial history and validates deep links (46.2473ms)
+  ✔ completed discussions remain open; building and account revocation still apply (3.9032ms)
+✔ discussion migration and permission, history, isolation and unread contracts in PostgreSQL (863.9738ms)
+✔ document triggers write distinct subjects and viewer-safe timeline projections (718.4594ms)
+✔ client ordering, draft isolation and legacy presentation (0.2348ms)
+✔ document deep links recheck current discussion access, transaction and document visibility before signing (168.4085ms)
+✔ sale actor names resolve historical staff for both external roles without exposing profiles (711.6557ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4054.1962
