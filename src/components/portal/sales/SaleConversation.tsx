@@ -364,7 +364,13 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
     if (!activityLoaded) void Promise.resolve().then(refresh);
     const timer = setInterval(refresh, 15000); document.addEventListener("visibilitychange", refresh);
     return () => { clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
-  }, [open, tab, activityLoaded, loadActivity]);
+  }, [open, tab, activityLoaded, loadActivity, saleId]);
+
+  useEffect(() => {
+    const changed = (event: Event) => { if ((event as CustomEvent<string>).detail === saleId) setActivityLoaded(false); };
+    window.addEventListener("sale-activity-changed", changed);
+    return () => window.removeEventListener("sale-activity-changed", changed);
+  }, [saleId]);
 
   async function paginate(direction: "before" | "after") {
     if (!saleId || busy) return;

@@ -29,6 +29,7 @@ import { currentSalesTask, getReservationTasks } from "@/lib/sales/stage-tasks";
 import { SalesStageTasks } from "./SalesStageTasks";
 import { parsePercentInput } from "@/lib/sales/percentages";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
+import { loadLegalSaleChanges, replaceSaleRows, replaceRowsById, settleRefreshes } from "@/lib/sales/action-refresh";
 import styles from "./SalesReservationWorkflow.module.css";
 import {
   SALES_ROUTE_STATUSES,
@@ -842,6 +843,8 @@ export function SalesReservationWorkflow({
   buildingContextId,
   onNotice,
   reloadPortalData,
+  refreshLegalPortalData,
+  salesRefreshKey,
 }: {
   user: User;
   profile: Profile | null;
@@ -853,7 +856,12 @@ export function SalesReservationWorkflow({
   buildingContextId: string;
   onNotice: (notice: string) => void;
   reloadPortalData: () => Promise<void>;
+  refreshLegalPortalData: (sale: string, action: string) => Promise<void>;
+  salesRefreshKey?: string | null;
 }) {
+  const salesLoadRevision = useRef(0);
+  const currentBuilding = useRef(buildingContextId);
+  useEffect(() => { currentBuilding.current = buildingContextId; }, [buildingContextId]);
   const commercialModelControlRef = useRef<HTMLDivElement | null>(null);
   const manuallySelectedWorkflowStageRef = useRef<SaleWorkflowStage | null>(null);
   const pendingAgentFeesScrollRef = useRef<AgentFeeMilestone | null>(null);
@@ -1735,27 +1743,51 @@ export function SalesReservationWorkflow({
     setCommercialSetupChanged(false);
   }, [activeAttempt, activeInvoice, activeTerms, completionAgentInvoice, reservationDocument, selectedBuildingDefault]);
 
+  async function refreshLegalSale(sale: string, action: string) {
+    const building = buildingId;
+    const revision = ++salesLoadRevision.current;
+    const fresh = await loadLegalSaleChanges(createSupabaseBrowserClient(), sale, action);
+    if (currentBuilding.current !== building || revision !== salesLoadRevision.current) return;
+    setIsLoading(false);
+    setAttempts(rows => replaceRowsById(rows, [fresh.attempt as SaleAttempt]));
+    setSaleActorNames(rows => replaceRowsById(rows, fresh.actors as SaleActorName[]));
+    if (fresh.documents) {
+      const documents = fresh.documents.map(row => { const document = { ...row }; delete document.unit_sale_document_versions; return document as SaleDocument; });
+      const versions = fresh.documents.flatMap(row => row.unit_sale_document_versions) as SaleDocumentVersion[];
+      setDocuments(rows => replaceSaleRows(rows, sale, documents));
+      setVersions(rows => {
+        const affected = new Set(documents.map(row => row.id));
+        return [...rows.filter(row => !affected.has(row.document_id)), ...versions];
+      });
+    }
+    if (fresh.deposit) setDepositReceiptSales(rows => [...rows.filter(id => id !== sale), ...fresh.deposit!.map(row => row.sale_attempt_id as string)]);
+    window.dispatchEvent(new CustomEvent("sale-activity-changed", { detail: sale }));
+  }
+
   async function loadSalesData() {
+    const revision = ++salesLoadRevision.current;
+    const building = buildingId;
+    const valid = () => revision === salesLoadRevision.current && currentBuilding.current === building;
     const supabase = createSupabaseBrowserClient();
     let defaultsQuery = supabase.from("building_sale_defaults").select("*");
     if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
     const { data: defaultRows, error: defaultsError } = await defaultsQuery;
-    setSaleActorNames([]);
+    if (valid()) setSaleActorNames([]);
     if (defaultsError) onNotice(defaultsError.message);
-    else setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
+    else if (valid()) setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
 
     if (buildingUnits.length === 0) {
-      setAttempts([]);
-      setTerms([]);
-      setPaymentSchedule([]);
-      setDocuments([]);
-      setVersions([]);
-      setInvoices([]);
-      setInvoicePayments([]);
+      if (valid()) setAttempts([]);
+      if (valid()) setTerms([]);
+      if (valid()) setPaymentSchedule([]);
+      if (valid()) setDocuments([]);
+      if (valid()) setVersions([]);
+      if (valid()) setInvoices([]);
+      if (valid()) setInvoicePayments([]);
       return;
     }
 
-    setIsLoading(true);
+    if (valid()) setIsLoading(true);
     try {
       const unitIds = buildingUnits.map((unit) => unit.id);
       const { data: saleAttempts, error: attemptsError } = await supabase
@@ -1766,15 +1798,15 @@ export function SalesReservationWorkflow({
       if (attemptsError) throw attemptsError;
 
       const attemptIds = (saleAttempts ?? []).map((attempt) => attempt.id as string);
-      setAttempts((saleAttempts ?? []) as SaleAttempt[]);
+      if (valid()) setAttempts((saleAttempts ?? []) as SaleAttempt[]);
 
       if (attemptIds.length === 0) {
-        setTerms([]);
-        setPaymentSchedule([]);
-        setDocuments([]);
-        setVersions([]);
-        setInvoices([]);
-        setInvoicePayments([]);
+        if (valid()) setTerms([]);
+        if (valid()) setPaymentSchedule([]);
+        if (valid()) setDocuments([]);
+        if (valid()) setVersions([]);
+        if (valid()) setInvoices([]);
+        if (valid()) setInvoicePayments([]);
         return;
       }
 
@@ -1793,24 +1825,24 @@ export function SalesReservationWorkflow({
       if (invoicesResult.error) throw invoicesResult.error;
       if (invoicePaymentsResult.error) throw invoicePaymentsResult.error;
       if (depositReceiptsResult.error) throw depositReceiptsResult.error;
-      setDepositReceiptSales([...new Set((depositReceiptsResult.data ?? []).map((receipt) => receipt.sale_attempt_id as string))]);
+      if (valid()) setDepositReceiptSales([...new Set((depositReceiptsResult.data ?? []).map((receipt) => receipt.sale_attempt_id as string))]);
 
       if (actorNamesResult.error && !isMissingSaleActorNames(actorNamesResult.error)) throw actorNamesResult.error;
-      setSaleActorNames((actorNamesResult.data ?? []) as SaleActorName[]);
+      if (valid()) setSaleActorNames((actorNamesResult.data ?? []) as SaleActorName[]);
       if (actorNamesResult.error) {
         console.warn("Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database.", actorNamesResult.error);
         onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
       }
 
       const loadedDocuments = (documentsResult.data ?? []) as SaleDocument[];
-      setTerms((termsResult.data ?? []) as SaleTerms[]);
-      setPaymentSchedule((scheduleResult.data ?? []) as PaymentScheduleRow[]);
-      setDocuments(loadedDocuments);
-      setInvoices((invoicesResult.data ?? []) as SaleInvoice[]);
-      setInvoicePayments((invoicePaymentsResult.data ?? []) as SaleInvoicePayment[]);
+      if (valid()) setTerms((termsResult.data ?? []) as SaleTerms[]);
+      if (valid()) setPaymentSchedule((scheduleResult.data ?? []) as PaymentScheduleRow[]);
+      if (valid()) setDocuments(loadedDocuments);
+      if (valid()) setInvoices((invoicesResult.data ?? []) as SaleInvoice[]);
+      if (valid()) setInvoicePayments((invoicePaymentsResult.data ?? []) as SaleInvoicePayment[]);
       const documentIds = loadedDocuments.map((document) => document.id);
       if (documentIds.length === 0) {
-        setVersions([]);
+        if (valid()) setVersions([]);
         return;
       }
 
@@ -1820,18 +1852,18 @@ export function SalesReservationWorkflow({
         .in("document_id", documentIds)
         .order("version_number", { ascending: false });
       if (versionsError) throw versionsError;
-      setVersions((versionRows ?? []) as SaleDocumentVersion[]);
+      if (valid()) setVersions((versionRows ?? []) as SaleDocumentVersion[]);
     } catch (error) {
       onNotice(salesLoadErrorMessage(error));
     } finally {
-      setIsLoading(false);
+      if (valid()) setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    void loadSalesData();
+    void Promise.resolve().then(loadSalesData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildingId, units.length]);
+  }, [buildingId, units.length, salesRefreshKey]);
 
   useEffect(() => {
     if (!isLoading && selectedSaleUnitId && activeWorkflowStage !== "exchange" && activeWorkflowStage !== "completion") salesNavigationReady();
@@ -3418,7 +3450,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "progression" && (activeWorkflowStage === "exchange" || activeWorkflowStage === "completion") && activeAttempt && (
-            <SalesLegalWorkflow key={activeAttempt.id} saleId={activeAttempt.id} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async (measurement) => { await loadSalesData(); measurement?.mark("sales_reload_completed"); await reloadPortalData(); measurement?.mark("portal_reload_completed"); }} />
+            <SalesLegalWorkflow key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async (sale, action, measurement) => { await settleRefreshes([refreshLegalSale(sale, action).then(() => measurement?.mark("sales_reload_completed")), refreshLegalPortalData(attempts.find(row => row.id === sale)?.unit_id ?? "", action).then(() => measurement?.mark("portal_reload_completed"))]); }} />
           )}
 
           {activeUnitSection === "progression" && activeWorkflowStage === "handover" && (

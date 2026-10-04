@@ -1,5 +1,6 @@
 "use client";
 
+import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
 import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
 import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
@@ -1106,6 +1107,23 @@ export function ProductionPortalApp() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  async function refreshLegalPortalData(unitId: string, action: string) {
+    if (!legalRefreshScope(action).unit) return;
+    const supabase = createSupabaseBrowserClient();
+    const previous = units.find(unit => unit.id === unitId);
+    const result = await supabase.from("units").select("*").eq("id", unitId).single();
+    if (result.error) throw result.error;
+    const fresh = result.data as Unit;
+    setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
+    if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
+      // Rental exit appends an audit event. Preserve the global log's page/count.
+      const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
+      if (audit.error) throw audit.error;
+      setAuditEvents((audit.data ?? []) as AuditEvent[]);
+      setAuditTotalCount(audit.count ?? audit.data?.length ?? 0);
+    }
+  }
+
   async function loadAll(userId = user?.id, userEmail = user?.email) {
     if (!userId) return;
 
@@ -1508,6 +1526,8 @@ export function ProductionPortalApp() {
           buildingContextId={buildingContextId}
           onNotice={setNotice}
           reloadPortalData={() => loadAll()}
+          refreshLegalPortalData={refreshLegalPortalData}
+          salesRefreshKey={lastDataRefreshAt}
         />
       )}
       {activeTab === "rentals" && (

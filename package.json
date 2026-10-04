@@ -24,7 +24,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:sales-refresh": "node --test tests/sales-action-refresh.test.mjs tests/sales-legal-refresh-ui.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

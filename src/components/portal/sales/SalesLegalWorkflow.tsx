@@ -1,5 +1,6 @@
 "use client";
 
+import { runAndRefresh, settleRefreshes } from "@/lib/sales/action-refresh";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { authorityStatus, authorityTerms, legalDateTime, resolveSalesRecipients, SalesRecipientError, type LegalEmail, type LegalSnapshot } from "@/lib/sales/legal-workflow";
@@ -46,8 +47,8 @@ async function legalRequest<T>(sale: string, body?: Record<string, unknown> | Fo
   return result as T;
 }
 
-export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }: {
-  saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: (measurement?: SalesMeasurement) => Promise<void>;
+export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, refreshKey }: {
+  refreshKey?: string | null; saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: (sale: string, action: string, measurement?: SalesMeasurement) => Promise<void>;
 }) {
   const [context, setContext] = useState<Context | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -68,11 +69,15 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
   const previewRef = useRef<HTMLDivElement>(null);
   const noticeReviewButtonRef = useRef<HTMLButtonElement>(null);
   const noticePreviewId = `notice-authority-preview-${saleId}`;
+  const alive = useRef(true);
+  const loadSequence = useRef(0);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const load = useCallback(async () => {
+    const sequence = ++loadSequence.current;
     const result = await legalRequest<Context>(saleId);
-    setContext(result);
+    if (alive.current && sequence === loadSequence.current) setContext(result);
   }, [saleId]);
-  useEffect(() => { let active = true; legalRequest<Context>(saleId).then((result) => { if (active) setContext(result); }).catch((error) => { if (active) setFailure(error); }); return () => { active = false; }; }, [saleId]);
+  useEffect(() => { let active = true; load().then(() => { if (active) setFailure(null); }).catch((error) => { if (active) setFailure(error); }); return () => { active = false; }; }, [load, refreshKey]);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
   useEffect(() => { if (preview) previewRef.current?.focus(); }, [preview]);
   useEffect(() => { if (busy) measurementRef.current?.painted("pending_visible"); }, [busy]);
@@ -83,20 +88,27 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged }:
     const timing = measurement ?? beginSalesMeasurement(legalPerformanceAction(body instanceof FormData ? body.get("action") : body.action));
     measurementRef.current = timing;
     inFlight.current = true; setBusy(true); setFailure(null); setNoticeReviewFailure(null);
+    const action = String(body instanceof FormData ? body.get("action") : body.action);
     try {
-      await prepare?.();
-      await legalRequest(saleId, body, timing);
-      setPreview(null); setApprovedPreview(false);
-      timing.mark("context_reload_started");
-      await load(); timing.mark("context_reload_completed");
-      await onChanged(timing); timing.mark("refresh_completed"); onNotice(message);
+      await runAndRefresh(async () => {
+        await prepare?.();
+        await legalRequest(saleId, body, timing);
+        if (alive.current) { setPreview(null); setApprovedPreview(false); }
+      }, async () => {
+        timing.mark("context_reload_started");
+        await settleRefreshes([
+          load().then(() => timing.mark("context_reload_completed")),
+          onChanged(saleId, action, timing),
+        ]);
+        timing.mark("refresh_completed");
+      });
+      if (alive.current) onNotice(message);
       return true;
     } catch (error) {
       timing.mark("error");
       const problem = error instanceof Error ? error : { message: "Legal action failed." };
       if (!(body instanceof FormData) && body.action === "send" && body.kind === "notice_authority") setNoticeReviewFailure(problem);
       else setFailure(problem);
-      await load().catch(() => {});
       return false;
     } finally { inFlight.current = false; setBusy(false); timing.finish(); }
   }
