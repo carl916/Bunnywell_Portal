@@ -62,6 +62,9 @@ try {
     }
     await page.goto(`${origin}/?screen=sales&building=${scope.buildingId}&salesUnitId=${unit.id}`);
     await page.getByRole('button', { name: /^Completion\b/ }).waitFor();
+    // A historical build can show the navigation controls before its Sales
+    // snapshot finishes. Settle warm-up before recording the first cold reload.
+    await page.waitForLoadState('networkidle');
     for (let run = 1; run <= Number(runs); run++) for (const navigation of ['cold', 'repeat']) {
       if (navigation === 'cold') await cdp.send('Network.clearBrowserCache');
       const rows = [], active = new Set(), tracked = new Map(), keys = new Map();

@@ -39,6 +39,11 @@ export async function salesFixture(page: Page, initialPath?: string) {
     for (const [key, value] of url.searchParams) {
       if (value.startsWith("eq.")) result = result.filter((row) => String(row[key]) === value.slice(3));
     }
+    // Legal action refreshes use PostgREST's joined document/version shape.
+    // Keep the fixture faithful so scoped refreshes retain replacement history.
+    if (url.pathname.endsWith('/unit_sale_documents') && url.searchParams.get('select')?.includes('unit_sale_document_versions')) {
+      result = result.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) }));
+    }
     const single = route.request().headers().accept?.includes("vnd.pgrst.object");
     await route.fulfill({ json: single ? result[0] ?? null : result });
   });

@@ -1780,33 +1780,33 @@ export function SalesReservationWorkflow({
 
   function loadSalesData(event = "operation-refresh") {
     const promise = salesLoads.current.run(salesKey, event, async current => {
-    if (!current() || currentSalesKey.current !== salesKey) return;
-    const revision = ++salesLoadRevision.current;
-    const building = buildingId;
-    const valid = () => current() && revision === salesLoadRevision.current && currentBuilding.current === building && currentSalesKey.current === salesKey;
-    setIsLoading(true);
-    try {
-      const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), buildingUnits.map(unit => unit.id), building);
-      if (!valid()) return;
-      setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
-      setAttempts(fresh.attempts as SaleAttempt[]);
-      setTerms(fresh.terms as SaleTerms[]);
-      setPaymentSchedule(fresh.schedule as PaymentScheduleRow[]);
-      setDocuments(fresh.documents as SaleDocument[]);
-      setVersions(fresh.versions as SaleDocumentVersion[]);
-      setInvoices(fresh.invoices as SaleInvoice[]);
-      setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
-      setSaleActorNames(fresh.actors as SaleActorName[]);
-      setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
-      setLoadedSalesKey(salesKey);
-      traceLoad("sales", event, "published");
-      if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
-    } catch (error) {
-      if (valid()) onNotice(salesLoadErrorMessage(error));
-      throw error;
-    } finally {
-      if (valid()) setIsLoading(false);
-    }
+      if (!current() || currentSalesKey.current !== salesKey) return;
+      const revision = ++salesLoadRevision.current;
+      const building = buildingId;
+      const valid = () => current() && revision === salesLoadRevision.current && currentBuilding.current === building && currentSalesKey.current === salesKey;
+      setIsLoading(true);
+      try {
+        const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), buildingUnits.map(unit => unit.id), building);
+        if (!valid()) return;
+        setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
+        setAttempts(fresh.attempts as SaleAttempt[]);
+        setTerms(fresh.terms as SaleTerms[]);
+        setPaymentSchedule(fresh.schedule as PaymentScheduleRow[]);
+        setDocuments(fresh.documents as SaleDocument[]);
+        setVersions(fresh.versions as SaleDocumentVersion[]);
+        setInvoices(fresh.invoices as SaleInvoice[]);
+        setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
+        setSaleActorNames(fresh.actors as SaleActorName[]);
+        setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
+        setLoadedSalesKey(salesKey);
+        traceLoad("sales", event, "published");
+        if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
+      } catch (error) {
+        if (valid()) onNotice(salesLoadErrorMessage(error));
+        throw error;
+      } finally {
+        if (valid()) setIsLoading(false);
+      }
     }, event === "operation-refresh");
     fullSalesLoad.current = promise;
     return promise;

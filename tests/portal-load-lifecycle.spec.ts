@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { salesFixture, userId } from './helpers/sales-fixture';
+import { legalFixture } from './helpers/legal-ui-fixture';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => { window.portalLoadTracing = true; });
@@ -66,6 +67,20 @@ test('deactivated profile signs out and old portal/Sales reads do not restore it
   await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toHaveCount(0);
 });
 
+test('an access-read failure hides stale Sales and an explicit retry restores a complete snapshot', async ({ page }) => {
+  await salesFixture(page);
+  let fail = true;
+  await page.route('**/rest/v1/user_building_access?**', route => fail
+    ? route.fulfill({ status: 403, json: { code: '42501', message: 'Access check denied' } })
+    : route.fallback());
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.getByText('Access check denied', { exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toHaveCount(0);
+  fail = false;
+  await page.getByRole('button', { name: 'Retry access check', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toBeVisible();
+});
+
 test('token refresh loads one fresh snapshot; focus with changed role removes Sales', async ({ page }) => {
   const f = await salesFixture(page);
   async function emit(event: string, token: string) {
@@ -123,4 +138,25 @@ test('sign-out during a delayed portal refresh cannot resurrect the previous pro
   await expect(page.getByLabel('Email', { exact: true })).toBeVisible(); release();
   await expect.poll(() => page.evaluate(() => window.portalLoadTrace?.some(row => row.scope === 'portal' && row.phase === 'discarded'))).toBe(true);
   await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+});
+
+for (const action of ['request_authority', 'confirm_exchange']) test(`${action} preserves the four/five-request legal refresh without a broad reload`, async ({ page }) => {
+  const f = await legalFixture(page);
+  f.profile.role = action === 'request_authority' ? 'sales_agent' : 'conveyancer';
+  if (action === 'confirm_exchange') f.emails.push({ id: 'authority', kind: 'authority', version: 1, delivery_status: 'sent', expires_at: new Date(Date.now() + 86400000).toISOString(), issued_at: new Date().toISOString(), snapshot: f.snapshot, to_recipients: ['legal@example.test'], cc_recipients: [], resend_message_id: 'fixture' });
+  await f.reloadStage('Exchange');
+  const button = page.getByRole('button', { name: action === 'request_authority' ? 'Request authority to exchange' : 'Confirm exchange', exact: true });
+  if (action === 'confirm_exchange') await page.getByLabel('Actual exchange date', { exact: true }).fill(new Date().toISOString().slice(0, 10));
+  await expect(button).toBeEnabled();
+  const requests: string[] = [];
+  page.on('request', request => {
+    const path = new URL(request.url()).pathname;
+    if (path === '/api/sales/legal' || path.includes('/rest/v1/') && !/sale_comment|sale_mentions|sale_activity/.test(path)) requests.push(path);
+  });
+  await button.click();
+  await expect(page.getByText(action === 'request_authority' ? /Exchange authority requested\./ : 'Exchange confirmed.', { exact: action === 'confirm_exchange' })).toBeVisible();
+  expect(requests).toHaveLength(action === 'request_authority' ? 4 : 5);
+  await expect.poll(() => starts(page, 'sales')).toBe(1);
+  await expect.poll(() => starts(page, 'portal')).toBe(action === 'confirm_exchange' ? 2 : 1); // the second start is the scoped unit read
+  expect(await page.evaluate(() => window.portalLoadTrace?.filter(row => row.scope === 'portal' && row.phase === 'start').map(row => row.event))).toEqual(action === 'confirm_exchange' ? ['session-restoration', 'legal-action'] : ['session-restoration']);
 });

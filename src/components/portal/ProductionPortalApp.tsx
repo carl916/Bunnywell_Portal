@@ -1115,188 +1115,190 @@ export function ProductionPortalApp() {
   async function refreshLegalPortalData(unitId: string, action: string) {
     if (!legalRefreshScope(action).unit) return;
     return portalLoads.current.run(`legal:${unitId}`, "legal-action", async valid => {
-    if (!valid()) return;
-    const supabase = createSupabaseBrowserClient();
-    const previous = units.find(unit => unit.id === unitId);
-    const result = await supabase.from("units").select("*").eq("id", unitId).single();
-    if (result.error) throw result.error;
-    if (!valid()) return;
-    const fresh = result.data as Unit;
-    setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
-    if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
-      // Rental exit appends an audit event. Preserve the global log's page/count.
-      const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
-      if (audit.error) throw audit.error;
       if (!valid()) return;
-      setAuditEvents((audit.data ?? []) as AuditEvent[]);
-      setAuditTotalCount(audit.count ?? audit.data?.length ?? 0);
-    }
+      const supabase = createSupabaseBrowserClient();
+      const previous = units.find(unit => unit.id === unitId);
+      const result = await supabase.from("units").select("*").eq("id", unitId).single();
+      if (result.error) throw result.error;
+      if (!valid()) return;
+      const fresh = result.data as Unit;
+      setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
+      if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
+        // Rental exit appends an audit event. Preserve the global log's page/count.
+        const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
+        if (audit.error) throw audit.error;
+        if (!valid()) return;
+        setAuditEvents((audit.data ?? []) as AuditEvent[]);
+        setAuditTotalCount(audit.count ?? audit.data?.length ?? 0);
+      }
     }, true);
   }
 
   async function loadAll(userId = user?.id, userEmail = user?.email, event = "operation-refresh") {
     if (!userId) return;
     return portalLoads.current.run(userId, event, async valid => {
-    if (!valid()) return;
-    const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
-    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
-    let profileResult = await supabase
-      .from("profiles")
-      .select(profileSelect)
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (!profileResult.data && userEmail) {
-      profileResult = await supabase
+      if (!valid()) return;
+      const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
+      const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
+      let profileResult = await supabase
         .from("profiles")
         .select(profileSelect)
-        .eq("email", userEmail)
+        .eq("id", userId)
         .maybeSingle();
-    }
 
-    const loadedProfile = profileResult.data as Profile | null;
-    if (!valid()) return;
-    if (profileResult.error) throw profileResult.error;
-    if (!loadedProfile) throw new Error("Your portal profile is unavailable. Contact Bunnywell to check your access.");
+      if (!profileResult.data && userEmail) {
+        profileResult = await supabase
+          .from("profiles")
+          .select(profileSelect)
+          .eq("email", userEmail)
+          .maybeSingle();
+      }
 
-    if (loadedProfile?.active === false) {
-      await supabase.auth.signOut({ scope: "local" });
-      clearPortalState();
-      setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
-      return;
-    }
+      const loadedProfile = profileResult.data as Profile | null;
+      if (!valid()) return;
+      if (profileResult.error || !loadedProfile) {
+        setProfile(null); loadedAccessKey.current = null;
+        throw profileResult.error ?? new Error("Your portal profile is unavailable. Contact Bunnywell to check your access.");
+      }
 
-    const profileIdForAccess = loadedProfile?.id ?? userId;
-    const [
-      buildingsResult,
-      unitsResult,
-      areasResult,
-      floorsResult,
-      unitTypesResult,
-      unitTypeAreasResult,
-      tradesResult,
-      orgsResult,
-      buildingOrganisationsResult,
-      profilesResult,
-      allBuildingAccessResult,
-      allUnitAccessResult,
-      accessRequestsResult,
-      snagsResult,
-      photosResult,
-      eventsResult,
-      auditEventsResult,
-      handoversResult,
-      handoverKeyItemsResult,
-      handoverPhotosResult,
-      metersResult,
-      accessResult,
-      buildingAccessResult,
-    ] = await Promise.all([
-      supabase.from("buildings").select("*").order("name"),
-      supabase.from("units").select("*").order("unit_number"),
-      fetchAllAreas(supabase),
-      supabase.from("building_floors").select("*").order("sort_order"),
-      supabase.from("unit_types").select("*").order("name"),
-      supabase.from("unit_type_areas").select("*").order("sort_order"),
-      supabase.from("trades").select("*").order("sort_order"),
-      supabase.from("organisations").select("*").order("name"),
-      supabase.from("building_organisations").select("*"),
-      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
-      supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
-      supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
-      supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
-      supabase.from("snags").select("*").order("created_at", { ascending: false }),
-      supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
-      supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-      supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
-      supabase.from("handovers").select("*").order("created_at", { ascending: false }),
-      supabase.from("handover_key_items").select("*").order("sort_order"),
-      supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
-      supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
-      supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
-    ]);
+      if (loadedProfile?.active === false) {
+        await supabase.auth.signOut({ scope: "local" });
+        clearPortalState();
+        setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
+        return;
+      }
 
-    if (!valid()) return;
+      const profileIdForAccess = loadedProfile?.id ?? userId;
+      const [
+        buildingsResult,
+        unitsResult,
+        areasResult,
+        floorsResult,
+        unitTypesResult,
+        unitTypeAreasResult,
+        tradesResult,
+        orgsResult,
+        buildingOrganisationsResult,
+        profilesResult,
+        allBuildingAccessResult,
+        allUnitAccessResult,
+        accessRequestsResult,
+        snagsResult,
+        photosResult,
+        eventsResult,
+        auditEventsResult,
+        handoversResult,
+        handoverKeyItemsResult,
+        handoverPhotosResult,
+        metersResult,
+        accessResult,
+        buildingAccessResult,
+      ] = await Promise.all([
+        supabase.from("buildings").select("*").order("name"),
+        supabase.from("units").select("*").order("unit_number"),
+        fetchAllAreas(supabase),
+        supabase.from("building_floors").select("*").order("sort_order"),
+        supabase.from("unit_types").select("*").order("name"),
+        supabase.from("unit_type_areas").select("*").order("sort_order"),
+        supabase.from("trades").select("*").order("sort_order"),
+        supabase.from("organisations").select("*").order("name"),
+        supabase.from("building_organisations").select("*"),
+        supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
+        supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
+        supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
+        supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("snags").select("*").order("created_at", { ascending: false }),
+        supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
+        supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
+        supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
+        supabase.from("handovers").select("*").order("created_at", { ascending: false }),
+        supabase.from("handover_key_items").select("*").order("sort_order"),
+        supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
+        supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
+        supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
+        supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
+      ]);
 
-    const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
-    if (accessError) throw accessError;
-    loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
+      if (!valid()) return;
 
-    const firstError = [
-      buildingsResult.error,
-      unitsResult.error,
-      areasResult.error,
-      buildingOrganisationsResult.error,
-      accessRequestsResult.error,
-      snagsResult.error,
-    ].find(Boolean);
+      const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
+      if (accessError) { setProfile(null); loadedAccessKey.current = null; throw accessError; }
+      loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
 
-    if (firstError) {
-      setNotice(`Production schema is not ready yet: ${firstError.message}`);
-    } else {
-      setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
-    }
+      const firstError = [
+        buildingsResult.error,
+        unitsResult.error,
+        areasResult.error,
+        buildingOrganisationsResult.error,
+        accessRequestsResult.error,
+        snagsResult.error,
+      ].find(Boolean);
 
-    const recordedActivityAt = lastActivityAtRef.current;
-    const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
-      ? { ...loadedProfile, last_active_at: recordedActivityAt }
-      : loadedProfile;
-    const loadedProfiles = (profilesResult.data ?? []) as Profile[];
-    const profilesWithCurrentActivity = recordedActivityAt
-      ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
-      : loadedProfiles;
+      if (firstError) {
+        setNotice(`Production schema is not ready yet: ${firstError.message}`);
+      } else {
+        setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
+      }
 
-    setProfile(profileWithCurrentActivity);
-    setBuildings((buildingsResult.data ?? []) as Building[]);
-    setUnits((unitsResult.data ?? []) as Unit[]);
-    setAreas((areasResult.data ?? []) as Area[]);
-    setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
-    setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
-    setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
-    setTrades((tradesResult.data ?? []) as Trade[]);
-    setOrganisations((orgsResult.data ?? []) as Organisation[]);
-    const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
-    setBuildingOrganisations(loadedBuildingOrganisations);
-    setProfiles(profilesWithCurrentActivity);
-    setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
-    setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
-    setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
-    setSnags((snagsResult.data ?? []) as ProductionSnag[]);
-    setPhotos((photosResult.data ?? []) as SnagPhoto[]);
-    setEvents((eventsResult.data ?? []) as SnagEvent[]);
-    setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
-    setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
-    setHandovers((handoversResult.data ?? []) as Handover[]);
-    setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
-    setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
-    setMeterReadings((metersResult.data ?? []) as MeterReading[]);
-    setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
-    const organisationBuildingIds = loadedProfile?.organisation_id
-      ? loadedBuildingOrganisations
-        .filter((link) => (
-          link.organisation_id === loadedProfile.organisation_id
-          && link.active !== false
-          && (
-            loadedProfile.role === "sales_agent"
-              ? link.role_on_project === "sales_agent"
-              : loadedProfile.role === "conveyancer"
-                ? link.role_on_project === "conveyancer"
-                : loadedProfile.role === "developer_representative"
-                  ? link.role_on_project === "developer_representative"
-                  : loadedProfile.role === "contractor"
-                    ? link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade"
-                    : true
-          )
-        ))
-        .map((link) => link.building_id)
-      : [];
-    setAccessibleBuildingIds(Array.from(new Set([
-      ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
-      ...organisationBuildingIds,
-    ])));
-    setLastDataRefreshAt(new Date().toISOString());
-    traceLoad("portal", event, "published");
+      const recordedActivityAt = lastActivityAtRef.current;
+      const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
+        ? { ...loadedProfile, last_active_at: recordedActivityAt }
+        : loadedProfile;
+      const loadedProfiles = (profilesResult.data ?? []) as Profile[];
+      const profilesWithCurrentActivity = recordedActivityAt
+        ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
+        : loadedProfiles;
+
+      setProfile(profileWithCurrentActivity);
+      setBuildings((buildingsResult.data ?? []) as Building[]);
+      setUnits((unitsResult.data ?? []) as Unit[]);
+      setAreas((areasResult.data ?? []) as Area[]);
+      setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
+      setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
+      setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
+      setTrades((tradesResult.data ?? []) as Trade[]);
+      setOrganisations((orgsResult.data ?? []) as Organisation[]);
+      const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
+      setBuildingOrganisations(loadedBuildingOrganisations);
+      setProfiles(profilesWithCurrentActivity);
+      setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
+      setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
+      setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
+      setSnags((snagsResult.data ?? []) as ProductionSnag[]);
+      setPhotos((photosResult.data ?? []) as SnagPhoto[]);
+      setEvents((eventsResult.data ?? []) as SnagEvent[]);
+      setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
+      setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
+      setHandovers((handoversResult.data ?? []) as Handover[]);
+      setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
+      setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
+      setMeterReadings((metersResult.data ?? []) as MeterReading[]);
+      setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
+      const organisationBuildingIds = loadedProfile?.organisation_id
+        ? loadedBuildingOrganisations
+          .filter((link) => (
+            link.organisation_id === loadedProfile.organisation_id
+            && link.active !== false
+            && (
+              loadedProfile.role === "sales_agent"
+                ? link.role_on_project === "sales_agent"
+                : loadedProfile.role === "conveyancer"
+                  ? link.role_on_project === "conveyancer"
+                  : loadedProfile.role === "developer_representative"
+                    ? link.role_on_project === "developer_representative"
+                    : loadedProfile.role === "contractor"
+                      ? link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade"
+                      : true
+            )
+          ))
+          .map((link) => link.building_id)
+        : [];
+      setAccessibleBuildingIds(Array.from(new Set([
+        ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
+        ...organisationBuildingIds,
+      ])));
+      setLastDataRefreshAt(new Date().toISOString());
+      traceLoad("portal", event, "published");
     }, event === "explicit-refresh" || event === "operation-refresh" || event.startsWith("auth:"));
   }
 
@@ -1315,6 +1317,15 @@ export function ProductionPortalApp() {
     const changed = portalAccessKey(person.data, unitAccess.data ?? [], buildingAccess.data ?? [], links.data ?? []) !== loadedAccessKey.current;
     traceLoad("access", "auth:SIGNED_IN", changed ? "changed" : "unchanged");
     return changed;
+  }
+
+  async function refreshPortal() {
+    try {
+      await loadAll(user?.id, user?.email, "explicit-refresh");
+      setSalesRefreshRevision(value => value + 1);
+    } catch (error) {
+      setNotice(readableError(error, "Could not reload your portal access. Use Refresh to try again."));
+    }
   }
 
   async function uploadStorageBlob(path: string, blob: Blob, contentType: string) {
@@ -1452,6 +1463,12 @@ export function ProductionPortalApp() {
     );
   }
 
+  if (!profile) {
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={signOut} onRefresh={refreshPortal}>
+      <section className="panel" aria-live="polite"><h2 className="text-xl font-bold text-[#0F3D2E]">Checking portal access</h2><p className="mt-2 text-sm text-[#617169]">Your portal data will appear after your access has been checked.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section>
+    </Shell>;
+  }
+
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
 
   return (
@@ -1465,7 +1482,7 @@ export function ProductionPortalApp() {
       buildingContextId={buildingContextId}
       onBuildingContextChange={setBuildingContextId}
       lastUpdatedAt={lastDataRefreshAt}
-      onRefresh={async () => { await loadAll(user?.id, user?.email, "explicit-refresh"); setSalesRefreshRevision(value => value + 1); }}
+      onRefresh={refreshPortal}
       onSignOut={signOut}
     >
       {activeTab === "dashboard" && (
