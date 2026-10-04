@@ -1,6 +1,7 @@
 "use client";
 
 import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
+import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
 import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
@@ -986,7 +987,7 @@ export function ProductionPortalApp() {
         }
 
         setUser(data.user);
-        if (data.user) await loadAll(data.user.id, data.user.email);
+        if (data.user) await loadAll(data.user.id, data.user.email, "session-restoration");
         else clearPortalState();
       })
       .catch(async (error: unknown) => {
@@ -1003,10 +1004,11 @@ export function ProductionPortalApp() {
       .finally(() => setIsLoading(false));
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      traceLoad("auth", event, "trigger");
       setUser(session?.user ?? null);
       if (session?.user) {
         setNotice("");
-        void loadAll(session.user.id, session.user.email);
+        void loadAll(session.user.id, session.user.email, `auth:${event}`);
       } else if (event === "SIGNED_OUT") {
         clearPortalState();
       }
@@ -1125,10 +1127,11 @@ export function ProductionPortalApp() {
     }
   }
 
-  async function loadAll(userId = user?.id, userEmail = user?.email) {
+  async function loadAll(userId = user?.id, userEmail = user?.email, event = "operation-refresh") {
     if (!userId) return;
 
-    const supabase = createSupabaseBrowserClient();
+    traceLoad("portal", event, "start");
+    const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
     const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
     let profileResult = await supabase
       .from("profiles")
@@ -1277,6 +1280,7 @@ export function ProductionPortalApp() {
       ...organisationBuildingIds,
     ])));
     setLastDataRefreshAt(new Date().toISOString());
+    traceLoad("portal", event, "published");
   }
 
   async function uploadStorageBlob(path: string, blob: Blob, contentType: string) {
@@ -1395,7 +1399,7 @@ export function ProductionPortalApp() {
           email={user?.email ?? ""}
           mode={authRedirect.type}
           onComplete={async () => {
-            if (user) await loadAll(user.id, user.email);
+            if (user) await loadAll(user.id, user.email, "invite-complete");
             clearUrlHash();
             setAuthRedirect(null);
             setNotice("Password set. Welcome to Bunnywell Portal.");
@@ -1427,7 +1431,7 @@ export function ProductionPortalApp() {
       buildingContextId={buildingContextId}
       onBuildingContextChange={setBuildingContextId}
       lastUpdatedAt={lastDataRefreshAt}
-      onRefresh={async () => { await loadAll(); setSalesRefreshRevision(value => value + 1); }}
+      onRefresh={async () => { await loadAll(user?.id, user?.email, "explicit-refresh"); setSalesRefreshRevision(value => value + 1); }}
       onSignOut={signOut}
     >
       {activeTab === "dashboard" && (

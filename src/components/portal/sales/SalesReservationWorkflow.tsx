@@ -5,6 +5,7 @@ import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
 import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
 import { salesLoadErrorMessage } from "@/lib/sales/load-errors";
+import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1764,13 +1765,14 @@ export function SalesReservationWorkflow({
     window.dispatchEvent(new CustomEvent("sale-activity-changed", { detail: sale }));
   }
 
-  async function loadSalesData() {
+  async function loadSalesData(event = "operation-refresh") {
+    traceLoad("sales", event, "start");
     const revision = ++salesLoadRevision.current;
     const building = buildingId;
     const valid = () => revision === salesLoadRevision.current && currentBuilding.current === building;
     setIsLoading(true);
     try {
-      const fresh = await loadBuildingSalesData(createSupabaseBrowserClient(), buildingUnits.map(unit => unit.id), building);
+      const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), buildingUnits.map(unit => unit.id), building);
       if (!valid()) return;
       setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
       setAttempts(fresh.attempts as SaleAttempt[]);
@@ -1782,16 +1784,24 @@ export function SalesReservationWorkflow({
       setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
       setSaleActorNames(fresh.actors as SaleActorName[]);
       setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
+      traceLoad("sales", event, "published");
       if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
     } catch (error) {
       if (valid()) onNotice(salesLoadErrorMessage(error));
     } finally {
       if (valid()) setIsLoading(false);
+      traceLoad("sales", event, "settled");
     }
   }
 
+  const previousLoadInputs = useRef<string[] | null>(null);
   useEffect(() => {
-    void Promise.resolve().then(loadSalesData);
+    const inputs = [buildingId, String(units.length), String(salesRefreshKey)];
+    const before = previousLoadInputs.current;
+    const event = !before ? "mount" : before[0] !== inputs[0] ? "building-switch" : before[1] !== inputs[1] ? "unit-count" : "refresh-key";
+    previousLoadInputs.current = inputs;
+    traceLoad("sales", event, "trigger");
+    void Promise.resolve().then(() => loadSalesData(event));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId, units.length, salesRefreshKey]);
 
