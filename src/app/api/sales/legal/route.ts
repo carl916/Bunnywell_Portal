@@ -110,9 +110,14 @@ async function postLegal(request: Request, timing: SalesServerTiming) {
       if (noticeSubmission && registered.data.path !== path) await client.storage.from("sale-documents").remove([path]);
       return NextResponse.json(noticeSubmission ? registered.data : { versionId: registered.data });
     }
-    const payload = await request.json();
+    // Body arrival after route entry and JSON decoding are separate spans. File
+    // bytes in the completion flow go directly to Storage, outside this route.
+    const body = await timing.measure("body_read", () => request.text());
+    const payload = await timing.measure("json_parse", async () => JSON.parse(body));
     if (["prepare_completion_upload", "finalize_completion_upload"].includes(payload.action)) {
-      return NextResponse.json(await completionUploadAction(client, actor, payload), { headers: { "Cache-Control": "no-store" } });
+      const result = await timing.measure(payload.action === "prepare_completion_upload" ? "upload_prepare" : "finalization",
+        () => completionUploadAction(client, actor, payload, timing));
+      return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
     }
     const sale = String(payload.sale || "");
     const action = String(payload.action || "");

@@ -13,8 +13,9 @@ async function ready(t) {
   const f=await legalDatabase();t.after(()=>f.db.close());await f.owner();
   await f.db.exec(`create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table storage.objects(bucket_id text,name text,metadata jsonb);`);
   await f.db.exec(readFileSync('supabase/migrations/20260922194750_completion_direct_upload.sql','utf8'));
-  await f.sent(await f.prepare());await f.action('solicitor','confirm_exchange',{date:'2026-09-22'});
-  await f.sent(await f.prepare({kind:'notice_authority',date:''}));await f.notice();
+  const dates=(await f.db.query("select current_date::text as exchange, (current_date+14)::text as due")).rows[0];
+  await f.sent(await f.prepare());await f.action('solicitor','confirm_exchange',{date:dates.exchange});
+  await f.sent(await f.prepare({kind:'notice_authority',date:''}));await f.notice({noticeDate:dates.exchange,dueDate:dates.due});
   const call=async(action,id,files=null,actor='solicitor',sale=f.ids.sale)=>{await f.service(actor);return f.rpc('sales_completion_upload_session',{p_sale:sale,p_actor:f.ids[actor],p_request:id,p_action:action,p_files:files});};
   const objects=async(u)=>{await f.owner();for(const item of u.files)await f.db.query("insert into storage.objects values('sale-documents',$1,$2)",[item.path,{size:item.size,mimetype:item.mime}]);};
   return {...f,call,objects};

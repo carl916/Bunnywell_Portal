@@ -13,7 +13,7 @@ const admin=createClient(env.NEXT_PUBLIC_SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_
 const building=await admin.from('buildings').select('id').eq('name','E2E Completion Upload 2026-09-22').single();if(building.error)throw Error('Dedicated upload fixtures missing.');
 const {data:units,error}=await admin.from('units').select('id,unit_number').eq('building_id',building.data.id).order('unit_number');if(error||units.length!==3)throw Error('Expected three new upload fixtures.');
 const out='artifacts/completion-direct-upload';fs.mkdirSync(out,{recursive:true});fs.mkdirSync('test-results/upload-files',{recursive:true});
-const samples=[];const save=()=>fs.writeFileSync(`${out}/live-samples.json`,JSON.stringify({originKind:origin.startsWith('http://localhost')?'local-production-build/staging-storage':'staging-preview',samples},null,2));
+const samples=[];const save=()=>fs.writeFileSync(`${out}/${origin.startsWith("http://localhost")?"live-samples":"staging-samples"}.json`,JSON.stringify({originKind:origin.startsWith('http://localhost')?'local-production-build/staging-storage':'staging-preview',samples},null,2));
 function pdf(size,name){const doc=new jsPDF();doc.text('SYNTHETIC UPLOAD TEST - NOT A LEGAL DOCUMENT',12,20);const source=Buffer.from(doc.output('arraybuffer'));const path=`test-results/upload-files/${name}`;fs.writeFileSync(path,Buffer.concat([source,Buffer.alloc(size-source.length,32)]));return path;}
 const browser=await chromium.launch({headless:true});
 try {
@@ -31,7 +31,7 @@ try {
     const begin=r=>{const path=new URL(r.url()).pathname;if(path==='/api/sales/legal'||path.includes('/storage/v1/upload/resumable'))starts.set(r,Date.now());};
     const end=r=>{if(!starts.has(r))return;pending.push((async()=>{const response=await r.response(),sizes=await r.sizes().catch(()=>null);if(response?.status()>=400&&new URL(r.url()).pathname.includes('/storage/')){const err=await response.json().catch(()=>({}));console.log(JSON.stringify({storageStatus:response.status(),message:String(err.message||err.error||'').replace(/eyJ[a-zA-Z0-9._-]+/g,'[redacted]')}));}const category=new URL(r.url()).pathname==='/api/sales/legal'?'legal':'storage';requests.push({category,method:r.method(),status:response?.status(),durationMs:Date.now()-starts.get(r),requestBytes:category==='legal'?sizes?.requestBodySize??null:null});if(category==='legal'&&r.method()==='POST'){const body=r.postDataJSON();requestId=body.requestId;if(body.action==='finalize_completion_upload')finalStatus=response.status();}})());};
     page.on('request',begin);page.on('requestfinished',end);const started=Date.now();
-    await docs.getByRole('button',{name:'Upload completion documents',exact:true}).click();
+    await docs.getByRole('button',{name:/^Upload (completion documents|replacement document)$/}).click();
     const outcome=await Promise.race([docs.locator('[role="group"][aria-label^="Selected "]').first().waitFor({state:'detached',timeout:360000}).then(()=>true),page.getByRole('alert').filter({hasText:/Could not|failed|not confirmed|interrupted|wrong|missing/}).first().waitFor({timeout:360000}).then(()=>false)]);
     const totalMs=Date.now()-started;page.off('request',begin);page.off('requestfinished',end);await Promise.all(pending);
     const sample={profile,label,count,size,totalMs,outcome,finalStatus,requests};samples.push(sample);save();console.log(JSON.stringify({profile,label,totalMs,outcome,finalStatus}));

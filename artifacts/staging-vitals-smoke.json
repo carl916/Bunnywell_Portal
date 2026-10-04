@@ -1,0 +1,57 @@
+{
+  "payloads": [
+    {
+      "payload": {
+        "metric": "TTFB",
+        "value": 28.199999928474426,
+        "rating": "good",
+        "route": "portal"
+      },
+      "bytes": 77,
+      "hasCookie": false,
+      "hasReferer": false,
+      "hasAuthorization": false
+    },
+    {
+      "payload": {
+        "metric": "LCP",
+        "value": 196,
+        "rating": "good",
+        "route": "portal"
+      },
+      "bytes": 61,
+      "hasCookie": false,
+      "hasReferer": false,
+      "hasAuthorization": false
+    },
+    {
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      },
+      "bytes": 60,
+      "hasCookie": false,
+      "hasReferer": false,
+      "hasAuthorization": false
+    },
+    {
+      "payload": {
+        "metric": "CLS",
+        "value": 0,
+        "rating": "good",
+        "route": "portal"
+      },
+      "bytes": 59,
+      "hasCookie": false,
+      "hasReferer": false,
+      "hasAuthorization": false
+    }
+  ],
+  "statuses": [
+    204,
+    204
+  ],
+  "pageErrors": 0
+}

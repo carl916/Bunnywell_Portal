@@ -1,15 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SalesServerTiming } from "./server-performance";
 import { requiredEnv } from "@/lib/supabase/admin";
 import { completionUploadBucket, completionUploadFiles, uploadUuid, type StoredCompletionUploadFile } from "./completion-upload";
 
 type UploadSession = { id: string; sale_id: string; actor_id: string; files: StoredCompletionUploadFile[]; state: string; result: unknown; expires_at: string };
 
-async function verifyObject(client: SupabaseClient, bucket: string, file: StoredCompletionUploadFile) {
+async function verifyObject(client: SupabaseClient, bucket: string, file: StoredCompletionUploadFile, timedFetch: typeof fetch = fetch) {
   const info = await client.storage.from(bucket).info(file.path);
   if (info.error) throw new Error("A PDF has not finished uploading. Retry to resume the transfer.");
   if (info.data.size !== file.size || info.data.contentType !== "application/pdf") throw new Error("The uploaded PDF has the wrong size or type. Remove it and choose the correct PDF again.");
   // Read only the signature, never buffer or proxy the PDF through Next.js.
-  const response = await fetch(`${requiredEnv("NEXT_PUBLIC_SUPABASE_URL")}/storage/v1/object/authenticated/${bucket}/${file.path}`, {
+  const response = await timedFetch(`${requiredEnv("NEXT_PUBLIC_SUPABASE_URL")}/storage/v1/object/authenticated/${bucket}/${file.path}`, {
     headers: { Authorization: `Bearer ${requiredEnv("SUPABASE_SERVICE_ROLE_KEY")}`, apikey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"), Range: "bytes=0-4" },
     cache: "no-store", signal: AbortSignal.timeout(15000),
   });
@@ -25,7 +26,7 @@ async function verifyObject(client: SupabaseClient, bucket: string, file: Stored
   if (new TextDecoder().decode(new Uint8Array(prefix)) !== "%PDF-") throw new Error("The uploaded file is not a PDF. Remove it and choose a PDF again.");
 }
 
-export async function completionUploadAction(client: SupabaseClient, actor: string, payload: Record<string, unknown>) {
+export async function completionUploadAction(client: SupabaseClient, actor: string, payload: Record<string, unknown>, timing?: SalesServerTiming) {
   const sale = payload.sale, request = payload.requestId;
   if (!uploadUuid(sale) || !uploadUuid(request)) throw new Error("Select a sale and a valid submission reference.");
   const begin = payload.action === "prepare_completion_upload";
@@ -48,12 +49,15 @@ export async function completionUploadAction(client: SupabaseClient, actor: stri
     return { completed: false, files, bucket: completionUploadBucket, endpoint: `${base.origin}/storage/v1/upload/resumable/sign`, expiresAt: session.expires_at };
   }
   for (const file of session.files) {
-    await verifyObject(client, completionUploadBucket, file);
+    const verify = (bucket: string) => timing
+      ? timing.measure("storage_verify", () => verifyObject(client, bucket, file, timing.fetch))
+      : verifyObject(client, bucket, file);
+    await verify(completionUploadBucket);
     // Storage performs the copy internally. Signed upload capabilities never
     // address a published document, even while their tokens remain valid.
     const copy = await client.storage.from(completionUploadBucket).copy(file.path, file.path, { destinationBucket: "sale-documents" });
     if (copy.error && !/already exists|duplicate/i.test(copy.error.message)) throw copy.error;
-    await verifyObject(client, "sale-documents", file);
+    await verify("sale-documents");
   }
   const result = await client.rpc("sales_completion_upload_session", { p_sale: sale, p_actor: actor, p_request: request, p_action: "finalize" });
   if (result.error) throw result.error;

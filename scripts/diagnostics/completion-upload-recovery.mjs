@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 dotenv.config({path:'.env.local',quiet:true});
-const env=process.env,origin='http://localhost:3100';
+const env=process.env,origin=env.UPLOAD_TEST_ORIGIN||'http://localhost:3100';
+if(origin!=='http://localhost:3100'&&origin!=='https://staging.bunnywell.co.uk')throw Error('Use the approved staging or local origin.');
 if(env.UPLOAD_TEST_STAGING!=='1'||new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname!=='vxkpvdtrldwwqiddoyof.supabase.co')throw Error('Staging only.');
 const admin=createClient(env.NEXT_PUBLIC_SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
 const {data:building}=await admin.from('buildings').select('id').eq('name','E2E Completion Upload 2026-09-22').single();
@@ -17,7 +18,9 @@ for(const [role,email] of Object.entries({admin:env.PLAYWRIGHT_ADMIN_EMAIL,conve
  const result=await client.auth.signInWithPassword({email,password:env.PLAYWRIGHT_ADMIN_PASSWORD});if(result.error)throw Error('Test sign-in failed.');clients[role]=client;tokens[role]=result.data.session.access_token;
 }
 const request=async(role,body)=>{const response=await fetch(origin+'/api/sales/legal',{method:'POST',headers:{'Content-Type':'application/json',...(tokens[role]?{Authorization:`Bearer ${tokens[role]}`}:{})},body:JSON.stringify({sale:sale.id,...body})});return {status:response.status,body:await response.json()};};
-const meta={type:'completion_statement',expectedVersionId:null,name:'synthetic-completion.pdf',size:10485760,mime:'application/pdf'};
+const snapshot=await fetch(origin+'/api/sales/legal?sale='+sale.id,{headers:{Authorization:'Bearer '+tokens.conveyancer}});assert.equal(snapshot.status,200);
+const current=(await snapshot.json()).documents.find(d=>d.document_type==='completion_statement')?.unit_sale_document_versions.find(v=>v.is_current&&!v.redacted_at)?.id??null;
+const meta={type:'completion_statement',expectedVersionId:current,name:'synthetic-completion.pdf',size:10485760,mime:'application/pdf'};
 for(const role of ['anonymous','admin','agent']){assert.equal((await request(role,{action:'prepare_completion_upload',requestId:crypto.randomUUID(),files:[meta]})).status,400);results.push({check:`${role} denied`,pass:true});}
 for(const files of [[],[meta,meta],[{...meta,size:10485761}],[{...meta,mime:'text/plain'}]])assert.equal((await request('conveyancer',{action:'prepare_completion_upload',requestId:crypto.randomUUID(),files})).status,400);
 results.push({check:'invalid count, duplicate type, over-limit and MIME rejected before transfer',pass:true});
@@ -41,14 +44,14 @@ try {
    await route.continue();
  });
  const patch=page.waitForRequest(r=>r.method()==='PATCH'&&r.url().includes('/storage/v1/upload/resumable'),{timeout:60000});
- await docs.getByRole('button',{name:'Upload completion documents',exact:true}).click();await patch;
- await docs.getByRole('button',{name:'Pause upload',exact:true}).click();await docs.getByRole('button',{name:'Upload completion documents',exact:true}).waitFor();
+ await docs.getByRole('button',{name:/^Upload (completion documents|replacement document)$/}).click();await patch;
+ await docs.getByRole('button',{name:'Pause upload',exact:true}).click();await docs.getByRole('button',{name:/^Upload (completion documents|replacement document)$/}).waitFor();
  await page.getByRole('alert').filter({hasText:'Upload paused'}).waitFor();assert.equal(await docs.locator('[role="group"][aria-label^="Selected "]').count(),1);
  results.push({check:'pause retains the selected PDF',pass:true});
- await docs.getByRole('button',{name:'Upload completion documents',exact:true}).click();await page.getByRole('alert').filter({hasText:'Upload not confirmed'}).waitFor({timeout:90000});
+ await docs.getByRole('button',{name:/^Upload (completion documents|replacement document)$/}).click();await page.getByRole('alert').filter({hasText:'Upload not confirmed'}).waitFor({timeout:90000});
  assert.ok(resumedOffset>=6*1024*1024);assert.equal(storagePosts,1);results.push({check:'interrupted TUS resumes from retained offset',pass:true,offset:resumedOffset});
  const before=await admin.from('unit_sale_document_versions').select('id').eq('completion_upload_id',id);assert.equal(before.data.length,1);
- await docs.getByRole('button',{name:'Upload completion documents',exact:true}).click();await docs.locator('[role="group"][aria-label^="Selected "]').first().waitFor({state:'detached',timeout:60000});assert.equal(storagePosts,1);
+ await docs.getByRole('button',{name:/^Upload (completion documents|replacement document)$/}).click();await docs.locator('[role="group"][aria-label^="Selected "]').first().waitFor({state:'detached',timeout:60000});assert.equal(storagePosts,1);
  const duplicated=await Promise.all([1,2].map(()=>request('conveyancer',{action:'finalize_completion_upload',requestId:id})));duplicated.forEach(r=>assert.equal(r.status,200));
  const after=await admin.from('unit_sale_document_versions').select('id').eq('completion_upload_id',id);assert.deepEqual(after.data,before.data);results.push({check:'lost final response and concurrent duplicate finalisation do not duplicate versions',pass:true});
  const {data:session}=await admin.from('sale_completion_uploads').select('files').eq('id',id).single();const path=session.files[0].path;
@@ -59,4 +62,4 @@ try {
  }
  results.push({check:'private objects and service-only session RPC deny browser reads and direct invocation',pass:true});
  await context.close();
-}finally{fs.writeFileSync('artifacts/completion-direct-upload/recovery.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results));await browser.close();}
+}finally{fs.writeFileSync(`artifacts/completion-direct-upload/${origin.startsWith('http://localhost')?'recovery':'staging-recovery'}.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));await browser.close();}

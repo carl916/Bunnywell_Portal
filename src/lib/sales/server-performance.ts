@@ -1,10 +1,12 @@
 // Disabled by default. Enable only for an explicitly configured diagnostic run.
 // Durations cover remote service round trips, not pure PostgreSQL execution time.
-type Phase = "auth" | "db_read" | "db_mutation" | "storage_upload" | "storage_cleanup" | "email_delivery" | "remote_other" | "multipart_parse" | "file_prepare";
+type Phase = "auth" | "db_read" | "db_rpc" | "db_mutation" | "storage_read" | "storage_upload" | "storage_verify" | "storage_cleanup" | "email_delivery" | "remote_other" | "body_read" | "json_parse" | "multipart_parse" | "file_prepare" | "upload_prepare" | "finalization";
 export class SalesServerTiming {
   private readonly started = performance.now();
   private readonly entries = new Map<Phase, { duration: number; count: number; completed: number }>();
-  private readonly enabled = process.env.SALES_PERF_DIAGNOSTICS === "1" && process.env.VERCEL_ENV !== "production";
+  private readonly enabled = process.env.SALES_PERF_DIAGNOSTICS === "1" && (
+    process.env.VERCEL_ENV === "preview" || !process.env.VERCEL_ENV && process.env.SALES_PERF_LOCAL === "1"
+  );
   async measure<T>(phase: Phase, work: () => PromiseLike<T>): Promise<T> {
     if (!this.enabled) return await work();
     const start = performance.now();
@@ -21,11 +23,12 @@ export class SalesServerTiming {
     const method = init?.method ?? (input instanceof Request ? input.method : "GET");
     let phase: Phase = "remote_other";
     if (url.pathname.startsWith("/auth/")) phase = "auth";
-    else if (url.pathname.startsWith("/storage/")) phase = method === "DELETE" ? "storage_cleanup" : "storage_upload";
+    else if (url.pathname.startsWith("/storage/")) phase = method === "DELETE" ? "storage_cleanup" : ["GET", "HEAD"].includes(method.toUpperCase()) || url.pathname.includes("/object/info/") ? "storage_read" : "storage_upload";
     else if (url.hostname === "api.resend.com") phase = "email_delivery";
     else if (url.pathname.startsWith("/rest/")) {
       const mutation = /\/(sales_legal_action|sales_legal_dispatch|sales_legal_prepare_email|sales_legal_expire|sales_completion_upload|sales_legal_submit_notice|sales_legal_register_document)$/.test(url.pathname);
-      phase = mutation || !url.pathname.includes("/rpc/") && !["GET", "HEAD"].includes(method) ? "db_mutation" : "db_read";
+      phase = url.pathname.endsWith("/rpc/sales_completion_upload_session") ? "db_rpc"
+        : mutation || !url.pathname.includes("/rpc/") && !["GET", "HEAD"].includes(method) ? "db_mutation" : "db_read";
     }
     return this.measure(phase, () => fetch(input, init));
   };
