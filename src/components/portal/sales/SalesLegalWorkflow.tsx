@@ -75,7 +75,14 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     const result = await legalRequest<Context>(saleId);
-    if (alive.current && sequence === loadSequence.current) setContext(result);
+    if (alive.current && sequence === loadSequence.current) {
+      setContext(result);
+      // A rejected/lost send response may follow a saved instruction. Its
+      // history is authoritative; the old preview must not claim it is unissued.
+      if (result.emails.some(email => email.id === requestId.current)) {
+        setPreview(null); setApprovedPreview(false);
+      }
+    }
   }, [saleId]);
   useEffect(() => { let active = true; load().then(() => { if (active) setFailure(null); }).catch((error) => { if (active) setFailure(error); }); return () => { active = false; }; }, [load, refreshKey]);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);

@@ -1,7 +1,7 @@
 // Explicitly authorised staging scope only. No traces, screenshots, response
 // bodies, credentials, URLs, buyer information or filenames enter the report.
 import fs from 'node:fs';
-import { recorder, attachVitals, out } from './action-refresh-recorder.mjs';
+import { recorder, attachVitals, out } from './action-refresh-release-recorder.mjs';
 import dotenv from 'dotenv';
 import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
@@ -11,7 +11,7 @@ const origin='https://staging.bunnywell.co.uk';
 const env=process.env;
 if(new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname!=='vxkpvdtrldwwqiddoyof.supabase.co')throw new Error('Only the verified staging project is authorised.');
 if(env.SALES_PERF_ALLOW_STAGING_MUTATIONS!=='1')throw new Error('Explicit staging diagnostic opt-in required.');
-const scope=JSON.parse(fs.readFileSync('work/staging-test-sales.json','utf8'));
+const scope=JSON.parse(fs.readFileSync('work/staging-release-sales.json','utf8'));
 const verified=JSON.parse(fs.readFileSync('work/staging-access.json','utf8'));
 if(!verified.matched)throw new Error('Staging project was not verified.');
 const output=`${out}/workflow-samples.json`;
@@ -30,10 +30,10 @@ async function post(role,path,body){
   const response=await fetch(origin+path,{method:'POST',headers:{Authorization:`Bearer ${tokens[role]}`,...(body instanceof FormData?{}:{'Content-Type':'application/json'})},body:body instanceof FormData?body:JSON.stringify(body)});
   if(!response.ok)throw new Error(`Fixture setup rejected: ${response.status}`);return response.json();
 }
-const allowedUnits=[111,112,113,114,201,202,203,204];
+const allowedUnits=[207,208];
 const units=scope.units.filter(u=>allowedUnits.includes(Number(u.unit_number)));
 if(units.some(u=>!allowedUnits.includes(Number(u.unit_number))))throw new Error('Fixture outside authorised refresh scope.');
-if(units.length!==4)throw new Error('Expected four fresh authorised units.');
+if(units.length!==2)throw new Error('Expected two fresh authorised units.');
 // Preparation uses the normal reservation API, never direct status/approval edits.
 for(const unit of units){
   const {data:attempt,error}=await clients.admin.from('unit_sale_attempts').select('id,workflow_status,buyer_person_name').eq('unit_id',unit.id).eq('is_active',true).single();
@@ -96,9 +96,9 @@ try{
     await page.goto(origin);await page.getByLabel('Email',{exact:true}).fill(email);await page.getByLabel('Password',{exact:true}).fill(env.PLAYWRIGHT_ADMIN_PASSWORD);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('button',{name:'Sign out',exact:true}).waitFor();
   }
   for(let i=0;i<units.length;i++){
-    const unit=units[i],run=i+1,profile=i>=2?'mobile-throttled':'desktop';if(env.SALES_PERF_UNIT && !env.SALES_PERF_UNIT.split(',').includes(unit.unit_number))continue;
+    const unit=units[i],run=i+1,profile=i>=1?'mobile-throttled':'desktop';if(env.SALES_PERF_UNIT && !env.SALES_PERF_UNIT.split(',').includes(unit.unit_number))continue;
     const {data:state}=await clients.admin.from('unit_sale_attempts').select('workflow_status').eq('id',unit.sale).single();if(state.workflow_status==='completed')throw Error('Completed record cannot be mutated.');
-    for(const page of Object.values(pages))page.baselineProfile=profile; if(i>=2)for(const [role,page]of Object.entries(pages)){await page.setViewportSize({width:390,height:844});const cdp=await contexts[role].newCDPSession(page);await cdp.send('Network.enable');await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750});await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});}
+    for(const page of Object.values(pages))page.baselineProfile=profile; if(i>=1)for(const [role,page]of Object.entries(pages)){await page.setViewportSize({width:390,height:844});const cdp=await contexts[role].newCDPSession(page);await cdp.send('Network.enable');await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750});await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});}
     let page=await open('agent',unit);
     const navigationCdp=await contexts.agent.newCDPSession(page);await navigationCdp.send('Network.enable');await navigationCdp.send('Network.clearBrowserCache');
     for(const mode of ['cold','repeat'])await measure(page,`sale.open.${mode}`,run,profile,()=>page.reload(),()=>page.getByRole('list',{name:'Exchange tasks',exact:true}).waitFor());
@@ -134,4 +134,5 @@ try{
   }
 }catch(error){console.log(JSON.stringify({stopped:error.message?.split('\n')[0]?.slice(0,240)}));process.exitCode=1;}
 finally{save();await browser.close();}
+
 
