@@ -1,0 +1,44 @@
+[
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "beforeErrors": 13,
+    "afterErrors": 13,
+    "beforeWarnings": 18,
+    "afterWarnings": 18,
+    "addedErrors": [],
+    "beforeRules": {
+      "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders": 11,
+      "react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.": 1,
+      "react-hooks/immutability: Error: Cannot access variable before it is declared": 1
+    },
+    "afterRules": {
+      "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders": 11,
+      "react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.": 1,
+      "react-hooks/immutability: Error: Cannot access variable before it is declared": 1
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "beforeErrors": 2,
+    "afterErrors": 2,
+    "beforeWarnings": 1,
+    "afterWarnings": 1,
+    "addedErrors": [],
+    "beforeRules": {
+      "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders": 2
+    },
+    "afterRules": {
+      "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders": 2
+    }
+  },
+  {
+    "file": "src/hooks/usePortalBuildingContext.ts",
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "beforeWarnings": 0,
+    "afterWarnings": 0,
+    "addedErrors": [],
+    "beforeRules": {},
+    "afterRules": {}
+  }
+]

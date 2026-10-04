@@ -1,0 +1,46 @@
+[WebServer] (node:30492) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:26136) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:19364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 33 tests using 1 worker
+
+(node:20020) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\portal-load-lifecycle.spec.ts:11:5 › direct entry restores one portal snapshot and mounts Sales only in the resolved building (755ms)
+  ok  2 [chromium] › tests\portal-load-lifecycle.spec.ts:19:5 › Refresh reloads portal and Sales once; a unit price/status edit does not trigger another broad Sales load (808ms)
+  ok  3 [chromium] › tests\portal-load-lifecycle.spec.ts:28:5 › a late old Sales snapshot cannot replace refreshed figures or expose incomplete controls (974ms)
+  ok  4 [chromium] › tests\portal-load-lifecycle.spec.ts:48:5 › permission revocation on Refresh removes Sales even if an old read finishes later (918ms)
+  ok  5 [chromium] › tests\portal-load-lifecycle.spec.ts:63:5 › deactivated profile signs out and old portal/Sales reads do not restore it (760ms)
+  ok  6 [chromium] › tests\portal-load-lifecycle.spec.ts:70:5 › an access-read failure hides stale Sales and an explicit retry restores a complete snapshot (890ms)
+  ok  7 [chromium] › tests\portal-load-lifecycle.spec.ts:84:5 › token refresh loads one fresh snapshot; focus with changed role removes Sales (887ms)
+  ok  8 [chromium] › tests\portal-load-lifecycle.spec.ts:103:5 › saved building restores before Sales mounts; a building switch loads only the new Sales scope (834ms)
+  ok  9 [chromium] › tests\portal-load-lifecycle.spec.ts:119:5 › equal-count replacement uses fresh accessible membership; unrelated units do not cause another load (774ms)
+  ok 10 [chromium] › tests\portal-load-lifecycle.spec.ts:130:5 › sign-out during a delayed portal refresh cannot resurrect the previous profile (748ms)
+  ok 11 [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › request_authority preserves the four/five-request legal refresh without a broad reload (936ms)
+  ok 12 [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › confirm_exchange preserves the four/five-request legal refresh without a broad reload (994ms)
+  ok 13 [chromium] › tests\sales-legal-workflow.spec.ts:5:5 › completion package selects both PDFs, queries one file, preserves replacement history and unlocks legal completion only after approval (3.3s)
+  ok 14 [chromium] › tests\sales-legal-workflow.spec.ts:38:5 › completion combined drop zone keeps both files and independent upload leaves developer approval locked (1.7s)
+  ok 15 [chromium] › tests\sales-legal-workflow.spec.ts:49:5 › post-exchange deposit is locked before exchange, then records a full read-only receipt and audited correction (1.5s)
+  ok 16 [chromium] › tests\sales-legal-workflow.spec.ts:75:52 › developer views historical outstanding deposit but cannot record it (2.0s)
+  ok 17 [chromium] › tests\sales-legal-workflow.spec.ts:75:52 › sales_agent views historical outstanding deposit but cannot record it (1.1s)
+  ok 18 [chromium] › tests\sales-legal-workflow.spec.ts:82:54 › sales_agent sees issued outcomes and can request renewal only after expiry (1.3s)
+  ok 19 [chromium] › tests\sales-legal-workflow.spec.ts:82:54 › conveyancer sees issued outcomes and can request renewal only after expiry (1.6s)
+  ok 20 [chromium] › tests\sales-legal-workflow.spec.ts:99:5 › developer reviews exact recipients, confirms and preserves the sent authority (1.5s)
+  ok 21 [chromium] › tests\sales-legal-workflow.spec.ts:124:5 › missing recipient blocks email review and offers organisation settings (821ms)
+  ok 22 [chromium] › tests\sales-legal-workflow.spec.ts:132:5 › agent can request authority; conveyancer confirms exchange only while authority is valid (1.1s)
+  ok 23 [chromium] › tests\sales-legal-workflow.spec.ts:142:5 › completion statement approval does not release keys; conveyancer legal confirmation does (1.3s)
+  ok 24 [chromium] › tests\sales-legal-workflow.spec.ts:162:5 › historical completion retains dates and actor names with no invented timestamp (859ms)
+  ok 25 [chromium] › tests\sales-legal-workflow.spec.ts:171:56 › sales_agent requests notice authority while notice and later controls stay locked (854ms)
+  ok 26 [chromium] › tests\sales-legal-workflow.spec.ts:171:56 › conveyancer requests notice authority while notice and later controls stay locked (879ms)
+  ok 27 [chromium] › tests\sales-legal-workflow.spec.ts:185:5 › notice authority preview stays in Step 2, toggles accessibly and preserves failed sends (3.2s)
+  ok 28 [chromium] › tests\sales-legal-workflow.spec.ts:225:5 › developer reviews notice authority without a date and grants it directly (999ms)
+  ok 29 [chromium] › tests\sales-legal-workflow.spec.ts:238:5 › notice form stages PDF, preserves a manual due date, retries failures and retains replacement history (3.2s)
+  ok 30 [chromium] › tests\sales-legal-workflow.spec.ts:263:5 › Exchange remains selected after its final action when initially opened from the sale status (861ms)
+  ok 31 [chromium] › tests\sales-legal-workflow.spec.ts:273:5 › Completion remains selected after legal completion when initially opened from the sale status (929ms)
+  ok 32 [chromium] › tests\sales-loading.spec.ts:4:5 › staging without the name lookup still loads the Sales figures (802ms)
+  ok 33 [chromium] › tests\sales-loading.spec.ts:16:5 › Sales displays the underlying database error for failed required queries (815ms)
+
+  33 passed (43.7s)

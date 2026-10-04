@@ -1,0 +1,523 @@
+{
+  "instrumented-before-clean": [
+    {
+      "profile": "desktop",
+      "navigation": "cold",
+      "n": 5,
+      "readyMedianMs": 2095,
+      "readySlowestMs": 2206,
+      "readyRequests": [
+        96,
+        112
+      ],
+      "workFinishedMedianMs": 2777,
+      "quietWindowMedianMs": 4360,
+      "settledRequests": [
+        115,
+        115
+      ],
+      "readyCoreRequests": [
+        94,
+        110
+      ],
+      "settledCoreRequests": [
+        112,
+        112
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        3,
+        3
+      ],
+      "sameRequestRepeats": [
+        50,
+        50
+      ],
+      "tracedDataReads": [
+        95,
+        95
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "desktop",
+      "navigation": "repeat",
+      "n": 5,
+      "readyMedianMs": 1908,
+      "readySlowestMs": 1946,
+      "readyRequests": [
+        112,
+        112
+      ],
+      "workFinishedMedianMs": 2413,
+      "quietWindowMedianMs": 3977,
+      "settledRequests": [
+        115,
+        115
+      ],
+      "readyCoreRequests": [
+        110,
+        110
+      ],
+      "settledCoreRequests": [
+        112,
+        112
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        3,
+        3
+      ],
+      "sameRequestRepeats": [
+        50,
+        50
+      ],
+      "tracedDataReads": [
+        95,
+        95
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "mobile-throttled",
+      "navigation": "cold",
+      "n": 5,
+      "readyMedianMs": 7840,
+      "readySlowestMs": 7857,
+      "readyRequests": [
+        97,
+        98
+      ],
+      "workFinishedMedianMs": 9427,
+      "quietWindowMedianMs": 10973,
+      "settledRequests": [
+        115,
+        115
+      ],
+      "readyCoreRequests": [
+        95,
+        96
+      ],
+      "settledCoreRequests": [
+        112,
+        112
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        3,
+        3
+      ],
+      "sameRequestRepeats": [
+        50,
+        50
+      ],
+      "tracedDataReads": [
+        95,
+        95
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "mobile-throttled",
+      "navigation": "repeat",
+      "n": 5,
+      "readyMedianMs": 4756,
+      "readySlowestMs": 4846,
+      "readyRequests": [
+        98,
+        98
+      ],
+      "workFinishedMedianMs": 6151,
+      "quietWindowMedianMs": 7705,
+      "settledRequests": [
+        115,
+        115
+      ],
+      "readyCoreRequests": [
+        96,
+        96
+      ],
+      "settledCoreRequests": [
+        112,
+        112
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        3,
+        3
+      ],
+      "sameRequestRepeats": [
+        50,
+        50
+      ],
+      "tracedDataReads": [
+        95,
+        95
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    }
+  ],
+  "instrumented-before-clean-events": [
+    {
+      "scope": "auth",
+      "event": "SIGNED_IN",
+      "phase": "trigger",
+      "at": 258.7000000476837
+    },
+    {
+      "scope": "portal",
+      "event": "auth:SIGNED_IN",
+      "phase": "start",
+      "at": 258.7000000476837
+    },
+    {
+      "scope": "auth",
+      "event": "INITIAL_SESSION",
+      "phase": "trigger",
+      "at": 259.60000002384186
+    },
+    {
+      "scope": "portal",
+      "event": "auth:INITIAL_SESSION",
+      "phase": "start",
+      "at": 259.60000002384186
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "start",
+      "at": 365.3000000715256
+    },
+    {
+      "scope": "portal",
+      "event": "auth:SIGNED_IN",
+      "phase": "published",
+      "at": 1235.2000000476837
+    },
+    {
+      "scope": "portal",
+      "event": "auth:INITIAL_SESSION",
+      "phase": "published",
+      "at": 1486.2000000476837
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "published",
+      "at": 1693.3000000715256
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "trigger",
+      "at": 1705.3000000715256
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "start",
+      "at": 1705.8999999761581
+    },
+    {
+      "scope": "sales",
+      "event": "building-switch",
+      "phase": "trigger",
+      "at": 1715.6000000238419
+    },
+    {
+      "scope": "sales",
+      "event": "building-switch",
+      "phase": "start",
+      "at": 1715.6000000238419
+    },
+    {
+      "scope": "sales",
+      "event": "building-switch",
+      "phase": "published",
+      "at": 2649
+    },
+    {
+      "scope": "sales",
+      "event": "building-switch",
+      "phase": "settled",
+      "at": 2649
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "settled",
+      "at": 2657.3000000715256
+    }
+  ],
+  "instrumented-before-clean-reads": {
+    "portal:auth:SIGNED_IN": 25,
+    "portal:auth:INITIAL_SESSION": 25,
+    "portal:session-restoration": 25,
+    "sales:mount": 10,
+    "sales:building-switch": 10
+  },
+  "after-final": [
+    {
+      "profile": "desktop",
+      "navigation": "cold",
+      "n": 5,
+      "readyMedianMs": 2094,
+      "readySlowestMs": 2156,
+      "readyRequests": [
+        54,
+        54
+      ],
+      "workFinishedMedianMs": 1879,
+      "quietWindowMedianMs": 3421,
+      "settledRequests": [
+        54,
+        54
+      ],
+      "readyCoreRequests": [
+        52,
+        52
+      ],
+      "settledCoreRequests": [
+        52,
+        52
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        2,
+        2
+      ],
+      "sameRequestRepeats": [
+        0,
+        0
+      ],
+      "tracedDataReads": [
+        35,
+        35
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "desktop",
+      "navigation": "repeat",
+      "n": 5,
+      "readyMedianMs": 1911,
+      "readySlowestMs": 1944,
+      "readyRequests": [
+        54,
+        54
+      ],
+      "workFinishedMedianMs": 1453,
+      "quietWindowMedianMs": 3008,
+      "settledRequests": [
+        54,
+        54
+      ],
+      "readyCoreRequests": [
+        52,
+        52
+      ],
+      "settledCoreRequests": [
+        52,
+        52
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        2,
+        2
+      ],
+      "sameRequestRepeats": [
+        0,
+        0
+      ],
+      "tracedDataReads": [
+        35,
+        35
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "mobile-throttled",
+      "navigation": "cold",
+      "n": 5,
+      "readyMedianMs": 7317,
+      "readySlowestMs": 7375,
+      "readyRequests": [
+        54,
+        54
+      ],
+      "workFinishedMedianMs": 6848,
+      "quietWindowMedianMs": 8404,
+      "settledRequests": [
+        54,
+        54
+      ],
+      "readyCoreRequests": [
+        52,
+        52
+      ],
+      "settledCoreRequests": [
+        52,
+        52
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        2,
+        2
+      ],
+      "sameRequestRepeats": [
+        0,
+        0
+      ],
+      "tracedDataReads": [
+        35,
+        35
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    },
+    {
+      "profile": "mobile-throttled",
+      "navigation": "repeat",
+      "n": 5,
+      "readyMedianMs": 3746,
+      "readySlowestMs": 3795,
+      "readyRequests": [
+        54,
+        54
+      ],
+      "workFinishedMedianMs": 3421,
+      "quietWindowMedianMs": 4963,
+      "settledRequests": [
+        54,
+        54
+      ],
+      "readyCoreRequests": [
+        52,
+        52
+      ],
+      "settledCoreRequests": [
+        52,
+        52
+      ],
+      "telemetry": [
+        0,
+        0
+      ],
+      "polling": [
+        2,
+        2
+      ],
+      "sameRequestRepeats": [
+        0,
+        0
+      ],
+      "tracedDataReads": [
+        35,
+        35
+      ],
+      "httpErrors": 0,
+      "browserFailures": 0,
+      "timedOut": false
+    }
+  ],
+  "after-final-events": [
+    {
+      "scope": "auth",
+      "event": "SIGNED_IN",
+      "phase": "trigger",
+      "at": 303
+    },
+    {
+      "scope": "auth",
+      "event": "INITIAL_SESSION",
+      "phase": "trigger",
+      "at": 303.5
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "trigger",
+      "at": 375.89999997615814
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "start",
+      "at": 375.89999997615814
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "published",
+      "at": 1144.1999999284744
+    },
+    {
+      "scope": "portal",
+      "event": "session-restoration",
+      "phase": "settled",
+      "at": 1144.1999999284744
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "trigger",
+      "at": 1151.2999999523163
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "start",
+      "at": 1151.2999999523163
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "published",
+      "at": 2068.1999999284744
+    },
+    {
+      "scope": "sales",
+      "event": "mount",
+      "phase": "settled",
+      "at": 2068.1999999284744
+    }
+  ],
+  "after-final-reads": {
+    "portal:session-restoration": 25,
+    "sales:mount": 10
+  }
+}
