@@ -2,6 +2,8 @@
 
 import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
 import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
+import { createLoadCoordinator, createSessionLifecycle } from "@/lib/portal-load-lifecycle";
+import { portalAccessKey } from "@/lib/portal-access-snapshot";
 import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
 import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
@@ -852,6 +854,8 @@ export function ProductionPortalApp() {
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
   const lastActivityPingAtRef = useRef(0);
   const lastActivityAtRef = useRef<string | null>(null);
+  const portalLoads = useRef(createLoadCoordinator("portal"));
+  const loadedAccessKey = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -861,7 +865,7 @@ export function ProductionPortalApp() {
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds, buildingOrganisations), [accessibleBuildingIds, accessibleUnitIds, buildingOrganisations, profile, snags]);
-  const { buildingContextId, setBuildingContextId } = usePortalBuildingContext({
+  const { buildingContextId, setBuildingContextId, contextReady } = usePortalBuildingContext({
     userId: profile?.id,
     buildings: scopedBuildings,
     ready: !isLoading && Boolean(profile),
@@ -891,6 +895,8 @@ export function ProductionPortalApp() {
   }
 
   function clearPortalState() {
+    portalLoads.current.invalidate();
+    loadedAccessKey.current = null;
     setUser(null);
     setProfile(null);
     setActiveTab("dashboard");
@@ -946,6 +952,25 @@ export function ProductionPortalApp() {
 
     const supabase = createSupabaseBrowserClient();
     const redirectState = readAuthRedirectState();
+    let cancelled = false;
+    const lifecycle = createSessionLifecycle<User>({
+      validate: async () => {
+        const { data, error } = await supabase.auth.getUser();
+        if (error && !isMissingSessionError(error)) throw error;
+        return data.user;
+      },
+      load: async (verifiedUser, event) => {
+        setUser(verifiedUser);
+        setProfile(null);
+        setNotice("");
+        setSalesRefreshRevision(value => value + 1);
+        await loadAll(verifiedUser.id, verifiedUser.email, event);
+      },
+      clear: clearPortalState,
+      invalidate: () => portalLoads.current.invalidate(),
+      recheck: recheckPortalAccess,
+      error: error => setNotice(readableError(error)),
+    });
 
     if (redirectState) {
       setAuthRedirect(redirectState);
@@ -971,26 +996,10 @@ export function ProductionPortalApp() {
     sessionReady
       .then(async ({ error: sessionError }) => {
         if (sessionError) throw sessionError;
-        return supabase.auth.getUser();
-      })
-      .then(async ({ data, error }) => {
-        if (error) {
-          if (isStaleRefreshTokenError(error)) {
-            await supabase.auth.signOut({ scope: "local" });
-          } else if (!isMissingSessionError(error)) {
-            setNotice(error.message);
-          } else {
-            setNotice("");
-          }
-          clearPortalState();
-          return;
-        }
-
-        setUser(data.user);
-        if (data.user) await loadAll(data.user.id, data.user.email, "session-restoration");
-        else clearPortalState();
+        await lifecycle.restore();
       })
       .catch(async (error: unknown) => {
+        if (cancelled) return;
         if (isStaleRefreshTokenError(error)) {
           await supabase.auth.signOut({ scope: "local" });
           clearPortalState();
@@ -1001,20 +1010,13 @@ export function ProductionPortalApp() {
           setNotice(error instanceof Error ? error.message : "Could not restore session.");
         }
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (!cancelled) setIsLoading(false); });
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      traceLoad("auth", event, "trigger");
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setNotice("");
-        void loadAll(session.user.id, session.user.email, `auth:${event}`);
-      } else if (event === "SIGNED_OUT") {
-        clearPortalState();
-      }
+      lifecycle.observe(event, session);
     });
 
-    return () => data.subscription.unsubscribe();
+    return () => { cancelled = true; lifecycle.dispose(); portalLoads.current.invalidate(); data.subscription.unsubscribe(); };
   }, [supabaseEnabled]);
 
   useEffect(() => {
@@ -1112,25 +1114,30 @@ export function ProductionPortalApp() {
 
   async function refreshLegalPortalData(unitId: string, action: string) {
     if (!legalRefreshScope(action).unit) return;
+    return portalLoads.current.run(`legal:${unitId}`, "legal-action", async valid => {
+    if (!valid()) return;
     const supabase = createSupabaseBrowserClient();
     const previous = units.find(unit => unit.id === unitId);
     const result = await supabase.from("units").select("*").eq("id", unitId).single();
     if (result.error) throw result.error;
+    if (!valid()) return;
     const fresh = result.data as Unit;
     setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
     if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
       // Rental exit appends an audit event. Preserve the global log's page/count.
       const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
       if (audit.error) throw audit.error;
+      if (!valid()) return;
       setAuditEvents((audit.data ?? []) as AuditEvent[]);
       setAuditTotalCount(audit.count ?? audit.data?.length ?? 0);
     }
+    }, true);
   }
 
   async function loadAll(userId = user?.id, userEmail = user?.email, event = "operation-refresh") {
     if (!userId) return;
-
-    traceLoad("portal", event, "start");
+    return portalLoads.current.run(userId, event, async valid => {
+    if (!valid()) return;
     const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
     const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
     let profileResult = await supabase
@@ -1148,6 +1155,9 @@ export function ProductionPortalApp() {
     }
 
     const loadedProfile = profileResult.data as Profile | null;
+    if (!valid()) return;
+    if (profileResult.error) throw profileResult.error;
+    if (!loadedProfile) throw new Error("Your portal profile is unavailable. Contact Bunnywell to check your access.");
 
     if (loadedProfile?.active === false) {
       await supabase.auth.signOut({ scope: "local" });
@@ -1206,6 +1216,12 @@ export function ProductionPortalApp() {
       supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
       supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
     ]);
+
+    if (!valid()) return;
+
+    const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
+    if (accessError) throw accessError;
+    loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
 
     const firstError = [
       buildingsResult.error,
@@ -1281,6 +1297,24 @@ export function ProductionPortalApp() {
     ])));
     setLastDataRefreshAt(new Date().toISOString());
     traceLoad("portal", event, "published");
+    }, event === "explicit-refresh" || event === "operation-refresh" || event.startsWith("auth:"));
+  }
+
+  async function recheckPortalAccess(verifiedUser: User) {
+    const previousAccessKey = loadedAccessKey.current;
+    const client = tracedClient(createSupabaseBrowserClient(), "access", "auth:SIGNED_IN");
+    const [person, unitAccess, buildingAccess, links] = await Promise.all([
+      client.from("profiles").select("id,role,active,organisation_id").eq("id", verifiedUser.id).maybeSingle(),
+      client.from("user_unit_access").select("unit_id").eq("user_id", verifiedUser.id),
+      client.from("user_building_access").select("building_id").eq("user_id", verifiedUser.id),
+      client.from("building_organisations").select("building_id,organisation_id,role_on_project,active"),
+    ]);
+    if (previousAccessKey !== loadedAccessKey.current) return false;
+    const error = [person.error, unitAccess.error, buildingAccess.error, links.error].find(Boolean);
+    if (error) { portalLoads.current.invalidate(); setProfile(null); throw error; }
+    const changed = portalAccessKey(person.data, unitAccess.data ?? [], buildingAccess.data ?? [], links.data ?? []) !== loadedAccessKey.current;
+    traceLoad("access", "auth:SIGNED_IN", changed ? "changed" : "unchanged");
+    return changed;
   }
 
   async function uploadStorageBlob(path: string, blob: Blob, contentType: string) {
@@ -1519,7 +1553,7 @@ export function ProductionPortalApp() {
           uploadSnagMedia={uploadSnagMedia}
         />
       )}
-      {activeTab === "sales" && (
+      {activeTab === "sales" && contextReady && (
         <SalesReservationWorkflow
           user={user}
           profile={profile}

@@ -6,6 +6,7 @@ import { SalesTableScroll } from "./SalesTableScroll";
 import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
 import { salesLoadErrorMessage } from "@/lib/sales/load-errors";
 import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
+import { createLoadCoordinator, salesMembershipKey } from "@/lib/portal-load-lifecycle";
 import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -861,6 +862,9 @@ export function SalesReservationWorkflow({
   salesRefreshKey?: string | null;
 }) {
   const salesLoadRevision = useRef(0);
+  const salesLoads = useRef(createLoadCoordinator("sales"));
+  const fullSalesLoad = useRef<Promise<void> | null>(null);
+  const [loadedSalesKey, setLoadedSalesKey] = useState<string | null>(null);
   const currentBuilding = useRef(buildingContextId);
   useEffect(() => { currentBuilding.current = buildingContextId; }, [buildingContextId]);
   const commercialModelControlRef = useRef<HTMLDivElement | null>(null);
@@ -877,6 +881,11 @@ export function SalesReservationWorkflow({
     ),
     [buildingFloors, buildingId, units],
   );
+  const membershipKey = salesMembershipKey(buildingUnits);
+  const salesKey = JSON.stringify([user.id, profile?.role, profile?.organisation_id, buildingId, membershipKey, salesRefreshKey]);
+  const currentSalesKey = useRef(salesKey);
+  useEffect(() => { currentSalesKey.current = salesKey; }, [salesKey]);
+  useEffect(() => () => { salesLoads.current.invalidate(); salesLoadRevision.current++; }, []);
   const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
   const [saleActorNames, setSaleActorNames] = useState<SaleActorName[]>([]);
   const profiles: SaleActorProfile[] = [
@@ -1746,9 +1755,13 @@ export function SalesReservationWorkflow({
 
   async function refreshLegalSale(sale: string, action: string) {
     const building = buildingId;
+    // A scoped result is only safe to merge into an already complete snapshot.
+    await fullSalesLoad.current;
+    if (currentSalesKey.current !== salesKey) return;
+    salesLoads.current.invalidate();
     const revision = ++salesLoadRevision.current;
     const fresh = await loadLegalSaleChanges(createSupabaseBrowserClient(), sale, action);
-    if (currentBuilding.current !== building || revision !== salesLoadRevision.current) return;
+    if (currentBuilding.current !== building || currentSalesKey.current !== salesKey || revision !== salesLoadRevision.current) return;
     setIsLoading(false);
     setAttempts(rows => replaceRowsById(rows, [fresh.attempt as SaleAttempt]));
     setSaleActorNames(rows => replaceRowsById(rows, fresh.actors as SaleActorName[]));
@@ -1765,11 +1778,12 @@ export function SalesReservationWorkflow({
     window.dispatchEvent(new CustomEvent("sale-activity-changed", { detail: sale }));
   }
 
-  async function loadSalesData(event = "operation-refresh") {
-    traceLoad("sales", event, "start");
+  function loadSalesData(event = "operation-refresh") {
+    const promise = salesLoads.current.run(salesKey, event, async current => {
+    if (!current() || currentSalesKey.current !== salesKey) return;
     const revision = ++salesLoadRevision.current;
     const building = buildingId;
-    const valid = () => revision === salesLoadRevision.current && currentBuilding.current === building;
+    const valid = () => current() && revision === salesLoadRevision.current && currentBuilding.current === building && currentSalesKey.current === salesKey;
     setIsLoading(true);
     try {
       const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), buildingUnits.map(unit => unit.id), building);
@@ -1784,30 +1798,33 @@ export function SalesReservationWorkflow({
       setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
       setSaleActorNames(fresh.actors as SaleActorName[]);
       setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
+      setLoadedSalesKey(salesKey);
       traceLoad("sales", event, "published");
       if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
     } catch (error) {
       if (valid()) onNotice(salesLoadErrorMessage(error));
+      throw error;
     } finally {
       if (valid()) setIsLoading(false);
-      traceLoad("sales", event, "settled");
     }
+    }, event === "operation-refresh");
+    fullSalesLoad.current = promise;
+    return promise;
   }
 
   const previousLoadInputs = useRef<string[] | null>(null);
   useEffect(() => {
-    const inputs = [buildingId, String(units.length), String(salesRefreshKey)];
+    const inputs = [buildingId, membershipKey, String(salesRefreshKey)];
     const before = previousLoadInputs.current;
-    const event = !before ? "mount" : before[0] !== inputs[0] ? "building-switch" : before[1] !== inputs[1] ? "unit-count" : "refresh-key";
+    const event = !before ? "mount" : before[0] !== inputs[0] ? "building-switch" : before[1] !== inputs[1] ? "unit-membership" : "access-or-refresh-key";
     previousLoadInputs.current = inputs;
-    traceLoad("sales", event, "trigger");
-    void Promise.resolve().then(() => loadSalesData(event));
+    void loadSalesData(event).catch(() => { /* The loader displays the required-read error. */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildingId, units.length, salesRefreshKey]);
+  }, [salesKey]);
 
   useEffect(() => {
-    if (!isLoading && selectedSaleUnitId && activeWorkflowStage !== "exchange" && activeWorkflowStage !== "completion") salesNavigationReady();
-  }, [isLoading, selectedSaleUnitId, activeWorkflowStage]);
+    if (!isLoading && loadedSalesKey === salesKey && selectedSaleUnitId && activeWorkflowStage !== "exchange" && activeWorkflowStage !== "completion") salesNavigationReady();
+  }, [isLoading, loadedSalesKey, salesKey, selectedSaleUnitId, activeWorkflowStage]);
 
   function resetCommercialModelDraft() {
     setCommercialSetupChanged(false);
@@ -2303,6 +2320,10 @@ export function SalesReservationWorkflow({
 
 
 
+
+  if (loadedSalesKey !== salesKey) {
+    return <section className="panel" aria-busy={isLoading} aria-label="Sales loading"><h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2><p className="mt-2 text-sm text-[#617169]">{isLoading ? "Loading sales data..." : "Sales data could not be loaded. Use Refresh to try again."}</p></section>;
+  }
 
   if (!selectedSaleUnitId) {
     if (activeSalesView === "agent_fees" && canViewAgentFeesPortfolio) {

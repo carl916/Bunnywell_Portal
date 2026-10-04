@@ -15,6 +15,7 @@ export function traceLoad(scope: string, event: string, phase: string, resource?
 }
 
 export function tracedClient(client: SupabaseClient, scope: string, event: string): SupabaseClient {
+  if (typeof window === "undefined" || !window.portalLoadTracing) return client;
   function query<T extends object>(target: T, resource: string): T {
     return new Proxy(target, { get(object, key) {
       const value = Reflect.get(object, key);

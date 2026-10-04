@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const BUILDING_CONTEXT_PARAM = "building";
 const BUILDING_CONTEXT_STORAGE_PREFIX = "bunnywell.portal.buildingContext";
@@ -52,7 +52,7 @@ export function usePortalBuildingContext({
   ready: boolean;
 }) {
   const [buildingContextId, setBuildingContextState] = useState("");
-  const initializedUserId = useRef<string | null>(null);
+  const [initializedUserId, setInitializedUserId] = useState<string | null>(null);
   const accessibleBuildingIds = useMemo(() => buildings.map((building) => building.id), [buildings]);
   const persistContext = useCallback((nextBuildingId: string) => {
     if (!userId || typeof window === "undefined") return;
@@ -81,22 +81,27 @@ export function usePortalBuildingContext({
       savedValue,
     });
 
-    if (initializedUserId.current !== userId) {
-      initializedUserId.current = userId;
-      setBuildingContextState(nextBuildingId);
-      persistContext(nextBuildingId);
-      return;
+    if (initializedUserId !== userId) {
+      const timer = window.setTimeout(() => {
+        setInitializedUserId(userId);
+        setBuildingContextState(nextBuildingId);
+        persistContext(nextBuildingId);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
-    setBuildingContextState((currentBuildingId) => {
+    const timer = window.setTimeout(() => {
       const validBuildingId = resolveBuildingContext({
         accessibleBuildingIds,
-        canonicalValue: currentBuildingId || "all",
+        canonicalValue: buildingContextId || "all",
       });
-      if (validBuildingId !== currentBuildingId) persistContext(validBuildingId);
-      return validBuildingId;
-    });
-  }, [accessibleBuildingIds, persistContext, ready, userId]);
+      if (validBuildingId !== buildingContextId) {
+        setBuildingContextState(validBuildingId);
+        persistContext(validBuildingId);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [accessibleBuildingIds, buildingContextId, initializedUserId, persistContext, ready, userId]);
 
   useEffect(() => {
     if (!ready || !userId || typeof window === "undefined") return;
@@ -117,5 +122,7 @@ export function usePortalBuildingContext({
     return () => window.removeEventListener("popstate", handlePopState);
   }, [accessibleBuildingIds, ready, userId]);
 
-  return { buildingContextId, setBuildingContextId };
+  const contextReady = ready && initializedUserId === userId
+    && (!buildingContextId || accessibleBuildingIds.includes(buildingContextId));
+  return { buildingContextId, setBuildingContextId, contextReady };
 }
