@@ -12,6 +12,7 @@ import {
 import { canPerformSalesAction } from "../src/lib/sales/permissions.ts";
 import { calculateAgentInvoicePreview } from "../src/lib/sales/commercial-model.ts";
 
+const refreshSource = readFileSync("src/lib/sales/action-refresh.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
@@ -152,7 +153,9 @@ test("payments append transactionally and survive client reload", () => {
   assert.match(migrationSource, /client_reference = p_client_reference/);
   assert.match(migrationSource, /unit_sale_invoice_payments_client_reference_idx/);
   assert.match(migrationSource, /drop policy if exists "commercial admins manage sale invoice payments"/);
-  assert.match(workflowSource, /unit_sale_invoice_payments"\)\.select\("\*"\)/);
+  assert.match(refreshSource, /unit_sale_invoice_payments"\)\.select\("\*"\)\.in\("sale_attempt_id", sales\)/);
+  assert.match(workflowSource, /loadBuildingSalesData/);
+  assert.match(workflowSource, /setInvoicePayments\(fresh.payments/);
   assert.match(workflowSource, /await Promise\.all\(\[loadSalesData\(\), reloadPortalData\(\)\]\)/);
 });
 

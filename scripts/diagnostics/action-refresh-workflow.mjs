@@ -9,9 +9,10 @@ import { jsPDF } from 'jspdf';
 dotenv.config({path:'.env.local',quiet:true});
 const origin='https://staging.bunnywell.co.uk';
 const env=process.env;
+if(new URL(env.NEXT_PUBLIC_SUPABASE_URL).hostname!=='vxkpvdtrldwwqiddoyof.supabase.co')throw new Error('Only the verified staging project is authorised.');
 if(env.SALES_PERF_ALLOW_STAGING_MUTATIONS!=='1')throw new Error('Explicit staging diagnostic opt-in required.');
-const scope=JSON.parse(fs.readFileSync('.next/performance/staging-test-sales.json','utf8'));
-const verified=JSON.parse(fs.readFileSync('.next/performance/staging-access.json','utf8'));
+const scope=JSON.parse(fs.readFileSync('work/staging-test-sales.json','utf8'));
+const verified=JSON.parse(fs.readFileSync('work/staging-access.json','utf8'));
 if(!verified.matched)throw new Error('Staging project was not verified.');
 const output=`${out}/workflow-samples.json`;
 const samples=fs.existsSync(output)?JSON.parse(fs.readFileSync(output,'utf8')):[];
@@ -29,8 +30,9 @@ async function post(role,path,body){
   const response=await fetch(origin+path,{method:'POST',headers:{Authorization:`Bearer ${tokens[role]}`,...(body instanceof FormData?{}:{'Content-Type':'application/json'})},body:body instanceof FormData?body:JSON.stringify(body)});
   if(!response.ok)throw new Error(`Fixture setup rejected: ${response.status}`);return response.json();
 }
-const units=scope.units.filter(u=>Number(u.unit_number)>=111&&Number(u.unit_number)<=114);
-if(units.some(u=>Number(u.unit_number)<111||Number(u.unit_number)>114))throw new Error('Fixture outside authorised refresh scope.');
+const allowedUnits=[111,112,113,114,201,202,203,204];
+const units=scope.units.filter(u=>allowedUnits.includes(Number(u.unit_number)));
+if(units.some(u=>!allowedUnits.includes(Number(u.unit_number))))throw new Error('Fixture outside authorised refresh scope.');
 if(units.length!==4)throw new Error('Expected four fresh authorised units.');
 // Preparation uses the normal reservation API, never direct status/approval edits.
 for(const unit of units){
@@ -58,6 +60,30 @@ function browserObserver(){
 }
 function category(request){const path=new URL(request.url()).pathname;if(path==='/api/sales/legal')return 'legal';if(path.includes('/rest/v1/'))return path.split('/').at(-1).replace(/[^a-z_]/g,'');if(path.includes('/auth/'))return 'auth';if(path.endsWith('.js'))return 'javascript';return 'other';}
 const measure=recorder(samples,output);
+const displayed=[];
+async function verifySwitch(page,unit,stage,action){
+  const picker=page.locator('[data-sale-file] select').filter({has:page.locator('option[value="'+unit.id+'"]')});
+  const option=await picker.locator('option:checked').innerText();
+  const other=units.find(item=>item.id!==unit.id);
+  await picker.selectOption(other.id);await page.getByRole('heading',{name:'Unit '+other.unit_number,exact:true}).waitFor();
+  await picker.selectOption(unit.id);await page.getByRole('heading',{name:'Unit '+unit.unit_number,exact:true}).waitFor();
+  await page.getByRole('button',{name:new RegExp('^'+stage+'\\b')}).click();
+  await page.getByRole('list',{name:stage+' tasks',exact:true}).waitFor();
+  if(await picker.locator('option:checked').innerText()!==option)throw new Error('Sale status changed after cached switch.');
+  const good=action==='authority.request'?await page.getByText(/Requested by/).count()>0:action==='authority.issue'?await page.getByText('Active',{exact:true}).count()>0:action==='exchange.record'?/Exchanged/.test(option):action==='completion.documents_approve'?await page.getByText('Completion documents approved',{exact:true}).count()>0:action==='completion.record'?/Completed/.test(option):true;
+  if(!good)throw new Error('Displayed state verification failed.');
+  if(action.startsWith('completion.documents_upload')) {
+    if(!(await page.locator('#completion-documents-step').getByText('synthetic-completion.pdf',{exact:true}).first().isVisible()))throw new Error('Current completion version not visible.');
+    if(action.includes('two-')&&!(await page.getByText('Both current documents uploaded.',{exact:true}).isVisible()))throw new Error('Current document pair not visible.');
+  }
+  await page.getByRole('tab',{name:/^Commercial/}).click();
+  const price=await page.locator('[data-testid="commercial-summary-cards"]').getByText('Contract price',{exact:true}).locator('..').locator('strong').innerText();
+  if(price!=='£250,000')throw new Error('Commercial figures changed unexpectedly.');
+  await page.getByRole('tab',{name:/^Progression/}).click();
+  await page.getByRole('button',{name:new RegExp('^'+stage+'\\b')}).click();await page.getByRole('list',{name:stage+' tasks',exact:true}).waitFor();
+  displayed.push({unit:Number(unit.unit_number),action,switchedToOtherAndBack:true,statusConsistent:true,legalDataConsistent:true,commercialFiguresConsistent:true});fs.writeFileSync(out+'/displayed-data.json',JSON.stringify(displayed,null,2));
+  await page.waitForLoadState('networkidle');
+}
 async function open(role,unit,stage='Exchange'){
   const page=pages[role];await page.goto(`${origin}/?screen=sales&building=${scope.buildingId}&salesUnitId=${unit.id}`);await page.getByRole('button',{name:new RegExp(`^${stage}\\b`)}).click();await page.getByRole('list',{name:`${stage} tasks`,exact:true}).waitFor();return page;
 }
@@ -74,13 +100,16 @@ try{
     let page=await open('agent',unit);
     const navigationCdp=await contexts.agent.newCDPSession(page);await navigationCdp.send('Network.enable');await navigationCdp.send('Network.clearBrowserCache');
     for(const mode of ['cold','repeat'])await measure(page,`sale.open.${mode}`,run,profile,()=>page.reload(),()=>page.getByRole('list',{name:'Exchange tasks',exact:true}).waitFor());
-    await measure(page,'authority.request',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Request authority to exchange',exact:true}),'Exchange authority requested. The developer has been notified.'),async()=>{});
+    if(await page.getByRole('button',{name:'Request authority to exchange',exact:true}).count()) await measure(page,'authority.request',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Request authority to exchange',exact:true}),'Exchange authority requested. The developer has been notified.'),async()=>{});
+    await verifySwitch(page,unit,'Exchange','authority.request');
     page=await open('admin',unit);const preview=page.getByRole('region',{name:'Final confirmation and email preview',exact:true});
     await measure(page,'authority.preview_open',run,profile,()=>page.getByRole('button',{name:'Review authority and email',exact:true}).click(),()=>preview.waitFor());
     await preview.getByRole('checkbox').check();
     await measure(page,'authority.issue',run,profile,()=>clickOutcome(page,preview.getByRole('button',{name:'Issue authority to exchange',exact:true}),'Authority to exchange issued.'),async()=>{});
+    await verifySwitch(page,unit,'Exchange','authority.issue');
     page=await open('conveyancer',unit);await page.getByLabel('Actual exchange date',{exact:true}).fill(today);
     await measure(page,'exchange.record',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Confirm exchange',exact:true}),'Exchange confirmed.'),async()=>{});
+    await verifySwitch(page,unit,'Exchange','exchange.record');
     await measure(page,'completion.open',run,profile,()=>page.getByRole('button',{name:/^Completion\b/}).click(),()=>page.getByRole('list',{name:'Completion tasks',exact:true}).waitFor());
     page=await open('admin',unit,'Completion');await page.getByRole('button',{name:'Review authority to serve notice and email',exact:true}).click();await page.getByRole('region',{name:'Final confirmation and email preview'}).getByRole('checkbox').check();await measure(page,'notice.authority_issue',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Give authority to serve notice',exact:true}),'Authority to serve notice given.'),async()=>{});
     page=await open('conveyancer',unit,'Completion');await page.getByLabel('Notice PDF',{exact:true}).setInputFiles({name:'synthetic-notice.pdf',mimeType:'application/pdf',buffer:pdf()});await page.getByLabel('Notice issue date',{exact:true}).fill(today);await page.getByLabel('Completion due date',{exact:true}).fill(today);await measure(page,'notice.arrangements_confirm',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Confirm completion arrangements',exact:true}),'Completion arrangements confirmed. The notice PDF and dates have been saved.'),async()=>{});
@@ -93,11 +122,14 @@ try{
         if(response.status()===413){await page.getByRole('alert').filter({hasText:/Unexpected|JSON|upload|large/i}).first().waitFor({timeout:60000});return;}
         if(!response.ok())throw new Error('Upload rejected');await page.getByText('Completion documents uploaded. Developer approval is required for the current files.',{exact:true}).waitFor({timeout:60000});await docs.locator('[role="group"][aria-label^="Selected "]').first().waitFor({state:'detached',timeout:60000});
       },async()=>{});
+      await verifySwitch(page,unit,'Completion','completion.documents_upload.'+label);
       while(await docs.getByRole('button',{name:'Remove',exact:true}).count())await docs.getByRole('button',{name:'Remove',exact:true}).first().click();
     }
     page=await open('admin',unit,'Completion');await measure(page,'completion.documents_approve',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Approve completion documents',exact:true}),'Completion documents approved.'),async()=>{});
+    await verifySwitch(page,unit,'Completion','completion.documents_approve');
     page=await open('conveyancer',unit,'Completion');await page.getByLabel('Actual legal completion date and time (your local time)').fill(`${today}T12:00`);await page.getByRole('checkbox',{name:/I confirm legal completion/}).check();await measure(page,'completion.record',run,profile,()=>clickOutcome(page,page.getByRole('button',{name:'Confirm legal completion',exact:true}),'Legal completion confirmed. Handover is now available.'),async()=>{});
+    await verifySwitch(page,unit,'Completion','completion.record');
   }
-}catch(error){console.log(JSON.stringify({stopped:error.message?.startsWith('Diagnostic step')?error.message:'A diagnostic setup/navigation step failed. No sensitive error context was saved.'}));process.exitCode=1;}
+}catch(error){console.log(JSON.stringify({stopped:error.message?.split('\n')[0]?.slice(0,240)}));process.exitCode=1;}
 finally{save();await browser.close();}
 

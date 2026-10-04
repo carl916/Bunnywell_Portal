@@ -847,6 +847,7 @@ export function ProductionPortalApp() {
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
+  const [salesRefreshRevision, setSalesRefreshRevision] = useState(0);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
   const lastActivityPingAtRef = useRef(0);
   const lastActivityAtRef = useRef<string | null>(null);
@@ -1426,7 +1427,7 @@ export function ProductionPortalApp() {
       buildingContextId={buildingContextId}
       onBuildingContextChange={setBuildingContextId}
       lastUpdatedAt={lastDataRefreshAt}
-      onRefresh={() => loadAll()}
+      onRefresh={async () => { await loadAll(); setSalesRefreshRevision(value => value + 1); }}
       onSignOut={signOut}
     >
       {activeTab === "dashboard" && (
@@ -1527,7 +1528,7 @@ export function ProductionPortalApp() {
           onNotice={setNotice}
           reloadPortalData={() => loadAll()}
           refreshLegalPortalData={refreshLegalPortalData}
-          salesRefreshKey={lastDataRefreshAt}
+          salesRefreshKey={String(salesRefreshRevision)}
         />
       )}
       {activeTab === "rentals" && (

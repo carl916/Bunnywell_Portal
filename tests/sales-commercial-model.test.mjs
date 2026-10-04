@@ -8,6 +8,7 @@ import { validateAgentFeeStructure } from "../src/lib/sales/agent-fees.ts";
 import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
+const refreshSource = readFileSync("src/lib/sales/action-refresh.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
@@ -278,7 +279,8 @@ test("reservation approval uses the form date and developer reject action", () =
 
 test("reservation UI keeps document and activity history visible", () => {
   assert.match(workflowSource, /DocumentVersionHistory/);
-  assert.match(workflowSource, /unit_sale_document_versions"\)\s+\.select\("\*"\)\s+\.in\("document_id", documentIds\)\s+\.order\("version_number"/);
+  assert.match(refreshSource, /unit_sale_document_versions"\)\.select\("\*"\)\.in\("document_id", ids\)\.order\("version_number"/);
+  assert.match(workflowSource, /setVersions\(fresh.versions/);
   assert.match(workflowSource, /<SalesLegalWorkflow/);
   assert.match(workflowSource, /<SaleConversationLayout/);
   assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /Load older activity/);

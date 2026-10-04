@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
-const { legalRefreshScope, loadLegalSaleChanges, replaceSaleRows, replaceRowsById, runAndRefresh, settleRefreshes } = loadTypescriptModule('src/lib/sales/action-refresh.ts');
+const { legalRefreshScope, loadLegalSaleChanges, loadBuildingSalesData, replaceSaleRows, replaceRowsById, runAndRefresh, settleRefreshes } = loadTypescriptModule('src/lib/sales/action-refresh.ts');
 
 function client(fail) {
   const calls=[];
@@ -50,4 +50,22 @@ test('a partial refresh waits for every independent panel, including one that su
   const pending=new Promise(resolve=>{finish=()=>{published=true;resolve();};});
   const all=settleRefreshes([Promise.reject(new Error('context offline')),pending]);
   finish();await assert.rejects(all,/context offline/);assert.equal(published,true);
+});
+
+function buildingClient(fail,empty=false) {
+  const calls=[];
+  return {calls,from(table){calls.push(table);return {select(){return this;},eq(){return this;},in(){return this;},order(){return this;},then(resolve){return Promise.resolve({data:empty&&table==='unit_sale_attempts'?[]:[{id:table==='unit_sale_attempts'?'sale-A':'doc',sale_attempt_id:'sale-A'}],error:table===fail?new Error('Building read failed'):null}).then(resolve);}};},rpc(){return Promise.resolve({data:[],error:null});}};
+}
+test('broad refresh for another user returns one complete snapshot with versions',async()=>{
+  const c=buildingClient(),fresh=await loadBuildingSalesData(c,['unit-A'],'building');
+  assert.equal(fresh.attempts[0].id,'sale-A');assert.equal(fresh.versions[0].id,'doc');
+  assert.equal(fresh.terms.length,1);assert.equal(fresh.payments.length,1);
+});
+for(const fail of ['building_sale_defaults','unit_sale_attempts','unit_sale_terms','unit_sale_documents','unit_sale_document_versions'])test(`broad refresh failure at ${fail} exposes no partial snapshot`,async()=>{
+  await assert.rejects(loadBuildingSalesData(buildingClient(fail),['unit-A'],'building'),/Building read failed/);
+});
+test('empty building refresh clears all sale collections without issuing unrelated child reads',async()=>{
+  const c=buildingClient(null,true),fresh=await loadBuildingSalesData(c,['unit-A'],'building');
+  assert.deepEqual(c.calls,['building_sale_defaults','unit_sale_attempts']);
+  for(const key of ['attempts','terms','schedule','documents','versions','invoices','payments','actors','deposits'])assert.deepEqual(fresh[key],[]);
 });

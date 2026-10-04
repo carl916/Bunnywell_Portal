@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-export const out='artifacts/performance/2026-10-04-action-refresh';
+export const out='artifacts/performance/2026-10-04-action-refresh-final';
 fs.mkdirSync(out,{recursive:true});
 const vitals=fs.existsSync(`${out}/web-vitals-browser.json`)?JSON.parse(fs.readFileSync(`${out}/web-vitals-browser.json`,'utf8')):[];
 export function observe(){

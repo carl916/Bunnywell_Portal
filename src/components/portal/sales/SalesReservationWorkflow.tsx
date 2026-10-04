@@ -4,7 +4,7 @@ import { PdfUploadBox } from "./PdfUploadBox";
 import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
 import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
-import { isMissingSaleActorNames, salesLoadErrorMessage } from "@/lib/sales/load-errors";
+import { salesLoadErrorMessage } from "@/lib/sales/load-errors";
 import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -29,7 +29,7 @@ import { currentSalesTask, getReservationTasks } from "@/lib/sales/stage-tasks";
 import { SalesStageTasks } from "./SalesStageTasks";
 import { parsePercentInput } from "@/lib/sales/percentages";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
-import { loadLegalSaleChanges, replaceSaleRows, replaceRowsById, settleRefreshes } from "@/lib/sales/action-refresh";
+import { loadBuildingSalesData, loadLegalSaleChanges, replaceSaleRows, replaceRowsById, settleRefreshes } from "@/lib/sales/action-refresh";
 import styles from "./SalesReservationWorkflow.module.css";
 import {
   SALES_ROUTE_STATUSES,
@@ -1768,93 +1768,23 @@ export function SalesReservationWorkflow({
     const revision = ++salesLoadRevision.current;
     const building = buildingId;
     const valid = () => revision === salesLoadRevision.current && currentBuilding.current === building;
-    const supabase = createSupabaseBrowserClient();
-    let defaultsQuery = supabase.from("building_sale_defaults").select("*");
-    if (buildingId) defaultsQuery = defaultsQuery.eq("building_id", buildingId);
-    const { data: defaultRows, error: defaultsError } = await defaultsQuery;
-    if (valid()) setSaleActorNames([]);
-    if (defaultsError) onNotice(defaultsError.message);
-    else if (valid()) setBuildingSaleDefaults((defaultRows ?? []) as BuildingSaleDefault[]);
-
-    if (buildingUnits.length === 0) {
-      if (valid()) setAttempts([]);
-      if (valid()) setTerms([]);
-      if (valid()) setPaymentSchedule([]);
-      if (valid()) setDocuments([]);
-      if (valid()) setVersions([]);
-      if (valid()) setInvoices([]);
-      if (valid()) setInvoicePayments([]);
-      return;
-    }
-
-    if (valid()) setIsLoading(true);
+    setIsLoading(true);
     try {
-      const unitIds = buildingUnits.map((unit) => unit.id);
-      const { data: saleAttempts, error: attemptsError } = await supabase
-        .from("unit_sale_attempts")
-        .select("*")
-        .in("unit_id", unitIds)
-        .order("attempt_number", { ascending: false });
-      if (attemptsError) throw attemptsError;
-
-      const attemptIds = (saleAttempts ?? []).map((attempt) => attempt.id as string);
-      if (valid()) setAttempts((saleAttempts ?? []) as SaleAttempt[]);
-
-      if (attemptIds.length === 0) {
-        if (valid()) setTerms([]);
-        if (valid()) setPaymentSchedule([]);
-        if (valid()) setDocuments([]);
-        if (valid()) setVersions([]);
-        if (valid()) setInvoices([]);
-        if (valid()) setInvoicePayments([]);
-        return;
-      }
-
-      const [termsResult, scheduleResult, documentsResult, invoicesResult, invoicePaymentsResult, actorNamesResult, depositReceiptsResult] = await Promise.all([
-        supabase.from("unit_sale_terms").select("*").in("sale_attempt_id", attemptIds),
-        supabase.from("unit_sale_payment_schedule").select("*").in("sale_attempt_id", attemptIds).order("sequence_no"),
-        supabase.from("unit_sale_documents").select("*").in("sale_attempt_id", attemptIds),
-        supabase.from("unit_sale_invoices").select("*").in("sale_attempt_id", attemptIds),
-        supabase.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", attemptIds),
-        supabase.rpc("sale_actor_names", { p_sales: attemptIds }),
-        supabase.from("sale_exchange_deposit_receipts").select("sale_attempt_id").in("sale_attempt_id", attemptIds),
-      ]);
-      if (termsResult.error) throw termsResult.error;
-      if (scheduleResult.error) throw scheduleResult.error;
-      if (documentsResult.error) throw documentsResult.error;
-      if (invoicesResult.error) throw invoicesResult.error;
-      if (invoicePaymentsResult.error) throw invoicePaymentsResult.error;
-      if (depositReceiptsResult.error) throw depositReceiptsResult.error;
-      if (valid()) setDepositReceiptSales([...new Set((depositReceiptsResult.data ?? []).map((receipt) => receipt.sale_attempt_id as string))]);
-
-      if (actorNamesResult.error && !isMissingSaleActorNames(actorNamesResult.error)) throw actorNamesResult.error;
-      if (valid()) setSaleActorNames((actorNamesResult.data ?? []) as SaleActorName[]);
-      if (actorNamesResult.error) {
-        console.warn("Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database.", actorNamesResult.error);
-        onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
-      }
-
-      const loadedDocuments = (documentsResult.data ?? []) as SaleDocument[];
-      if (valid()) setTerms((termsResult.data ?? []) as SaleTerms[]);
-      if (valid()) setPaymentSchedule((scheduleResult.data ?? []) as PaymentScheduleRow[]);
-      if (valid()) setDocuments(loadedDocuments);
-      if (valid()) setInvoices((invoicesResult.data ?? []) as SaleInvoice[]);
-      if (valid()) setInvoicePayments((invoicePaymentsResult.data ?? []) as SaleInvoicePayment[]);
-      const documentIds = loadedDocuments.map((document) => document.id);
-      if (documentIds.length === 0) {
-        if (valid()) setVersions([]);
-        return;
-      }
-
-      const { data: versionRows, error: versionsError } = await supabase
-        .from("unit_sale_document_versions")
-        .select("*")
-        .in("document_id", documentIds)
-        .order("version_number", { ascending: false });
-      if (versionsError) throw versionsError;
-      if (valid()) setVersions((versionRows ?? []) as SaleDocumentVersion[]);
+      const fresh = await loadBuildingSalesData(createSupabaseBrowserClient(), buildingUnits.map(unit => unit.id), building);
+      if (!valid()) return;
+      setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
+      setAttempts(fresh.attempts as SaleAttempt[]);
+      setTerms(fresh.terms as SaleTerms[]);
+      setPaymentSchedule(fresh.schedule as PaymentScheduleRow[]);
+      setDocuments(fresh.documents as SaleDocument[]);
+      setVersions(fresh.versions as SaleDocumentVersion[]);
+      setInvoices(fresh.invoices as SaleInvoice[]);
+      setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
+      setSaleActorNames(fresh.actors as SaleActorName[]);
+      setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
+      if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
     } catch (error) {
-      onNotice(salesLoadErrorMessage(error));
+      if (valid()) onNotice(salesLoadErrorMessage(error));
     } finally {
       if (valid()) setIsLoading(false);
     }
