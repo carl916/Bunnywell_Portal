@@ -952,6 +952,7 @@ export function ProductionPortalApp() {
 
     const supabase = createSupabaseBrowserClient();
     const redirectState = readAuthRedirectState();
+    const coordinator = portalLoads.current;
     let cancelled = false;
     const lifecycle = createSessionLifecycle<User>({
       validate: async () => {
@@ -967,7 +968,7 @@ export function ProductionPortalApp() {
         await loadAll(verifiedUser.id, verifiedUser.email, event);
       },
       clear: clearPortalState,
-      invalidate: () => portalLoads.current.invalidate(),
+      invalidate: () => coordinator.invalidate(),
       recheck: recheckPortalAccess,
       error: error => setNotice(readableError(error)),
     });
@@ -1016,7 +1017,7 @@ export function ProductionPortalApp() {
       lifecycle.observe(event, session);
     });
 
-    return () => { cancelled = true; lifecycle.dispose(); portalLoads.current.invalidate(); data.subscription.unsubscribe(); };
+    return () => { cancelled = true; lifecycle.dispose(); coordinator.invalidate(); data.subscription.unsubscribe(); };
   }, [supabaseEnabled]);
 
   useEffect(() => {

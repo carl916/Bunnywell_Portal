@@ -92,7 +92,7 @@ try {
       const trace = await page.evaluate(() => window.portalLoadTrace ?? []);
       page.off('request', begin); page.off('response', response); page.off('requestfinished', end); page.off('requestfailed', failed);
       const sample = { profile, run, navigation, startedAt: new Date(start).toISOString(), readyMs, readyRequests, settledMs, settledRequests: rows.length, timedOut, requests: rows, trace };
-      samples.push(sample); fs.writeFileSync(`${output}/samples.json`, JSON.stringify(samples, null, 2));
+      samples.push(sample); fs.writeFileSync(`${output}/samples.json`, `[\n${samples.map(row => JSON.stringify(row)).join(',\n')}\n]\n`);
       console.log(JSON.stringify({ profile, run, navigation, readyMs, readyRequests, settledMs, settledRequests: rows.length, tracedEvents: trace.length, timedOut }));
     }
     await context.close();
