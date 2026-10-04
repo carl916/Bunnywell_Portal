@@ -46,6 +46,8 @@ export function createSessionLifecycle<U extends SessionUser>(options: {
   let latest: Session<U> | null | undefined;
   let identity: string | null = null;
   let appliedToken: string | null = null;
+  let pendingApply: { key: string; promise: Promise<void> } | null = null;
+  let restorationTokenPending = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   async function apply(session: Session<U>, event: string) {
     if (!alive) return;
@@ -64,11 +66,28 @@ export function createSessionLifecycle<U extends SessionUser>(options: {
     try { await options.load(verified, `auth:${event}`); }
     catch (error) { if (alive && current === epoch) { appliedToken = null; options.error(error); } }
   }
+  function requestApply(session: Session<U>, event: string) {
+    const key = JSON.stringify([session.user.id, session.access_token, epoch]);
+    if (pendingApply?.key === key) return pendingApply.promise;
+    const promise = apply(session, event).finally(() => {
+      if (pendingApply?.promise === promise) pendingApply = null;
+    });
+    pendingApply = { key, promise };
+    return promise;
+  }
   return {
     observe(event: string, session: Session<U> | null) {
       traceLoad("auth", event, "trigger");
+      if (restorationTokenPending && session?.user.id === identity && ["INITIAL_SESSION", "SIGNED_IN"].includes(event)) {
+        latest = session; appliedToken = session.access_token; restorationTokenPending = false;
+        traceLoad("auth", event, "duplicate");
+        return;
+      }
       const changed = latest?.user.id !== session?.user.id || latest?.access_token !== session?.access_token;
       if (changed || event === "SIGNED_OUT" || event === "USER_UPDATED") { epoch++; if (restored) options.invalidate(); }
+      if (restored && identity && identity !== session?.user.id) {
+        identity = null; appliedToken = null; options.clear();
+      }
       latest = session;
       if (!session) {
         if (event === "SIGNED_OUT") { identity = null; appliedToken = null; options.clear(); }
@@ -76,16 +95,17 @@ export function createSessionLifecycle<U extends SessionUser>(options: {
       }
       if (!restored) return;
       clearTimeout(timer);
-      timer = setTimeout(() => { void apply(session, event).catch(options.error); }, 0);
+      timer = setTimeout(() => { void requestApply(session, event).catch(options.error); }, 0);
     },
     async restore() {
       const user = await options.validate();
       if (!alive) return;
       restored = true;
       if (latest === null) { options.clear(); return; }
-      if (latest && latest.user.id !== user?.id) { await apply(latest, "SIGNED_IN"); return; }
+      if (latest && latest.user.id !== user?.id) { await requestApply(latest, "SIGNED_IN"); return; }
       if (!user) { options.clear(); return; }
       identity = user.id;
+      restorationTokenPending = latest === undefined;
       appliedToken = latest?.access_token ?? null;
       const current = epoch;
       try { await options.load(user, "session-restoration"); }

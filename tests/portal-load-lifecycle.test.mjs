@@ -48,6 +48,22 @@ test('unverified replacement principal cannot inherit the previous account', asy
   const f = fixture(); f.lifecycle.observe('INITIAL_SESSION', { user: { id: 'A' }, access_token: 'A' }); await f.lifecycle.restore();
   f.lifecycle.observe('SIGNED_IN', { user: { id: 'unverified' }, access_token: 'other' }); await tick();
   assert.deepEqual(f.calls, ['session-restoration']);
+  assert.equal(f.snapshot(), null);
+});
+
+test('late INITIAL_SESSION after explicit restoration adopts the token without a second load', async () => {
+  const f = fixture(); await f.lifecycle.restore();
+  f.lifecycle.observe('INITIAL_SESSION', { user: { id: 'A' }, access_token: 'late' }); await tick();
+  assert.deepEqual(f.calls, ['session-restoration']);
+});
+
+test('overlapping focus access checks coalesce and cannot reload after sign-out', async () => {
+  const pending = deferred(), calls = [], session = { user: { id: 'A' }, access_token: 'A' };
+  const lifecycle = createSessionLifecycle({ validate: async () => session.user, load: async (_user, event) => { calls.push(event); }, clear() {}, invalidate() {}, recheck: async () => { calls.push('check'); await pending.promise; return true; }, error() {} });
+  lifecycle.observe('INITIAL_SESSION', session); await lifecycle.restore();
+  lifecycle.observe('SIGNED_IN', session); await tick(); lifecycle.observe('SIGNED_IN', session); await tick();
+  assert.deepEqual(calls, ['session-restoration', 'check']); lifecycle.observe('SIGNED_OUT', null); pending.resolve(); await tick();
+  assert.deepEqual(calls, ['session-restoration', 'check']);
 });
 test('overlapping identical loads coalesce; explicit Refresh supersedes and old response is discarded', async () => {
   const gate = createLoadCoordinator('portal'), old = deferred(), fresh = deferred(); let reads = 0, snapshot = null;
