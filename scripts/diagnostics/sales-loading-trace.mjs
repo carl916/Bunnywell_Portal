@@ -8,7 +8,8 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config({ path: '.env.local', quiet: true });
 const [manifestPath, roundsArg = '5', profilesArg = 'desktop,mobile-throttled'] = process.argv.slice(2);
 const variants = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-const prefix = process.env.SALES_TRACE_PREFIX ?? (variants.after ? 'paired' : 'baseline');
+const dataChecks = process.argv.includes('--data-checks');
+const prefix = dataChecks ? 'data-checks' : process.env.SALES_TRACE_PREFIX ?? (variants.after ? 'paired' : 'baseline');
 const out = 'artifacts/performance/sales-loading';
 fs.mkdirSync(out, { recursive: true });
 const project = 'vxkpvdtrldwwqiddoyof.supabase.co';
@@ -23,7 +24,7 @@ const units = scope.units.filter(u => ['107','108','109','110'].includes(u.unit_
 const attempts = await read(admin.from('unit_sale_attempts').select('id,unit_id,workflow_status').in('unit_id', units.map(u => u.id)).eq('is_active', true));
 if (attempts.length !== 4 || attempts.some(a => a.workflow_status !== 'completed')) throw Error('Completed fixtures required');
 const sale = attempts.find(a => a.unit_id === unit.id);
-const emails = await read(admin.from('sale_legal_emails').select('expires_at,sent_at,expiry_recorded_at,exchanged_at,revoked_at,replaced_by').eq('sale_attempt_id', sale.id).eq('kind','authority'));
+const emails = await read(admin.from('sale_legal_emails').select('expires_at,sent_at,expiry_recorded_at,exchanged_at,revoked_at,replaced_by').in('sale_attempt_id', attempts.map(a=>a.id)).eq('kind','authority'));
 if (emails.some(e => e.sent_at && !e.expiry_recorded_at && !e.exchanged_at && !e.revoked_at && !e.replaced_by && Date.parse(e.expires_at) < Date.now()+3600000)) throw Error('Legal GET could write expiry');
 const canonical = v => Array.isArray(v) ? v.map(canonical).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k,canonical(v[k])])) : v;
 const hash = v => createHash('sha256').update(JSON.stringify(canonical(v))).digest('hex');
@@ -111,6 +112,7 @@ async function setup(label, d, profile) {
 }
 async function measure(s,run,action,act,ready,recordTrace=false) {
   const {page,cdp}=s, rows=[], tracked=new Map(),active=new Set(),pending=[];
+  const startedAt = new Date().toISOString();
   let lastWork=performance.now();
   const traceEvents=[];
   const event=e => traceEvents.push(...e.value);
@@ -143,11 +145,52 @@ async function measure(s,run,action,act,ready,recordTrace=false) {
   const metricNames=['ScriptDuration','TaskDuration','LayoutDuration','RecalcStyleDuration'];
   const mainThread=Object.fromEntries(metricNames.map(n=>[n,Math.max(0,readyMetrics[n]-baseMetrics[n])*1000]));
   const sample={variant:s.label,profile:s.profile,run,action,status,readyMs,readyRequests,settledRequests:rows.length,lastRequestEndMs:Math.max(0,...rows.filter(r=>!['telemetry','polling'].includes(r.kind)).map(r=>r.endMs??0)),quietBoundaryMs,timedOut:active.size>0,applicationFailures:applicationFailures.length,aborted:rows.filter(r=>r.failed).map(r=>({kind:r.kind,endpoint:r.endpoint,failure:r.failure,status:r.status,collectorAcceptance:r.kind==='telemetry'?(r.status===204?'accepted':r.status===null?'unknown':'rejected'):null})),transferredJavaScript:state.resources.reduce((a,r)=>a+r.transfer,0),encodedJavaScript:state.resources.reduce((a,r)=>a+r.encoded,0),decodedJavaScript:state.resources.reduce((a,r)=>a+r.decoded,0),mainThread,...state,requests:rows,tracePath,displayedStateChecked:status==='ok',displayedUnit:107};
-  Object.assign(sample,{displayedSnapshotSha256,httpErrors,telemetryFailures});
+  Object.assign(sample,{startedAt,finishedAt:new Date().toISOString(),displayedSnapshotSha256,httpErrors,telemetryFailures});
   samples.push(sample);save();console.log(JSON.stringify({variant:s.label,profile:s.profile,run,action,readyMs:Math.round(readyMs),requests:rows.length,applicationFailures:applicationFailures.length,jsBytes:sample.transferredJavaScript,mainThread}));
   if(status!=='ok'||active.size||applicationFailures.length||httpErrors||telemetryFailures||violations||s.errors.length)throw Error('Navigation application gate failed');
 }
 try {
+  if (dataChecks) {
+    const fixtureTerms = await read(admin.from('unit_sale_terms').select('*').in('sale_attempt_id', attempts.map(a=>a.id)).eq('is_current',true));
+    const fixtureDocuments = await read(admin.from('unit_sale_documents').select('*,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(*)').in('sale_attempt_id', attempts.map(a=>a.id)));
+    for (const profile of profilesArg.split(',')) for (const [label,d] of Object.entries(variants)) {
+      const s=await setup(label,d,profile), {page}=s;
+      let httpErrors=0;
+      page.on('response',r=>{if(r.status()>=400)httpErrors++;});
+      for (const target of units) {
+        const attempt=attempts.find(a=>a.unit_id===target.id), terms=fixtureTerms.find(t=>t.sale_attempt_id===attempt.id);
+        if(!terms?.contract_price)throw Error('Completed fixture price required');
+        await page.locator('[data-sale-file] select').selectOption(target.id);
+        await page.getByRole('heading',{name:`Unit ${target.unit_number}`,exact:true}).waitFor();
+        const price=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(terms.contract_price);
+        await page.getByText(price,{exact:true}).first().waitFor();
+        await page.getByRole('tab',{name:/^Commercial\b/}).click();
+        const commercial=page.locator('#unit-sale-commercial');await commercial.waitFor();
+        await commercial.getByText(price,{exact:true}).first().waitFor();
+        const commercialSha256=hash(await commercial.innerText());
+        await page.getByRole('tab',{name:/^Financials\b/}).click();
+        await page.locator('#agent-fees').waitFor();
+        const financialSha256=hash(await page.locator('#agent-fees').innerText());
+        await page.getByRole('tab',{name:/^Progression\b/}).click();
+        await page.getByRole('button',{name:/^Completion\b/}).click();
+        await page.getByRole('list',{name:'Completion tasks',exact:true}).waitFor();
+        await page.getByText('Legally completed',{exact:true}).waitFor();
+        const completion=page.getByRole('list',{name:'Completion tasks',exact:true});
+        const documents=fixtureDocuments.filter(doc=>doc.sale_attempt_id===attempt.id && !doc.redacted_at && !doc.superseded_at && ['completion_statement','draft_statement_of_account','statement_of_account','completion_correspondence'].includes(doc.document_type));
+        let currentVersions=0;
+        for(const document of documents) {
+          const current=document.unit_sale_document_versions.find(v=>v.is_current&&!v.redacted_at);
+          if(current){await completion.getByText(current.file_name,{exact:true}).first().waitFor();currentVersions++;}
+        }
+        if(!currentVersions)throw Error('Completed document versions required');
+        await page.waitForLoadState('networkidle');
+        samples.push({variant:label,profile,unit:Number(target.unit_number),contractPriceChecked:true,completedStatusChecked:true,currentVersionsChecked:currentVersions,commercialSha256,financialSha256,completionSha256:hash(await completion.innerText()),httpErrors,pageErrors:s.errors.length});save();
+        console.log(JSON.stringify({variant:label,profile,unit:Number(target.unit_number),displayedChecks:'passed',currentVersions}));
+      }
+      if(httpErrors||s.errors.length||violations)throw Error('Displayed data gate failed');
+      await s.context.close();
+    }
+  } else {
   for(const profile of profilesArg.split(',')) {
     const activeSessions=[];
     for(const [label,d]of Object.entries(variants)){const s=await setup(label,d,profile);activeSessions.push(s);await s.page.goto('about:blank');}
@@ -167,6 +210,7 @@ try {
       }
     }
     for(const s of activeSessions)await s.context.close();
+  }
   }
   completed=true;
 } catch(e){console.log(JSON.stringify({stopped:true,message:e.message.startsWith('Navigation')||e.message.startsWith('Environment')?e.message:'Browser step failed; sensitive details withheld'}));process.exitCode=1;}
