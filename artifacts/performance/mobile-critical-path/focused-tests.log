@@ -1,0 +1,48 @@
+✔ getUser restoration, INITIAL_SESSION and SIGNED_IN produce one portal snapshot (12.4006ms)
+✔ sign-in after empty restoration validates Auth and loads once; sign-out clears (14.5594ms)
+✔ token refresh reloads access/data once, while unchanged focus only rechecks access (47.4058ms)
+✔ permission change on focus or USER_UPDATED reloads authoritative profile/access (34.655ms)
+✔ unverified replacement principal cannot inherit the previous account (14.7457ms)
+✔ late INITIAL_SESSION after explicit restoration adopts the token without a second load (12.9332ms)
+✔ overlapping focus access checks coalesce and cannot reload after sign-out (56.8275ms)
+✔ overlapping identical loads coalesce; explicit Refresh supersedes and old response is discarded (15.4419ms)
+✔ sign-out, unmount and account replacement invalidate an outstanding response (47.3556ms)
+✔ old building cannot publish over a new one, including equal-size membership replacements (0.2995ms)
+✔ disposed restoration and sign-out during getUser never resurrect data (0.1486ms)
+✔ failed load can retry and never marks a failed snapshot complete (0.3015ms)
+✔ access signature detects revocation, deactivation, role and organisation changes with equal counts (0.1197ms)
+✔ report PDF dependency is loaded on demand and the real generator preserves report content (78.0409ms)
+✔ a failed dependency load rejects report generation rather than returning an incomplete PDF (0.6958ms)
+✔ request_authority refreshes the affected sale and only changed data (1.5253ms)
+✔ send refreshes the affected sale and only changed data (0.1923ms)
+✔ confirm_exchange refreshes the affected sale and only changed data (0.1799ms)
+✔ finalize_completion_upload refreshes the affected sale and only changed data (0.0961ms)
+✔ approve_completion_package refreshes the affected sale and only changed data (0.0892ms)
+✔ confirm_completion refreshes the affected sale and only changed data (0.1187ms)
+✔ query_completion_package refreshes the affected sale and only changed data (0.1457ms)
+✔ confirm_notice refreshes the affected sale and only changed data (0.1266ms)
+✔ retry_email refreshes the affected sale and only changed data (0.1324ms)
+✔ switching sales retains the other sale, terms and commercial figures; deleted scoped rows are removed (0.3006ms)
+✔ document read failure publishes no incomplete refresh (0.5172ms)
+✔ prepare failure reconciles saved state and preserves the error (0.2312ms)
+✔ transfer failure reconciles saved state and preserves the error (0.0764ms)
+✔ finalisation failure reconciles saved state and preserves the error (0.0523ms)
+✔ email delivery failure reconciles saved state and preserves the error (0.0825ms)
+✔ receipt save failure reconciles saved state and preserves the error (0.0818ms)
+✔ saved action with refresh failure does not report success (0.214ms)
+✔ a partial refresh waits for every independent panel, including one that succeeds after another fails (0.1723ms)
+✔ broad refresh for another user returns one complete snapshot with versions (0.2939ms)
+✔ broad refresh failure at building_sale_defaults exposes no partial snapshot (0.0705ms)
+✔ broad refresh failure at unit_sale_attempts exposes no partial snapshot (0.0518ms)
+✔ broad refresh failure at unit_sale_terms exposes no partial snapshot (0.0729ms)
+✔ broad refresh failure at unit_sale_documents exposes no partial snapshot (0.0634ms)
+✔ broad refresh failure at unit_sale_document_versions exposes no partial snapshot (0.1039ms)
+✔ empty building refresh clears all sale collections without issuing unrelated child reads (0.1097ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 496.0783
