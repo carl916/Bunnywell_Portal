@@ -12,5 +12,15 @@
       "path": "/api/cron/snag-digest",
       "schedule": "30 7 * * *"
     }
-  ]
+  ],
+  "regions": [
+    "iad1"
+  ],
+  "functions": {
+    "src/app/api/sales/legal/route.ts": {
+      "regions": [
+        "fra1"
+      ]
+    }
+  }
 }
