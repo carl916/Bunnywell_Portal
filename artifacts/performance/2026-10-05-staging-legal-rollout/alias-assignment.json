@@ -1,0 +1,15 @@
+{
+  "recordedAt": "2026-10-05T17:29:50.373Z",
+  "fromDeployment": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+  "toDeployment": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+  "alias": "staging.bunnywell.co.uk",
+  "previewGatePassed": true,
+  "response": {
+    "result": {
+      "uid": "036bc10e4d86d01c533372f745d6355ed4ddca84188a99dae370dfa7ef88557c132cb517a4c741f61d345e648521bbcbb2918038b8ed7e184450bf2f4a0913be",
+      "alias": "staging.bunnywell.co.uk",
+      "created": "2026-06-26T14:07:48.488Z",
+      "oldDeploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+    }
+  }
+}

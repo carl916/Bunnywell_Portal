@@ -1,0 +1,426 @@
+{
+  "recordedAt": "2026-10-05T17:25:50.574Z",
+  "staging": {
+    "id": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-nlg51jyrp-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791220902183,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "staging",
+      "githubCommitSha": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+      "githubCommitMessage": "Document targeted staging legal region test",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "staging.bunnywell.co.uk",
+      "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791220903378,
+    "ready": 1791220938769,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "production": {
+    "id": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-7iq0pvltz-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1790084616512,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "main",
+      "githubCommitSha": "d37ab6518a2f28640a0e5435ce0d84daaf1ee39c",
+      "githubCommitMessage": "Merge pull request #16 from carl916/staging\n\nStaging",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk",
+      "bunnywell-portal.vercel.app",
+      "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1790084618839,
+    "ready": 1790084665359,
+    "readyState": "READY",
+    "source": "redeploy",
+    "aliasError": null
+  },
+  "project": {
+    "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+    "name": "bunnywell-portal",
+    "framework": "nextjs",
+    "accountId": "team_x65ctL8Fot37UcabAkdh8f72",
+    "createdAt": 1780516318923,
+    "updatedAt": 1791215121566,
+    "nodeVersion": "24.x",
+    "live": false,
+    "latestDeployment": {
+      "id": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+      "url": "bunnywell-portal-nlg51jyrp-carl-gilbert-s-projects.vercel.app",
+      "createdAt": 1791220902183,
+      "readyState": "READY",
+      "target": null
+    },
+    "domains": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk",
+      "bunnywell-portal.vercel.app",
+      "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+    ],
+    "passwordProtection": {
+      "enabled": false,
+      "deploymentType": null
+    },
+    "ssoProtection": {
+      "enabled": false,
+      "deploymentType": null
+    },
+    "trustedIps": {
+      "enabled": false,
+      "deploymentType": null,
+      "addresses": [],
+      "protectionMode": null
+    }
+  },
+  "environmentEntries": [
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "FyXu8DO12Axcv4cf",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "ntXwMSNQIFRESac6",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "7F8QfOJnkZjbAj84",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "MK5urJReMqvBvTWx",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "H5ZFTd3W0iSG9Kly",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-iad1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "uboDZwJrIF0c57Ch",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-iad1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "mqNi1oXISgjSZ62x",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-fra1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "pwR48alhwsPPEiou",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-fra1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "O1fbo91qiiNmPKoQ",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "Ck2CyYW4DFohNWF9",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "hfo5k0jH7G0T1VbF",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "9mpDiDuILBwMK8V7",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "morCR0FMsSnZGQcG",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783521338994
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "pYjDICW4TgO6Y5xj",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783521338994
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "6DAyn7lBxItPRpf9",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783521314095
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "uXGOiruU1UOKDk5R",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783521314095
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "CXfiIFXaCwnW4u2R",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "5uK31WaQGQBEcFqU",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "ApeHNXXwgkMcAmuH",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "id": "unMY6WkifMxJVmzL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783010098266
+    },
+    {
+      "key": "DIGEST_APP_URL",
+      "id": "SysPUuGeL2p9Kaaz",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783010098266
+    },
+    {
+      "key": "DIGEST_APP_URL",
+      "id": "xVOjuclzCy02lyoj",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783010054181
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "id": "UgdvBaEguKJho8cL",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783010054181
+    },
+    {
+      "key": "DIGEST_EMAILS_ENABLED",
+      "id": "JFZBcAfxIDspExpN",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975346
+    },
+    {
+      "key": "CRON_SECRET",
+      "id": "iQe2uzh9XKolwNor",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975346
+    },
+    {
+      "key": "DIGEST_FROM_EMAIL",
+      "id": "OQN1g5W3Qmaubhkx",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975345
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "jAsqGmUSQXmkaq4e",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477349690
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "r43ZZV08aLWrL8W6",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477335834
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "OnPAuJNWkmYl1Yze",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477302721
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "fZFbTKr7CAv54Qyi",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1780859262742
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "kA6bwlFS53ZVWKTE",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783510471438
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "LCgtj91n2sGdNdkg",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783510483579
+    }
+  ]
+}

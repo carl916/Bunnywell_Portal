@@ -1,0 +1,185 @@
+{
+  "verifiedAt": "2026-10-05T17:29:27.047Z",
+  "phase": "preview-smoke",
+  "passed": true,
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "salesOpened": [
+    107,
+    209
+  ],
+  "excludedTestSales": [
+    210,
+    211
+  ],
+  "actions": 12,
+  "failures": 0,
+  "legalGetChecks": 4,
+  "legalPreviewPostChecks": 2,
+  "legalRegion": "fra1",
+  "otherMeasuredFunctions": 4,
+  "otherGetChecks": 6,
+  "otherRegion": "iad1",
+  "stagingEnvironmentVerified": true,
+  "displayedStatesPassed": true,
+  "saleStateUnchanged": true,
+  "rootConfigUnchanged": true,
+  "timingSamples": [
+    {
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "readyMs": 2112.5653999999977,
+      "completeMs": 2112.5653999999977,
+      "settledRequests": 54
+    },
+    {
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "readyMs": 1943.9010000000017,
+      "completeMs": 1943.9010000000017,
+      "settledRequests": 54
+    },
+    {
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "readyMs": 887.4549000000006,
+      "completeMs": 887.4549000000006,
+      "settledRequests": 1
+    },
+    {
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "readyMs": 435.3123000000014,
+      "completeMs": 435.3123000000014,
+      "settledRequests": 1
+    },
+    {
+      "profile": "desktop",
+      "action": "completion.entry",
+      "readyMs": 53.85770000000048,
+      "completeMs": 53.85770000000048,
+      "settledRequests": 0
+    },
+    {
+      "profile": "desktop",
+      "action": "authority.preview",
+      "readyMs": 363.3040000000001,
+      "completeMs": 363.3040000000001,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "readyMs": 6953.965700000001,
+      "completeMs": 6953.965700000001,
+      "settledRequests": 54
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "readyMs": 3801.0878000000084,
+      "completeMs": 3801.0878000000084,
+      "settledRequests": 54
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "readyMs": 896.4487999999983,
+      "completeMs": 896.4487999999983,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "readyMs": 414.33179999999993,
+      "completeMs": 414.33179999999993,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "completion.entry",
+      "readyMs": 152.61629999999423,
+      "completeMs": 152.61629999999423,
+      "settledRequests": 0
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "readyMs": 385.2158000000054,
+      "completeMs": 385.2158000000054,
+      "settledRequests": 1
+    }
+  ],
+  "functionInvocations": [
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::7gjr7-1791221212275-9b8cf3cc7d37",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::9h22k-1791221215433-aaea7310e63e",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::2s4lh-1791221218282-6fe79046c99a",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::v5zkh-1791221220543-22102fab3c66",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::8wjd2-1791221227998-e0ba67ac0573",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::bzmwx-1791221274447-e4bf3413e35c",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::n5z2f-1791221279682-3a2832b788da",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::pps2h-1791221284211-9e6cb00628e8",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::bzmwx-1791221286212-e520dd98f7e9",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::628wd-1791221295623-f515cdb173b7",
+      "executionRegion": "fra1"
+    }
+  ]
+}
