@@ -8,7 +8,6 @@ import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
 import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
 import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
-import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -8638,6 +8637,7 @@ function ReportsPanel({
   }
 
   async function buildReportPdf() {
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();

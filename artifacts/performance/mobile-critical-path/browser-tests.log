@@ -1,0 +1,70 @@
+
+Running 25 tests using 1 worker
+
+(node:12564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\portal-load-lifecycle.spec.ts:11:5 › direct entry restores one portal snapshot and mounts Sales only in the resolved building (691ms)
+  ok  2 [chromium] › tests\portal-load-lifecycle.spec.ts:19:5 › Refresh reloads portal and Sales once; a unit price/status edit does not trigger another broad Sales load (758ms)
+  ok  3 [chromium] › tests\portal-load-lifecycle.spec.ts:28:5 › a late old Sales snapshot cannot replace refreshed figures or expose incomplete controls (898ms)
+  ok  4 [chromium] › tests\portal-load-lifecycle.spec.ts:48:5 › permission revocation on Refresh removes Sales even if an old read finishes later (873ms)
+  ok  5 [chromium] › tests\portal-load-lifecycle.spec.ts:63:5 › deactivated profile signs out and old portal/Sales reads do not restore it (666ms)
+  ok  6 [chromium] › tests\portal-load-lifecycle.spec.ts:70:5 › an access-read failure hides stale Sales and an explicit retry restores a complete snapshot (858ms)
+  ok  7 [chromium] › tests\portal-load-lifecycle.spec.ts:84:5 › token refresh loads one fresh snapshot; focus with changed role removes Sales (816ms)
+  ok  8 [chromium] › tests\portal-load-lifecycle.spec.ts:103:5 › saved building restores before Sales mounts; a building switch loads only the new Sales scope (784ms)
+  ok  9 [chromium] › tests\portal-load-lifecycle.spec.ts:119:5 › equal-count replacement uses fresh accessible membership; unrelated units do not cause another load (711ms)
+  ok 10 [chromium] › tests\portal-load-lifecycle.spec.ts:130:5 › sign-out during a delayed portal refresh cannot resurrect the previous profile (729ms)
+  ok 11 [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › request_authority preserves the four/five-request legal refresh without a broad reload (918ms)
+  ok 12 [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › confirm_exchange preserves the four/five-request legal refresh without a broad reload (961ms)
+  ok 13 [chromium] › tests\sales-controls.spec.ts:47:5 › desktop Mentions stays beside the tabs and overlays Sales and Agent Fees without shifting content (1.2s)
+  ok 14 [chromium] › tests\sales-controls.spec.ts:79:5 › Mentions supports trigger toggle, outside click, Escape, keyboard focus and a compact empty state (1.1s)
+  ok 15 [chromium] › tests\sales-controls.spec.ts:95:5 › mobile Mentions is content-width, right aligned, bounded by the viewport and scrolls internally (1.1s)
+  ok 16 [chromium] › tests\sales-controls.spec.ts:118:5 › mention links keep their sale and comment destination and only reading the comment clears unread state (2.1s)
+  x  17 [chromium] › tests\sales-controls.spec.ts:135:5 › Agent Fees paginates 62 sales in twelve-row pages without reducing summary totals (6.6s)
+(node:26808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 18 [chromium] › tests\sales-controls.spec.ts:157:5 › Agent Fees filters reset pagination and remain selected while paging the filtered dataset (1.5s)
+  ok 19 [chromium] › tests\sales-controls.spec.ts:180:5 › shared Sales pagination and mobile Agent Fees keep horizontal scrolling and row navigation (1.1s)
+  ok 20 [chromium] › tests\sales-loading.spec.ts:4:5 › staging without the name lookup still loads the Sales figures (808ms)
+  ok 21 [chromium] › tests\sales-loading.spec.ts:16:5 › Sales displays the underlying database error for failed required queries (772ms)
+  ok 22 [chromium] › tests\sales-stage-tasks.spec.ts:10:5 › Reservation remains selected after approval and unlocks Exchange (1.0s)
+  ok 23 [chromium] › tests\sales-stage-tasks.spec.ts:27:5 › reservation and exchange show their saved milestones, rejection and completed history (2.3s)
+  ok 24 [chromium] › tests\sales-stage-tasks.spec.ts:65:5 › completion survives reload through upload, query, replacement, approval and recording (3.5s)
+  ok 25 [chromium] › tests\sales-stage-tasks.spec.ts:124:5 › task cards use available width without overflow at desktop, tablet and mobile sizes (2.4s)
+
+
+  1) [chromium] › tests\sales-controls.spec.ts:135:5 › Agent Fees paginates 62 sales in twelve-row pages without reducing summary totals
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('navigation', { name: 'Results pagination' })
+    Expected substring: "Showing 13–15 of 15"
+    Received string:    "Showing 1–12 of 15PreviousNext"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 5000ms
+      - waiting for getByRole('navigation', { name: 'Results pagination' })
+        2 × locator resolved to <nav aria-label="Results pagination" class="mt-4 flex flex-col gap-3 text-sm text-[#617169] sm:flex-row sm:items-center sm:justify-between">…</nav>
+          - unexpected value "Showing 61–62 of 62PreviousNext"
+        12 × locator resolved to <nav aria-label="Results pagination" class="mt-4 flex flex-col gap-3 text-sm text-[#617169] sm:flex-row sm:items-center sm:justify-between">…</nav>
+           - unexpected value "Showing 1–12 of 15PreviousNext"
+
+
+      151 |   await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled(); await expect(summary).toContainText("£62,000");
+      152 |   f.shrink(15); await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    > 153 |   await expect(pagination(page)).toContainText("Showing 13–15 of 15"); await expect(feeRows(page)).toHaveCount(3);
+          |                                  ^
+      154 |   await pagination(page).getByRole("button", { name: "Previous" }).click(); await expect(pagination(page)).toContainText("Showing 1–12 of 15");
+      155 | });
+      156 |
+        at C:\GitHub\Bunnywell_Portal\tests\sales-controls.spec.ts:153:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sales-controls-Agent-Fees--0f307-out-reducing-summary-totals-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sales-controls-Agent-Fees--0f307-out-reducing-summary-totals-chromium\error-context.md
+
+  1 failed
+    [chromium] › tests\sales-controls.spec.ts:135:5 › Agent Fees paginates 62 sales in twelve-row pages without reducing summary totals
+  24 passed (36.3s)

@@ -1,0 +1,5350 @@
+[
+  {
+    "variant": "before",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "navigation.cold",
+    "status": "ok",
+    "readyMs": 7930.196499999998,
+    "readyRequests": 54,
+    "settledRequests": 54,
+    "lastRequestEndMs": 7440.6134999999995,
+    "quietBoundaryMs": 8985.7411,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 511975,
+    "encodedJavaScript": 509575,
+    "decodedJavaScript": 1848820,
+    "mainThread": {
+      "ScriptDuration": 1674.61,
+      "TaskDuration": 2678.3390000000004,
+      "LayoutDuration": 92.96,
+      "RecalcStyleDuration": 21.319
+    },
+    "trace": [
+      {
+        "scope": "auth",
+        "event": "SIGNED_IN",
+        "phase": "trigger",
+        "at": 4014.600000023842
+      },
+      {
+        "scope": "auth",
+        "event": "INITIAL_SESSION",
+        "phase": "trigger",
+        "at": 4019.2000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "trigger",
+        "at": 4237.600000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "start",
+        "at": 4238
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 4238.800000071526
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 4459.700000047684
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "buildings",
+        "at": 4459.900000095367
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "units",
+        "at": 4459.900000095367
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_floors",
+        "at": 4460.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_types",
+        "at": 4460.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_type_areas",
+        "at": 4460.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "trades",
+        "at": 4460.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "organisations",
+        "at": 4460.300000071526
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_organisations",
+        "at": 4460.300000071526
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 4460.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 4460.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 4460.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "resident_access_requests",
+        "at": 4460.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snags",
+        "at": 4460.600000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_photos",
+        "at": 4460.900000095367
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_events",
+        "at": 4460.900000095367
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "audit_events",
+        "at": 4460.900000095367
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handovers",
+        "at": 4461.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_key_items",
+        "at": 4461.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_photos",
+        "at": 4461.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "meter_readings",
+        "at": 4461.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 4461.100000023842
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 4461.300000071526
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 5710.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "published",
+        "at": 5987
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "settled",
+        "at": 5987.400000095367
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 6024.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 6024.700000047684
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 6025.300000071526
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 6240.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 6545
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 6545.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 6545.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 6545.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 6545.300000071526
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 6545.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 6545.700000047684
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 7040.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 7439.300000071526
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 7439.400000095367
+      }
+    ],
+    "vitals": {
+      "lcp": 7504,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 163.30000007152557,
+          "duration": 531
+        },
+        {
+          "start": 7439.400000095367,
+          "duration": 53
+        }
+      ]
+    },
+    "resources": [
+      {
+        "path": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "start": 687.6000000238419,
+        "end": 1057.8000000715256,
+        "encoded": 6358,
+        "decoded": 17474,
+        "transfer": 6658
+      },
+      {
+        "path": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "start": 687.8000000715256,
+        "end": 2092.3000000715256,
+        "encoded": 51362,
+        "decoded": 200919,
+        "transfer": 51662
+      },
+      {
+        "path": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "start": 688.1000000238419,
+        "end": 2357.7000000476837,
+        "encoded": 72353,
+        "decoded": 227537,
+        "transfer": 72653
+      },
+      {
+        "path": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "start": 688.5,
+        "end": 1488.5,
+        "encoded": 4470,
+        "decoded": 10835,
+        "transfer": 4770
+      },
+      {
+        "path": "/_next/static/chunks/40vfej7y8kg94.js",
+        "start": 688.6000000238419,
+        "end": 1504,
+        "encoded": 3687,
+        "decoded": 9265,
+        "transfer": 3987
+      },
+      {
+        "path": "/_next/static/chunks/158myu8e_yme3.js",
+        "start": 688.7000000476837,
+        "end": 1831.9000000953674,
+        "encoded": 14368,
+        "decoded": 57909,
+        "transfer": 14668
+      },
+      {
+        "path": "/_next/static/chunks/11w-5de_dfbvr.js",
+        "start": 688.9000000953674,
+        "end": 1710.3000000715256,
+        "encoded": 2034,
+        "decoded": 4090,
+        "transfer": 2334
+      },
+      {
+        "path": "/_next/static/chunks/3icpmwynur7oe.js",
+        "start": 689.2000000476837,
+        "end": 3900.2000000476837,
+        "encoded": 354943,
+        "decoded": 1320791,
+        "transfer": 355243
+      },
+      {
+        "path": "/_next-live/feedback/feedback.js",
+        "start": 1492.7000000476837,
+        "end": 1669.8000000715256,
+        "encoded": 0,
+        "decoded": 0,
+        "transfer": 0
+      }
+    ],
+    "navigation": [
+      {
+        "ttfb": 37.10000002384186,
+        "domInteractive": 1242.9000000953674,
+        "load": 4000.3000000715256
+      }
+    ],
+    "requests": [
+      {
+        "kind": "asset/document",
+        "endpoint": "document",
+        "method": "GET",
+        "offsetMs": 2.8391999999985273,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225541578-47bf30398ebf",
+        "cache": "HIT",
+        "endMs": 699.5932999999968,
+        "responseBytes": 3789
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 698.5335999999988,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::7vnp5-1791225542249-57f4e359a37a",
+        "cache": "HIT",
+        "endMs": 1402.4075999999986,
+        "responseBytes": 23322
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 698.5638999999974,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225542249-bf88a58c6705",
+        "cache": "HIT",
+        "endMs": 1526.3557,
+        "responseBytes": 29587
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "image",
+        "method": "GET",
+        "offsetMs": 698.6993000000002,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::mmpsg-1791225542249-f62f3487154d",
+        "cache": "HIT",
+        "endMs": 1171.0221999999994,
+        "responseBytes": 13430
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 698.7110999999968,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225542249-a3c45e625463",
+        "cache": "HIT",
+        "endMs": 1244.2047999999995,
+        "responseBytes": 15522
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 698.7213999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542249-b56ca3183c00",
+        "cache": "HIT",
+        "endMs": 977.1448999999993,
+        "responseBytes": 3662
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "method": "GET",
+        "offsetMs": 698.7335999999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::mmpsg-1791225542257-081c06cc3dd8",
+        "cache": "HIT",
+        "endMs": 1062.0446999999986,
+        "responseBytes": 6542,
+        "decodedBytes": 17474,
+        "sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "method": "GET",
+        "offsetMs": 698.926099999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542528-0d9987c75791",
+        "cache": "HIT",
+        "endMs": 2097.5675999999985,
+        "responseBytes": 51571,
+        "decodedBytes": 200919,
+        "sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "method": "GET",
+        "offsetMs": 698.9538999999968,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225542613-d9113347ee6c",
+        "cache": "HIT",
+        "endMs": 2363.297999999999,
+        "responseBytes": 72568,
+        "decodedBytes": 227537,
+        "sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "method": "GET",
+        "offsetMs": 698.9833999999973,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225542723-3999f6b11ee0",
+        "cache": "HIT",
+        "endMs": 1493.3616999999977,
+        "responseBytes": 4642,
+        "decodedBytes": 10835,
+        "sha256": "019457adae4f0685edd71ff9584f534161b21acbeb5eca8e865686bd6c729750",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/40vfej7y8kg94.js",
+        "method": "GET",
+        "offsetMs": 699.0038999999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542793-6d1d1cdfe16d",
+        "cache": "HIT",
+        "endMs": 1507.9300000000003,
+        "responseBytes": 3851,
+        "decodedBytes": 9265,
+        "sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/158myu8e_yme3.js",
+        "method": "GET",
+        "offsetMs": 699.0168999999987,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::mxjrq-1791225542950-0c0a8cbbf024",
+        "cache": "HIT",
+        "endMs": 1836.2865999999995,
+        "responseBytes": 14600,
+        "decodedBytes": 57909,
+        "sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/11w-5de_dfbvr.js",
+        "method": "GET",
+        "offsetMs": 699.0459999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225543043-6ff32bd7ffdf",
+        "cache": "HIT",
+        "endMs": 1713.9974999999977,
+        "responseBytes": 2215,
+        "decodedBytes": 4090,
+        "sha256": "3f3ba2210c567a0ac665cab251e5383126c521ff654d10332c8d59262b4c8794",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3icpmwynur7oe.js",
+        "method": "GET",
+        "offsetMs": 699.059699999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225543058-cc978f6f3ca6",
+        "cache": "HIT",
+        "endMs": 3914.2418,
+        "responseBytes": 355404,
+        "decodedBytes": 1320791,
+        "sha256": "a03613962a6f0925130c8e2bddede23b5e0d6761f7a802efc1fc2459c7f9988d",
+        "containsJsPdf": true
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next-live/feedback/feedback.js",
+        "method": "GET",
+        "offsetMs": 1495.648799999999,
+        "status": 204,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::7dkhf-1791225543046-ab9c1068a91a",
+        "cache": null,
+        "endMs": 1673.8329999999987,
+        "responseBytes": 78,
+        "decodedBytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "auth",
+        "endpoint": "auth",
+        "method": "GET",
+        "offsetMs": 4023.8701999999976,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4239.357699999997,
+        "responseBytes": 1162
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 4243.5052,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4455.1384,
+        "responseBytes": 1221
+      },
+      {
+        "kind": "auth",
+        "endpoint": "/api/auth/activity",
+        "method": "POST",
+        "offsetMs": 4247.826499999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::9h22k-1791225545804-2505e6ee94dd",
+        "cache": "MISS",
+        "executionRegion": "iad1",
+        "endMs": 5454.069099999997,
+        "responseBytes": 221
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 4502.739399999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5710.642499999998,
+        "responseBytes": 63915
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "buildings",
+        "method": "GET",
+        "offsetMs": 4502.7647,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4738.5831,
+        "responseBytes": 1688
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "units",
+        "method": "GET",
+        "offsetMs": 4502.940899999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5110.226799999997,
+        "responseBytes": 9606
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_floors",
+        "method": "GET",
+        "offsetMs": 4502.9571,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4806.655999999999,
+        "responseBytes": 1610
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_types",
+        "method": "GET",
+        "offsetMs": 4502.9713999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4702.4908,
+        "responseBytes": 1211
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_type_areas",
+        "method": "GET",
+        "offsetMs": 4503.1103,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4807.060699999998,
+        "responseBytes": 2056
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "trades",
+        "method": "GET",
+        "offsetMs": 4503.118599999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4726.509899999997,
+        "responseBytes": 1249
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "organisations",
+        "method": "GET",
+        "offsetMs": 4503.126799999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4838.2384999999995,
+        "responseBytes": 1655
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_organisations",
+        "method": "GET",
+        "offsetMs": 4503.135299999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4695.132599999997,
+        "responseBytes": 1398
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 4503.143699999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4837.462199999998,
+        "responseBytes": 2204
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 4503.156499999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4740.280699999999,
+        "responseBytes": 1420
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 4503.170299999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4776.034599999999,
+        "responseBytes": 1130
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "resident_access_requests",
+        "method": "GET",
+        "offsetMs": 4503.185699999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4756.720299999997,
+        "responseBytes": 1324
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snags",
+        "method": "GET",
+        "offsetMs": 4503.3319999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5238.774299999997,
+        "responseBytes": 13620
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_photos",
+        "method": "GET",
+        "offsetMs": 4503.3413,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5334.148599999997,
+        "responseBytes": 18276
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_events",
+        "method": "GET",
+        "offsetMs": 4503.350599999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5507.367399999999,
+        "responseBytes": 27047
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "audit_events",
+        "method": "GET",
+        "offsetMs": 4503.359399999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5523.2608999999975,
+        "responseBytes": 29028
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handovers",
+        "method": "GET",
+        "offsetMs": 4503.367299999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4973.903399999999,
+        "responseBytes": 5941
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_key_items",
+        "method": "GET",
+        "offsetMs": 4503.435999999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4749.537399999997,
+        "responseBytes": 897
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_photos",
+        "method": "GET",
+        "offsetMs": 4503.444299999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4777.3714999999975,
+        "responseBytes": 895
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "meter_readings",
+        "method": "GET",
+        "offsetMs": 4503.4522,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4775.4774,
+        "responseBytes": 894
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 4503.460199999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4824.1502999999975,
+        "responseBytes": 919
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 4503.4728,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4793.185999999998,
+        "responseBytes": 923
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 5715.435899999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5988.5965,
+        "responseBytes": 4862
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 6029.772399999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6241.259699999999,
+        "responseBytes": 1332
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 6244.964,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6543.418599999997,
+        "responseBytes": 18011
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 6558.977899999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6912.4601,
+        "responseBytes": 8920
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 6559.163199999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 7040.8678,
+        "responseBytes": 19222
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 6559.1777,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6986.089899999999,
+        "responseBytes": 12419
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 6559.190599999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6820.445799999998,
+        "responseBytes": 3827
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 6559.203299999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6887.9231,
+        "responseBytes": 3763
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 6559.300299999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6927.3714,
+        "responseBytes": 1022
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 6559.313699999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6837.663999999997,
+        "responseBytes": 2636
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 7045.7029,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 7440.6134999999995,
+        "responseBytes": 26656
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 7515.0785,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 7712.5782,
+        "responseBytes": 847
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 7515.1711,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 7758.179499999998,
+        "responseBytes": 2277
+      }
+    ],
+    "tracePath": "before-mobile-throttled-navigation.cold-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "before",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "navigation.repeat",
+    "status": "ok",
+    "readyMs": 4381.3796,
+    "readyRequests": 54,
+    "settledRequests": 54,
+    "lastRequestEndMs": 3858.304299999996,
+    "quietBoundaryMs": 5396.299999999996,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 509575,
+    "decodedJavaScript": 1848820,
+    "mainThread": {
+      "ScriptDuration": 198.0979999999999,
+      "TaskDuration": 720.145,
+      "LayoutDuration": 18.597,
+      "RecalcStyleDuration": 17.996
+    },
+    "trace": [
+      {
+        "scope": "auth",
+        "event": "SIGNED_IN",
+        "phase": "trigger",
+        "at": 453.39999997615814
+      },
+      {
+        "scope": "auth",
+        "event": "INITIAL_SESSION",
+        "phase": "trigger",
+        "at": 457.7999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "trigger",
+        "at": 626.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "start",
+        "at": 626.6999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 627.3999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 804.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "buildings",
+        "at": 804.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "units",
+        "at": 804.6000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_floors",
+        "at": 804.6999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_types",
+        "at": 804.6999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_type_areas",
+        "at": 804.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "trades",
+        "at": 804.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "organisations",
+        "at": 804.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_organisations",
+        "at": 804.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 805.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 805.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 805.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "resident_access_requests",
+        "at": 805.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snags",
+        "at": 805.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_photos",
+        "at": 805.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_events",
+        "at": 805.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "audit_events",
+        "at": 805.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handovers",
+        "at": 805.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_key_items",
+        "at": 805.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_photos",
+        "at": 805.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "meter_readings",
+        "at": 805.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 805.6000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 805.6999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 2013
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "published",
+        "at": 2398.1999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "settled",
+        "at": 2398.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 2437.899999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 2438.2999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 2439.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 2630.6999999284744
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 2964.6999999284744
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 2965
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 2965.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 2965.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 2965.2999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 2965.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 2965.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 3457.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 3858
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 3858.100000023842
+      }
+    ],
+    "vitals": {
+      "lcp": 2444,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 165.29999995231628,
+          "duration": 99
+        }
+      ]
+    },
+    "resources": [
+      {
+        "path": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "start": 257.1999999284744,
+        "end": 257.1999999284744,
+        "encoded": 6358,
+        "decoded": 17474,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "start": 257.60000002384186,
+        "end": 257.60000002384186,
+        "encoded": 51362,
+        "decoded": 200919,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "start": 258,
+        "end": 258,
+        "encoded": 72353,
+        "decoded": 227537,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "start": 258.2999999523163,
+        "end": 258.2999999523163,
+        "encoded": 4470,
+        "decoded": 10835,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/40vfej7y8kg94.js",
+        "start": 258.5,
+        "end": 258.5,
+        "encoded": 3687,
+        "decoded": 9265,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/158myu8e_yme3.js",
+        "start": 258.7999999523163,
+        "end": 258.7999999523163,
+        "encoded": 14368,
+        "decoded": 57909,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/11w-5de_dfbvr.js",
+        "start": 259.39999997615814,
+        "end": 259.39999997615814,
+        "encoded": 2034,
+        "decoded": 4090,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/3icpmwynur7oe.js",
+        "start": 259.89999997615814,
+        "end": 259.89999997615814,
+        "encoded": 354943,
+        "decoded": 1320791,
+        "transfer": 0
+      },
+      {
+        "path": "/_next-live/feedback/feedback.js",
+        "start": 301.89999997615814,
+        "end": 301.89999997615814,
+        "encoded": 0,
+        "decoded": 0,
+        "transfer": 0
+      }
+    ],
+    "navigation": [
+      {
+        "ttfb": 14.899999976158142,
+        "domInteractive": 273.6999999284744,
+        "load": 444.5
+      }
+    ],
+    "requests": [
+      {
+        "kind": "asset/document",
+        "endpoint": "document",
+        "method": "GET",
+        "offsetMs": 1.73859999999695,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::fmpm4-1791225551403-7cd3b99d5ba7",
+        "cache": "HIT",
+        "endMs": 272.73739999999816,
+        "responseBytes": 121
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 268.1035999999949,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::7vnp5-1791225542249-57f4e359a37a",
+        "cache": "HIT",
+        "endMs": 268.2808999999979,
+        "responseBytes": -650
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 268.8197999999975,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225542249-bf88a58c6705",
+        "cache": "HIT",
+        "endMs": 268.84560000000056,
+        "responseBytes": -650
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "image",
+        "method": "GET",
+        "offsetMs": 269.3185999999987,
+        "status": 304,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::jdjm4-1791225551663-e6ae9658e65c",
+        "cache": "HIT",
+        "endMs": 439.16159999999945,
+        "responseBytes": 82
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 269.3330999999962,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225542249-a3c45e625463",
+        "cache": "HIT",
+        "endMs": 269.38039999999455,
+        "responseBytes": -597
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 269.48689999999624,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542249-b56ca3183c00",
+        "cache": "HIT",
+        "endMs": 269.51519999999437,
+        "responseBytes": -597
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "method": "GET",
+        "offsetMs": 269.6333000000013,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::mmpsg-1791225542257-081c06cc3dd8",
+        "cache": "HIT",
+        "endMs": 270.15499999999884,
+        "responseBytes": -609,
+        "decodedBytes": 17474,
+        "sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "method": "GET",
+        "offsetMs": 270.3350999999966,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542528-0d9987c75791",
+        "cache": "HIT",
+        "endMs": 270.36019999999553,
+        "responseBytes": -609,
+        "decodedBytes": 200919,
+        "sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "method": "GET",
+        "offsetMs": 270.5369999999966,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225542613-d9113347ee6c",
+        "cache": "HIT",
+        "endMs": 270.58870000000024,
+        "responseBytes": -609,
+        "decodedBytes": 227537,
+        "sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "method": "GET",
+        "offsetMs": 270.72389999999723,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225542723-3999f6b11ee0",
+        "cache": "HIT",
+        "endMs": 270.74609999999666,
+        "responseBytes": -629,
+        "decodedBytes": 10835,
+        "sha256": "019457adae4f0685edd71ff9584f534161b21acbeb5eca8e865686bd6c729750",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/40vfej7y8kg94.js",
+        "method": "GET",
+        "offsetMs": 270.86309999999503,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gjq2n-1791225542793-6d1d1cdfe16d",
+        "cache": "HIT",
+        "endMs": 271.50679999999556,
+        "responseBytes": -609,
+        "decodedBytes": 9265,
+        "sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/158myu8e_yme3.js",
+        "method": "GET",
+        "offsetMs": 271.6206999999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::mxjrq-1791225542950-0c0a8cbbf024",
+        "cache": "HIT",
+        "endMs": 271.6616999999969,
+        "responseBytes": -609,
+        "decodedBytes": 57909,
+        "sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/11w-5de_dfbvr.js",
+        "method": "GET",
+        "offsetMs": 271.8009999999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::ltnqj-1791225543043-6ff32bd7ffdf",
+        "cache": "HIT",
+        "endMs": 271.8321999999971,
+        "responseBytes": -609,
+        "decodedBytes": 4090,
+        "sha256": "3f3ba2210c567a0ac665cab251e5383126c521ff654d10332c8d59262b4c8794",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3icpmwynur7oe.js",
+        "method": "GET",
+        "offsetMs": 272.00709999999526,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225543058-cc978f6f3ca6",
+        "cache": "HIT",
+        "endMs": 272.03689999999915,
+        "responseBytes": -609,
+        "decodedBytes": 1320791,
+        "sha256": "a03613962a6f0925130c8e2bddede23b5e0d6761f7a802efc1fc2459c7f9988d",
+        "containsJsPdf": true
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next-live/feedback/feedback.js",
+        "method": "GET",
+        "offsetMs": 304.6889999999985,
+        "status": 204,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::7dkhf-1791225543046-ab9c1068a91a",
+        "cache": null,
+        "endMs": 304.74059999999736,
+        "responseBytes": -252,
+        "decodedBytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "auth",
+        "endpoint": "auth",
+        "method": "GET",
+        "offsetMs": 461.82570000000123,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 627.3986000000004,
+        "responseBytes": 1161
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 631.4373999999953,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 800.3142000000007,
+        "responseBytes": 1222
+      },
+      {
+        "kind": "auth",
+        "endpoint": "/api/auth/activity",
+        "method": "POST",
+        "offsetMs": 635.417300000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::jdjm4-1791225552063-f289c48ed142",
+        "cache": "MISS",
+        "executionRegion": "iad1",
+        "endMs": 1873.8859000000011,
+        "responseBytes": 156
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 834.926099999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2012.5377000000008,
+        "responseBytes": 63915
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "buildings",
+        "method": "GET",
+        "offsetMs": 834.9447,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1053.6757999999973,
+        "responseBytes": 1688
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "units",
+        "method": "GET",
+        "offsetMs": 834.9591999999975,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1246.1057,
+        "responseBytes": 9607
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_floors",
+        "method": "GET",
+        "offsetMs": 835.1284000000014,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 997.9715999999971,
+        "responseBytes": 1609
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_types",
+        "method": "GET",
+        "offsetMs": 835.1414000000004,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 988.1017999999967,
+        "responseBytes": 1211
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_type_areas",
+        "method": "GET",
+        "offsetMs": 835.1558999999979,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1023.051099999997,
+        "responseBytes": 2055
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "trades",
+        "method": "GET",
+        "offsetMs": 835.1693999999989,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1090.8513999999996,
+        "responseBytes": 1248
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "organisations",
+        "method": "GET",
+        "offsetMs": 835.1823999999979,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1097.5843999999997,
+        "responseBytes": 1657
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_organisations",
+        "method": "GET",
+        "offsetMs": 835.1954999999944,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1140.998099999997,
+        "responseBytes": 1396
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 835.2109999999957,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1071.631699999998,
+        "responseBytes": 2204
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 835.3463999999949,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1118.1183999999994,
+        "responseBytes": 1422
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 835.3610999999946,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1073.6987000000008,
+        "responseBytes": 1130
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "resident_access_requests",
+        "method": "GET",
+        "offsetMs": 835.3745999999956,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1090.2770999999993,
+        "responseBytes": 1326
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snags",
+        "method": "GET",
+        "offsetMs": 835.3878999999943,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1453.8240000000005,
+        "responseBytes": 13616
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_photos",
+        "method": "GET",
+        "offsetMs": 835.3957999999984,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1659.3817999999956,
+        "responseBytes": 18253
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_events",
+        "method": "GET",
+        "offsetMs": 835.4128999999957,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1829.6867999999959,
+        "responseBytes": 27055
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "audit_events",
+        "method": "GET",
+        "offsetMs": 835.5185999999958,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1781.5767999999953,
+        "responseBytes": 29003
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handovers",
+        "method": "GET",
+        "offsetMs": 835.5293999999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1259.3473999999987,
+        "responseBytes": 5937
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_key_items",
+        "method": "GET",
+        "offsetMs": 835.5630999999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1035.7739000000001,
+        "responseBytes": 897
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_photos",
+        "method": "GET",
+        "offsetMs": 835.5746999999974,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1176.0198999999993,
+        "responseBytes": 896
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "meter_readings",
+        "method": "GET",
+        "offsetMs": 835.5858999999982,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1158.2583999999988,
+        "responseBytes": 894
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 835.5968999999968,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1106.1568999999945,
+        "responseBytes": 916
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 835.6412999999957,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1014.5403000000006,
+        "responseBytes": 922
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 2017.0508999999947,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2398.9477999999945,
+        "responseBytes": 4861
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 2443.558499999999,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2630.769499999995,
+        "responseBytes": 1336
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 2635.9303,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2962.7546999999977,
+        "responseBytes": 18014
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 2986.6738999999943,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3347.3554000000004,
+        "responseBytes": 8922
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 2986.8411999999953,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3457.1970999999976,
+        "responseBytes": 19225
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 2986.8591000000015,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3425.835699999996,
+        "responseBytes": 12404
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 2986.8776,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3242.964399999997,
+        "responseBytes": 3828
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 2986.8899999999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3305.8358000000007,
+        "responseBytes": 3763
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 2986.9681999999957,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3322.147499999999,
+        "responseBytes": 1021
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 2986.9821999999986,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3258.8528000000006,
+        "responseBytes": 2637
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 3461.797099999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3858.304299999996,
+        "responseBytes": 26655
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 3913.8840999999957,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4098.215199999999,
+        "responseBytes": 850
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 3913.9747999999963,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4142.6466999999975,
+        "responseBytes": 2276
+      }
+    ],
+    "tracePath": "before-mobile-throttled-navigation.repeat-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "before",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "sales.entry",
+    "status": "ok",
+    "readyMs": 3590.2275999999983,
+    "readyRequests": 12,
+    "settledRequests": 12,
+    "lastRequestEndMs": 3501.7209000000003,
+    "quietBoundaryMs": 5039.089099999997,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 0,
+    "decodedJavaScript": 0,
+    "mainThread": {
+      "ScriptDuration": 56.30399999999991,
+      "TaskDuration": 334.03399999999993,
+      "LayoutDuration": 6.5610000000000115,
+      "RecalcStyleDuration": 18.793000000000003
+    },
+    "trace": [
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 7396.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 7402.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 7404.799999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 7641.899999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 8551.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 8551.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 8551.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 8551.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 8551.699999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 8552
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 8552
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 9627.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 10775.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 10775.799999952316
+      }
+    ],
+    "vitals": {
+      "lcp": 2444,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 7275.5,
+          "duration": 58
+        }
+      ]
+    },
+    "resources": [],
+    "navigation": [
+      {
+        "ttfb": 14.899999976158142,
+        "domInteractive": 273.6999999284744,
+        "load": 444.5
+      }
+    ],
+    "requests": [
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 139.89830000000075,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 367.8503999999957,
+        "responseBytes": 1333
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 372.35719999999856,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1274.4911999999968,
+        "responseBytes": 17993
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 1296.7414999999964,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1929.4020999999993,
+        "responseBytes": 8921
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 1296.7621999999974,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2352.2079999999987,
+        "responseBytes": 19223
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 1296.7753000000012,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2139.2603000000017,
+        "responseBytes": 12406
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 1296.9118000000017,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1719.745600000002,
+        "responseBytes": 3827
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 1296.9298999999955,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1706.2554000000018,
+        "responseBytes": 3762
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 1296.9456999999966,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1669.2423999999955,
+        "responseBytes": 1017
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 1297.0210000000006,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1584.9917999999961,
+        "responseBytes": 2639
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 2357.100599999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3501.7209000000003,
+        "responseBytes": 26659
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 3547.5051999999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3752.1883000000016,
+        "responseBytes": 846
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 3547.524599999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3846.2367000000013,
+        "responseBytes": 2280
+      }
+    ],
+    "tracePath": "before-mobile-throttled-sales.entry-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "before",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "exchange.entry",
+    "status": "ok",
+    "readyMs": 2934.1608999999953,
+    "readyRequests": 1,
+    "settledRequests": 1,
+    "lastRequestEndMs": 2462.9847999999984,
+    "quietBoundaryMs": 4007.3620999999985,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 0,
+    "decodedJavaScript": 0,
+    "mainThread": {
+      "ScriptDuration": 39.34500000000041,
+      "TaskDuration": 218.6680000000001,
+      "LayoutDuration": 17.21399999999998,
+      "RecalcStyleDuration": 10.774000000000006
+    },
+    "trace": [],
+    "vitals": {
+      "lcp": 2444,
+      "cls": 0.0007754335464854096,
+      "longTasks": []
+    },
+    "resources": [],
+    "navigation": [
+      {
+        "ttfb": 14.899999976158142,
+        "domInteractive": 273.6999999284744,
+        "load": 444.5
+      }
+    ],
+    "requests": [
+      {
+        "kind": "function",
+        "endpoint": "/api/sales/legal",
+        "method": "GET",
+        "offsetMs": 43.043799999999464,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::flc7m-1791225563856-da9196aaaa99",
+        "cache": "BYPASS",
+        "executionRegion": "iad1",
+        "endMs": 2462.9847999999984,
+        "responseBytes": 5683
+      }
+    ],
+    "tracePath": null,
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "after",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "navigation.cold",
+    "status": "ok",
+    "readyMs": 7017.326799999995,
+    "readyRequests": 54,
+    "settledRequests": 54,
+    "lastRequestEndMs": 6547.509599999998,
+    "quietBoundaryMs": 8058.001700000001,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 374197,
+    "encodedJavaScript": 371797,
+    "decodedJavaScript": 1429803,
+    "mainThread": {
+      "ScriptDuration": 1023.08,
+      "TaskDuration": 1735.5020000000002,
+      "LayoutDuration": 90.937,
+      "RecalcStyleDuration": 21.877999999999993
+    },
+    "trace": [
+      {
+        "scope": "auth",
+        "event": "SIGNED_IN",
+        "phase": "trigger",
+        "at": 3094.399999976158
+      },
+      {
+        "scope": "auth",
+        "event": "INITIAL_SESSION",
+        "phase": "trigger",
+        "at": 3099.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "trigger",
+        "at": 3327.0999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "start",
+        "at": 3327.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 3328.899999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 3539.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "buildings",
+        "at": 3539.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "units",
+        "at": 3539.7999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_floors",
+        "at": 3539.899999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_types",
+        "at": 3539.899999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_type_areas",
+        "at": 3540
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "trades",
+        "at": 3540
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "organisations",
+        "at": 3540.0999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_organisations",
+        "at": 3540.0999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 3540.1999999284744
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 3540.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 3540.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "resident_access_requests",
+        "at": 3540.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snags",
+        "at": 3540.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_photos",
+        "at": 3540.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_events",
+        "at": 3540.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "audit_events",
+        "at": 3540.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handovers",
+        "at": 3540.5999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_key_items",
+        "at": 3540.7999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_photos",
+        "at": 3541
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "meter_readings",
+        "at": 3541
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 3541.0999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 3541.0999999046326
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 4785
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "published",
+        "at": 5085.799999952316
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "settled",
+        "at": 5086
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 5128.699999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 5129.199999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 5130
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 5345.199999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 5646.899999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 5647.099999904633
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 5647.099999904633
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 5647.099999904633
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 5647.199999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 5647.199999928474
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 5647.299999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 6125.599999904633
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 6546.599999904633
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 6547
+      }
+    ],
+    "vitals": {
+      "lcp": 5132,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 179.19999992847443,
+          "duration": 350
+        },
+        {
+          "start": 6547,
+          "duration": 50
+        }
+      ]
+    },
+    "resources": [
+      {
+        "path": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "start": 522.7999999523163,
+        "end": 891.6999999284744,
+        "encoded": 6358,
+        "decoded": 17474,
+        "transfer": 6658
+      },
+      {
+        "path": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "start": 523.2999999523163,
+        "end": 1926.5,
+        "encoded": 51362,
+        "decoded": 200919,
+        "transfer": 51662
+      },
+      {
+        "path": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "start": 523.5,
+        "end": 2190.7999999523163,
+        "encoded": 72353,
+        "decoded": 227537,
+        "transfer": 72653
+      },
+      {
+        "path": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "start": 523.8999999761581,
+        "end": 1322.1999999284744,
+        "encoded": 4472,
+        "decoded": 10835,
+        "transfer": 4772
+      },
+      {
+        "path": "/_next/static/chunks/40vfej7y8kg94.js",
+        "start": 523.8999999761581,
+        "end": 1340.7999999523163,
+        "encoded": 3687,
+        "decoded": 9265,
+        "transfer": 3987
+      },
+      {
+        "path": "/_next/static/chunks/3fess44c9ps2a.js",
+        "start": 524.0999999046326,
+        "end": 1548.6999999284744,
+        "encoded": 1978,
+        "decoded": 3645,
+        "transfer": 2278
+      },
+      {
+        "path": "/_next/static/chunks/158myu8e_yme3.js",
+        "start": 524.0999999046326,
+        "end": 1675.2999999523163,
+        "encoded": 14368,
+        "decoded": 57909,
+        "transfer": 14668
+      },
+      {
+        "path": "/_next/static/chunks/1akyy4rtlsb-d.js",
+        "start": 524.5,
+        "end": 3026.899999976158,
+        "encoded": 217219,
+        "decoded": 902219,
+        "transfer": 217519
+      },
+      {
+        "path": "/_next-live/feedback/feedback.js",
+        "start": 1326.5,
+        "end": 1514,
+        "encoded": 0,
+        "decoded": 0,
+        "transfer": 0
+      }
+    ],
+    "navigation": [
+      {
+        "ttfb": 14,
+        "domInteractive": 1081.5,
+        "load": 3084.0999999046326
+      }
+    ],
+    "requests": [
+      {
+        "kind": "asset/document",
+        "endpoint": "document",
+        "method": "GET",
+        "offsetMs": 1.876799999998184,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gxn8n-1791225573804-96d4fd6272ee",
+        "cache": "HIT",
+        "endMs": 533.3885000000009,
+        "responseBytes": 3792
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 532.1970999999976,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225574321-63d5d3c14bba",
+        "cache": "HIT",
+        "endMs": 1237.2353000000003,
+        "responseBytes": 23384
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 532.3613999999943,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225574321-ba653d092dd0",
+        "cache": "HIT",
+        "endMs": 1362.8364000000001,
+        "responseBytes": 29555
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "image",
+        "method": "GET",
+        "offsetMs": 532.3729999999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::whx6s-1791225574322-359c1586b0f2",
+        "cache": "HIT",
+        "endMs": 1009.0241999999998,
+        "responseBytes": 13396
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 532.3845999999976,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225574321-96041c9e4b5a",
+        "cache": "HIT",
+        "endMs": 1082.3727999999974,
+        "responseBytes": 15494
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 532.3947999999946,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574322-be93503ec84f",
+        "cache": "HIT",
+        "endMs": 814.3540999999968,
+        "responseBytes": 3662
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "method": "GET",
+        "offsetMs": 532.4042999999947,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574334-d17cef117245",
+        "cache": "HIT",
+        "endMs": 895.5005999999994,
+        "responseBytes": 6543,
+        "decodedBytes": 17474,
+        "sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "method": "GET",
+        "offsetMs": 532.4140999999945,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225574608-a8ffbc09f926",
+        "cache": "HIT",
+        "endMs": 1931.5174999999945,
+        "responseBytes": 51571,
+        "decodedBytes": 200919,
+        "sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "method": "GET",
+        "offsetMs": 532.4235999999946,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225574689-f8a3e42c0208",
+        "cache": "HIT",
+        "endMs": 2195.7465999999986,
+        "responseBytes": 72565,
+        "decodedBytes": 227537,
+        "sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "method": "GET",
+        "offsetMs": 532.433299999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574804-dc4246e3050f",
+        "cache": "HIT",
+        "endMs": 1325.9935999999943,
+        "responseBytes": 4653,
+        "decodedBytes": 10835,
+        "sha256": "70d433d4b613b99e045c32d03f27cde953adf77126b48334dcc9f0552c59968e",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/40vfej7y8kg94.js",
+        "method": "GET",
+        "offsetMs": 532.5276999999987,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574874-858625e25ea8",
+        "cache": "HIT",
+        "endMs": 1344.1313999999984,
+        "responseBytes": 3850,
+        "decodedBytes": 9265,
+        "sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/158myu8e_yme3.js",
+        "method": "GET",
+        "offsetMs": 532.5377000000008,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::tqjx2-1791225575028-9feca40af1dc",
+        "cache": "HIT",
+        "endMs": 1678.6880999999994,
+        "responseBytes": 14582,
+        "decodedBytes": 57909,
+        "sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3fess44c9ps2a.js",
+        "method": "GET",
+        "offsetMs": 532.5467999999964,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::whx6s-1791225575120-8da6b1c69481",
+        "cache": "HIT",
+        "endMs": 1551.6471999999994,
+        "responseBytes": 2150,
+        "decodedBytes": 3645,
+        "sha256": "1e880e1a3d4c1fc2b7998ed9eba14c62204e795ed618b4ab1ac7f108928f21ef",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1akyy4rtlsb-d.js",
+        "method": "GET",
+        "offsetMs": 532.5561999999991,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225575138-15a28e99c2c6",
+        "cache": "HIT",
+        "endMs": 3036.0098999999973,
+        "responseBytes": 217573,
+        "decodedBytes": 902219,
+        "sha256": "323150cf833bf62a1666c8566df6a162222ec4aea22162545087b6f697dd7f5e",
+        "containsJsPdf": true
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next-live/feedback/feedback.js",
+        "method": "GET",
+        "offsetMs": 1329.2212,
+        "status": 204,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::trb2f-1791225575132-644bdd3f4111",
+        "cache": null,
+        "endMs": 1517.2765999999974,
+        "responseBytes": 78,
+        "decodedBytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "auth",
+        "endpoint": "auth",
+        "method": "GET",
+        "offsetMs": 3103.5483999999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3327.9634000000005,
+        "responseBytes": 1162
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 3333.221099999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3534.3929999999964,
+        "responseBytes": 1223
+      },
+      {
+        "kind": "auth",
+        "endpoint": "/api/auth/activity",
+        "method": "POST",
+        "offsetMs": 3338.062299999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::x2xk9-1791225577137-0cc9969c739f",
+        "cache": "MISS",
+        "executionRegion": "iad1",
+        "endMs": 4387.660400000001,
+        "responseBytes": 222
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 3580.388500000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4784.799500000001,
+        "responseBytes": 63942
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "buildings",
+        "method": "GET",
+        "offsetMs": 3580.411199999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3819.7909,
+        "responseBytes": 1689
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "units",
+        "method": "GET",
+        "offsetMs": 3580.7577999999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4176.492299999998,
+        "responseBytes": 9606
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_floors",
+        "method": "GET",
+        "offsetMs": 3580.775299999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3881.164399999994,
+        "responseBytes": 1612
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_types",
+        "method": "GET",
+        "offsetMs": 3580.787599999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3754.7286999999997,
+        "responseBytes": 1209
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_type_areas",
+        "method": "GET",
+        "offsetMs": 3580.8008999999947,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3894.803799999994,
+        "responseBytes": 2055
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "trades",
+        "method": "GET",
+        "offsetMs": 3580.8139999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3771.7844999999943,
+        "responseBytes": 1249
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "organisations",
+        "method": "GET",
+        "offsetMs": 3580.826399999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3910.4758999999976,
+        "responseBytes": 1659
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_organisations",
+        "method": "GET",
+        "offsetMs": 3580.8385999999955,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3784.4795999999988,
+        "responseBytes": 1395
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 3581.0318999999945,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3910.8255999999965,
+        "responseBytes": 2205
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 3581.044600000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3826.7549,
+        "responseBytes": 1418
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 3581.0557999999946,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3791.3013999999966,
+        "responseBytes": 1129
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "resident_access_requests",
+        "method": "GET",
+        "offsetMs": 3581.0669999999955,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3821.344099999995,
+        "responseBytes": 1325
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snags",
+        "method": "GET",
+        "offsetMs": 3581.078300000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4322.496299999999,
+        "responseBytes": 13615
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_photos",
+        "method": "GET",
+        "offsetMs": 3581.0894999999946,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4417.570899999999,
+        "responseBytes": 18252
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_events",
+        "method": "GET",
+        "offsetMs": 3581.1031000000003,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4570.490899999997,
+        "responseBytes": 27046
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "audit_events",
+        "method": "GET",
+        "offsetMs": 3581.3341,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4585.920299999998,
+        "responseBytes": 29033
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handovers",
+        "method": "GET",
+        "offsetMs": 3581.351299999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 4023.9591,
+        "responseBytes": 5940
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_key_items",
+        "method": "GET",
+        "offsetMs": 3581.3638999999966,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3882.578499999996,
+        "responseBytes": 896
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_photos",
+        "method": "GET",
+        "offsetMs": 3581.3790999999983,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3850.9168999999965,
+        "responseBytes": 896
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "meter_readings",
+        "method": "GET",
+        "offsetMs": 3581.3908999999985,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3850.482100000001,
+        "responseBytes": 895
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 3581.4032000000007,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3858.202799999999,
+        "responseBytes": 916
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 3581.4145999999964,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3862.052499999998,
+        "responseBytes": 923
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 4788.723699999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5086.6777,
+        "responseBytes": 4864
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 5134.152799999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5345.629399999998,
+        "responseBytes": 1335
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 5349.2111,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5644.392199999995,
+        "responseBytes": 17992
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 5659.175799999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6028.0893,
+        "responseBytes": 8920
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 5659.325399999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6125.383600000001,
+        "responseBytes": 19275
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 5659.338899999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6094.2356,
+        "responseBytes": 12408
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 5659.350299999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5958.714199999995,
+        "responseBytes": 3828
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 5659.420899999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5961.141899999995,
+        "responseBytes": 3764
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 5659.490899999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5993.503299999997,
+        "responseBytes": 1023
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 5659.502499999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 5914.079899999997,
+        "responseBytes": 2638
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 6129.7990999999965,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6547.509599999998,
+        "responseBytes": 26706
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 6619.434799999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6854.391799999998,
+        "responseBytes": 847
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 6619.513899999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 6881.936900000001,
+        "responseBytes": 2279
+      }
+    ],
+    "tracePath": "after-mobile-throttled-navigation.cold-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "after",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "navigation.repeat",
+    "status": "ok",
+    "readyMs": 3838.66090000001,
+    "readyRequests": 54,
+    "settledRequests": 54,
+    "lastRequestEndMs": 3670.177100000008,
+    "quietBoundaryMs": 5195.726400000007,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 371797,
+    "decodedJavaScript": 1429803,
+    "mainThread": {
+      "ScriptDuration": 166.35599999999994,
+      "TaskDuration": 568.241,
+      "LayoutDuration": 18.15800000000001,
+      "RecalcStyleDuration": 14.963000000000005
+    },
+    "trace": [
+      {
+        "scope": "auth",
+        "event": "SIGNED_IN",
+        "phase": "trigger",
+        "at": 413.2000000476837
+      },
+      {
+        "scope": "auth",
+        "event": "INITIAL_SESSION",
+        "phase": "trigger",
+        "at": 417.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "trigger",
+        "at": 602.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "start",
+        "at": 602.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 603.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 789
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "buildings",
+        "at": 789.2000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "units",
+        "at": 789.2000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_floors",
+        "at": 789.2000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_types",
+        "at": 789.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "unit_type_areas",
+        "at": 789.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "trades",
+        "at": 789.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "organisations",
+        "at": 789.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "building_organisations",
+        "at": 789.5
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "profiles",
+        "at": 789.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 789.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 789.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "resident_access_requests",
+        "at": 789.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snags",
+        "at": 789.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_photos",
+        "at": 789.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "snag_events",
+        "at": 789.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "audit_events",
+        "at": 789.8999999761581
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handovers",
+        "at": 790.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_key_items",
+        "at": 790.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "handover_photos",
+        "at": 790.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "meter_readings",
+        "at": 790.2000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_unit_access",
+        "at": 790.2999999523163
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "user_building_access",
+        "at": 790.7000000476837
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "request",
+        "resource": "areas",
+        "at": 1999.1000000238419
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "published",
+        "at": 2246.399999976158
+      },
+      {
+        "scope": "portal",
+        "event": "session-restoration",
+        "phase": "settled",
+        "at": 2246.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 2289.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 2289.7999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 2290.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 2471.2999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 2770.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 2770.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 2770.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 2770.600000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 2770.7999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 2770.7999999523163
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 2771
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 3294.2000000476837
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 3669.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 3669.7999999523163
+      }
+    ],
+    "vitals": {
+      "lcp": 2292,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 172.70000004768372,
+          "duration": 94
+        }
+      ]
+    },
+    "resources": [
+      {
+        "path": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "start": 259,
+        "end": 259,
+        "encoded": 6358,
+        "decoded": 17474,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "start": 259.5,
+        "end": 259.5,
+        "encoded": 51362,
+        "decoded": 200919,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "start": 260,
+        "end": 260,
+        "encoded": 72353,
+        "decoded": 227537,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "start": 260.2999999523163,
+        "end": 260.2999999523163,
+        "encoded": 4472,
+        "decoded": 10835,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/40vfej7y8kg94.js",
+        "start": 260.7000000476837,
+        "end": 260.7000000476837,
+        "encoded": 3687,
+        "decoded": 9265,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/158myu8e_yme3.js",
+        "start": 261.10000002384186,
+        "end": 261.10000002384186,
+        "encoded": 14368,
+        "decoded": 57909,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/3fess44c9ps2a.js",
+        "start": 261.2999999523163,
+        "end": 261.2999999523163,
+        "encoded": 1978,
+        "decoded": 3645,
+        "transfer": 0
+      },
+      {
+        "path": "/_next/static/chunks/1akyy4rtlsb-d.js",
+        "start": 262.2999999523163,
+        "end": 262.2999999523163,
+        "encoded": 217219,
+        "decoded": 902219,
+        "transfer": 0
+      },
+      {
+        "path": "/_next-live/feedback/feedback.js",
+        "start": 302,
+        "end": 302,
+        "encoded": 0,
+        "decoded": 0,
+        "transfer": 0
+      }
+    ],
+    "navigation": [
+      {
+        "ttfb": 12.799999952316284,
+        "domInteractive": 276.60000002384186,
+        "load": 428.10000002384186
+      }
+    ],
+    "requests": [
+      {
+        "kind": "asset/document",
+        "endpoint": "document",
+        "method": "GET",
+        "offsetMs": 1.8771000000051572,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::kh6c7-1791225582326-64bfcebcfa01",
+        "cache": "HIT",
+        "endMs": 275.3894,
+        "responseBytes": 122
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 270.7820000000065,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225574321-63d5d3c14bba",
+        "cache": "HIT",
+        "endMs": 271.1674000000057,
+        "responseBytes": -650
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "font",
+        "method": "GET",
+        "offsetMs": 271.4293000000034,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225574321-ba653d092dd0",
+        "cache": "HIT",
+        "endMs": 272.0587000000014,
+        "responseBytes": -650
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "image",
+        "method": "GET",
+        "offsetMs": 272.21310000000085,
+        "status": 304,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2rzh-1791225582586-ffcfccaae736",
+        "cache": "HIT",
+        "endMs": 422.5964000000022,
+        "responseBytes": 82
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 272.2350000000006,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::9h22k-1791225574321-96041c9e4b5a",
+        "cache": "HIT",
+        "endMs": 272.2888000000021,
+        "responseBytes": -597
+      },
+      {
+        "kind": "asset/document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 272.4479000000065,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574322-be93503ec84f",
+        "cache": "HIT",
+        "endMs": 272.4841000000015,
+        "responseBytes": -597
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+        "method": "GET",
+        "offsetMs": 273.14360000000306,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574334-d17cef117245",
+        "cache": "HIT",
+        "endMs": 273.1705000000002,
+        "responseBytes": -609,
+        "decodedBytes": 17474,
+        "sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1bzqw010xzs8k.js",
+        "method": "GET",
+        "offsetMs": 273.29089999999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225574608-a8ffbc09f926",
+        "cache": "HIT",
+        "endMs": 273.3101999999999,
+        "responseBytes": -609,
+        "decodedBytes": 200919,
+        "sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+        "method": "GET",
+        "offsetMs": 273.4074000000037,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::x2xk9-1791225574689-f8a3e42c0208",
+        "cache": "HIT",
+        "endMs": 273.4395000000004,
+        "responseBytes": -609,
+        "decodedBytes": 227537,
+        "sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+        "method": "GET",
+        "offsetMs": 273.5477000000028,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574804-dc4246e3050f",
+        "cache": "HIT",
+        "endMs": 273.57160000000295,
+        "responseBytes": -629,
+        "decodedBytes": 10835,
+        "sha256": "70d433d4b613b99e045c32d03f27cde953adf77126b48334dcc9f0552c59968e",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/40vfej7y8kg94.js",
+        "method": "GET",
+        "offsetMs": 273.65810000000056,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::gmxfl-1791225574874-858625e25ea8",
+        "cache": "HIT",
+        "endMs": 273.67260000000533,
+        "responseBytes": -609,
+        "decodedBytes": 9265,
+        "sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/158myu8e_yme3.js",
+        "method": "GET",
+        "offsetMs": 273.74840000000404,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::tqjx2-1791225575028-9feca40af1dc",
+        "cache": "HIT",
+        "endMs": 274.4179000000004,
+        "responseBytes": -609,
+        "decodedBytes": 57909,
+        "sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/3fess44c9ps2a.js",
+        "method": "GET",
+        "offsetMs": 274.5491000000038,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::whx6s-1791225575120-8da6b1c69481",
+        "cache": "HIT",
+        "endMs": 274.5703000000067,
+        "responseBytes": -609,
+        "decodedBytes": 3645,
+        "sha256": "1e880e1a3d4c1fc2b7998ed9eba14c62204e795ed618b4ab1ac7f108928f21ef",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next/static/chunks/1akyy4rtlsb-d.js",
+        "method": "GET",
+        "offsetMs": 274.6676000000007,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::rjcd6-1791225575138-15a28e99c2c6",
+        "cache": "HIT",
+        "endMs": 274.69830000000366,
+        "responseBytes": -609,
+        "decodedBytes": 902219,
+        "sha256": "323150cf833bf62a1666c8566df6a162222ec4aea22162545087b6f697dd7f5e",
+        "containsJsPdf": true
+      },
+      {
+        "kind": "javascript",
+        "endpoint": "/_next-live/feedback/feedback.js",
+        "method": "GET",
+        "offsetMs": 304.6941000000006,
+        "status": 204,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::trb2f-1791225575132-644bdd3f4111",
+        "cache": null,
+        "endMs": 304.9065000000046,
+        "responseBytes": -252,
+        "decodedBytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "containsJsPdf": false
+      },
+      {
+        "kind": "auth",
+        "endpoint": "auth",
+        "method": "GET",
+        "offsetMs": 421.6229999999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 603.2813000000024,
+        "responseBytes": 1160
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 607.7570000000051,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 785.0697,
+        "responseBytes": 1221
+      },
+      {
+        "kind": "auth",
+        "endpoint": "/api/auth/activity",
+        "method": "POST",
+        "offsetMs": 612.1200000000026,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::w76hj-1791225582939-100777bd9b0c",
+        "cache": "MISS",
+        "executionRegion": "iad1",
+        "endMs": 1596.2933000000048,
+        "responseBytes": 162
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 821.5925000000061,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1998.6175000000003,
+        "responseBytes": 63933
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "buildings",
+        "method": "GET",
+        "offsetMs": 821.6105000000025,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1128.7667000000001,
+        "responseBytes": 1688
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "units",
+        "method": "GET",
+        "offsetMs": 821.7453999999998,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1380.747500000005,
+        "responseBytes": 9607
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_floors",
+        "method": "GET",
+        "offsetMs": 821.7590000000055,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1069.9384000000064,
+        "responseBytes": 1611
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_types",
+        "method": "GET",
+        "offsetMs": 821.9603000000061,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 969.1314000000057,
+        "responseBytes": 1209
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_type_areas",
+        "method": "GET",
+        "offsetMs": 821.9767000000065,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1134.7206000000006,
+        "responseBytes": 2057
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "trades",
+        "method": "GET",
+        "offsetMs": 821.9916000000012,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 977.1631000000052,
+        "responseBytes": 1247
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "organisations",
+        "method": "GET",
+        "offsetMs": 822.016300000003,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1128.2927000000054,
+        "responseBytes": 1657
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_organisations",
+        "method": "GET",
+        "offsetMs": 822.0304000000033,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 992.4734000000026,
+        "responseBytes": 1398
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 822.0426000000007,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1167.4728000000032,
+        "responseBytes": 2202
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 822.1231000000043,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1034.002800000002,
+        "responseBytes": 1420
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 822.1357000000062,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 999.7397000000055,
+        "responseBytes": 1127
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "resident_access_requests",
+        "method": "GET",
+        "offsetMs": 822.4204000000027,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1089.1147000000055,
+        "responseBytes": 1327
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snags",
+        "method": "GET",
+        "offsetMs": 822.4353000000046,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1518.9869000000035,
+        "responseBytes": 13617
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_photos",
+        "method": "GET",
+        "offsetMs": 822.4521999999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1639.8890000000029,
+        "responseBytes": 18303
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "snag_events",
+        "method": "GET",
+        "offsetMs": 822.4671000000017,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1824.8744000000079,
+        "responseBytes": 27070
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "audit_events",
+        "method": "GET",
+        "offsetMs": 822.4802000000054,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1798.8655000000072,
+        "responseBytes": 29033
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handovers",
+        "method": "GET",
+        "offsetMs": 822.4930999999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1281.6881000000067,
+        "responseBytes": 5941
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_key_items",
+        "method": "GET",
+        "offsetMs": 822.5156000000061,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1037.2667000000001,
+        "responseBytes": 896
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "handover_photos",
+        "method": "GET",
+        "offsetMs": 822.6215000000011,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1094.866700000006,
+        "responseBytes": 897
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "meter_readings",
+        "method": "GET",
+        "offsetMs": 822.6362000000008,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1067.5009000000064,
+        "responseBytes": 895
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 822.6509000000005,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1055.1353000000017,
+        "responseBytes": 916
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 822.6640000000043,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1055.7739000000001,
+        "responseBytes": 924
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 2003.2157999999981,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2247.2105000000083,
+        "responseBytes": 4863
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 2294.6632000000027,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2471.529499999997,
+        "responseBytes": 1335
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 2474.9718000000066,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2768.414100000002,
+        "responseBytes": 17996
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 2783.602300000006,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3172.998599999999,
+        "responseBytes": 8918
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 2783.7701000000015,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3293.9770000000062,
+        "responseBytes": 19226
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 2783.7876000000033,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3256.6670999999988,
+        "responseBytes": 12407
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 2783.803300000007,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3084.843700000005,
+        "responseBytes": 3828
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 2783.8190000000104,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3084.4182999999975,
+        "responseBytes": 3763
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 2783.9075000000084,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3160.917600000008,
+        "responseBytes": 1023
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 2783.9243999999962,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3104.1295000000027,
+        "responseBytes": 2638
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 3298.542500000003,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3670.177100000008,
+        "responseBytes": 26663
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 3722.612199999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3905.828300000001,
+        "responseBytes": 848
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 3722.678300000007,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3951.9604000000036,
+        "responseBytes": 2279
+      }
+    ],
+    "tracePath": "after-mobile-throttled-navigation.repeat-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "after",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "sales.entry",
+    "status": "ok",
+    "readyMs": 3562.207699999999,
+    "readyRequests": 12,
+    "settledRequests": 12,
+    "lastRequestEndMs": 3385.1447999999946,
+    "quietBoundaryMs": 4919.873999999996,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 0,
+    "decodedJavaScript": 0,
+    "mainThread": {
+      "ScriptDuration": 53.471000000000046,
+      "TaskDuration": 308.2419999999999,
+      "LayoutDuration": 7.890999999999981,
+      "RecalcStyleDuration": 16.726999999999993
+    },
+    "trace": [
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "trigger",
+        "at": 7253.399999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "start",
+        "at": 7258.799999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "building_sale_defaults",
+        "at": 7261.299999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_attempts",
+        "at": 7487.100000023842
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_terms",
+        "at": 8416.299999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_payment_schedule",
+        "at": 8416.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_documents",
+        "at": 8416.5
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoices",
+        "at": 8416.799999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_invoice_payments",
+        "at": 8416.799999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_actor_names",
+        "at": 8416.799999952316
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "sale_exchange_deposit_receipts",
+        "at": 8416.899999976158
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "request",
+        "resource": "unit_sale_document_versions",
+        "at": 9429.700000047684
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "published",
+        "at": 10511
+      },
+      {
+        "scope": "sales",
+        "event": "mount",
+        "phase": "settled",
+        "at": 10511.200000047684
+      }
+    ],
+    "vitals": {
+      "lcp": 2292,
+      "cls": 0.0007754335464854096,
+      "longTasks": [
+        {
+          "start": 7127.399999976158,
+          "duration": 55
+        }
+      ]
+    },
+    "resources": [],
+    "navigation": [
+      {
+        "ttfb": 12.799999952316284,
+        "domInteractive": 276.60000002384186,
+        "load": 428.10000002384186
+      }
+    ],
+    "requests": [
+      {
+        "kind": "supabase-read",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 143.82970000000205,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 361.0905000000057,
+        "responseBytes": 1335
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 364.22870000000694,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1287.7428999999975,
+        "responseBytes": 17994
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 1302.938599999994,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1873.647800000006,
+        "responseBytes": 8920
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 1303.2281000000075,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2303.0341000000044,
+        "responseBytes": 19225
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 1303.2551999999996,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 2059.131500000003,
+        "responseBytes": 12425
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 1303.276899999997,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1723.9513000000006,
+        "responseBytes": 3829
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 1303.4572000000044,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1739.6089000000065,
+        "responseBytes": 3763
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 1303.5065000000031,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1710.7407999999996,
+        "responseBytes": 1021
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 1303.5276000000013,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 1654.061400000006,
+        "responseBytes": 2641
+      },
+      {
+        "kind": "supabase-read",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 2307.144199999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3385.1447999999946,
+        "responseBytes": 26658
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 3427.827099999995,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3639.347200000004,
+        "responseBytes": 851
+      },
+      {
+        "kind": "polling",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 3427.9116000000067,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": null,
+        "cache": null,
+        "endMs": 3722.6493000000046,
+        "responseBytes": 2278
+      }
+    ],
+    "tracePath": "after-mobile-throttled-sales.entry-1.trace.json.gz",
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  },
+  {
+    "variant": "after",
+    "profile": "mobile-throttled",
+    "run": 1,
+    "action": "exchange.entry",
+    "status": "ok",
+    "readyMs": 2940.6641999999993,
+    "readyRequests": 1,
+    "settledRequests": 1,
+    "lastRequestEndMs": 2470.6667000000016,
+    "quietBoundaryMs": 4006.68759999999,
+    "timedOut": false,
+    "applicationFailures": 0,
+    "aborted": [],
+    "transferredJavaScript": 0,
+    "encodedJavaScript": 0,
+    "decodedJavaScript": 0,
+    "mainThread": {
+      "ScriptDuration": 39.241000000000085,
+      "TaskDuration": 217.45899999999983,
+      "LayoutDuration": 17.856999999999957,
+      "RecalcStyleDuration": 11.896999999999991
+    },
+    "trace": [],
+    "vitals": {
+      "lcp": 2292,
+      "cls": 0.0007754335464854096,
+      "longTasks": []
+    },
+    "resources": [],
+    "navigation": [
+      {
+        "ttfb": 12.799999952316284,
+        "domInteractive": 276.60000002384186,
+        "load": 428.10000002384186
+      }
+    ],
+    "requests": [
+      {
+        "kind": "function",
+        "endpoint": "/api/sales/legal",
+        "method": "GET",
+        "offsetMs": 52.82859999999346,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "vercelId": "lhr1::iad1::kh6c7-1791225594538-7722752af12d",
+        "cache": "BYPASS",
+        "executionRegion": "iad1",
+        "endMs": 2470.6667000000016,
+        "responseBytes": 5683
+      }
+    ],
+    "tracePath": null,
+    "displayedStateChecked": true,
+    "displayedUnit": 107
+  }
+]

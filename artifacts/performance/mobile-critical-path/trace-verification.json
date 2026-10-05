@@ -1,0 +1,109 @@
+{
+  "completed": true,
+  "unchanged": true,
+  "before": {
+    "attempts": "3f6c9ed15142adbda3b8ceadc243059e7a0ce22016a2d1b5468bdc39a837d498",
+    "units": "c091d974db333204ed816071ad35ad7c46938815e12fe6da6832631ca93490d9",
+    "emails": "549b0e587d97dc8713feee38689e51b2dee0c3dec7d8768b7008dfc79730f436",
+    "events": "30761500de4c1127912a8c9a8c7b611b48545135df4ba84c4fd3bc1763a3d944",
+    "documents": "b626edb93fe31c198a55171f799de7d96b2d8962064562b3399c70b94e708414"
+  },
+  "after": {
+    "attempts": "3f6c9ed15142adbda3b8ceadc243059e7a0ce22016a2d1b5468bdc39a837d498",
+    "units": "c091d974db333204ed816071ad35ad7c46938815e12fe6da6832631ca93490d9",
+    "emails": "549b0e587d97dc8713feee38689e51b2dee0c3dec7d8768b7008dfc79730f436",
+    "events": "30761500de4c1127912a8c9a8c7b611b48545135df4ba84c4fd3bc1763a3d944",
+    "documents": "b626edb93fe31c198a55171f799de7d96b2d8962064562b3399c70b94e708414"
+  },
+  "violations": 0,
+  "browser": "149.0.7827.55",
+  "fixtures": [
+    107,
+    108,
+    109,
+    110
+  ],
+  "readOnly": true,
+  "profiles": "mobile-throttled",
+  "variants": {
+    "before": {
+      "origin": "https://bunnywell-portal-fe1e2j4f9-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_9z11LY3JvsrhUg1iWMhyVkzp2YCK",
+      "commit": "06e09fabea43a6cfa262ee3caa033db6eb76c036",
+      "applicationBase": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+      "region": "iad1"
+    },
+    "after": {
+      "origin": "https://bunnywell-portal-cbq2kofji-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_cKZEN1SXvoQdX4RYG6PHXE8TxUBC",
+      "commit": "83670f3a18a2f5370f1d9927e956723d0d86a4c3",
+      "region": "iad1"
+    }
+  },
+  "gates": [
+    {
+      "variant": "before",
+      "profile": "mobile-throttled",
+      "run": 1,
+      "exchangeDisplayed": true,
+      "sampledRegions": [
+        {
+          "endpoint": "/api/auth/activity",
+          "region": "iad1",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/auth/activity",
+          "region": "iad1",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/sales/legal",
+          "region": "iad1",
+          "status": 200
+        }
+      ]
+    },
+    {
+      "variant": "after",
+      "profile": "mobile-throttled",
+      "run": 1,
+      "exchangeDisplayed": true,
+      "sampledRegions": [
+        {
+          "endpoint": "/api/auth/activity",
+          "region": "iad1",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/auth/activity",
+          "region": "iad1",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/sales/legal",
+          "region": "iad1",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "variant": "before",
+      "profile": "mobile-throttled",
+      "projects": [
+        "vxkpvdtrldwwqiddoyof.supabase.co"
+      ],
+      "pageErrors": 0
+    },
+    {
+      "variant": "after",
+      "profile": "mobile-throttled",
+      "projects": [
+        "vxkpvdtrldwwqiddoyof.supabase.co"
+      ],
+      "pageErrors": 0
+    }
+  ]
+}
