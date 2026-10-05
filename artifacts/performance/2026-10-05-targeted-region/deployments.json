@@ -1,0 +1,24 @@
+{
+  "baseline": "9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2",
+  "iad1": {
+    "origin": "https://bunnywell-portal-mwvgb5vko-carl-gilbert-s-projects.vercel.app",
+    "deploymentId": "dpl_hNjFuwWR23C5AiMjZyJVy9APjbpf",
+    "state": "READY",
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "commit": "73b935201aaf25705a297963f6fcdab78b0441e7"
+  },
+  "fra1": {
+    "origin": "https://bunnywell-portal-11i4lffpk-carl-gilbert-s-projects.vercel.app",
+    "deploymentId": "dpl_BSLd1gTjuxrWB5vWLJ84oUHhACG9",
+    "state": "READY",
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "legalRegion": "fra1",
+    "commit": "5cbe6805a0c66a959ba5e9313c9fc6c9d36c15ac"
+  }
+}

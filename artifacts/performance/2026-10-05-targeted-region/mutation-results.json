@@ -1,0 +1,448 @@
+{
+  "startedAt": "2026-10-05T16:22:52.901Z",
+  "consumedUnits": [
+    210,
+    211
+  ],
+  "fixtures": [
+    {
+      "region": "iad1",
+      "unit": 210,
+      "preparedState": {
+        "workflow_status": "approved",
+        "authority_requested_at": null,
+        "exchanged_at": null,
+        "completed_at": null
+      },
+      "normalisedSnapshotSha256": "43d83a36d0a6ad0ae11de466451172fcb60750c87edd50612cdcce258ce49b05",
+      "safeRecipientsVerified": true,
+      "reservationStorageWork": "setup only; excluded from measured authority issue"
+    },
+    {
+      "region": "fra1",
+      "unit": 211,
+      "preparedState": {
+        "workflow_status": "approved",
+        "authority_requested_at": null,
+        "exchanged_at": null,
+        "completed_at": null
+      },
+      "normalisedSnapshotSha256": "43d83a36d0a6ad0ae11de466451172fcb60750c87edd50612cdcce258ce49b05",
+      "safeRecipientsVerified": true,
+      "reservationStorageWork": "setup only; excluded from measured authority issue"
+    }
+  ],
+  "fixtureSetupRequests": [
+    {
+      "regionVariant": "iad1",
+      "endpoint": "/api/sales/reservations",
+      "action": "save_commercial_model",
+      "status": 200,
+      "vercelId": "lhr1::iad1::mdbks-1791217374242-4ad771c330df",
+      "executionRegion": "iad1",
+      "durationMs": 1403.9329000000002,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "iad1",
+      "endpoint": "/api/sales/reservations",
+      "action": "reservation_form_upload",
+      "status": 200,
+      "vercelId": "lhr1::iad1::tsnkz-1791217375601-2e575839b886",
+      "executionRegion": "iad1",
+      "durationMs": 2756.1897,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "iad1",
+      "endpoint": "/api/sales/reservations",
+      "action": "save_reservation",
+      "status": 200,
+      "vercelId": "lhr1::iad1::tsnkz-1791217378371-470410051819",
+      "executionRegion": "iad1",
+      "durationMs": 2781.7334,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "iad1",
+      "endpoint": "/api/sales/reservations",
+      "action": "approve_reservation",
+      "status": 200,
+      "vercelId": "lhr1::iad1::l5nzn-1791217381145-759d828d92b5",
+      "executionRegion": "iad1",
+      "durationMs": 1357.0360999999994,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "fra1",
+      "endpoint": "/api/sales/reservations",
+      "action": "save_commercial_model",
+      "status": 200,
+      "vercelId": "lhr1::iad1::l5nzn-1791217383275-27e104e9fbfb",
+      "executionRegion": "iad1",
+      "durationMs": 1569.2850999999991,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "fra1",
+      "endpoint": "/api/sales/reservations",
+      "action": "reservation_form_upload",
+      "status": 200,
+      "vercelId": "lhr1::iad1::p96xr-1791217384807-7b8f76499e69",
+      "executionRegion": "iad1",
+      "durationMs": 2051.5704000000005,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "fra1",
+      "endpoint": "/api/sales/reservations",
+      "action": "save_reservation",
+      "status": 200,
+      "vercelId": "lhr1::iad1::p96xr-1791217386866-10e6913810d9",
+      "executionRegion": "iad1",
+      "durationMs": 3144.7228000000014,
+      "excludedFromMeasuredLegalAction": true
+    },
+    {
+      "regionVariant": "fra1",
+      "endpoint": "/api/sales/reservations",
+      "action": "approve_reservation",
+      "status": 200,
+      "vercelId": "lhr1::iad1::w5446-1791217390014-e7cd1e66e79a",
+      "executionRegion": "iad1",
+      "durationMs": 1956.4444999999978,
+      "excludedFromMeasuredLegalAction": true
+    }
+  ],
+  "samples": [
+    {
+      "region": "fra1",
+      "unit": 211,
+      "profile": "desktop",
+      "status": "ok",
+      "readyMs": 878.1576999999997,
+      "readyRequests": 4,
+      "settledRequests": 4,
+      "lastRequestEndMs": 745.599299999998,
+      "requests": [
+        {
+          "category": "legal",
+          "endpoint": "/api/sales/legal",
+          "method": "POST",
+          "offsetMs": 33.65289999999732,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": "lhr1::fra1::g6n6n-1791217401107-6777040cefb3",
+          "executionRegion": "fra1",
+          "serverTiming": "route;dur=417.81, auth;dur=21.43;desc=\"1 calls\", auth_end;dur=21.69;desc=\"offset from route entry\", db_read;dur=58.53;desc=\"2 calls\", db_read_end;dur=81.31;desc=\"offset from route entry\", body_read;dur=0.10;desc=\"1 calls\", body_read_end;dur=44.68;desc=\"offset from route entry\", json_parse;dur=0.02;desc=\"1 calls\", json_parse_end;dur=44.70;desc=\"offset from route entry\", db_mutation;dur=124.44;desc=\"3 calls\", db_mutation_end;dur=416.79;desc=\"offset from route entry\", email_delivery;dur=206.04;desc=\"1 calls\", email_delivery_end;dur=372.66;desc=\"offset from route entry\"",
+          "endMs": 508.54849999999715,
+          "durationMs": 474.89559999999983,
+          "browserTiming": {
+            "startTime": 1791217401381.885,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.449,
+            "responseStart": 473.58,
+            "responseEnd": 475.311
+          },
+          "responseBytes": 4007
+        },
+        {
+          "category": "legal",
+          "endpoint": "/api/sales/legal",
+          "method": "GET",
+          "offsetMs": 510.2358999999997,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": "lhr1::fra1::g6n6n-1791217401583-c2536aa3dc74",
+          "executionRegion": "fra1",
+          "serverTiming": "route;dur=167.61, auth;dur=19.92;desc=\"1 calls\", auth_end;dur=20.16;desc=\"offset from route entry\", db_read;dur=343.84;desc=\"8 calls\", db_read_end;dur=167.25;desc=\"offset from route entry\", db_mutation;dur=26.76;desc=\"1 calls\", db_mutation_end;dur=112.40;desc=\"offset from route entry\"",
+          "endMs": 745.599299999998,
+          "durationMs": 235.36339999999836,
+          "browserTiming": {
+            "startTime": 1791217401858.468,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.405,
+            "responseStart": 234.445,
+            "responseEnd": 235.851
+          },
+          "responseBytes": 3914
+        },
+        {
+          "category": "direct-supabase",
+          "endpoint": "unit_sale_attempts",
+          "method": "GET",
+          "offsetMs": 510.3120999999992,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": null,
+          "executionRegion": null,
+          "serverTiming": "cfExtPri",
+          "endMs": 579.1826000000001,
+          "durationMs": 68.8705000000009,
+          "browserTiming": {
+            "startTime": 1791217401881.0068,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.32,
+            "responseStart": 46.426,
+            "responseEnd": 69.294
+          },
+          "responseBytes": 1742
+        },
+        {
+          "category": "direct-supabase",
+          "endpoint": "sale_actor_names",
+          "method": "POST",
+          "offsetMs": 510.33699999999953,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": null,
+          "executionRegion": null,
+          "serverTiming": "cfExtPri",
+          "endMs": 567.0070999999989,
+          "durationMs": 56.670099999999366,
+          "browserTiming": {
+            "startTime": 1791217401858.7073,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.435,
+            "responseStart": 56.259,
+            "responseEnd": 56.7
+          },
+          "responseBytes": 997
+        }
+      ],
+      "displayedStateChecked": true,
+      "savedEmailState": [
+        {
+          "kind": "authority",
+          "version": 1,
+          "delivery_status": "sent",
+          "hasSentAt": true,
+          "hasProviderReceipt": true
+        }
+      ],
+      "legalRegionsVerified": true,
+      "storageRequests": 0
+    },
+    {
+      "region": "iad1",
+      "unit": 210,
+      "profile": "desktop",
+      "status": "ok",
+      "readyMs": 2926.2006,
+      "readyRequests": 4,
+      "settledRequests": 4,
+      "lastRequestEndMs": 2825.7824,
+      "requests": [
+        {
+          "category": "legal",
+          "endpoint": "/api/sales/legal",
+          "method": "POST",
+          "offsetMs": 17.848699999998644,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": "lhr1::iad1::6t2kr-1791217404009-96b48703f6b2",
+          "executionRegion": "iad1",
+          "serverTiming": "route;dur=1445.50, auth;dur=141.80;desc=\"1 calls\", auth_end;dur=142.03;desc=\"offset from route entry\", db_read;dur=474.85;desc=\"2 calls\", db_read_end;dur=618.08;desc=\"offset from route entry\", body_read;dur=0.12;desc=\"1 calls\", body_read_end;dur=467.16;desc=\"offset from route entry\", json_parse;dur=0.02;desc=\"1 calls\", json_parse_end;dur=467.18;desc=\"offset from route entry\", db_mutation;dur=556.68;desc=\"3 calls\", db_mutation_end;dur=1444.41;desc=\"offset from route entry\", email_delivery;dur=263.56;desc=\"1 calls\", email_delivery_end;dur=1325.12;desc=\"offset from route entry\"",
+          "endMs": 1656.4871999999996,
+          "durationMs": 1638.638500000001,
+          "browserTiming": {
+            "startTime": 1791217404285.206,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.623,
+            "responseStart": 1637.326,
+            "responseEnd": 1639.149
+          },
+          "responseBytes": 4016
+        },
+        {
+          "category": "legal",
+          "endpoint": "/api/sales/legal",
+          "method": "GET",
+          "offsetMs": 1657.9492999999966,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": "lhr1::iad1::24x58-1791217405652-5ed9f8582f6b",
+          "executionRegion": "iad1",
+          "serverTiming": "route;dur=1045.02, auth;dur=318.62;desc=\"1 calls\", auth_end;dur=318.87;desc=\"offset from route entry\", db_read;dur=1321.15;desc=\"8 calls\", db_read_end;dur=1044.49;desc=\"offset from route entry\", db_mutation;dur=129.35;desc=\"1 calls\", db_mutation_end;dur=710.46;desc=\"offset from route entry\"",
+          "endMs": 2825.7824,
+          "durationMs": 1167.8331000000035,
+          "browserTiming": {
+            "startTime": 1791217405925.477,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.625,
+            "responseStart": 1166.903,
+            "responseEnd": 1167.589
+          },
+          "responseBytes": 3955
+        },
+        {
+          "category": "direct-supabase",
+          "endpoint": "unit_sale_attempts",
+          "method": "GET",
+          "offsetMs": 1658.2104,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": null,
+          "executionRegion": null,
+          "serverTiming": "cfExtPri",
+          "endMs": 1744.8792999999969,
+          "durationMs": 86.66889999999694,
+          "browserTiming": {
+            "startTime": 1791217405953.908,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.471,
+            "responseStart": 58.127,
+            "responseEnd": 86.923
+          },
+          "responseBytes": 1743
+        },
+        {
+          "category": "direct-supabase",
+          "endpoint": "sale_actor_names",
+          "method": "POST",
+          "offsetMs": 1658.2487,
+          "status": 200,
+          "finished": true,
+          "failed": false,
+          "vercelId": null,
+          "executionRegion": null,
+          "serverTiming": "cfExtPri",
+          "endMs": 1730.9989999999998,
+          "durationMs": 72.7502999999997,
+          "browserTiming": {
+            "startTime": 1791217405925.7268,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.52,
+            "responseStart": 72.348,
+            "responseEnd": 72.818
+          },
+          "responseBytes": 1000
+        }
+      ],
+      "displayedStateChecked": true,
+      "savedEmailState": [
+        {
+          "kind": "authority",
+          "version": 1,
+          "delivery_status": "sent",
+          "hasSentAt": true,
+          "hasProviderReceipt": true
+        }
+      ],
+      "legalRegionsVerified": true,
+      "storageRequests": 0
+    }
+  ],
+  "failures": [],
+  "profile": "desktop",
+  "mutation": "authority.issue",
+  "safeRecipientAllowlist": [
+    "carl@accoladeproperties.co.uk"
+  ],
+  "readiness": "success notice, Active authority status, visible reissue review control, two animation frames",
+  "plannedMutationSamplesPerRegion": 1,
+  "protectedBefore": {
+    "units": {
+      "count": 24,
+      "sha256": "df949a5bd62fe50fbbffeea51f4395b13deccd37ba5b627d0ab5ad4628e740aa"
+    },
+    "attempts": {
+      "count": 24,
+      "sha256": "fae131aaa97fa90e04dd7ac4a30b1aeb805e3281808f61ad14d22ea7654ee2be"
+    },
+    "sale_legal_emails": {
+      "count": 45,
+      "sha256": "06849f2643b10c4695e175d9af4f1652d3e5508b7c0a251bfaf39ac79ff5995a"
+    },
+    "unit_sale_workflow_events": {
+      "count": 411,
+      "sha256": "7e7131be78ba7eff306e4d8c51cb21497042c8a236e8df74a4f93e29a5dfb751"
+    },
+    "sale_comments": {
+      "count": 21,
+      "sha256": "14ae7c80dc07316a2ef2b62049ca4dfd525a7531da7fc64620197d658522ce07"
+    },
+    "sale_mention_notifications": {
+      "count": 21,
+      "sha256": "30553dc0542eeb649f62b70b566fc947ab73ae9244d342b47376c88acf23da12"
+    },
+    "documents": {
+      "count": 90,
+      "sha256": "6f7fbf608bb13819d115320d3fbe1fbb465ab27ff2a89e809a7bcc262fc350f7"
+    }
+  },
+  "matchedLegalSnapshots": true,
+  "commonExpiry": "2026-10-07T16:23:00.000Z",
+  "completed": true,
+  "protectedAfter": {
+    "units": {
+      "count": 24,
+      "sha256": "df949a5bd62fe50fbbffeea51f4395b13deccd37ba5b627d0ab5ad4628e740aa"
+    },
+    "attempts": {
+      "count": 24,
+      "sha256": "fae131aaa97fa90e04dd7ac4a30b1aeb805e3281808f61ad14d22ea7654ee2be"
+    },
+    "sale_legal_emails": {
+      "count": 45,
+      "sha256": "06849f2643b10c4695e175d9af4f1652d3e5508b7c0a251bfaf39ac79ff5995a"
+    },
+    "unit_sale_workflow_events": {
+      "count": 411,
+      "sha256": "7e7131be78ba7eff306e4d8c51cb21497042c8a236e8df74a4f93e29a5dfb751"
+    },
+    "sale_comments": {
+      "count": 21,
+      "sha256": "14ae7c80dc07316a2ef2b62049ca4dfd525a7531da7fc64620197d658522ce07"
+    },
+    "sale_mention_notifications": {
+      "count": 21,
+      "sha256": "30553dc0542eeb649f62b70b566fc947ab73ae9244d342b47376c88acf23da12"
+    },
+    "documents": {
+      "count": 90,
+      "sha256": "6f7fbf608bb13819d115320d3fbe1fbb465ab27ff2a89e809a7bcc262fc350f7"
+    }
+  },
+  "protectedUnchanged": true,
+  "finishedAt": "2026-10-05T16:23:30.112Z"
+}

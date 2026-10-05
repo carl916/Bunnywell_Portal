@@ -1,0 +1,26 @@
+{
+  "verifiedAt": "2026-10-05T16:24:16.636Z",
+  "passed": true,
+  "readOnlyActionSamples": 192,
+  "mutationSamples": 2,
+  "mutationSamplesPerRegion": 1,
+  "consumedUnits": [
+    210,
+    211
+  ],
+  "readOnlyRegionChecks": 160,
+  "staticAssetsCompared": 10,
+  "staticAssetsIdentical": 9,
+  "hashes": {
+    "samples.json": "cd54965fae44d142e68f0291fa79557ba20f4d603eb2e7b73785628c14982a3f",
+    "summary.json": "8cf2597753839be5c526672a52712c4746045fbb203a0a7dabd16f5ca6cd39c5",
+    "details.json": "31f241c65a624ec805bbe15d5f56605f00b3f98c00dedbb1d1f15717ac14933a",
+    "region-verification.json": "ebd5106278015e95835b58096f43e6a60d3434791a6af807c5f9172d0efdd3e9",
+    "verification.json": "0b3485911589a481d5cec6b06848a12dc36c27aecf31ffe5c2894701f50ad289",
+    "mutation-results.json": "e9824c9832d0df485a941925070c8a95ce4a5bb06720d83f45341324e5816a0a",
+    "preflight.json": "3894dd9f2e6a06742e89d03ffa2e07efa33407d5771b9c10e13f91aa02a85302",
+    "setup-evidence.json": "f60c8690f1975df8f4aec10707d0407180e838846dfed03479dcf0b7dddbfb17",
+    "runtime-asset-verification.json": "f778344680afe3e9415987351e115166f29d8d310041dd5cd4a954567cbd1620",
+    "other-function-verification.json": "57cc35b39fb20067e6c776d2664b01f6afe39a61aae916ec3132abffbf3bfad2"
+  }
+}

@@ -1,0 +1,597 @@
+{
+  "pairedSettled": [
+    {
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": 43.62799999999697,
+        "p25": 5.579599999953643,
+        "p75": 175.37285000000793,
+        "min": -58.31649999995716,
+        "max": 596.0714999999618
+      },
+      "fraFasterPairs": 2
+    },
+    {
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -0.23705000001064036,
+        "p25": -23.67117500002405,
+        "p75": 11.773249999940163,
+        "min": -60.977599999983795,
+        "max": 25.071899999995367
+      },
+      "fraFasterPairs": 4
+    },
+    {
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -1026.0373000000109,
+        "p25": -1165.0419249999395,
+        "p75": -541.8209249999545,
+        "min": -1537.873200000031,
+        "max": -491.41420000002836
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -1134.6674500000154,
+        "p25": -1421.382124999982,
+        "p75": -1014.9749500000344,
+        "min": -1556.8760000000475,
+        "max": -836.5009999999893
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "desktop",
+      "action": "completion.entry",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": 2.4351499999756925,
+        "p25": -1.5312749999648076,
+        "p75": 6.503249999979744,
+        "min": -6.395099999994272,
+        "max": 11.184700000001612
+      },
+      "fraFasterPairs": 3
+    },
+    {
+      "profile": "desktop",
+      "action": "authority.preview",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -1021.0739499999654,
+        "p25": -1069.3442500000165,
+        "p75": -615.0047750000085,
+        "min": -1134.1138999999966,
+        "max": -605.5887000000803
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -0.9038499999442138,
+        "p25": -14.136650000000373,
+        "p75": 14.975049999949988,
+        "min": -27.204300000099465,
+        "max": 27.17659999988973
+      },
+      "fraFasterPairs": 4
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -5.456800000043586,
+        "p25": -15.40330000006361,
+        "p75": 39.7285499998834,
+        "min": -67.02190000005066,
+        "max": 54.503399999812245
+      },
+      "fraFasterPairs": 5
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -1025.4418999999762,
+        "p25": -1043.59832499997,
+        "p75": -1016.6955000000598,
+        "min": -1527.3143999997992,
+        "max": -562.3108000000939
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -1054.536599999934,
+        "p25": -1319.1238250002498,
+        "p75": -808.4711750001879,
+        "min": -1446.807399999816,
+        "max": -606.3508999999613
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "completion.entry",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": 3.262849999940954,
+        "p25": 0.9926499999128282,
+        "p75": 14.350949999818113,
+        "min": -17.057099999976344,
+        "max": 18.279000000096858
+      },
+      "fraFasterPairs": 2
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "pairedCompleteActionFraMinusIadMs": {
+        "n": 8,
+        "median": -523.6992999999784,
+        "p25": -679.7642999998643,
+        "p75": -482.9625999999116,
+        "min": -1075.411400000099,
+        "max": -462.5091000001412
+      },
+      "fraFasterPairs": 8
+    }
+  ],
+  "assets": [
+    {
+      "path": "/_next/static/chunks/02662_95fqwrd.css",
+      "iad1Sha256": "41cfb2ce850741d385279322caf0e20bd0ab46c71642ee345233dc7010508fe1",
+      "fra1Sha256": "41cfb2ce850741d385279322caf0e20bd0ab46c71642ee345233dc7010508fe1",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/23cfdszdkj9w9.css",
+      "iad1Sha256": "89a081897cac38bab4d1200a6eefeba93501a1be24aa0f4e75eff00235104ed9",
+      "fra1Sha256": "89a081897cac38bab4d1200a6eefeba93501a1be24aa0f4e75eff00235104ed9",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/0_a3f2s3xcdlr.js",
+      "iad1Sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+      "fra1Sha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/1bzqw010xzs8k.js",
+      "iad1Sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+      "fra1Sha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/3n7dm2ojtyzwn.js",
+      "iad1Sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+      "fra1Sha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+      "iad1Sha256": "aaa28123417d128677ea41dff03b93cea85c983a1a3e68d8e1bd8bf7e197d909",
+      "fra1Sha256": "eeb91893f43fa3d5401ba810551e8061fe04656be4e687883302554db46aa959",
+      "identical": false
+    },
+    {
+      "path": "/_next/static/chunks/40vfej7y8kg94.js",
+      "iad1Sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+      "fra1Sha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/158myu8e_yme3.js",
+      "iad1Sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+      "fra1Sha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/11w-5de_dfbvr.js",
+      "iad1Sha256": "3f3ba2210c567a0ac665cab251e5383126c521ff654d10332c8d59262b4c8794",
+      "fra1Sha256": "3f3ba2210c567a0ac665cab251e5383126c521ff654d10332c8d59262b4c8794",
+      "identical": true
+    },
+    {
+      "path": "/_next/static/chunks/3icpmwynur7oe.js",
+      "iad1Sha256": "a03613962a6f0925130c8e2bddede23b5e0d6761f7a802efc1fc2459c7f9988d",
+      "fra1Sha256": "a03613962a6f0925130c8e2bddede23b5e0d6761f7a802efc1fc2459c7f9988d",
+      "identical": true
+    }
+  ],
+  "staticAssetsIdentical": 9,
+  "staticAssetsCompared": 10,
+  "directReads": [
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 154.45364999998128,
+        "p25": 126.89557499999773,
+        "p75": 230.29652499992517,
+        "min": 65.62030000000959,
+        "max": 449.8664000000572
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 364.0188500000095,
+        "p25": 337.1347249999817,
+        "p75": 376.902200000055,
+        "min": 332.9743000000017,
+        "max": 412.10049999994226
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 1936.9720500000549,
+        "p25": 1905.0861250000016,
+        "p75": 1972.6273750000546,
+        "min": 1815.3726000000024,
+        "max": 2018.5673999999417
+      }
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 134.05215000003227,
+        "p25": 98.32267500000307,
+        "p75": 211.73727499998495,
+        "min": 46.803100000019185,
+        "max": 469.7133000000031
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 141.4505000000063,
+        "p25": 133.5235499999908,
+        "p75": 160.97849999999198,
+        "min": 124.87840000004508,
+        "max": 167.0726999999897
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 1555.187900000019,
+        "p25": 1486.4501,
+        "p75": 1629.4228250000015,
+        "min": 1465.516900000046,
+        "max": 1664.9780000000028
+      }
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 318.6907999998657,
+        "p25": 263.41942499997094,
+        "p75": 431.6909999999334,
+        "min": 177.23629999998957,
+        "max": 1295.156799999997
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 3708.6250500000315,
+        "p25": 3690.1356749999104,
+        "p75": 3727.897350000043,
+        "min": 3685.7754000000423,
+        "max": 3736.3512999999803
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 6803.107250000117,
+        "p25": 6788.97642500003,
+        "p75": 6816.7126249999565,
+        "min": 6775.0146999999415,
+        "max": 6958.22900000005
+      }
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 286.56589999998687,
+        "p25": 230.38227499998175,
+        "p75": 399.2260749998968,
+        "min": 146.9715000001015,
+        "max": 1174.12900000019
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 545.4262000000454,
+        "p25": 542.9163500000141,
+        "p75": 567.1934250000922,
+        "min": 538.4451000001281,
+        "max": 568.7369999999646
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 3544.338500000129,
+        "p25": 3516.901574999967,
+        "p75": 3552.6589749999694,
+        "min": 3440.284199999878,
+        "max": 3577.616699999897
+      }
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 187.34399999998277,
+        "p25": 137.55285000003641,
+        "p75": 256.74114999998346,
+        "min": 69.97269999999844,
+        "max": 488.26720000000205
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 401.6910999999891,
+        "p25": 368.54139999999825,
+        "p75": 422.20289999994566,
+        "min": 357.2565000000177,
+        "max": 643.5666000000201
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 2045.3213499999983,
+        "p25": 1982.2193250000419,
+        "p75": 2116.842249999987,
+        "min": 1850.1705000000075,
+        "max": 2220.2982999999076
+      }
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 145.59334999999555,
+        "p25": 110.83317500000703,
+        "p75": 214.70064999996976,
+        "min": 46.96619999996619,
+        "max": 428.14429999992717
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 149.5124500000311,
+        "p25": 141.45484999996552,
+        "p75": 163.91759999998612,
+        "min": 133.83519999997225,
+        "max": 206.2496000000101
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 1582.420049999986,
+        "p25": 1566.247825000013,
+        "p75": 1667.9089499999827,
+        "min": 1534.4939000000013,
+        "max": 1768.295299999998
+      }
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 313.5284499999834,
+        "p25": 258.60812499996973,
+        "p75": 419.41572500002803,
+        "min": 173.39259999990463,
+        "max": 1264.376099999994
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 3711.947550000041,
+        "p25": 3705.6500249999226,
+        "p75": 3718.430124999839,
+        "min": 3697.9199000000954,
+        "max": 3723.9784999999683
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 6794.09315000003,
+        "p25": 6770.039075000037,
+        "p75": 6818.68097499985,
+        "min": 6762.448300000047,
+        "max": 6951.860100000165
+      }
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "requestCount": 280,
+      "requestDurationMs": {
+        "n": 280,
+        "median": 286.30610000004526,
+        "p25": 229.34332500008168,
+        "p75": 398.8994000001112,
+        "min": 156.04260000004433,
+        "max": 1177.2779000001028
+      },
+      "firstStartMs": {
+        "n": 8,
+        "median": 556.3355000000447,
+        "p25": 538.3808249998838,
+        "p75": 569.3131749999011,
+        "min": 533.7141999999294,
+        "max": 629.0009999999311
+      },
+      "lastEndMs": {
+        "n": 8,
+        "median": 3563.7911499999464,
+        "p25": 3556.8542250000755,
+        "p75": 3602.1843749999534,
+        "min": 3442.764599999995,
+        "max": 3620.7749000000767
+      }
+    }
+  ],
+  "mutation": {
+    "completed": true,
+    "consumedUnits": [
+      210,
+      211
+    ],
+    "matchedLegalSnapshots": true,
+    "protectedUnchanged": true,
+    "failures": [],
+    "sampleCount": 2,
+    "samples": [
+      {
+        "region": "fra1",
+        "unit": 211,
+        "profile": "desktop",
+        "status": "ok",
+        "completeActionMs": 878.1576999999997,
+        "readinessMs": 878.1576999999997,
+        "settledRequests": 4,
+        "legalPostBrowserMs": 474.89559999999983,
+        "legalPostSpans": {
+          "route": 417.81,
+          "auth": 21.43,
+          "auth_end": 21.69,
+          "db_read": 58.53,
+          "db_read_end": 81.31,
+          "body_read": 0.1,
+          "body_read_end": 44.68,
+          "json_parse": 0.02,
+          "json_parse_end": 44.7,
+          "db_mutation": 124.44,
+          "db_mutation_end": 416.79,
+          "email_delivery": 206.04,
+          "email_delivery_end": 372.66
+        },
+        "contextRefreshBrowserMs": [
+          235.36339999999836
+        ],
+        "contextRefreshOffsetMs": [
+          510.2358999999997
+        ],
+        "contextRefreshEndMs": [
+          745.599299999998
+        ],
+        "contextRefreshSpans": [
+          {
+            "route": 167.61,
+            "auth": 19.92,
+            "auth_end": 20.16,
+            "db_read": 343.84,
+            "db_read_end": 167.25,
+            "db_mutation": 26.76,
+            "db_mutation_end": 112.4
+          }
+        ],
+        "directRefreshRequests": 2,
+        "storageRequests": 0,
+        "displayedStateChecked": true,
+        "legalRegionsVerified": true,
+        "savedEmailState": [
+          {
+            "kind": "authority",
+            "version": 1,
+            "delivery_status": "sent",
+            "hasSentAt": true,
+            "hasProviderReceipt": true
+          }
+        ]
+      },
+      {
+        "region": "iad1",
+        "unit": 210,
+        "profile": "desktop",
+        "status": "ok",
+        "completeActionMs": 2926.2006,
+        "readinessMs": 2926.2006,
+        "settledRequests": 4,
+        "legalPostBrowserMs": 1638.638500000001,
+        "legalPostSpans": {
+          "route": 1445.5,
+          "auth": 141.8,
+          "auth_end": 142.03,
+          "db_read": 474.85,
+          "db_read_end": 618.08,
+          "body_read": 0.12,
+          "body_read_end": 467.16,
+          "json_parse": 0.02,
+          "json_parse_end": 467.18,
+          "db_mutation": 556.68,
+          "db_mutation_end": 1444.41,
+          "email_delivery": 263.56,
+          "email_delivery_end": 1325.12
+        },
+        "contextRefreshBrowserMs": [
+          1167.8331000000035
+        ],
+        "contextRefreshOffsetMs": [
+          1657.9492999999966
+        ],
+        "contextRefreshEndMs": [
+          2825.7824
+        ],
+        "contextRefreshSpans": [
+          {
+            "route": 1045.02,
+            "auth": 318.62,
+            "auth_end": 318.87,
+            "db_read": 1321.15,
+            "db_read_end": 1044.49,
+            "db_mutation": 129.35,
+            "db_mutation_end": 710.46
+          }
+        ],
+        "directRefreshRequests": 2,
+        "storageRequests": 0,
+        "displayedStateChecked": true,
+        "legalRegionsVerified": true,
+        "savedEmailState": [
+          {
+            "kind": "authority",
+            "version": 1,
+            "delivery_status": "sent",
+            "hasSentAt": true,
+            "hasProviderReceipt": true
+          }
+        ]
+      }
+    ],
+    "pairedCompleteActionFraMinusIadMs": -2048.0429000000004,
+    "pairedLegalPostFraMinusIadMs": -1163.742900000001
+  }
+}

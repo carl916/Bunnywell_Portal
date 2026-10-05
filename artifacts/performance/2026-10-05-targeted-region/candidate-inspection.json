@@ -1,0 +1,24 @@
+{
+  "inspection": "Before preview browser measurements or fixture preparation",
+  "building": "Forum House",
+  "suitableEmptyDraftUnits": [210, 211, 212, 213, 214, 215, 302, 303, 304, 305, 306],
+  "allSuitableDrafts": {
+    "workflow_status": "draft",
+    "buyer_name": null,
+    "authority_requested_at": null,
+    "exchanged_at": null,
+    "completed_at": null,
+    "legal_email_count": 0,
+    "document_count": 0
+  },
+  "excluded301": {
+    "workflow_status": "awaiting_approval",
+    "hasExistingBuyer": true,
+    "document_count": 1
+  },
+  "protectedUnits": [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 201, 202, 203, 204, 205, 206, 207, 208, 209, 301],
+  "plannedMutationPair": {
+    "iad1": 210,
+    "fra1": 211
+  }
+}
