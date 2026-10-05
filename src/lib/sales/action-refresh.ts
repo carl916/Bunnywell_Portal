@@ -39,29 +39,42 @@ export async function loadLegalSaleChanges(client: SupabaseClient, sale: string,
 export async function loadBuildingSalesData(client: SupabaseClient, units: string[], building: string) {
   let defaultsQuery = client.from("building_sale_defaults").select("*");
   if (building) defaultsQuery = defaultsQuery.eq("building_id", building);
-  const defaults = await defaultsQuery;
+  // Defaults and attempts share the already-authorised building context, but
+  // neither consumes the other's rows. Keep publication behind both branches.
+  const [defaults, fresh] = await Promise.all([defaultsQuery, loadSalesRows(client, units)]);
   if (defaults.error) throw defaults.error;
-  const empty = { defaults: defaults.data ?? [], attempts: [], terms: [], schedule: [], documents: [], versions: [], invoices: [], payments: [], actors: [], deposits: [], namesUnavailable: false };
+  return { defaults: defaults.data ?? [], ...fresh };
+}
+
+async function loadSalesRows(client: SupabaseClient, units: string[]) {
+  const empty = { attempts: [], terms: [], schedule: [], documents: [], versions: [], invoices: [], payments: [], actors: [], deposits: [], namesUnavailable: false };
   if (!units.length) return empty;
   const attempts = await client.from("unit_sale_attempts").select("*").in("unit_id", units).order("attempt_number", { ascending: false });
   if (attempts.error) throw attempts.error;
   const sales = (attempts.data ?? []).map(row => row.id as string);
   if (!sales.length) return { ...empty, attempts: attempts.data ?? [] };
-  const [terms, schedule, documents, invoices, payments, actors, deposits] = await Promise.all([
+  const [terms, schedule, documentRows, invoices, payments, actors, deposits] = await Promise.all([
     client.from("unit_sale_terms").select("*").in("sale_attempt_id", sales),
     client.from("unit_sale_payment_schedule").select("*").in("sale_attempt_id", sales).order("sequence_no"),
-    client.from("unit_sale_documents").select("*").in("sale_attempt_id", sales),
+    loadDocuments(),
     client.from("unit_sale_invoices").select("*").in("sale_attempt_id", sales),
     client.from("unit_sale_invoice_payments").select("*").in("sale_attempt_id", sales),
     client.rpc("sale_actor_names", { p_sales: sales }),
     client.from("sale_exchange_deposit_receipts").select("sale_attempt_id").in("sale_attempt_id", sales),
   ]);
-  for (const result of [terms, schedule, documents, invoices, payments, deposits]) if (result.error) throw result.error;
+  for (const result of [terms, schedule, invoices, payments, deposits]) if (result.error) throw result.error;
   if (actors.error && !isMissingSaleActorNames(actors.error)) throw actors.error;
-  const ids = (documents.data ?? []).map(row => row.id as string);
-  const versions = ids.length ? await client.from("unit_sale_document_versions").select("*").in("document_id", ids).order("version_number", { ascending: false }) : { data: [], error: null };
-  if (versions.error) throw versions.error;
-  return { defaults: defaults.data ?? [], attempts: attempts.data ?? [], terms: terms.data ?? [], schedule: schedule.data ?? [], documents: documents.data ?? [], versions: versions.data ?? [], invoices: invoices.data ?? [], payments: payments.data ?? [], actors: actors.data ?? [], deposits: deposits.data ?? [], namesUnavailable: Boolean(actors.error) };
+  return { attempts: attempts.data ?? [], terms: terms.data ?? [], schedule: schedule.data ?? [], ...documentRows, invoices: invoices.data ?? [], payments: payments.data ?? [], actors: actors.data ?? [], deposits: deposits.data ?? [], namesUnavailable: Boolean(actors.error) };
+
+  async function loadDocuments() {
+    const documents = await client.from("unit_sale_documents").select("*").in("sale_attempt_id", sales);
+    if (documents.error) throw documents.error;
+    // Version IDs depend only on documents, not on the financial/name reads.
+    const ids = (documents.data ?? []).map(row => row.id as string);
+    const versions = ids.length ? await client.from("unit_sale_document_versions").select("*").in("document_id", ids).order("version_number", { ascending: false }) : { data: [], error: null };
+    if (versions.error) throw versions.error;
+    return { documents: documents.data ?? [], versions: versions.data ?? [] };
+  }
 }
 
 // A rejected mutation can have committed before its response/email failed.
