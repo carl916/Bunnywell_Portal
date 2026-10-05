@@ -1,0 +1,44 @@
+{
+  "verifiedAt": "2026-10-05T17:25:51.555Z",
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "branch": "codex/staging-legal-fra1-87d83c7",
+  "sourceDiff": [
+    "vercel.json"
+  ],
+  "mergedConfig": {
+    "crons": [
+      {
+        "path": "/api/cron/completion-uploads",
+        "schedule": "15 3 * * *"
+      },
+      {
+        "path": "/api/cron/snag-digest",
+        "schedule": "30 6 * * *"
+      },
+      {
+        "path": "/api/cron/snag-digest",
+        "schedule": "30 7 * * *"
+      }
+    ],
+    "regions": [
+      "iad1"
+    ],
+    "functions": {
+      "src/app/api/sales/legal/route.ts": {
+        "regions": [
+          "fra1"
+        ]
+      }
+    }
+  },
+  "allRootSettingsPreserved": true,
+  "rootFileSha256": "fecaa384c363892b419a07741734a1d5ed3229e7833df77c70c1b395effaac4d",
+  "usesSameSharedPreviewSupabaseEntries": true,
+  "sharedPreviewSupabaseEntryIds": {
+    "NEXT_PUBLIC_SUPABASE_URL": "OnPAuJNWkmYl1Yze",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "r43ZZV08aLWrL8W6",
+    "SUPABASE_SERVICE_ROLE_KEY": "jAsqGmUSQXmkaq4e"
+  },
+  "stagingSupabaseHost": "vxkpvdtrldwwqiddoyof.supabase.co"
+}

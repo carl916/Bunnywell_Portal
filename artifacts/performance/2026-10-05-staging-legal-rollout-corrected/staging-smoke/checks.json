@@ -1,0 +1,1171 @@
+{
+  "verifiedAt": "2026-10-05T18:16:47.790Z",
+  "phase": "staging-smoke",
+  "passed": true,
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "salesOpened": [
+    107,
+    209
+  ],
+  "excludedTestSales": [
+    210,
+    211
+  ],
+  "actions": 12,
+  "failures": 0,
+  "legalGetChecks": 4,
+  "legalPreviewPostChecks": 2,
+  "legalRegion": "fra1",
+  "otherMeasuredFunctions": 4,
+  "otherGetChecks": 6,
+  "otherRegion": "iad1",
+  "stagingEnvironmentVerified": true,
+  "displayedStatesPassed": true,
+  "saleStateUnchanged": true,
+  "rootConfigUnchanged": true,
+  "telemetry": {
+    "requests": 44,
+    "accepted204": 20,
+    "unknownNoResponse": 24,
+    "unloadAborted": 37,
+    "regionUnknown": 24
+  },
+  "abortedRequests": [
+    {
+      "requestAuditId": 16,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 406.55979999999977
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 18,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 427.2153999999998
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 21,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/auth/activity",
+      "requestType": "vercel-function",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.0039999999999054
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 22,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "areas",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.9903999999996813
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 37,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "snag_events",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.0288000000000466
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 46,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.010899999999765
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 47,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.018999999999778
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 63,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 136.28179999999975
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 102,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.6934999999994034
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 103,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.6301999999996042
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 120,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 140.92210000000068
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 159,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 161,
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.4923999999991793
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 162,
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.380799999998999
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 178,
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 364.7409000000007
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 218,
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2093000000004395
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 219,
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.1926000000003114
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 235,
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 164.9333000000006
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 275,
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 278,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.129899999999907
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 279,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.139499999997497
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 295,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 160.05069999999978
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 335,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 339,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.550199999997858
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 340,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.560299999997369
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 356,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 411.26630000000296
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 358,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 411.2753999999986
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 361,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/auth/activity",
+      "requestType": "vercel-function",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.028700000002573
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 362,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "areas",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.0371999999988475
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 377,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "snag_events",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.0446999999985565
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 386,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.050600000002305
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 387,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.087299999999232
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 403,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 372.08430000000226
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 442,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.762500000004366
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 443,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.769000000000233
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 460,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 365.88440000000264
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 499,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 501,
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 5.249400000000605
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 502,
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 5.229899999991176
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 518,
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 558,
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.946799999990617
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 559,
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.934599999993225
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 575,
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 395.72179999999935
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 615,
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 618,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.849300000001676
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 619,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.87510000000475
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 635,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 372.4904999999999
+      },
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 675,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "accepted-telemetry-abort",
+      "unloadEvidence": null,
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1"
+    },
+    {
+      "requestAuditId": 679,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 6.409299999999348
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 680,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/performance/vitals",
+      "requestType": "web-vitals-telemetry",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": true,
+      "classification": "unload-telemetry-unknown",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 6.415899999992689
+      },
+      "collectorOutcome": "unknown",
+      "executionRegion": null
+    }
+  ],
+  "timingSamples": [
+    {
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "readyMs": 2117.0210000000006,
+      "completeMs": 2117.0210000000006,
+      "settledRequests": 57
+    },
+    {
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "readyMs": 1969.3986000000004,
+      "completeMs": 1969.3986000000004,
+      "settledRequests": 57
+    },
+    {
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "readyMs": 873.2507000000005,
+      "completeMs": 873.2507000000005,
+      "settledRequests": 2
+    },
+    {
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "readyMs": 304.72559999999794,
+      "completeMs": 304.72559999999794,
+      "settledRequests": 1
+    },
+    {
+      "profile": "desktop",
+      "action": "completion.entry",
+      "readyMs": 49.47680000000037,
+      "completeMs": 49.47680000000037,
+      "settledRequests": 0
+    },
+    {
+      "profile": "desktop",
+      "action": "authority.preview",
+      "readyMs": 248.6931000000004,
+      "completeMs": 248.6931000000004,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "readyMs": 6986.711599999995,
+      "completeMs": 6986.711599999995,
+      "settledRequests": 57
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "readyMs": 3794.731599999999,
+      "completeMs": 3794.731599999999,
+      "settledRequests": 57
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "readyMs": 901.1702000000078,
+      "completeMs": 901.1702000000078,
+      "settledRequests": 2
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "readyMs": 460.3591000000015,
+      "completeMs": 460.3591000000015,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "completion.entry",
+      "readyMs": 95.73599999998987,
+      "completeMs": 95.73599999998987,
+      "settledRequests": 0
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "readyMs": 413.73799999999756,
+      "completeMs": 413.73799999999756,
+      "settledRequests": 1
+    }
+  ],
+  "functionInvocations": [
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::2gtgz-1791224074901-4909ef19d500",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::fkwnc-1791224075003-6ac8e686359e",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::knbp6-1791224078010-a10a6b39a5ef",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::f6gcp-1791224078096-426c0dcc5977",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::hjb2q-1791224080949-10da874d1e16",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::ltnqj-1791224080958-bf45f36337d9",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::flc7m-1791224082991-a6c9ca62cbda",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::kl9fm-1791224090883-21060ed2cc58",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::7dkhf-1791224137134-a9d385df2986",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::psx8p-1791224137350-635432ed3693",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": null,
+      "vercelId": null,
+      "executionRegion": null
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::t6hbc-1791224142406-ff1c59aa5c50",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::x2xk9-1791224142594-ee8d677b00e6",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::7qhmk-1791224147179-beae90cfd488",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "status": 204,
+      "vercelId": "lhr1::iad1::jdjm4-1791224147185-159ccbb47213",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::shmkt-1791224149318-e94e0f4ea4aa",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::jdjm4-1791224158961-b4d62bbcfd44",
+      "executionRegion": "fra1"
+    }
+  ]
+}

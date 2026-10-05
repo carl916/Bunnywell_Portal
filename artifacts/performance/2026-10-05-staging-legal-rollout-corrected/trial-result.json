@@ -1,0 +1,3112 @@
+{
+  "recordedAt": "2026-10-05T18:17:09.010Z",
+  "targetedRegionTrialPassed": true,
+  "status": "PASSED",
+  "stagingUrl": "https://staging.bunnywell.co.uk",
+  "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "legalRegion": "fra1",
+  "otherRegion": "iad1",
+  "supabaseHost": "vxkpvdtrldwwqiddoyof.supabase.co",
+  "finalPreviewActions": 12,
+  "finalStagingActions": 12,
+  "finalMeasuredApplicationFailures": 0,
+  "finalMeasuredHttpErrors": 0,
+  "actualLegalInvocationsVerified": 12,
+  "previewTelemetry": {
+    "requests": 0,
+    "accepted204": 0,
+    "unknownNoResponse": 0,
+    "unloadAborted": 0,
+    "regionUnknown": 0
+  },
+  "stagingTelemetry": {
+    "requests": 44,
+    "accepted204": 20,
+    "unknownNoResponse": 24,
+    "unloadAborted": 37,
+    "regionUnknown": 24
+  },
+  "allAbortGroups": [
+    {
+      "phase": "original-staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "unknown; original capture did not retain metric name",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown-inferred",
+      "count": 2
+    },
+    {
+      "phase": "original-staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "unknown; original capture did not retain metric name",
+      "collectorOutcome": "accepted",
+      "classification": "accepted-telemetry-abort",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "profiles",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "units",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "snags",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "handovers",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "TTFB",
+      "collectorOutcome": "accepted",
+      "classification": "accepted-telemetry-abort",
+      "count": 12
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "LCP",
+      "collectorOutcome": "accepted",
+      "classification": "accepted-telemetry-abort",
+      "count": 8
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 2
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "INP",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 8
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "CLS",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 12
+    },
+    {
+      "phase": "staging-smoke",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "LCP",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 4
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "TTFB",
+      "collectorOutcome": "accepted",
+      "classification": "accepted-telemetry-abort",
+      "count": 5
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "LCP",
+      "collectorOutcome": "accepted",
+      "classification": "accepted-telemetry-abort",
+      "count": 3
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "metric": null,
+      "collectorOutcome": null,
+      "classification": "unmeasured-harness-transition-cancellation",
+      "count": 1
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "INP",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 2
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "CLS",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 4
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "metric": "LCP",
+      "collectorOutcome": "unknown",
+      "classification": "unload-telemetry-unknown",
+      "count": 2
+    }
+  ],
+  "everyAbortedRequest": [
+    {
+      "id": "original-1",
+      "requestType": "web-vitals-telemetry",
+      "metric": "unknown; original capture did not retain metric name",
+      "endpoint": "/api/performance/vitals",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "executionRegion": null,
+      "vercelId": null,
+      "phase": "original-staging-smoke",
+      "scope": "measured navigation",
+      "classification": "unload-telemetry-unknown-inferred"
+    },
+    {
+      "id": "original-2",
+      "requestType": "web-vitals-telemetry",
+      "metric": "unknown; original capture did not retain metric name",
+      "endpoint": "/api/performance/vitals",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "executionRegion": null,
+      "vercelId": null,
+      "phase": "original-staging-smoke",
+      "scope": "measured navigation",
+      "classification": "unload-telemetry-unknown-inferred"
+    },
+    {
+      "id": "original-3",
+      "requestType": "web-vitals-telemetry",
+      "metric": "unknown; original capture did not retain metric name",
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::67hgm-1791221419787-ef71af6240e3",
+      "phase": "original-staging-smoke",
+      "scope": "measured navigation",
+      "classification": "accepted-telemetry-abort"
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 19,
+      "startedAt": "2026-10-05T18:11:27.359Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.116700000000037
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 20,
+      "startedAt": "2026-10-05T18:11:27.511Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2498999999997977
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 34,
+      "startedAt": "2026-10-05T18:11:27.512Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2588000000000648
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 35,
+      "startedAt": "2026-10-05T18:11:27.512Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.263600000000224
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 36,
+      "startedAt": "2026-10-05T18:11:27.512Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2683000000001812
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 337,
+      "startedAt": "2026-10-05T18:12:22.595Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.756999999997788
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 338,
+      "startedAt": "2026-10-05T18:12:22.715Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.744200000001001
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke",
+      "requestAuditId": 353,
+      "startedAt": "2026-10-05T18:12:22.716Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.7634000000034575
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 18,
+      "startedAt": "2026-10-05T18:03:43.605Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "profiles",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.1751000000003842
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 19,
+      "startedAt": "2026-10-05T18:03:43.607Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2330999999994674
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 314,
+      "startedAt": "2026-10-05T18:04:40.854Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.3729999999923166
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 315,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.4777000000030966
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 317,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "units",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.380300000004354
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 328,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snags",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.355200000005425
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 329,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.4694000000017695
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 330,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.5111000000033528
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 331,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.4949999999953434
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "requestAuditId": 332,
+      "startedAt": "2026-10-05T18:04:41.015Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "handovers",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.485499999995227
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 19,
+      "startedAt": "2026-10-05T18:08:18.568Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.152900000000045
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 20,
+      "startedAt": "2026-10-05T18:08:18.668Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.0646999999999025
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 34,
+      "startedAt": "2026-10-05T18:08:18.668Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.1080000000001746
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 35,
+      "startedAt": "2026-10-05T18:08:18.668Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.0954000000001543
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 36,
+      "startedAt": "2026-10-05T18:08:18.668Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.102600000000166
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 337,
+      "startedAt": "2026-10-05T18:09:13.391Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.846299999997427
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 353,
+      "startedAt": "2026-10-05T18:09:13.500Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.9331999999994878
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "requestAuditId": 362,
+      "startedAt": "2026-10-05T18:09:14.069Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.824799999994866
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 16,
+      "startedAt": "2026-10-05T18:14:25.952Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 406.55979999999977
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::ltnqj-1791224065843-486423858760"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 18,
+      "startedAt": "2026-10-05T18:14:26.012Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 427.2153999999998
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::wcr2l-1791224065869-24c9e98ef39d"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 21,
+      "startedAt": "2026-10-05T18:14:26.348Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.0039999999999054
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 22,
+      "startedAt": "2026-10-05T18:14:26.437Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.9903999999996813
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 37,
+      "startedAt": "2026-10-05T18:14:26.438Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.0288000000000466
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 46,
+      "startedAt": "2026-10-05T18:14:26.838Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.010899999999765
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 47,
+      "startedAt": "2026-10-05T18:14:26.838Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.018999999999778
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 63,
+      "startedAt": "2026-10-05T18:14:26.869Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 136.28179999999975
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::8wjd2-1791224066713-ab5abf9ba509"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 102,
+      "startedAt": "2026-10-05T18:14:30.745Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.6934999999994034
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 103,
+      "startedAt": "2026-10-05T18:14:30.745Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.6301999999996042
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 120,
+      "startedAt": "2026-10-05T18:14:30.796Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 140.92210000000068
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::8wjd2-1791224070642-50d3a25f9776"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 159,
+      "startedAt": "2026-10-05T18:14:32.646Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::8wjd2-1791224072493-bab62dbcbc80"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 161,
+      "startedAt": "2026-10-05T18:14:34.806Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.4923999999991793
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 162,
+      "startedAt": "2026-10-05T18:14:34.807Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.380799999998999
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 178,
+      "startedAt": "2026-10-05T18:14:35.058Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 364.7409000000007
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::2gtgz-1791224074901-4909ef19d500"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 218,
+      "startedAt": "2026-10-05T18:14:38.114Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2093000000004395
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 219,
+      "startedAt": "2026-10-05T18:14:38.114Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.1926000000003114
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 235,
+      "startedAt": "2026-10-05T18:14:38.167Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 164.9333000000006
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::knbp6-1791224078010-a10a6b39a5ef"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 275,
+      "startedAt": "2026-10-05T18:14:41.112Z",
+      "profile": "desktop",
+      "scope": "exchange.entry",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::ltnqj-1791224080958-bf45f36337d9"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 278,
+      "startedAt": "2026-10-05T18:14:46.990Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.129899999999907
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 279,
+      "startedAt": "2026-10-05T18:14:46.990Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.139499999997497
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 295,
+      "startedAt": "2026-10-05T18:14:47.022Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 160.05069999999978
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::b9pd9-1791224086869-ebe4a0d37ba8"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 335,
+      "startedAt": "2026-10-05T18:14:48.879Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::nj4sj-1791224088726-88a95b6a4cf4"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 339,
+      "startedAt": "2026-10-05T18:15:20.666Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.550199999997858
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 340,
+      "startedAt": "2026-10-05T18:15:20.666Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.560299999997369
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 356,
+      "startedAt": "2026-10-05T18:15:21.022Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 411.26630000000296
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::ltnqj-1791224120908-5a11fa4de951"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 358,
+      "startedAt": "2026-10-05T18:15:21.077Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 411.2753999999986
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::mmpsg-1791224120923-3b4b6b02fca8"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 361,
+      "startedAt": "2026-10-05T18:15:21.402Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.028700000002573
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 362,
+      "startedAt": "2026-10-05T18:15:21.516Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.0371999999988475
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 377,
+      "startedAt": "2026-10-05T18:15:21.517Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.0446999999985565
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 386,
+      "startedAt": "2026-10-05T18:15:22.063Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.050600000002305
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 387,
+      "startedAt": "2026-10-05T18:15:22.063Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.087299999999232
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 403,
+      "startedAt": "2026-10-05T18:15:22.255Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 372.08430000000226
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::mmpsg-1791224122102-232ea1f122c1"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 442,
+      "startedAt": "2026-10-05T18:15:27.758Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.762500000004366
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 443,
+      "startedAt": "2026-10-05T18:15:27.758Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.769000000000233
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 460,
+      "startedAt": "2026-10-05T18:15:28.117Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 365.88440000000264
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::9m8jz-1791224127961-4f4e9747c8c8"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 499,
+      "startedAt": "2026-10-05T18:15:31.548Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::mmpsg-1791224131391-0219861ca672"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 501,
+      "startedAt": "2026-10-05T18:15:33.939Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 5.249400000000605
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 502,
+      "startedAt": "2026-10-05T18:15:33.939Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 5.229899999991176
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 518,
+      "startedAt": "2026-10-05T18:15:37.291Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::7dkhf-1791224137134-a9d385df2986"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 558,
+      "startedAt": "2026-10-05T18:15:42.357Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.946799999990617
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 559,
+      "startedAt": "2026-10-05T18:15:42.357Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 4.934599999993225
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 575,
+      "startedAt": "2026-10-05T18:15:42.563Z",
+      "profile": "mobile-throttled",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 395.72179999999935
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::t6hbc-1791224142406-ff1c59aa5c50"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 615,
+      "startedAt": "2026-10-05T18:15:47.342Z",
+      "profile": "mobile-throttled",
+      "scope": "exchange.entry",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::jdjm4-1791224147185-159ccbb47213"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 618,
+      "startedAt": "2026-10-05T18:15:53.203Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.849300000001676
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 619,
+      "startedAt": "2026-10-05T18:15:53.203Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 7.87510000000475
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 635,
+      "startedAt": "2026-10-05T18:15:53.394Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 372.4904999999999
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::q282r-1791224153237-ebb498f5e1b1"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 675,
+      "startedAt": "2026-10-05T18:15:56.849Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::9fmqg-1791224156692-2bcfb99180d8"
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 679,
+      "startedAt": "2026-10-05T18:16:45.061Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 6.409299999999348
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke",
+      "requestAuditId": 680,
+      "startedAt": "2026-10-05T18:16:45.061Z",
+      "profile": "mobile-throttled",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 6.415899999992689
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 16,
+      "startedAt": "2026-10-05T18:06:54.097Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "navigation-start",
+        "deltaMs": 153.70259999999985
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::knbp6-1791223613981-c54f688db8f8"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 18,
+      "startedAt": "2026-10-05T18:06:54.158Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "navigation-start",
+        "deltaMs": 175.99459999999976
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::jhrlk-1791223614009-3c0dea4c535e"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 21,
+      "startedAt": "2026-10-05T18:06:54.510Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "vercel-function",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.519800000000032
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 22,
+      "startedAt": "2026-10-05T18:06:54.599Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "areas",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.5119000000004235
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 36,
+      "startedAt": "2026-10-05T18:06:54.600Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_photos",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4976000000001477
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 37,
+      "startedAt": "2026-10-05T18:06:54.600Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "snag_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4838000000004286
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 38,
+      "startedAt": "2026-10-05T18:06:54.600Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "browser-supabase-data",
+      "endpoint": "audit_events",
+      "method": "GET",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": null,
+      "unloadAssociated": false,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.5048000000001593
+      },
+      "classification": "unmeasured-harness-transition-cancellation",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 46,
+      "startedAt": "2026-10-05T18:06:54.977Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4704000000001543
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 47,
+      "startedAt": "2026-10-05T18:06:54.977Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4903000000003885
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 63,
+      "startedAt": "2026-10-05T18:06:55.001Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 132.9118000000003
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::jz4b8-1791223614846-9af6ef4b8a9a"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 102,
+      "startedAt": "2026-10-05T18:06:58.694Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.0621000000001004
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 103,
+      "startedAt": "2026-10-05T18:06:58.694Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 2.071899999999914
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 120,
+      "startedAt": "2026-10-05T18:06:58.771Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 142.8109999999997
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::knbp6-1791223618618-98fa279a1e15"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 159,
+      "startedAt": "2026-10-05T18:07:00.658Z",
+      "profile": "desktop",
+      "scope": "setup/warmup/cleanup",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::knbp6-1791223620505-c14270f73d9a"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 161,
+      "startedAt": "2026-10-05T18:07:02.907Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "INP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4173000000009779
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 162,
+      "startedAt": "2026-10-05T18:07:02.907Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.3171000000002095
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 178,
+      "startedAt": "2026-10-05T18:07:03.652Z",
+      "profile": "desktop",
+      "scope": "navigation.cold",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 871.1464000000014
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::bzmwx-1791223623494-b20170ec2dd5"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 218,
+      "startedAt": "2026-10-05T18:07:07.547Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.4028999999991356
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 219,
+      "startedAt": "2026-10-05T18:07:07.547Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "CLS",
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "unknown",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.3870999999999185
+      },
+      "classification": "unload-telemetry-unknown",
+      "executionRegion": null,
+      "vercelId": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 235,
+      "startedAt": "2026-10-05T18:07:07.602Z",
+      "profile": "desktop",
+      "scope": "navigation.repeat",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "TTFB",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": true,
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 192.28759999999966
+      },
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::kh6c7-1791223627447-06b31e808269"
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "requestAuditId": 275,
+      "startedAt": "2026-10-05T18:07:10.808Z",
+      "profile": "desktop",
+      "scope": "exchange.entry",
+      "type": "web-vitals-telemetry",
+      "endpoint": "/api/performance/vitals",
+      "method": "POST",
+      "metric": "LCP",
+      "status": 204,
+      "failure": "net::ERR_ABORTED",
+      "collectorOutcome": "accepted",
+      "unloadAssociated": false,
+      "unloadEvidence": null,
+      "classification": "accepted-telemetry-abort",
+      "executionRegion": "iad1",
+      "vercelId": "lhr1::iad1::bmqdp-1791223630660-ced0fd0cc46a"
+    }
+  ],
+  "attempts": [
+    {
+      "phase": "preview-smoke",
+      "completed": true,
+      "actionSamples": 12,
+      "gateFailures": 0,
+      "displayedStateFailures": 0,
+      "stateUnchanged": true,
+      "failureArtifact": null
+    },
+    {
+      "phase": "preview-smoke-attempt1",
+      "completed": true,
+      "actionSamples": 12,
+      "gateFailures": 0,
+      "displayedStateFailures": 0,
+      "stateUnchanged": true,
+      "failureArtifact": null
+    },
+    {
+      "phase": "preview-smoke-attempt2",
+      "completed": false,
+      "actionSamples": 10,
+      "gateFailures": 0,
+      "displayedStateFailures": 0,
+      "stateUnchanged": true,
+      "failureArtifact": null
+    },
+    {
+      "phase": "staging-smoke",
+      "completed": true,
+      "actionSamples": 12,
+      "gateFailures": 0,
+      "displayedStateFailures": 0,
+      "stateUnchanged": true,
+      "failureArtifact": null
+    },
+    {
+      "phase": "staging-smoke-attempt1",
+      "completed": false,
+      "actionSamples": 3,
+      "gateFailures": 1,
+      "displayedStateFailures": 0,
+      "stateUnchanged": true,
+      "failureArtifact": null
+    }
+  ],
+  "stateFingerprintsUnchanged": true,
+  "openedUnits": [
+    107,
+    209
+  ],
+  "testSales210And211NotReused": true,
+  "mutations": 0,
+  "emailSends": 0,
+  "storageWrites": 0,
+  "rootVercelConfigAndCronsUnchanged": true,
+  "productionAndProjectDefaultsUnchanged": true,
+  "platform": {
+    "verifiedAt": "2026-10-05T18:17:08.071Z",
+    "stagingDeploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+    "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+    "target": null,
+    "stagingAlias": "staging.bunnywell.co.uk",
+    "onlyStagingCustomAliasChanged": true,
+    "changedAliases": [
+      {
+        "alias": "staging.bunnywell.co.uk",
+        "previous": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+        "current": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+      }
+    ],
+    "aliases": [
+      {
+        "alias": "bunnywell-portal-git-codex-stagi-775707-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-targe-18fd17-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_DNNejYswJj6cSa1niw3WbZfGPKpW"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-legal-1aa09c-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_BSLd1gTjuxrWB5vWLJ84oUHhACG9"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-legal-d709b7-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_hNjFuwWR23C5AiMjZyJVy9APjbpf"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-stagi-83a90b-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_Bm3LTYepUo2Ebo8VHV2m25fPzZXJ"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-stagi-fbfcc5-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_3oXXzkPL4hu9fkKPNNKxe1g7dxBR"
+      },
+      {
+        "alias": "bunnywell-portal-git-codex-dedup-a737c0-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_DrChST7ZYZtczWk3mit5jV8BKBiC"
+      },
+      {
+        "alias": "portal.bunnywell.co.uk",
+        "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+      },
+      {
+        "alias": "bunnywell-portal-git-conveyancing-poc-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_E62qnWa5FzEpTtv5PvMdYHQBgcGs"
+      },
+      {
+        "alias": "staging.bunnywell.co.uk",
+        "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+      },
+      {
+        "alias": "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+      },
+      {
+        "alias": "defects.bunnywell.co.uk",
+        "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+      },
+      {
+        "alias": "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+      },
+      {
+        "alias": "bunnywell-portal.vercel.app",
+        "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+      },
+      {
+        "alias": "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app",
+        "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+      }
+    ],
+    "productionDeploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "productionAliasesUnchanged": true,
+    "projectDefaultsWritePerformed": false,
+    "projectMetadata": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs",
+      "accountId": "team_x65ctL8Fot37UcabAkdh8f72",
+      "createdAt": 1780516318923,
+      "updatedAt": 1791221080202,
+      "nodeVersion": "24.x",
+      "live": false,
+      "latestDeployment": {
+        "id": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+        "url": "bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app",
+        "createdAt": 1791221092239,
+        "readyState": "READY",
+        "target": null
+      },
+      "domains": [
+        "portal.bunnywell.co.uk",
+        "defects.bunnywell.co.uk",
+        "bunnywell-portal.vercel.app",
+        "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+        "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+      ],
+      "passwordProtection": {
+        "enabled": false,
+        "deploymentType": null
+      },
+      "ssoProtection": {
+        "enabled": false,
+        "deploymentType": null
+      },
+      "trustedIps": {
+        "enabled": false,
+        "deploymentType": null,
+        "addresses": [],
+        "protectionMode": null
+      }
+    },
+    "environmentMetadata": [
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "VysLDcttlDnxQUVM",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-legal-fra1-87d83c7",
+        "updatedAt": 1791221080201
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "QT4d14wMEj4kQzj7",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-legal-fra1-87d83c7",
+        "updatedAt": 1791221080201
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "FyXu8DO12Axcv4cf",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/legal-region-targeted-iad1",
+        "updatedAt": 1791215121566
+      },
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "ntXwMSNQIFRESac6",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/legal-region-targeted-iad1",
+        "updatedAt": 1791215121566
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "7F8QfOJnkZjbAj84",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/legal-region-targeted-fra1",
+        "updatedAt": 1791215121566
+      },
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "MK5urJReMqvBvTWx",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/legal-region-targeted-fra1",
+        "updatedAt": 1791215121566
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "H5ZFTd3W0iSG9Kly",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-iad1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "uboDZwJrIF0c57Ch",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-iad1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "mqNi1oXISgjSZ62x",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-fra1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "pwR48alhwsPPEiou",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-fra1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "key": "STAGING_WEB_VITALS",
+        "id": "O1fbo91qiiNmPKoQ",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "staging",
+        "updatedAt": 1791138465871
+      },
+      {
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "id": "Ck2CyYW4DFohNWF9",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "staging",
+        "updatedAt": 1791138465871
+      },
+      {
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "id": "hfo5k0jH7G0T1VbF",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783521368387
+      },
+      {
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "id": "9mpDiDuILBwMK8V7",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783521368387
+      },
+      {
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "id": "morCR0FMsSnZGQcG",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1783521338994
+      },
+      {
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "id": "pYjDICW4TgO6Y5xj",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1783521338994
+      },
+      {
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "id": "6DAyn7lBxItPRpf9",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783521314095
+      },
+      {
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "id": "uXGOiruU1UOKDk5R",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783521314095
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "id": "CXfiIFXaCwnW4u2R",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "id": "5uK31WaQGQBEcFqU",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "id": "ApeHNXXwgkMcAmuH",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "key": "RESEND_API_KEY",
+        "id": "unMY6WkifMxJVmzL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783010098266
+      },
+      {
+        "key": "DIGEST_APP_URL",
+        "id": "SysPUuGeL2p9Kaaz",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783010098266
+      },
+      {
+        "key": "DIGEST_APP_URL",
+        "id": "xVOjuclzCy02lyoj",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1783010054181
+      },
+      {
+        "key": "RESEND_API_KEY",
+        "id": "UgdvBaEguKJho8cL",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1783010054181
+      },
+      {
+        "key": "DIGEST_EMAILS_ENABLED",
+        "id": "JFZBcAfxIDspExpN",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "updatedAt": 1783009975346
+      },
+      {
+        "key": "CRON_SECRET",
+        "id": "iQe2uzh9XKolwNor",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "updatedAt": 1783009975346
+      },
+      {
+        "key": "DIGEST_FROM_EMAIL",
+        "id": "OQN1g5W3Qmaubhkx",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "updatedAt": 1783009975345
+      },
+      {
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "id": "jAsqGmUSQXmkaq4e",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1782477349690
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "id": "r43ZZV08aLWrL8W6",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1782477335834
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "id": "OnPAuJNWkmYl1Yze",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "updatedAt": 1782477302721
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "id": "fZFbTKr7CAv54Qyi",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1780859262742
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "id": "kA6bwlFS53ZVWKTE",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783510471438
+      },
+      {
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "id": "LCgtj91n2sGdNdkg",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1783510483579
+      }
+    ]
+  },
+  "baselineComparison": {
+    "comparedAt": "2026-10-05T18:04:16.537Z",
+    "baseline": {
+      "documentation": "docs/sales-performance-baseline-2026-10-04.md",
+      "payloads": 274,
+      "observed204": 132,
+      "withoutObservedResponse": 142,
+      "missingResponseMeaning": "unknown; not proof of failed delivery or successful acceptance"
+    },
+    "collector": {
+      "documentation": "docs/staging-performance-baseline.md",
+      "source": "src/components/performance/StagingWebVitals.tsx",
+      "sameOriginKeepalive": true,
+      "hostname": "staging.bunnywell.co.uk",
+      "acceptedStatus": 204
+    },
+    "previewDifference": "A/B preview hostnames are outside the client and collector allowlist; the previous preview tests did not emit these telemetry requests.",
+    "originalFailure": {
+      "actionSamples": 1,
+      "applicationReadinessPassed": true,
+      "httpErrors": 0,
+      "aborts": [
+        {
+          "id": "original-1",
+          "requestType": "web-vitals-telemetry",
+          "metric": "unknown; original capture did not retain metric name",
+          "endpoint": "/api/performance/vitals",
+          "status": null,
+          "failure": "net::ERR_ABORTED",
+          "collectorOutcome": "unknown",
+          "executionRegion": null,
+          "vercelId": null
+        },
+        {
+          "id": "original-2",
+          "requestType": "web-vitals-telemetry",
+          "metric": "unknown; original capture did not retain metric name",
+          "endpoint": "/api/performance/vitals",
+          "status": null,
+          "failure": "net::ERR_ABORTED",
+          "collectorOutcome": "unknown",
+          "executionRegion": null,
+          "vercelId": null
+        },
+        {
+          "id": "original-3",
+          "requestType": "web-vitals-telemetry",
+          "metric": "unknown; original capture did not retain metric name",
+          "endpoint": "/api/performance/vitals",
+          "status": 204,
+          "failure": "net::ERR_ABORTED",
+          "collectorOutcome": "accepted",
+          "executionRegion": "iad1",
+          "vercelId": "lhr1::iad1::67hgm-1791221419787-ef71af6240e3"
+        }
+      ],
+      "note": "Original artifacts did not record lifecycle evidence. Their unload association follows timing around the explicit cold reload; new runs capture lifecycle boundaries."
+    },
+    "correction": "A same-origin Web Vitals POST aborted with ERR_ABORTED after observed 204 is recorded as accepted telemetry with an aborted browser transport. A response-less telemetry abort is exempt only with an observed pagehide/navigation-start within 1000 ms; acceptance and execution region remain unknown. HTTP errors and any observed incorrect/missing function execution region always fail. Application failures and displayed-state/readiness gates are unchanged. Setup/warmup/cleanup cancellations are retained separately from measured action failures, as setup was excluded from October action timings."
+  },
+  "limits": [
+    "Smoke validation uses one sample per action/profile, not a new latency distribution.",
+    "No-response telemetry acceptance and regions remain unknown.",
+    "204 proves collector acceptance, not durable analytics delivery.",
+    "All setup/cleanup cancellations and unsuccessful harness attempts are retained; these are separate from final measured action failures."
+  ],
+  "evidence": {
+    "preview": "preview-smoke/checks.json",
+    "staging": "staging-smoke/checks.json",
+    "baseline": "baseline-comparison.json",
+    "everyAbort": "trial-result.json:everyAbortedRequest",
+    "platform": "platform-final.json"
+  }
+}

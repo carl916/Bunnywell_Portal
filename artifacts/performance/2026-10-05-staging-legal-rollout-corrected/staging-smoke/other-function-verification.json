@@ -1,0 +1,83 @@
+{
+  "verifiedAt": "2026-10-05T18:14:17.715Z",
+  "origins": {
+    "B": "https://staging.bunnywell.co.uk"
+  },
+  "rows": [
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1177.2755,
+      "vercelId": "lhr1::iad1::4v5vc-1791224052030-fa47cc2622f6",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 1304.6847,
+      "vercelId": "lhr1::iad1::4v5vc-1791224053177-efd1003c2edf",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 709.4524999999999,
+      "vercelId": "lhr1::iad1::4v5vc-1791224054465-ad162ef10ef0",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 584.6421,
+      "vercelId": "lhr1::iad1::4v5vc-1791224055183-ec75d459a884",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1007.7426000000005,
+      "vercelId": "lhr1::iad1::4v5vc-1791224055760-5eb16e805a15",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 677.6399000000001,
+      "vercelId": "lhr1::iad1::4v5vc-1791224056770-b6a5dbe3a844",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    }
+  ],
+  "isolationPassed": true,
+  "successfulHandlers": true,
+  "salesMutations": 0
+}

@@ -1,0 +1,115 @@
+{
+  "verifiedAt": "2026-10-05T17:31:21.166Z",
+  "status": "ROLLED_BACK",
+  "stagingDeployment": {
+    "id": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-nlg51jyrp-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791220902183,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "staging",
+      "githubCommitSha": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+      "githubCommitMessage": "Document targeted staging legal region test",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "staging.bunnywell.co.uk",
+      "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791220903378,
+    "ready": 1791220938769,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "allAliasesMatchBeforeSwitch": true,
+  "productionUnchanged": true,
+  "rollbackResponse": {
+    "result": {
+      "uid": "036bc10e4d86d01c533372f745d6355ed4ddca84188a99dae370dfa7ef88557c132cb517a4c741f61d345e648521bbcbb2918038b8ed7e184450bf2f4a0913be",
+      "alias": "staging.bunnywell.co.uk",
+      "created": "2026-06-26T14:07:48.488Z",
+      "oldDeploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    }
+  },
+  "aliases": [
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-775707-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-targe-18fd17-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DNNejYswJj6cSa1niw3WbZfGPKpW"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-1aa09c-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_BSLd1gTjuxrWB5vWLJ84oUHhACG9"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-d709b7-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_hNjFuwWR23C5AiMjZyJVy9APjbpf"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-83a90b-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_Bm3LTYepUo2Ebo8VHV2m25fPzZXJ"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-fbfcc5-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_3oXXzkPL4hu9fkKPNNKxe1g7dxBR"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-dedup-a737c0-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DrChST7ZYZtczWk3mit5jV8BKBiC"
+    },
+    {
+      "alias": "portal.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-conveyancing-poc-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_E62qnWa5FzEpTtv5PvMdYHQBgcGs"
+    },
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+    },
+    {
+      "alias": "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+    },
+    {
+      "alias": "defects.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    }
+  ],
+  "candidateDeployment": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+  "reason": "Staging smoke stopped at desktop cold navigation: three /api/performance/vitals request failures; two had no region response, one received HTTP 204 in iad1 before aborting. Further staging legal/mobile smoke not run."
+}

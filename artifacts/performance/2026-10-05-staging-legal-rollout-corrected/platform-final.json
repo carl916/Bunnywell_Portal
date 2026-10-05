@@ -1,0 +1,446 @@
+{
+  "verifiedAt": "2026-10-05T18:17:08.071Z",
+  "stagingDeploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "target": null,
+  "stagingAlias": "staging.bunnywell.co.uk",
+  "onlyStagingCustomAliasChanged": true,
+  "changedAliases": [
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "previous": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+      "current": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    }
+  ],
+  "aliases": [
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-775707-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-targe-18fd17-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DNNejYswJj6cSa1niw3WbZfGPKpW"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-1aa09c-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_BSLd1gTjuxrWB5vWLJ84oUHhACG9"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-d709b7-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_hNjFuwWR23C5AiMjZyJVy9APjbpf"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-83a90b-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_Bm3LTYepUo2Ebo8VHV2m25fPzZXJ"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-fbfcc5-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_3oXXzkPL4hu9fkKPNNKxe1g7dxBR"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-dedup-a737c0-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DrChST7ZYZtczWk3mit5jV8BKBiC"
+    },
+    {
+      "alias": "portal.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-conveyancing-poc-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_E62qnWa5FzEpTtv5PvMdYHQBgcGs"
+    },
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    },
+    {
+      "alias": "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+    },
+    {
+      "alias": "defects.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    }
+  ],
+  "productionDeploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+  "productionAliasesUnchanged": true,
+  "projectDefaultsWritePerformed": false,
+  "projectMetadata": {
+    "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+    "name": "bunnywell-portal",
+    "framework": "nextjs",
+    "accountId": "team_x65ctL8Fot37UcabAkdh8f72",
+    "createdAt": 1780516318923,
+    "updatedAt": 1791221080202,
+    "nodeVersion": "24.x",
+    "live": false,
+    "latestDeployment": {
+      "id": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+      "url": "bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app",
+      "createdAt": 1791221092239,
+      "readyState": "READY",
+      "target": null
+    },
+    "domains": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk",
+      "bunnywell-portal.vercel.app",
+      "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+    ],
+    "passwordProtection": {
+      "enabled": false,
+      "deploymentType": null
+    },
+    "ssoProtection": {
+      "enabled": false,
+      "deploymentType": null
+    },
+    "trustedIps": {
+      "enabled": false,
+      "deploymentType": null,
+      "addresses": [],
+      "protectionMode": null
+    }
+  },
+  "environmentMetadata": [
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "VysLDcttlDnxQUVM",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7",
+      "updatedAt": 1791221080201
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "QT4d14wMEj4kQzj7",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7",
+      "updatedAt": 1791221080201
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "FyXu8DO12Axcv4cf",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "ntXwMSNQIFRESac6",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "7F8QfOJnkZjbAj84",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "MK5urJReMqvBvTWx",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "updatedAt": 1791215121566
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "H5ZFTd3W0iSG9Kly",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-iad1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "uboDZwJrIF0c57Ch",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-iad1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "mqNi1oXISgjSZ62x",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-fra1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "pwR48alhwsPPEiou",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-region-ab-fra1",
+      "updatedAt": 1791211910736
+    },
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "O1fbo91qiiNmPKoQ",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "Ck2CyYW4DFohNWF9",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "hfo5k0jH7G0T1VbF",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "9mpDiDuILBwMK8V7",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "morCR0FMsSnZGQcG",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783521338994
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "pYjDICW4TgO6Y5xj",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783521338994
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "id": "6DAyn7lBxItPRpf9",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783521314095
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "id": "uXGOiruU1UOKDk5R",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783521314095
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "CXfiIFXaCwnW4u2R",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "5uK31WaQGQBEcFqU",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "ApeHNXXwgkMcAmuH",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "id": "unMY6WkifMxJVmzL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783010098266
+    },
+    {
+      "key": "DIGEST_APP_URL",
+      "id": "SysPUuGeL2p9Kaaz",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783010098266
+    },
+    {
+      "key": "DIGEST_APP_URL",
+      "id": "xVOjuclzCy02lyoj",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783010054181
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "id": "UgdvBaEguKJho8cL",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1783010054181
+    },
+    {
+      "key": "DIGEST_EMAILS_ENABLED",
+      "id": "JFZBcAfxIDspExpN",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975346
+    },
+    {
+      "key": "CRON_SECRET",
+      "id": "iQe2uzh9XKolwNor",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975346
+    },
+    {
+      "key": "DIGEST_FROM_EMAIL",
+      "id": "OQN1g5W3Qmaubhkx",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1783009975345
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "jAsqGmUSQXmkaq4e",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477349690
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "r43ZZV08aLWrL8W6",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477335834
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "OnPAuJNWkmYl1Yze",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "updatedAt": 1782477302721
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "id": "fZFbTKr7CAv54Qyi",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1780859262742
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "id": "kA6bwlFS53ZVWKTE",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783510471438
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "id": "LCgtj91n2sGdNdkg",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1783510483579
+    }
+  ]
+}

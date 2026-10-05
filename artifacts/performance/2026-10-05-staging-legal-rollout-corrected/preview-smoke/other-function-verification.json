@@ -1,0 +1,83 @@
+{
+  "verifiedAt": "2026-10-05T18:11:19.484Z",
+  "origins": {
+    "B": "https://bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app"
+  },
+  "rows": [
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1303.3242,
+      "vercelId": "lhr1::iad1::gdq4m-1791223872969-1765f179f83d",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 962.8894,
+      "vercelId": "lhr1::iad1::fjskj-1791223874246-d8af3286d871",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1065.0424000000003,
+      "vercelId": "lhr1::iad1::fjskj-1791223875205-dbd86b611632",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 1245.0705999999996,
+      "vercelId": "lhr1::iad1::txg7h-1791223876267-bbcdf84bcfc9",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 717.6904999999997,
+      "vercelId": "lhr1::iad1::fjskj-1791223877508-806f2b1f43f0",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 934.5355,
+      "vercelId": "lhr1::iad1::fdv7q-1791223878233-f42ca99c2dfd",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    }
+  ],
+  "isolationPassed": true,
+  "successfulHandlers": true,
+  "salesMutations": 0
+}

@@ -1,0 +1,83 @@
+{
+  "verifiedAt": "2026-10-05T17:26:30.789Z",
+  "origins": {
+    "B": "https://bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app"
+  },
+  "rows": [
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1925.9564,
+      "vercelId": "lhr1::iad1::68bzk-1791221183689-03487fb09f9b",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 1168.4278,
+      "vercelId": "lhr1::iad1::qqz7f-1791221185580-6bf3e7fe3513",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 879.1090000000004,
+      "vercelId": "lhr1::iad1::kpwht-1791221186747-bdb7b0a1933c",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 710.7431999999999,
+      "vercelId": "lhr1::iad1::68bzk-1791221187628-71754c4c629c",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1056.2999,
+      "vercelId": "lhr1::iad1::x2rzh-1791221188340-f7140469c21d",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 832.9355999999998,
+      "vercelId": "lhr1::iad1::kpwht-1791221189396-8a48c66c3273",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    }
+  ],
+  "isolationPassed": true,
+  "successfulHandlers": true,
+  "salesMutations": 0
+}
