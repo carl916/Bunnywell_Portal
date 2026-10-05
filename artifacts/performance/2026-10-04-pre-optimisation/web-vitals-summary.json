@@ -1,0 +1,72 @@
+{
+  "kind": "initial controlled observations, not a field baseline",
+  "total": 274,
+  "accepted204": 132,
+  "noResponseObserved": 142,
+  "routes": [
+    "portal",
+    "request-access",
+    "other"
+  ],
+  "metrics": [
+    "TTFB",
+    "LCP",
+    "INP",
+    "CLS"
+  ],
+  "unexpectedKeys": 0,
+  "sensitiveRequestHeaders": 0,
+  "bodyByteRange": "58–90",
+  "byProfile": [
+    {
+      "profile": "desktop",
+      "metrics": [
+        {
+          "metric": "TTFB",
+          "n": 35,
+          "median": 27.600000023841858
+        },
+        {
+          "metric": "LCP",
+          "n": 22,
+          "median": 2092
+        },
+        {
+          "metric": "INP",
+          "n": 0,
+          "median": null
+        },
+        {
+          "metric": "CLS",
+          "n": 0,
+          "median": null
+        }
+      ]
+    },
+    {
+      "profile": "mobile-throttled",
+      "metrics": [
+        {
+          "metric": "TTFB",
+          "n": 35,
+          "median": 23.09999990463257
+        },
+        {
+          "metric": "LCP",
+          "n": 22,
+          "median": 4016
+        },
+        {
+          "metric": "INP",
+          "n": 0,
+          "median": null
+        },
+        {
+          "metric": "CLS",
+          "n": 0,
+          "median": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "expectedRoute": "portal",
+    "documentStatus": 200,
+    "observedMetrics": [
+      "TTFB",
+      "LCP",
+      "INP",
+      "CLS"
+    ],
+    "observedRoutes": [
+      "portal"
+    ],
+    "payloadCount": 4,
+    "allPayloadsAllowed": true
+  },
+  {
+    "expectedRoute": "request-access",
+    "documentStatus": 200,
+    "observedMetrics": [
+      "TTFB",
+      "LCP",
+      "INP",
+      "CLS"
+    ],
+    "observedRoutes": [
+      "request-access"
+    ],
+    "payloadCount": 4,
+    "allPayloadsAllowed": true
+  },
+  {
+    "expectedRoute": "other",
+    "documentStatus": 404,
+    "observedMetrics": [
+      "TTFB",
+      "LCP",
+      "INP",
+      "CLS"
+    ],
+    "observedRoutes": [
+      "other"
+    ],
+    "payloadCount": 4,
+    "allPayloadsAllowed": true
+  }
+]

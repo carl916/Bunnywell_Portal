@@ -1,0 +1,4112 @@
+[
+  {
+    "observedAt": "2026-10-04T18:39:39.870Z",
+    "profile": "admin",
+    "payload": {
+      "metric": "TTFB",
+      "value": 188.79999995231628,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:39.929Z",
+    "profile": "admin",
+    "payload": {
+      "metric": "LCP",
+      "value": 788,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:41.455Z",
+    "profile": "conveyancer",
+    "payload": {
+      "metric": "TTFB",
+      "value": 198.20000004768372,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:41.513Z",
+    "profile": "conveyancer",
+    "payload": {
+      "metric": "LCP",
+      "value": 736,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:42.442Z",
+    "profile": "agent",
+    "payload": {
+      "metric": "TTFB",
+      "value": 59,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:42.497Z",
+    "profile": "agent",
+    "payload": {
+      "metric": "LCP",
+      "value": 616,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:43.453Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:43.453Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.00018732299804687498,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 80,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:43.479Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 13.800000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:47.396Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3948,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:48.739Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:48.740Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.038291781658596466,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 78,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:49.007Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.399999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:39:54.471Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3304,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:54.472Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.043318223232693145,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 78,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:39:54.504Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.600000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:00.012Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3172,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:04.966Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:04.967Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.19915352545844184,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:05.005Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 13.699999928474426,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:06.862Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1680,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:15.646Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:15.647Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.22089987055460614,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:15.687Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.100000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:19.069Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2964,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:25.521Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:25.522Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.23833138519922892,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:25.583Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 42,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:28.001Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2108,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:35.764Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:35.765Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.05162586669921875,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:40:35.828Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 50.89999997615814,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:40:39.218Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3260,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:16.407Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:16.408Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.46323529730902774,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:16.482Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 62.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:18.368Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1704,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:24.181Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 48,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:24.182Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.37243420134650335,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:24.231Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 44.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:27.608Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3068,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:51.138Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 133.69999992847443,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:51.215Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1112,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:51.562Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:51.562Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 59,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:51.590Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 39.40000009536743,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:53.439Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1544,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:53.440Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06880517142613729,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:53.464Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:55.314Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1608,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:55.315Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.0686178484280904,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:55.527Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 22.899999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:57.423Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1792,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:57.424Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.0686178484280904,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:42:57.452Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:42:59.386Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1672,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:01.446Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 40,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:01.448Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06922196626663207,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:01.473Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 32.700000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:03.359Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1924,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:03.360Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.04502734319898818,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:03.843Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:05.761Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2208,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:05.763Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.04502734319898818,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:05.809Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 37.699999928474426,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:07.736Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1620,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:09.239Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 32,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:09.241Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06919635752571954,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:09.265Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:11.153Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1576,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:11.154Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06877956268522475,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:11.363Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:13.279Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1932,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:13.280Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.04502734319898818,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:13.327Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 44.700000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:15.219Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1588,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:17.239Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 32,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:17.241Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06938368052376642,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:17.269Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.700000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:19.179Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1440,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:19.180Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06877956268522475,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:19.567Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 51.800000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:21.439Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1992,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:21.440Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06859223968717787,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:21.472Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.199999928474426,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:23.359Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1640,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:24.840Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 24,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:24.841Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.045172623146904844,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 78,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:24.865Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.300000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:26.804Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1440,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:26.805Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.06902573781543309,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:27.426Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 98.39999997615814,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:29.314Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2128,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:29.315Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.0688384148173862,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:29.345Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.200000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:31.243Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1592,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:33.636Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 208.89999997615814,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:33.695Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 880,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:34.182Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:34.183Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 59,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:34.364Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 57.60000002384186,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:38.968Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4572,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:38.969Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:39.135Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:43.758Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4388,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:43.759Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:47.030Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 34.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:51.702Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 7616,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:51.703Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:51.887Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.100000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:56.763Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4476,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:43:58.978Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 48,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:58.980Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1763556241096466,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:43:59.173Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.700000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:03.871Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4496,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:03.872Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:07.149Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.099999904632568,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:11.792Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 7500,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:11.794Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:11.962Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 39.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:16.707Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4492,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:18.887Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 48,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:18.888Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:19.066Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.100000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:23.687Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4448,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:23.689Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:26.958Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 37.60000002384186,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:31.569Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 7628,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:31.571Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:31.759Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 20.899999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:36.426Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4380,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:39.075Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 40,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:39.076Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1763556241096466,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:39.269Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:43.858Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4384,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:43.860Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:47.136Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.399999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:51.774Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 7580,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:51.775Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:51.950Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 68.90000009536743,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:56.833Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4488,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:44:59.047Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 48,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:59.049Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1763556241096466,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:44:59.303Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 27,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:03.419Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4384,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:03.420Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:06.712Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 32.300000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:11.363Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 7708,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:11.364Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:11.540Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 14.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:16.197Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4420,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:36.838Z",
+    "profile": "admin",
+    "payload": {
+      "metric": "TTFB",
+      "value": 66.80000007152557,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:36.910Z",
+    "profile": "admin",
+    "payload": {
+      "metric": "LCP",
+      "value": 356,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:41.577Z",
+    "profile": "conveyancer",
+    "payload": {
+      "metric": "TTFB",
+      "value": 300.10000002384186,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:41.675Z",
+    "profile": "conveyancer",
+    "payload": {
+      "metric": "LCP",
+      "value": 3884,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:43.611Z",
+    "profile": "agent",
+    "payload": {
+      "metric": "TTFB",
+      "value": 128.20000004768372,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:43.708Z",
+    "profile": "agent",
+    "payload": {
+      "metric": "LCP",
+      "value": 620,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:44.131Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:44.133Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 59,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:44.164Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 27.600000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:48.081Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3768,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:50.082Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:50.083Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.03800671679178874,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:50.315Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 167.19999992847443,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:54.208Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2380,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:54.208Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.04426825536092123,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:45:54.234Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 19.399999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:45:58.693Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2940,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:03.179Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:03.179Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.19915352545844184,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:03.284Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 107,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:05.641Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2076,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:11.854Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:11.856Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.22067718887329102,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:11.964Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 37.39999997615814,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:14.842Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2840,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:20.233Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:20.234Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.23833138519922892,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:20.270Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.900000095367432,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:22.124Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1540,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:29.318Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:29.319Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.05162586669921875,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:46:29.358Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 35.40000009536743,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:46:32.757Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 2976,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:02.629Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:02.631Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.46323529730902774,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:02.673Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 36.700000047683716,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:04.526Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 1556,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:09.329Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 40,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:09.331Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.37243420134650335,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:09.380Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 41.09999990463257,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:12.775Z",
+    "profile": "desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 3176,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:20.034Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:20.037Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.04303315836588542,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:20.238Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 32.89999997615814,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:23.698Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3652,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:25.712Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 24,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:25.713Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:29.017Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 34,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:34.629Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 6872,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:34.630Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:34.799Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 18.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:42.097Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3772,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:47.769Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:47.769Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.044750724506378174,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 78,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:48:47.945Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 30.100000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:48:52.424Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4532,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:00.514Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:00.515Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.0697767153316074,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:00.694Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.90000009536743,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:04.151Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3616,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:11.028Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:11.029Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.3734323258445741,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:11.196Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 52.60000002384186,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:15.657Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4488,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:23.815Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 24,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:23.816Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1890042670730436,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:49:23.993Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 23.09999990463257,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:49:27.410Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3580,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:56:37.705Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:56:37.705Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.7012516709199174,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:56:37.883Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 35.300000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:56:42.362Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4260,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:56:49.194Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 48,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:56:49.195Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.7707438282510299,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:56:49.363Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 30.899999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:56:52.778Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3580,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:00.151Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 24,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:00.152Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:00.335Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.300000071525574,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:03.767Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3700,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:05.276Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:05.277Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11509954290783404,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:08.553Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 55.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:14.265Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 6988,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:14.266Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1580171160359574,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:14.434Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 15.600000023841858,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:21.402Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3604,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:27.034Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:27.035Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.24179643292793548,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:27.212Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 65.30000007152557,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:31.616Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4376,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:39.635Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:39.636Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.11587497645431945,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 90,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:39.814Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 17.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:43.260Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3632,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:50.420Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:50.422Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.3734323258445741,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:57:50.595Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.399999976158142,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:57:55.000Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4328,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:58:02.980Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 32,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:58:02.981Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.1890042670730436,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 89,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T18:58:03.155Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 35.199999928474426,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T18:58:06.565Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3576,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:17.103Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:17.104Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.7027078549506168,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:17.290Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 16.5,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 63,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:21.717Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 4372,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 62,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:29.848Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "INP",
+      "value": 40,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:29.849Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.7707438282510299,
+      "rating": "poor",
+      "route": "portal"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:30.026Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "TTFB",
+      "value": 18.299999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:33.452Z",
+    "profile": "mobile-throttled",
+    "payload": {
+      "metric": "LCP",
+      "value": 3672,
+      "rating": "needs-improvement",
+      "route": "portal"
+    },
+    "bytes": 75,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:55.022Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 53.799999952316284,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 77,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:56.288Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 336,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 61,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:56.585Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:56.586Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0.00023415374755859371,
+      "rating": "good",
+      "route": "portal"
+    },
+    "bytes": 80,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:05:58.586Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 62.799999952316284,
+      "rating": "good",
+      "route": "request-access"
+    },
+    "bytes": 85,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:05:59.837Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 392,
+      "rating": "good",
+      "route": "request-access"
+    },
+    "bytes": 69,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:06:00.142Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "request-access"
+    },
+    "bytes": 68,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:06:00.143Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0,
+      "rating": "good",
+      "route": "request-access"
+    },
+    "bytes": 67,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:06:02.019Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "TTFB",
+      "value": 53.700000047683716,
+      "rating": "good",
+      "route": "other"
+    },
+    "bytes": 76,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:06:03.287Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "LCP",
+      "value": 240,
+      "rating": "good",
+      "route": "other"
+    },
+    "bytes": 60,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": 204
+  },
+  {
+    "observedAt": "2026-10-04T19:06:03.584Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "INP",
+      "value": 16,
+      "rating": "good",
+      "route": "other"
+    },
+    "bytes": 59,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  },
+  {
+    "observedAt": "2026-10-04T19:06:03.585Z",
+    "profile": "collector-check-desktop",
+    "payload": {
+      "metric": "CLS",
+      "value": 0,
+      "rating": "good",
+      "route": "other"
+    },
+    "bytes": 58,
+    "hasCookie": false,
+    "hasAuthorization": false,
+    "hasReferrer": false,
+    "status": null
+  }
+]

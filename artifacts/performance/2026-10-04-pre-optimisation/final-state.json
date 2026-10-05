@@ -1,0 +1,36 @@
+{
+  "finalDeploymentVerificationPhase": "after all journey measurements",
+  "commit": "b883040b9bfc7b66084d1c4af73c13a179af578b",
+  "deploymentId": "dpl_5hFWn1r6y1FW7VjbwVgcixBFt9GR",
+  "aliasStillAssigned": true,
+  "freshSaleFinalStates": [
+    {
+      "unit_number": "107",
+      "workflow_status": "completed",
+      "diagnostic_buyer": true
+    },
+    {
+      "unit_number": "108",
+      "workflow_status": "completed",
+      "diagnostic_buyer": true
+    },
+    {
+      "unit_number": "109",
+      "workflow_status": "completed",
+      "diagnostic_buyer": true
+    },
+    {
+      "unit_number": "110",
+      "workflow_status": "completed",
+      "diagnostic_buyer": true
+    }
+  ],
+  "completedOriginalUnitsExcludedFromHarnessScope": [
+    102,
+    103,
+    104,
+    105,
+    106
+  ],
+  "applicationSourceEdited": false
+}

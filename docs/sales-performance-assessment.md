@@ -2,6 +2,8 @@
 
 22 September 2026 · [staging.bunnywell.co.uk](https://staging.bunnywell.co.uk/) · deployed commit `e70c840cec437ba3e80ccf74d6e128deae92dd65`
 
+Follow-up: [4 October pre-optimisation baseline](sales-performance-baseline-2026-10-04.md) captures the deployed prompt 8 build using fresh authorised sales and isolated journeys. The measurements below remain the original September assessment.
+
 The clearest problems are oversized uploads that fail after transferring their bodies, repeated initial data loading, and broad serial reloads after small workflow updates. The interface normally acknowledges clicks promptly. Once loaded, switching sales or moving from Exchange to Completion is fast. PostgreSQL permission evaluation contributes to building-wide reads, but the legal mutation RPCs themselves are much shorter than the user-visible delay.
 
 Only opt-in instrumentation and diagnostic tests were added. There are no performance optimisations, index changes, permission changes, migrations or deployments in this assessment. Existing authority versions, legal emails and audit records remain intact.

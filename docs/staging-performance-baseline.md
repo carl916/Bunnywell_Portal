@@ -58,7 +58,7 @@ The direct completion PDFs travel browser-to-Storage via TUS. Their inbound tran
 
 ## Verification and comparison limits
 
-On 4 October 2026 the two flags were configured through Vercel for project `bunnywell-portal`, target `preview`, branch `staging` only. This working-tree implementation has not been deployed; the existing staging deployment will not acquire the new boundary or timing spans merely from the environment change. Live staging payload/log and real upload header checks remain the rollout verification step.
+On 4 October 2026 the two flags were configured through Vercel for project `bunnywell-portal`, target `preview`, branch `staging` only. The implementation is now deployed on commit `b883040b9bfc7b66084d1c4af73c13a179af578b`, staging deployment `dpl_5hFWn1r6y1FW7VjbwVgcixBFt9GR`. The [deployed pre-optimisation baseline](sales-performance-baseline-2026-10-04.md) verifies live payloads/runtime logs, fixed route labels and timing headers on real authorised staging journeys. Web Vitals remain initial controlled observations, not a reliable field baseline.
 
 Local production-build verification passed TypeScript, focused ESLint, 15 focused unit/database tests and all 19 existing legal workflow browser tests with collection enabled. The direct-upload fixture now derives exchange/notice dates from the test database's current date, fixing its unrelated date-sensitive setup failure. A browser smoke check emitted TTFB, LCP, INP and CLS bodies of 59–77 bytes with no cookies, referrer or authorization headers, and no page errors. See `artifacts/staging-vitals-smoke.json` and its screenshot. These are synthetic localhost observations, not field staging measurements or a performance improvement claim.
 
