@@ -1,0 +1,33 @@
+{
+  "baseCommit": "9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2",
+  "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+  "stagingDatabase": { "project": "vxkpvdtrldwwqiddoyof", "region": "eu-central-1" },
+  "iad1": {
+    "commit": "e79f35f4e86468925c17fdb11240da2152aadb4e",
+    "branch": "codex/staging-region-ab-iad1",
+    "deploymentId": "dpl_3oXXzkPL4hu9fkKPNNKxe1g7dxBR",
+    "origin": "https://bunnywell-portal-mp9jhtpk2-carl-gilbert-s-projects.vercel.app",
+    "state": "READY", "target": null, "regions": ["iad1"],
+    "createdAt": 1791211935080, "buildingAt": 1791211936583, "readyAt": 1791211988605
+  },
+  "fra1": {
+    "commit": "3262e6991ce22face13a78cd08cbbb804f468051",
+    "branch": "codex/staging-region-ab-fra1",
+    "deploymentId": "dpl_Bm3LTYepUo2Ebo8VHV2m25fPzZXJ",
+    "origin": "https://bunnywell-portal-ka2xc0sle-carl-gilbert-s-projects.vercel.app",
+    "state": "READY", "target": null, "regions": ["fra1"],
+    "createdAt": 1791211942910, "buildingAt": 1791211990862, "readyAt": 1791212030575
+  },
+  "environment": {
+    "sharedPreviewValuesInherited": true,
+    "branchOverrides": { "SALES_PERF_DIAGNOSTICS": "1", "STAGING_WEB_VITALS": "1" },
+    "webVitalsHostnameGate": "staging.bunnywell.co.uk; neither immutable preview sends telemetry",
+    "productionEnvironmentChanged": false
+  },
+  "productionBefore": {
+    "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "commit": "d37ab6518a2f28640a0e5435ce0d84daaf1ee39c",
+    "origin": "https://bunnywell-portal-7iq0pvltz-carl-gilbert-s-projects.vercel.app"
+  },
+  "stagingAliasBefore": { "deploymentId": "dpl_HUYPJC3ze6AKKpon5VFmjZHFEWdo", "commit": "9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2" }
+}

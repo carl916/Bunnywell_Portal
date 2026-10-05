@@ -1,0 +1,151 @@
+{
+  "completed": true,
+  "unchanged": true,
+  "before": {
+    "attempts": {
+      "count": 35,
+      "sha256": "2cac77dc190ca81498773d178766d01cb0b103a365012607cd8ce3f9a3bc60b0"
+    },
+    "emails": {
+      "count": 45,
+      "sha256": "06849f2643b10c4695e175d9af4f1652d3e5508b7c0a251bfaf39ac79ff5995a"
+    },
+    "events": {
+      "count": 411,
+      "sha256": "7e7131be78ba7eff306e4d8c51cb21497042c8a236e8df74a4f93e29a5dfb751"
+    },
+    "documentsAndVersions": {
+      "count": 90,
+      "sha256": "6f7fbf608bb13819d115320d3fbe1fbb465ab27ff2a89e809a7bcc262fc350f7"
+    },
+    "units": {
+      "count": 35,
+      "sha256": "6f8335bde83e5196d5a9d1eb6fdbe4a411d7e127464ecb6ac297cb751e075e99"
+    }
+  },
+  "after": {
+    "attempts": {
+      "count": 35,
+      "sha256": "2cac77dc190ca81498773d178766d01cb0b103a365012607cd8ce3f9a3bc60b0"
+    },
+    "emails": {
+      "count": 45,
+      "sha256": "06849f2643b10c4695e175d9af4f1652d3e5508b7c0a251bfaf39ac79ff5995a"
+    },
+    "events": {
+      "count": 411,
+      "sha256": "7e7131be78ba7eff306e4d8c51cb21497042c8a236e8df74a4f93e29a5dfb751"
+    },
+    "documentsAndVersions": {
+      "count": 90,
+      "sha256": "6f7fbf608bb13819d115320d3fbe1fbb465ab27ff2a89e809a7bcc262fc350f7"
+    },
+    "units": {
+      "count": 35,
+      "sha256": "6f8335bde83e5196d5a9d1eb6fdbe4a411d7e127464ecb6ac297cb751e075e99"
+    }
+  },
+  "guardViolations": 0,
+  "protectedNumbers": [
+    "102",
+    "103",
+    "104",
+    "105",
+    "106",
+    "107",
+    "108",
+    "109",
+    "110",
+    "111",
+    "112",
+    "113",
+    "114",
+    "115",
+    "201",
+    "202",
+    "203",
+    "204",
+    "205",
+    "206",
+    "207",
+    "208",
+    "209"
+  ],
+  "extraNumbers": [
+    "210",
+    "211",
+    "212",
+    "213",
+    "214",
+    "215",
+    "301",
+    "302",
+    "303",
+    "304",
+    "305",
+    "306"
+  ],
+  "salesMutations": 0,
+  "previewOnlyPost": true,
+  "selectedCompletedUnit": 107,
+  "previewOnlyUnit": 209,
+  "browser": "149.0.7827.55",
+  "node": "v24.19.0",
+  "profiles": {
+    "desktop": {
+      "width": 1280,
+      "height": 900
+    },
+    "mobile-throttled": {
+      "width": 390,
+      "height": 844,
+      "cpu": 4,
+      "latencyMs": 150,
+      "downloadBytesPerSecond": 200000,
+      "uploadBytesPerSecond": 93750
+    }
+  },
+  "setupRequests": [],
+  "sessions": [
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "stagingVerified": true,
+      "readRpcs": [
+        "sale_actor_names",
+        "sale_mentions_inbox",
+        "sale_comment_unread"
+      ]
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "stagingVerified": true,
+      "readRpcs": [
+        "sale_actor_names",
+        "sale_mentions_inbox",
+        "sale_comment_unread"
+      ]
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "stagingVerified": true,
+      "readRpcs": [
+        "sale_actor_names",
+        "sale_mentions_inbox",
+        "sale_comment_unread"
+      ]
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "stagingVerified": true,
+      "readRpcs": [
+        "sale_actor_names",
+        "sale_mentions_inbox",
+        "sale_comment_unread"
+      ]
+    }
+  ]
+}
