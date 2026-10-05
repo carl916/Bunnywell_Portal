@@ -1,0 +1,125 @@
+{
+  "verifiedAt": "2026-10-05T16:24:04.751Z",
+  "staging": {
+    "id": "dpl_5z4uiDHDcs7Ttd75CV9C5NRW2id1",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-rgbiun00f-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791214939681,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "staging",
+      "githubCommitSha": "803caeb82297bf439c7d29a6ec2f5174d7cb3083",
+      "githubCommitMessage": "Record staging function region comparison",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "staging.bunnywell.co.uk",
+      "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791214940927,
+    "ready": 1791214981570,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "production": {
+    "id": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-7iq0pvltz-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1790084616512,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "main",
+      "githubCommitSha": "d37ab6518a2f28640a0e5435ce0d84daaf1ee39c",
+      "githubCommitMessage": "Merge pull request #16 from carl916/staging\n\nStaging",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk",
+      "bunnywell-portal.vercel.app",
+      "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1790084618839,
+    "ready": 1790084665359,
+    "readyState": "READY",
+    "source": "redeploy",
+    "aliasError": null
+  },
+  "stagingAliasUnchanged": true,
+  "productionAliasUnchanged": true,
+  "preExistingEnvMetadataUnchanged": true,
+  "addedEnvironmentMetadata": [
+    {
+      "id": "FyXu8DO12Axcv4cf",
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "type": "plain",
+      "updatedAt": 1791215121566
+    },
+    {
+      "id": "ntXwMSNQIFRESac6",
+      "key": "STAGING_WEB_VITALS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-iad1",
+      "type": "plain",
+      "updatedAt": 1791215121566
+    },
+    {
+      "id": "7F8QfOJnkZjbAj84",
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "type": "plain",
+      "updatedAt": 1791215121566
+    },
+    {
+      "id": "MK5urJReMqvBvTWx",
+      "key": "STAGING_WEB_VITALS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/legal-region-targeted-fra1",
+      "type": "plain",
+      "updatedAt": 1791215121566
+    }
+  ]
+}

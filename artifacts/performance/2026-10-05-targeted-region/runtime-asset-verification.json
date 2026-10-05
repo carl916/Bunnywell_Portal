@@ -1,0 +1,28 @@
+{
+  "verifiedAt": "2026-10-05T16:03:53.312Z",
+  "rows": [
+    {
+      "region": "iad1",
+      "status": 200,
+      "assetPath": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+      "bytes": 10835,
+      "sha256": "aaa28123417d128677ea41dff03b93cea85c983a1a3e68d8e1bd8bf7e197d909",
+      "cache": "HIT",
+      "vercelId": "lhr1::wpnv2-1791216232915-984152453006",
+      "deploymentIdOccurrences": 1,
+      "normalisedSha256": "76d483a5fd7b13c9c2b3e13228c620c8ecfa0a61beae26f5edaf15fa6bb1092d"
+    },
+    {
+      "region": "fra1",
+      "status": 200,
+      "assetPath": "/_next/static/chunks/turbopack-2_9az3epal9fr.js",
+      "bytes": 10835,
+      "sha256": "eeb91893f43fa3d5401ba810551e8061fe04656be4e687883302554db46aa959",
+      "cache": "HIT",
+      "vercelId": "lhr1::2bg9j-1791216232913-3ab1737a49cb",
+      "deploymentIdOccurrences": 1,
+      "normalisedSha256": "76d483a5fd7b13c9c2b3e13228c620c8ecfa0a61beae26f5edaf15fa6bb1092d"
+    }
+  ],
+  "onlyDeploymentIdDiffers": true
+}

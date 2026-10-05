@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+dotenv.config({path:'.env.local',quiet:true});
+if(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname!=='vxkpvdtrldwwqiddoyof.supabase.co')throw Error('Staging required');
+const client=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+const read=async q=>{const r=await q;if(r.error)throw Error('Candidate inspection failed');return r.data;};
+const b=await read(client.from('buildings').select('id').eq('name','Forum House').single());
+const units=await read(client.from('units').select('id,unit_number').eq('building_id',b.id).in('unit_number',['210','211','212','213','214','215','301','302','303','304','305','306']).order('unit_number'));
+const sales=await read(client.from('unit_sale_attempts').select('id,unit_id,workflow_status,buyer_name,buyer_person_name,buyer_company_name,redacted_at,authority_requested_at,exchanged_at,completed_at').in('unit_id',units.map(u=>u.id)).eq('is_active',true));
+const [docs,emails]=await Promise.all([read(client.from('unit_sale_documents').select('sale_attempt_id').in('sale_attempt_id',sales.map(s=>s.id))),read(client.from('sale_legal_emails').select('sale_attempt_id').in('sale_attempt_id',sales.map(s=>s.id)))]);
+const rows=units.map(u=>{const s=sales.find(s=>s.unit_id===u.id);if(!s)throw Error('Active candidate missing');return {unit:Number(u.unit_number),workflow_status:s.workflow_status,hasBuyer:!!(s.buyer_name?.trim()||s.buyer_person_name?.trim()||s.buyer_company_name?.trim()),redacted:!!s.redacted_at,hasAuthorityRequest:!!s.authority_requested_at,exchanged:!!s.exchanged_at,completed:!!s.completed_at,documentCount:docs.filter(d=>d.sale_attempt_id===s.id).length,legalEmailCount:emails.filter(e=>e.sale_attempt_id===s.id).length};});
+const after=process.argv.includes('--after');
+const unchangedDrafts=rows.filter(r=>![301,...(after?[210,211]:[])].includes(r.unit)).every(r=>r.workflow_status==='draft'&&!r.hasBuyer&&!r.redacted&&!r.hasAuthorityRequest&&!r.exchanged&&!r.completed&&!r.documentCount&&!r.legalEmailCount);
+const result={inspectedAt:new Date().toISOString(),phase:after?'after mutations':'before mutations',rows,unusedDraftsRemainEmpty:unchangedDrafts};
+fs.writeFileSync(`artifacts/performance/2026-10-05-targeted-region/candidate-details-${after?'after':'before'}.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+if(!unchangedDrafts)process.exitCode=2;
