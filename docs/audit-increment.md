@@ -31,6 +31,12 @@ and rolled back all its synthetic unit/snag changes. The daily retention job is
 active at 02:17 UTC. Do not replay historical migrations or this migration on
 production as part of this PR.
 
+Follow-up `20261006135625_preserve_legacy_audit_actors.sql` is also applied to
+staging. It preserves explicit actor IDs supplied by existing trusted service
+RPCs during rollout; ordinary JWT inserts are still attributed to `auth.uid()`.
+The tenancy route now carries its verified actor header too. The compatibility
+test and tenancy suite passed (16 tests).
+
 | Coverage | Record and atomic boundary |
 | --- | --- |
 | Profiles and effective building/unit access | Database triggers append general audit in the row transaction; profile and effective access edits use one service-only RPC. No-op access saves produce no essential history. |
@@ -122,7 +128,39 @@ Forum House units 107/108, and 20 HTTP structural updates on a newly created
 synthetic unit that was deleted afterward. No diagnostic sale was mutated.
 Baseline opening p50/p95: **9.53/10.89 ms**, zero requests for these cached
 switches; mutation: **618.57/1314.56 ms**, one browser request per update.
-Branch-preview comparison is recorded after preview verification below.
+The immutable feature preview tested was
+`bunnywell-portal-9k6qxsapv-carl-gilbert-s-projects.vercel.app`, commit `aa3c3fb`,
+target preview, region `iad1`. Browser interception blocked every non-staging
+Supabase hostname before authentication; the preview's staging configuration
+was verified without changing any environment setting.
+
+| 20 samples per batch | Baseline p50 / p95 ms | Increment p50 / p95 ms | Added browser requests |
+| --- | --- | --- | --- |
+| Cached unit selection → heading visible | 9.53 / 10.89 | 8.25 / 13.78 | One async RPC on each first deliberate open; 2 across 20 selections, 0 on repeats |
+| Unit structural PATCH → response received | 618.57 / 1314.56 | 1001.16 / 1402.28 | 0: still one HTTP PATCH; the same four remote server operations (Auth verification, profile, type, update) |
+
+The first mutation batch shows a **382.60 ms higher median and 87.72 ms higher
+p95**. A repeat baseline using the unchanged staging application after schema
+application measured **857.18 / 1245.37 ms**; its unbound legacy route does not
+emit new essential structural history during rollout. These sequential small
+batches show sizeable network/platform variability and do not establish how
+much of the difference is auditing. A rolled-back staging EXPLAIN on a new
+synthetic unit measured **1.015 ms** for `essential_audit_change`, **1.318 ms**
+for the entire database update. No claim of zero mutation overhead is made.
+Opening measures cached draft test files and visible content, not document
+downloads or optional audit completion. It cannot be generalised to cold sale
+or rental loads. All benchmark units were cleaned up; rollback diagnostics left
+no synthetic units.
+
+Live smoke verification also passed: anonymous/contractor/resident denied,
+admin business/Auth/view feeds readable, cursor pages nonoverlapping, exactly
+two persisted opens, no views in the business feed, and the audit UI renders
+all three streams. Only sanitised counts/timings/booleans are committed in
+`artifacts/audit`; no credentials, request bodies or provider identity export.
+Use `npm run test:audit` for local audit regression tests. The smoke script
+expects the authorised staging test credentials and a verified feature-preview
+URL; performance scripts also require the private authorised fixture scope
+file `.next/performance/staging-test-sales.json` (recreate after a Next build).
 
 ## Retention proposal
 

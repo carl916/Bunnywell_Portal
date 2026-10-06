@@ -1,0 +1,10 @@
+{
+  "anonymousDenied": true,
+  "livePagination": true,
+  "providerFeed": true,
+  "viewRecords": 2,
+  "businessExcludesViews": true,
+  "contractorDenied": true,
+  "residentDenied": true,
+  "auditUi": true
+}

@@ -48,6 +48,7 @@ export async function auditDatabase() {
   // The complete unmodified migration and cron job are also verified in staging.
   migration=migration.replace(/create extension if not exists pg_cron[\s\S]*?-- Query through/, '-- Query through');
   await db.exec(migration);
+  await db.exec(readFileSync('supabase/migrations/20261006135625_preserve_legacy_audit_actors.sql','utf8'));
   await db.exec('alter table unit_sale_workflow_events add column actor_name text, add column actor_role text');
   async function as(name,service=false) {
     await db.exec('reset role');

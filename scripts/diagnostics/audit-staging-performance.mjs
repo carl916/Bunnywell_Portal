@@ -14,6 +14,11 @@ let step='navigate';
 let page;
 try {
   page=await browser.newPage({viewport:{width:1280,height:900}});
+  let wrongDatabase=false;
+  await page.route('**/*.supabase.co/**',route=>{
+    if(new URL(route.request().url()).hostname!=='vxkpvdtrldwwqiddoyof.supabase.co') {wrongDatabase=true;return route.abort();}
+    return route.continue();
+  });
   page.setDefaultTimeout(45000);
   await page.goto(origin);
   step='sign-in';
@@ -21,6 +26,7 @@ try {
   await page.getByLabel('Password',{exact:true}).fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD);
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.getByRole('button',{name:'Sign out',exact:true}).waitFor();
+  if(wrongDatabase) throw Error('Preview attempted a non-staging database request');
   step='open-authorised-unit';
   const first=scope.units.find(u=>u.unit_number==='107');
   const other=scope.units.find(u=>u.unit_number==='108');

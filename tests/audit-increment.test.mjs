@@ -66,6 +66,10 @@ test('database attribution, atomicity, access, pagination, retries and retention
     await as('admin',true);await db.query('select save_portal_user_access($1,$2,$3,$4)',[ids.resident,{email:'synthetic@example.invalid',role:'resident'},[ids.building],[{unitId:ids.unit,accessType:'tenant'}]]);
     await owner();assert.equal((await db.query('select count(*)::int n from audit_events')).rows[0].n,previous);
     await as('admin');await assert.rejects(db.query('select save_portal_user_access($1,$2,$3,$4)',[ids.resident,{},[],[]]),/permission denied/);
+    await as('admin',true);
+    await db.query("select set_config('request.headers','{}',false)");
+    await db.query("insert into audit_events(event_type,entity_type,summary,created_by_user_id) values('legacy_transaction','unit','Legacy trusted RPC',$1)",[ids.admin]);
+    await owner();assert.equal((await db.query("select created_by_user_id from audit_events where event_type='legacy_transaction'")).rows[0].created_by_user_id,ids.admin);
   } finally { await db.close(); }
 });
 test('background loads and repeated renders do not arm unit opens',()=>{
