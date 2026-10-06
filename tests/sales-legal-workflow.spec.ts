@@ -10,17 +10,20 @@ test("completion package selects both PDFs, queries one file, preserves replacem
   await expect(legal).toContainText("Available once the current completion documents have been approved by the developer.");await expect(legal.locator("input,button,textarea,select")).toHaveCount(0);
   await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/01-empty-upload.png"});await legal.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/07-legal-locked.png"});
   const pdf=(name:string)=>({name,mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.7\nfixture")});
-  const picker=documents.getByLabel("Choose completion documents",{exact:true});await expect(picker).toHaveAttribute("multiple","");
-  await picker.setInputFiles([pdf("first.pdf"),pdf("second.pdf")]);const upload=documents.getByRole("button",{name:"Upload completion documents",exact:true});
-  await expect(upload).toBeDisabled();await documents.getByLabel("Document type for first.pdf").selectOption("completion_statement");await documents.getByLabel("Document type for second.pdf").selectOption("completion_statement");
-  await expect(documents.getByRole("alert")).toContainText("different document type");await expect(upload).toBeDisabled();
-  await documents.getByLabel("Document type for second.pdf").selectOption("draft_statement_of_account");await expect(upload).toBeEnabled();await expect(upload).toHaveClass(/primary/);
-  await documents.getByLabel("Replace selected first.pdf",{exact:true}).setInputFiles(pdf("draft-completion.pdf"));await documents.getByLabel("Replace selected second.pdf",{exact:true}).setInputFiles(pdf("draft-account.pdf"));
+  const upload=documents.getByRole("button",{name:"Upload completion documents",exact:true});
+  await expect(upload).toBeDisabled();await expect(documents.locator('input[type="file"]')).toHaveCount(2);await expect(documents.getByRole("combobox")).toHaveCount(0);
+  await documents.getByLabel("Choose draft completion statement",{exact:true}).setInputFiles(pdf("first.pdf"));
+  await documents.getByLabel("Choose draft statement of account",{exact:true}).setInputFiles(pdf("second.pdf"));
+  await expect(upload).toBeEnabled();await expect(upload).toHaveClass(/primary/);expect(f.actions).toHaveLength(0);
+  await documents.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("draft-completion.pdf"));await documents.getByLabel("Replace draft statement of account",{exact:true}).setInputFiles(pdf("draft-account.pdf"));
   await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/02-two-selected.png"});
   await page.setViewportSize({width:390,height:2600});await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/02-two-selected-mobile.png"});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.setViewportSize({width:1280,height:900});
   f.failNotice(true);await upload.click();await expect(page.getByRole("alert").filter({hasText:"Upload failed"})).toBeVisible();await expect(documents.getByRole("group",{name:"Selected draft-account.pdf",exact:true})).toBeVisible();f.failNotice(false);await upload.click();
   await expect(documents.getByRole("group")).toHaveCount(0);await expect(documents.getByText("Awaiting approval",{exact:true})).toHaveCount(2);await expect(legal.locator("input,button")).toHaveCount(0);
   expect(f.actions.filter(action=>action.action==="prepare_completion_upload")).toHaveLength(2);expect(f.rows.unit_sale_document_versions).toHaveLength(2);await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/03-uploaded-awaiting.png"});
+  const attempts=f.actions.filter(action=>action.action==="prepare_completion_upload");expect(attempts[0].requestId).toBe(attempts[1].requestId);
+  expect(attempts[1].files).toMatchObject([{type:"completion_statement",name:"draft-completion.pdf",expectedVersionId:null},{type:"draft_statement_of_account",name:"draft-account.pdf",expectedVersionId:null}]);
+  expect(f.actions.filter(action=>action.action==="finalize_completion_upload")).toHaveLength(1);
   f.profile.role="developer";await f.reloadStage("Completion");await expect(review.getByRole("article")).toHaveCount(2);await expect(review).not.toContainText("Version 1");await expect(review.getByRole("button",{name:"Approve completion documents",exact:true})).toHaveClass(/primary/);await review.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/04-developer-review.png"});
   const query=review.getByRole("button",{name:"Raise a query",exact:true});await expect(query).toBeDisabled();await review.getByRole("checkbox",{name:"Draft statement of account",exact:true}).check();await expect(query).toBeDisabled();await review.getByLabel("Query or rejection reason").fill("Please correct the retained balance.");await query.click();
   expect(f.actions.find(action=>action.action==="query_completion_package")).toMatchObject({documentTypes:["draft_statement_of_account"],reason:"Please correct the retained balance."});
@@ -35,14 +38,20 @@ test("completion package selects both PDFs, queries one file, preserves replacem
   await documents.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("revised-completion.pdf"));await documents.getByRole("button",{name:"Upload replacement document",exact:true}).click();await expect(legal.locator("input,button")).toHaveCount(0);expect(f.completionPackage.approval).not.toBeNull();
 });
 
-test("completion combined drop zone keeps both files and independent upload leaves developer approval locked",async({page})=>{
+test("completion slots assign dropped PDFs by destination and independent upload leaves developer approval locked",async({page})=>{
   const f=await legalFixture(page);f.profile.role="conveyancer";f.unit.sale_status="exchanged";Object.assign(f.attempt,{workflow_status:"exchanged",exchanged_at:"2026-09-01",completion_legacy_stage:"arrangements"});await f.reloadStage("Completion");
   const documents=page.locator("#completion-documents-step"),review=page.locator("#completion-approval-step");
-  const transfer=await page.evaluateHandle(()=>{const dt=new DataTransfer();for(const name of ["completion.pdf","account.pdf"])dt.items.add(new File(["%PDF-1.7"],name,{type:"application/pdf"}));return dt;});
-  await documents.locator("label.upload-target").first().dispatchEvent("drop",{dataTransfer:transfer});await transfer.dispose();await expect(documents.getByRole("group")).toHaveCount(2);
-  await expect(documents.getByLabel("Document type for completion.pdf")).toHaveValue("completion_statement");await expect(documents.getByLabel("Document type for account.pdf")).toHaveValue("draft_statement_of_account");
-  await documents.getByRole("group",{name:"Selected account.pdf",exact:true}).getByRole("button",{name:"Remove",exact:true}).click();await documents.getByRole("button",{name:"Upload completion documents",exact:true}).click();await expect(review).toContainText("Available once the conveyancer has uploaded both completion documents.");
-  await expect(documents.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(0);expect(f.rows.unit_sale_document_versions).toHaveLength(1);await documents.getByLabel("Choose completion documents",{exact:true}).setInputFiles({name:"invalid.txt",mimeType:"text/plain",buffer:Buffer.from("text")});await expect(documents.getByRole("alert")).toContainText("PDF");
+  async function drop(label:string,names:string[]) {
+    const transfer=await page.evaluateHandle(names=>{const dt=new DataTransfer();for(const name of names)dt.items.add(new File(["%PDF-1.7"],name,{type:"application/pdf"}));return dt;},names);
+    await documents.locator("label.upload-target").filter({has:page.getByLabel(label,{exact:true})}).dispatchEvent("drop",{dataTransfer:transfer});await transfer.dispose();
+  }
+  await drop("Choose draft completion statement",["first.pdf","second.pdf"]);await expect(documents.getByRole("alert")).toContainText("one PDF for each document slot");await expect(documents.getByRole("group")).toHaveCount(0);
+  // Filenames must not decide which document the user is uploading.
+  await drop("Choose draft completion statement",["account.pdf"]);await drop("Choose draft statement of account",["completion.pdf"]);await expect(documents.getByRole("group")).toHaveCount(2);expect(f.actions).toHaveLength(0);
+  await documents.getByRole("group",{name:"Selected completion.pdf",exact:true}).getByRole("button",{name:"Remove",exact:true}).click();await expect(documents.getByLabel("Choose draft statement of account",{exact:true})).toHaveCount(1);
+  await documents.getByRole("button",{name:"Upload completion documents",exact:true}).click();await expect(review).toContainText("Available once the conveyancer has uploaded both completion documents.");
+  expect(f.actions.find(action=>action.action==="prepare_completion_upload")?.files).toMatchObject([{type:"completion_statement",name:"account.pdf"}]);
+  await expect(documents.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(0);expect(f.rows.unit_sale_document_versions).toHaveLength(1);await documents.getByLabel("Choose draft statement of account",{exact:true}).setInputFiles({name:"invalid.txt",mimeType:"text/plain",buffer:Buffer.from("text")});await expect(documents.getByRole("alert")).toContainText("PDF");
   for(const role of ["sales_agent","developer"]) {f.profile.role=role;await f.reloadStage("Completion");await expect(documents.locator('input[type="file"]')).toHaveCount(0);await expect(review.getByRole("button")).toHaveCount(0);}
 });
 
