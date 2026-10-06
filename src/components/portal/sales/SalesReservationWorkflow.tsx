@@ -2321,30 +2321,32 @@ export function SalesReservationWorkflow({
 
 
 
+  // Agent Fees loads independently. Keep it mounted while Sales refreshes so
+  // its filters and page survive and the pagination hook can clamp new totals.
+  if (!selectedSaleUnitId && activeSalesView === "agent_fees" && canViewAgentFeesPortfolio) {
+    return (
+      <div className="grid gap-5">
+        <section className="panel">
+          <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
+          <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
+          <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
+        </section>
+        <AgentFeesPortfolio
+          requesterId={profile?.id ?? user.id}
+          buildingContextId={buildingId}
+          buildingContextName={scopeBuilding?.name ?? "Selected building"}
+          refreshKey={units}
+          onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
+        />
+      </div>
+    );
+  }
+
   if (loadedSalesKey !== salesKey) {
     return <section className="panel" aria-busy={isLoading} aria-label="Sales loading"><h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2><p className="mt-2 text-sm text-[#617169]">{isLoading ? "Loading sales data..." : "Sales data could not be loaded. Use Refresh to try again."}</p></section>;
   }
 
   if (!selectedSaleUnitId) {
-    if (activeSalesView === "agent_fees" && canViewAgentFeesPortfolio) {
-      return (
-        <div className="grid gap-5">
-          <section className="panel">
-            <h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>
-            <p className="mt-1 text-sm text-[#617169]">Portfolio sales operations and unit-level workspaces.</p>
-            <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
-          </section>
-          <AgentFeesPortfolio
-            requesterId={profile?.id ?? user.id}
-            buildingContextId={buildingId}
-            buildingContextName={scopeBuilding?.name ?? "Selected building"}
-            refreshKey={units}
-            onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
-          />
-        </div>
-      );
-    }
-
     return (
       <div className="grid gap-5">
         <section className="panel">

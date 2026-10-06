@@ -168,17 +168,28 @@ test("radius roles, upload focus and intentional shape exceptions survive shared
   const f = await portalFixture(page);
   f.rows.buildings.push({ id: "10000000-0000-4000-8000-000000000002", name: "Second Test House", status: "active", lifecycle_status: "active" });
   await f.go("sales");
-  const upload = page.locator('label[for^="reservation-form-"]').first();
+  const fileInput = page.getByLabel("Upload reservation form PDF", { exact: true });
+  const upload = fileInput.locator("..");
   await expect(upload).toHaveCSS("border-radius", "6px");
-  await upload.locator("input").focus();
+  await fileInput.focus();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Shift+Tab");
   await expect(upload).toHaveCSS("outline-style", "solid");
-  await upload.locator("input").setInputFiles({ name: "Reservation form with a long descriptive filename.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF") });
-  await expect(upload).toContainText("Reservation form with a long descriptive filename.pdf");
-  await expect(upload.locator(".rounded-bw-inset")).toHaveCSS("border-radius", "4px");
-  await page.getByRole("button", { name: "Remove selected PDF", exact: true }).click();
-  await expect(upload.getByText("Reservation form with a long descriptive filename.pdf")).toHaveCount(0);
+  await expect(fileInput).toBeFocused();
+  await fileInput.setInputFiles({ name: "Reservation form with a long descriptive filename.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF") });
+  // Selection replaces the empty drop target with a card and Replace/Remove actions.
+  const selectedUpload = fileInput.locator("../../..");
+  await expect(selectedUpload.getByText("Reservation form with a long descriptive filename.pdf", { exact: true })).toBeVisible();
+  await expect(selectedUpload).toContainText("Selected – ready to submit");
+  await expect(selectedUpload).toHaveCSS("border-radius", "6px");
+  await fileInput.focus();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(fileInput).toBeFocused();
+  await expect(fileInput.locator("..")).toHaveCSS("outline-style", "solid");
+  await selectedUpload.getByRole("button", { name: "Remove", exact: true }).click();
+  await expect(page.getByText("Reservation form with a long descriptive filename.pdf", { exact: true })).toHaveCount(0);
+  await expect(upload).toContainText("Choose a file or drag and drop");
   const roles: Record<string, string> = {};
   for (const [name, locator, radius] of [
     ["workspace", page.locator(".panel").first(), "8px"],

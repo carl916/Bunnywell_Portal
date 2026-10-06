@@ -7,6 +7,10 @@ const mentionsButton = (page: Page) => page.getByRole("button", { name: /^@ Ment
 const popover = (page: Page) => page.getByRole("dialog", { name: "Unread mentions" });
 const pagination = (page: Page) => page.getByRole("navigation", { name: "Results pagination" });
 const feeRows = (page: Page) => page.getByRole("region", { name: "Agent fees", exact: true }).locator("tbody tr[tabindex]");
+const refreshFees = (page: Page) => Promise.all([
+  page.waitForResponse(response => response.url().includes("/rpc/get_agent_fee_portfolio") && response.ok()),
+  page.getByRole("button", { name: "Refresh", exact: true }).click(),
+]);
 
 async function fixture(page: Page, mentionCount = 3) {
   const ui = await salesFixture(page);
@@ -149,8 +153,13 @@ test("Agent Fees paginates 62 sales in twelve-row pages without reducing summary
   for (let pageNumber = 1; pageNumber < 6; pageNumber++) await pagination(page).getByRole("button", { name: "Next" }).click();
   await expect(pagination(page)).toContainText("Showing 61–62 of 62"); await expect(feeRows(page)).toHaveCount(2);
   await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled(); await expect(summary).toContainText("£62,000");
-  f.shrink(15); await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  await refreshFees(page);
+  await expect(pagination(page)).toContainText("Showing 61–62 of 62");
+  f.shrink(15); await refreshFees(page);
   await expect(pagination(page)).toContainText("Showing 13–15 of 15"); await expect(feeRows(page)).toHaveCount(3);
+  await expect(feeRows(page).first()).toContainText("Unit 113");
+  await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled();
+  await expect(summary).toContainText("£15,000");
   await pagination(page).getByRole("button", { name: "Previous" }).click(); await expect(pagination(page)).toContainText("Showing 1–12 of 15");
 });
 
@@ -160,6 +169,8 @@ test("Agent Fees filters reset pagination and remain selected while paging the f
   await next.click(); await page.getByRole("combobox", { name: "Agent", exact: true }).selectOption("agent-a");
   await expect(pagination(page)).toContainText("Showing 1–12 of 40");
   await next.click(); await expect(pagination(page)).toContainText("Showing 13–24 of 40");
+  await refreshFees(page);
+  await expect(pagination(page)).toContainText("Showing 13–24 of 40");
   await expect(page.getByRole("combobox", { name: "Agent", exact: true })).toHaveValue("agent-a");
   await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("awaiting_approval");
   await expect(pagination(page)).toContainText("Showing 1–12 of 31");
