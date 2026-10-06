@@ -1,4 +1,6 @@
 "use client";
+import { UnitOpenObserver } from "@/components/portal/audit/UnitOpenObserver";
+import { markUnitOpenIntent } from "@/lib/audit/unit-open";
 
 import { AlertCircle, CalendarClock, ChevronLeft, ChevronRight, Home, TrendingDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -227,6 +229,7 @@ function RentalFile({
   const isAlsoForSale = saleAttemptUnitIds.has(unit.id) || ["for_sale", "reserved", "exchanged", "completed", "handed_over"].includes(unit.sale_status);
 
   return <div className="grid min-w-0 gap-5">
+    <UnitOpenObserver unitId={unit.id} />
     <section className="panel">
       <div className="flex items-center justify-between gap-3">
         <button className="secondary" type="button" onClick={onBack}>&lt; Back to Rentals</button>
@@ -488,6 +491,7 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
   }
 
   function openRentalFile(unit: Unit, rememberListPosition = false) {
+    markUnitOpenIntent(unit.id);
     if (rememberListPosition) rentalListScrollYRef.current = window.scrollY;
     setSelectedUnitId(unit.id);
     setTab("current");

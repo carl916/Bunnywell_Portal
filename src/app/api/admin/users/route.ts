@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/admin";
 import type { AppRole, ResidentType } from "@/lib/data/production";
 
 type CreateUserBody = {
@@ -131,7 +132,7 @@ async function getAdminClientForRequest(request: Request) {
     };
   }
 
-  return { adminClient, user: userData.user };
+  return { adminClient: createSupabaseServiceRoleClient(undefined, userData.user.id), user: userData.user };
 }
 
 export async function POST(request: Request) {
@@ -202,39 +203,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error?.message ?? "Could not create user." }, { status: 400 });
     }
 
-    await adminClient.from("profiles").upsert({
-      id: data.user.id,
-      email,
-      full_name: body.fullName ?? null,
-      name: body.fullName ?? null,
-      phone: body.phone?.trim() || null,
-      role,
-      resident_type: role === "resident" ? residentType : null,
-      organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null,
-      active: true,
+    const { error: accessError } = await adminClient.rpc("save_portal_user_access", {
+      p_user: data.user.id,
+      p_profile: { email, full_name: body.fullName ?? null, name: body.fullName ?? null,
+        phone: body.phone?.trim() || null, role, resident_type: role === "resident" ? residentType : null,
+        organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null, active: true },
+      p_buildings: buildingIds,
+      p_units: unitAccess,
     });
-
-    if (buildingIds.length > 0) {
-      await adminClient.from("user_building_access").upsert(
-        buildingIds.map((buildingId) => ({
-          user_id: data.user.id,
-          building_id: buildingId,
-          role_on_building: role,
-        })),
-        { onConflict: "user_id,building_id" },
-      );
-    }
-
-    if (unitAccess.length > 0) {
-      await adminClient.from("user_unit_access").upsert(
-        unitAccess.map((access) => ({
-          user_id: data.user.id,
-          unit_id: access.unitId,
-          access_type: access.accessType,
-        })),
-        { onConflict: "user_id,unit_id,access_type" },
-      );
-    }
+    if (accessError) return NextResponse.json({ error: accessError.message, userId: data.user.id }, { status: 400 });
 
     return NextResponse.json({ id: data.user.id, email, role, invited: sendInviteEmail });
   } catch (error) {
@@ -379,45 +356,17 @@ export async function PATCH(request: Request) {
       buildingIds = Array.from(new Set((accessUnits ?? []).map((unit) => unit.building_id)));
     }
 
-    const { error: profileError } = await adminClient.from("profiles").update({
-      full_name: body.fullName ?? null,
-      name: body.fullName ?? null,
-      phone: body.phone?.trim() || null,
-      role,
-      resident_type: role === "resident" ? residentType : null,
-      organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null,
-    }).eq("id", userId);
-
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 400 });
-    }
-
-    await Promise.all([
-      adminClient.from("user_building_access").delete().eq("user_id", userId),
-      adminClient.from("user_unit_access").delete().eq("user_id", userId),
-    ]);
-
-    if (buildingIds.length > 0) {
-      await adminClient.from("user_building_access").upsert(
-        buildingIds.map((buildingId) => ({
-          user_id: userId,
-          building_id: buildingId,
-          role_on_building: role,
-        })),
-        { onConflict: "user_id,building_id" },
-      );
-    }
-
-    if (unitAccess.length > 0) {
-      await adminClient.from("user_unit_access").upsert(
-        unitAccess.map((access) => ({
-          user_id: userId,
-          unit_id: access.unitId,
-          access_type: access.accessType,
-        })),
-        { onConflict: "user_id,unit_id,access_type" },
-      );
-    }
+    const { data: currentProfile, error: currentError } = await adminClient.from("profiles").select("email").eq("id", userId).single();
+    if (currentError) return NextResponse.json({ error: currentError.message }, { status: 400 });
+    const { error: profileError } = await adminClient.rpc("save_portal_user_access", {
+      p_user: userId,
+      p_profile: { email: currentProfile.email, full_name: body.fullName ?? null, name: body.fullName ?? null,
+        phone: body.phone?.trim() || null, role, resident_type: role === "resident" ? residentType : null,
+        organisation_id: needsOrganisationAndBuilding(role) ? body.organisationId || null : null },
+      p_buildings: buildingIds,
+      p_units: unitAccess,
+    });
+    if (profileError) return NextResponse.json({ error: profileError.message }, { status: 400 });
 
     return NextResponse.json({ id: userId, role });
   } catch (error) {

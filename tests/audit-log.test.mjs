@@ -19,8 +19,9 @@ test("Audit log supports the required toolbar, quick filters and responsive deta
   for (const label of ["All events", "All users", "Any date", "Reset"]) {
     assert.match(component, new RegExp(label));
   }
-  assert.match(component, /buildingContextId \? rows\.filter/);
-  assert.doesNotMatch(component, /FilterSelect label="Building"/);
+  assert.match(component, /buildingContextId && stream !== "authentication" \? rows\.filter/);
+  assert.match(component, /FilterSelect label="Building"/);
+  assert.match(component, /rpc\("portal_audit_page"/);
   for (const heading of ["Date", "Activity", "Subject", "Change", "User"]) {
     assert.match(component, new RegExp(`>${heading}<`));
   }

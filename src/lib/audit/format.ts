@@ -212,6 +212,13 @@ export function getAuditChanges(event: AuditEvent): AuditChange[] {
   };
 
   if (event.field_name) add(event.field_name, event.previous_value, event.new_value);
+  if (Array.isArray(metadata.changed_fields)) {
+    const previous = metadata.previous as Record<string, unknown> | undefined;
+    const next = metadata.next as Record<string, unknown> | undefined;
+    for (const field of metadata.changed_fields) {
+      if (typeof field === "string" && (previous?.[field] !== undefined || next?.[field] !== undefined)) add(field, previous?.[field], next?.[field]);
+    }
+  }
   const structured = metadata.changes;
   if (Array.isArray(structured)) {
     structured.forEach((change) => {

@@ -9,6 +9,8 @@ import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
 import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { markUnitOpenIntent, resetUnitOpenIntents } from "@/lib/audit/unit-open";
+import { UnitOpenObserver } from "@/components/portal/audit/UnitOpenObserver";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
@@ -819,6 +821,7 @@ function readAuthRedirectTokens() {
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
+  useEffect(() => { resetUnitOpenIntents(); }, [user?.id]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tab, setActiveTab] = useState<Tab>(() => screenFromUrl() ?? "dashboard");
   const [snagListFilters, setSnagListFilters] = useState<SnagListFilters>({});
@@ -1125,7 +1128,7 @@ export function ProductionPortalApp() {
       setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
       if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
         // Rental exit appends an audit event. Preserve the global log's page/count.
-        const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
+        const audit = await Promise.resolve({ data: [], count: 0, error: null });
         if (audit.error) throw audit.error;
         if (!valid()) return;
         setAuditEvents((audit.data ?? []) as AuditEvent[]);
@@ -1210,7 +1213,7 @@ export function ProductionPortalApp() {
         supabase.from("snags").select("*").order("created_at", { ascending: false }),
         supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
         supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-        supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
+        Promise.resolve({ data: [], count: 0, error: null }),
         supabase.from("handovers").select("*").order("created_at", { ascending: false }),
         supabase.from("handover_key_items").select("*").order("sort_order"),
         supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
@@ -1420,6 +1423,7 @@ export function ProductionPortalApp() {
 
   async function recordAudit(event: NewAuditEvent) {
     if (!user?.id) return;
+    if (/^(user_(created|updated|deleted|reactivated|deactivated)|access_request_(notes_updated|approved|rejected))$/.test(event.event_type)) return;
     const supabase = createSupabaseBrowserClient();
     const structuredInsert = buildAuditInsert(event, { ...profile, id: user.id, email: profile?.email ?? user.email ?? "" });
     let result = await supabase.from("audit_events").insert(structuredInsert).select("*").single();
@@ -1596,6 +1600,7 @@ export function ProductionPortalApp() {
           organisations={organisations}
           onNotice={setNotice}
           onOpenSaleFile={(unit) => {
+            markUnitOpenIntent(unit.id);
             const params = new URLSearchParams(window.location.search);
             params.set("screen", "sales");
             params.set("salesUnitId", unit.id);
@@ -2157,6 +2162,7 @@ function SetupSection({
           units={units}
           buildingContextId={buildingContextId}
           onOpenSaleFile={(unit) => {
+            markUnitOpenIntent(unit.id);
             if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             params.set("screen", "sales");
@@ -3338,6 +3344,7 @@ function UnitStructureCard({
     <article className="border-b border-[#eef0eb] bg-white px-3 py-2 last:border-b-0" data-unit-id={unit.id}>
               {editing ? (
                 <div className="grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
+                  <UnitOpenObserver unitId={unit.id} />
                   <div className="grid gap-2 sm:grid-cols-2">
                     <input className="field" value={editNumber} onChange={(event) => setEditNumber(event.target.value)} placeholder="Unit number" />
                     <select className="field" value={editFloor} onChange={(event) => setEditFloor(event.target.value)}>
@@ -3428,7 +3435,7 @@ function UnitStructureCard({
                   <p className="text-sm text-[#617169]">{formatParkingBays(unit.parking_bays)}</p>
                   <div className="flex flex-wrap gap-1"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>{unit.rental_portfolio_status === "active" && <span className="rounded-md bg-[#eef8fa] px-2 py-1 text-xs font-semibold text-[#315f6a]">Rental</span>}</div>
                   <div className="flex gap-2 lg:justify-end">
-                      <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
+                      <button className="secondary icon-button" onClick={() => { markUnitOpenIntent(unit.id); setEditing(true); }} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
                         <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                       <button
@@ -6753,23 +6760,11 @@ async function saveSnagStatusChange({
   const updatePayload: { status: string; closed_at?: string | null } = { status: nextStatus };
   if (closedAt !== undefined) updatePayload.closed_at = closedAt;
 
-  const { error: statusError } = await supabase
-    .from("snags")
-    .update(updatePayload)
-    .eq("id", snag.id);
-
+  const { error: statusError } = await supabase.rpc("change_snag", {
+    p_snag: snag.id, p_patch: updatePayload, p_comment: comment?.trim() || null,
+  });
   if (statusError) throw new Error(statusError.message);
 
-  const { error: eventError } = await supabase.from("snag_events").insert({
-    snag_id: snag.id,
-    event_type: "status_change",
-    old_value: snag.status,
-    new_value: nextStatus,
-    comment: comment?.trim() || null,
-    created_by_user_id: user.id,
-  });
-
-  if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
 }
 
 async function reloadAfterSavedSnagStatus(reload: () => Promise<void>) {
@@ -8075,22 +8070,13 @@ function TriageActions({ user, snag, buildings, organisations, onNotice, reload 
     }
 
     const supabase = createSupabaseBrowserClient();
-    await supabase.from("snags").update({
-      status,
-      priority_code: status === "accepted" ? priority : snag.priority_code,
-      sla_due_date: status === "accepted" ? slaForPriority(priority, building?.defects_liability_end_date) : snag.sla_due_date,
-    }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "triage", old_value: snag.status, new_value: status, comment, created_by_user_id: user.id });
-    if (status === "accepted" && snag.priority_code !== priority) {
-      await supabase.from("snag_events").insert({
-        snag_id: snag.id,
-        event_type: "priority_changed",
-        old_value: snag.priority_code,
-        new_value: priority,
-        comment: `Priority changed from ${snag.priority_code ?? "None"} to ${priority}`,
-        created_by_user_id: user.id,
-      });
-    }
+    const { error } = await supabase.rpc("change_snag", {
+      p_snag: snag.id,
+      p_patch: { status, priority_code: status === "accepted" ? priority : snag.priority_code,
+        sla_due_date: status === "accepted" ? slaForPriority(priority, building?.defects_liability_end_date) : snag.sla_due_date },
+      p_comment: comment || null,
+    });
+    if (error) { onNotice(error.message); return; }
     setComment("");
     await reload();
   }
@@ -10009,7 +9995,8 @@ function SnagDetailPage({
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { error: statusError } = await supabase.from("snags").update({ status: "rejected_back_to_contractor" }).eq("id", snag.id);
+    const { error: statusError } = await supabase.rpc("change_snag", { p_snag: snag.id, p_patch: { status: "rejected_back_to_contractor" }, p_comment: rejectNote });
+    if (statusError) { onNotice(statusError.message); return; }
     let photoErrorMessage = "";
     if (rejectPhoto) {
       const mediaUploads = await uploadSnagMedia({ imageDataUrl: rejectPhoto }, "rejections");
@@ -10017,15 +10004,7 @@ function SnagDetailPage({
       const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
       photoErrorMessage = photoError?.message ?? "";
     }
-    const { error: eventError } = await supabase.from("snag_events").insert({
-      snag_id: snag.id,
-      event_type: "status_change",
-      old_value: snag.status,
-      new_value: "rejected_back_to_contractor",
-      comment: rejectNote,
-      created_by_user_id: user.id,
-    });
-    if (statusError || eventError || photoErrorMessage) onNotice(statusError?.message ?? eventError?.message ?? photoErrorMessage);
+    if (photoErrorMessage) onNotice(photoErrorMessage);
     else {
       setRejectNote("");
       setRejectPhoto("");

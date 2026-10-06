@@ -201,7 +201,7 @@ test("the backend derives recorder identity and never accepts payer or note inpu
   assert.doesNotMatch(recordBody, /payload\.payerType/);
   assert.doesNotMatch(recordBody, /payload\.paymentNote/);
   assert.match(recordBody, /p_requester_id: requester\.id/);
-  assert.match(recordBody, /recordedByUserId: requester\.id/);
+  assert.doesNotMatch(recordBody, /await insertEvent/);
   assert.match(recorderMigrationSource, /new\.recorded_by_user_id/);
   assert.match(recorderMigrationSource, /coalesce\(profile\.full_name, profile\.name, profile\.email\)/);
   assert.match(recorderMigrationSource, /organisation\.name/);
