@@ -1,0 +1,156 @@
+{
+  "verifiedAt": "2026-10-05T16:22:36.486Z",
+  "origins": {
+    "A": "https://bunnywell-portal-mwvgb5vko-carl-gilbert-s-projects.vercel.app",
+    "B": "https://bunnywell-portal-11i4lffpk-carl-gilbert-s-projects.vercel.app"
+  },
+  "rows": [
+    {
+      "round": 1,
+      "variant": "A",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 726.7727,
+      "vercelId": "lhr1::iad1::bplr8-1791217345690-2f89ad4ad6a7",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "A",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 914.6767,
+      "vercelId": "lhr1::iad1::p96xr-1791217346385-4b4cc53151d0",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 932.3263000000002,
+      "vercelId": "lhr1::iad1::fhbnb-1791217347354-a0853a61b1eb",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 1,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 1186.2469,
+      "vercelId": "lhr1::iad1::w8cng-1791217348231-5f2ad0a1f9f2",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 1119.1471999999999,
+      "vercelId": "lhr1::iad1::fhbnb-1791217349418-ddcdc3d419e2",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 736.8449,
+      "vercelId": "lhr1::iad1::l2ptz-1791217350528-35b266356735",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "A",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 562.9700000000003,
+      "vercelId": "lhr1::iad1::2bg9j-1791217351264-bb9d009f07a4",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 2,
+      "variant": "A",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 949.2532999999994,
+      "vercelId": "lhr1::iad1::2bg9j-1791217351842-c22682ebb772",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "A",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 478.509,
+      "vercelId": "lhr1::iad1::2bg9j-1791217352779-e164fff39358",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "A",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 970.3734999999997,
+      "vercelId": "lhr1::iad1::4n9bc-1791217353263-19defb30a411",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/tenancies",
+      "status": 200,
+      "durationMs": 966.6486000000004,
+      "vercelId": "lhr1::iad1::6t2kr-1791217354238-c767027b1bf1",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    },
+    {
+      "round": 3,
+      "variant": "B",
+      "path": "/api/rentals/rent-risk",
+      "status": 200,
+      "durationMs": 898.3623000000007,
+      "vercelId": "lhr1::iad1::6t2kr-1791217355200-ed3d22204967",
+      "edgeRegion": "lhr1",
+      "executionRegion": "iad1",
+      "cache": "BYPASS",
+      "serverTiming": null
+    }
+  ],
+  "isolationPassed": true,
+  "successfulHandlers": true,
+  "salesMutations": 0
+}

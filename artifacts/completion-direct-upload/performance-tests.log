@@ -1,0 +1,14 @@
+
+> bunnywell-portal@0.1.0 test:sales-performance
+> node --test tests/sales-performance.test.mjs
+
+✔ server diagnostics are opt-in, request-scoped and contain only allowlisted numeric timing data (40.8454ms)
+✔ browser measurements are opt-in, bounded, omit payloads and remain off on the production domain (14.1781ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 226.9962

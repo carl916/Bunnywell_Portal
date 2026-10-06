@@ -1,0 +1,25 @@
+{
+  "verifiedAt": "2026-10-04T19:08:32.774Z",
+  "passed": true,
+  "workflowSamples": 60,
+  "navigationSamples": 50,
+  "workflowSamplesPerProfile": 2,
+  "navigationSamplesPerActionPerProfile": 5,
+  "uiFailures": 0,
+  "httpWorkflowFailures": 0,
+  "allLegalResponsesTimed": true,
+  "requiredSpansPresent": true,
+  "allTelemetryPayloadsAllowed": true,
+  "allPermittedRoutesObserved": true,
+  "allMetricsInRuntimeLogs": true,
+  "freshSalesCompleted": true,
+  "aliasStillAssigned": true,
+  "noDiagnosticProcessesRemaining": true,
+  "hashes": {
+    "workflow-samples.json": "14d110acfdec7dc937acc1de19d07b4b843db98004cb271248cce81c8f33849b",
+    "navigation-samples.json": "72aa7c8ee5cff54e4620c5e2b67fabfc258d842f890146bba2a79843e1e683ad",
+    "web-vitals-browser.json": "146d419a24c108b1dcff36632e1b26ad035c09c77526aaef67ba95fb891a0905",
+    "web-vitals-runtime-observation.json": "88ad9bb547b341251e2116c1072424daffd4e1da1b6be04241fbe3b527ac529c",
+    "deployment.json": "66f6510d454799ea8f41f67a3830c50bcab7940ed95b73b0b9dff80d76074d6a"
+  }
+}

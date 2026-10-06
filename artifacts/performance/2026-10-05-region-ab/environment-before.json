@@ -1,0 +1,248 @@
+{
+  "note": "Metadata only, before adding four preview-branch diagnostic flags. No secret values retained.",
+  "envs": [
+    {
+      "id": "5uK31WaQGQBEcFqU",
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "id": "6DAyn7lBxItPRpf9",
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783521314095
+    },
+    {
+      "id": "9mpDiDuILBwMK8V7",
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "id": "ApeHNXXwgkMcAmuH",
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "id": "Ck2CyYW4DFohNWF9",
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "id": "CXfiIFXaCwnW4u2R",
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783519084547
+    },
+    {
+      "id": "fZFbTKr7CAv54Qyi",
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1780859262742
+    },
+    {
+      "id": "hfo5k0jH7G0T1VbF",
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "conveyancing-poc",
+      "updatedAt": 1783521368387
+    },
+    {
+      "id": "iQe2uzh9XKolwNor",
+      "key": "CRON_SECRET",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783009975346
+    },
+    {
+      "id": "jAsqGmUSQXmkaq4e",
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1782477349690
+    },
+    {
+      "id": "JFZBcAfxIDspExpN",
+      "key": "DIGEST_EMAILS_ENABLED",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783009975346
+    },
+    {
+      "id": "kA6bwlFS53ZVWKTE",
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783510471438
+    },
+    {
+      "id": "LCgtj91n2sGdNdkg",
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783510483579
+    },
+    {
+      "id": "morCR0FMsSnZGQcG",
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783521338994
+    },
+    {
+      "id": "O1fbo91qiiNmPKoQ",
+      "key": "STAGING_WEB_VITALS",
+      "type": "plain",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging",
+      "updatedAt": 1791138465871
+    },
+    {
+      "id": "OnPAuJNWkmYl1Yze",
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1782477302721
+    },
+    {
+      "id": "OQN1g5W3Qmaubhkx",
+      "key": "DIGEST_FROM_EMAIL",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783009975345
+    },
+    {
+      "id": "pYjDICW4TgO6Y5xj",
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783521338994
+    },
+    {
+      "id": "r43ZZV08aLWrL8W6",
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1782477335834
+    },
+    {
+      "id": "SysPUuGeL2p9Kaaz",
+      "key": "DIGEST_APP_URL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783010098266
+    },
+    {
+      "id": "UgdvBaEguKJho8cL",
+      "key": "RESEND_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783010054181
+    },
+    {
+      "id": "unMY6WkifMxJVmzL",
+      "key": "RESEND_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783010098266
+    },
+    {
+      "id": "uXGOiruU1UOKDk5R",
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783521314095
+    },
+    {
+      "id": "xVOjuclzCy02lyoj",
+      "key": "DIGEST_APP_URL",
+      "type": "sensitive",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null,
+      "updatedAt": 1783010054181
+    }
+  ]
+}

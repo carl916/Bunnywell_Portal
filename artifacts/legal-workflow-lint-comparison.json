@@ -1,0 +1,407 @@
+[
+  {
+    "file": "src/app/api/sales/reservations/route.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 1,
+      "rules": [
+        "@typescript-eslint/no-unused-vars: 'calculateScheduleAmount' is defined but never used."
+      ]
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "before": {
+      "errors": 13,
+      "warnings": 18,
+      "rules": [
+        "@typescript-eslint/no-unused-vars: 'entityLabel' is defined but never used.",
+        "@typescript-eslint/no-unused-vars: 'handoverPhotos' is assigned a value but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'loadAll'. Either include it or remove the dependency array.",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'userBuildingAccess' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'HandoverAndMeters' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.",
+        "@typescript-eslint/no-unused-vars: 'value' is defined but never used.",
+        "@typescript-eslint/no-unused-vars: 'user' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'addFittedImage' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "react-hooks/immutability: Error: Cannot access variable before it is declared",
+        "react-hooks/exhaustive-deps: React Hook useEffect has missing dependencies: 'redraw' and 'strokes'. Either include them or remove the dependency array.",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'redraw'. Either include it or remove the dependency array.",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+      ]
+    },
+    "after": {
+      "errors": 13,
+      "warnings": 18,
+      "rules": [
+        "@typescript-eslint/no-unused-vars: 'entityLabel' is defined but never used.",
+        "@typescript-eslint/no-unused-vars: 'handoverPhotos' is assigned a value but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'loadAll'. Either include it or remove the dependency array.",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'userBuildingAccess' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'HandoverAndMeters' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react/no-unescaped-entities: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.",
+        "@typescript-eslint/no-unused-vars: 'value' is defined but never used.",
+        "@typescript-eslint/no-unused-vars: 'user' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@typescript-eslint/no-unused-vars: 'addFittedImage' is defined but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "react-hooks/immutability: Error: Cannot access variable before it is declared",
+        "react-hooks/exhaustive-deps: React Hook useEffect has missing dependencies: 'redraw' and 'strokes'. Either include them or remove the dependency array.",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'redraw'. Either include it or remove the dependency array.",
+        "@next/next/no-img-element: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element"
+      ]
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "before": {
+      "errors": 4,
+      "warnings": 2,
+      "rules": [
+        "@typescript-eslint/no-unused-vars: 'isLoading' is assigned a value but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'workflowStageForUnit'. Either include it or remove the dependency array.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders"
+      ]
+    },
+    "after": {
+      "errors": 4,
+      "warnings": 2,
+      "rules": [
+        "@typescript-eslint/no-unused-vars: 'isLoading' is assigned a value but never used.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/exhaustive-deps: React Hook useEffect has a missing dependency: 'workflowStageForUnit'. Either include it or remove the dependency array.",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders",
+        "react-hooks/set-state-in-effect: Error: Calling setState synchronously within an effect can trigger cascading renders"
+      ]
+    }
+  },
+  {
+    "file": "src/lib/data/production.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/lib/sales/discussion.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/lib/sales/permissions.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/helpers/sales-fixture.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-actor-names.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-agent-fees.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-commercial-model.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-completion-workflow.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-exchange-sequence.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-stage-tasks.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-stage-tasks.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-unit-detail-sections.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/app/api/sales/legal/route.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/components/portal/sales/BuildingSalesContacts.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/components/portal/sales/PdfUploadBox.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesLegalWorkflow.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "src/lib/sales/legal-workflow.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/helpers/legal-database.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/helpers/legal-sql.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-contacts.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-legal-workflow.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  },
+  {
+    "file": "tests/sales-legal-workflow.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  }
+]

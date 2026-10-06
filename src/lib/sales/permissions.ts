@@ -28,6 +28,7 @@ export type SalesStageAction =
   | "request_exchange_approval"
   | "approve_exchange"
   | "record_exchange"
+  | "confirm_exchange_deposit"
   | "record_solicitor_payment"
   | "record_developer_shortfall"
   | "record_agent_fee_payment"
@@ -36,6 +37,7 @@ export type SalesStageAction =
   | "submit_completion_documents"
   | "approve_completion_documents"
   | "record_completion"
+  | "confirm_completion_arrangements"
   | "view_forecasting";
 
 export type SalesBuildingAccessInput = {
@@ -105,15 +107,9 @@ export function canPerformSalesAction(role: SalesAccessRole, action: SalesStageA
     return isSalesInternalRole(role) || normalisedRole === "sales_agent";
   }
 
-  if (
-    action === "request_exchange_approval"
-    || action === "record_exchange"
-    || action === "record_solicitor_payment"
-    || action === "submit_completion_documents"
-    || action === "record_completion"
-  ) {
-    return isSalesInternalRole(role) || normalisedRole === "conveyancer";
-  }
+  if (action === "request_exchange_approval") return normalisedRole === "sales_agent" || normalisedRole === "conveyancer";
+  if (["record_exchange", "confirm_exchange_deposit", "submit_completion_documents", "record_completion", "confirm_completion_arrangements"].includes(action)) return normalisedRole === "conveyancer";
+  if (action === "record_solicitor_payment") return isSalesInternalRole(role) || normalisedRole === "conveyancer";
 
   return isSalesInternalRole(role);
 }

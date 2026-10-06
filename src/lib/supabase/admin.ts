@@ -6,7 +6,7 @@ export function requiredEnv(name: string) {
   return value;
 }
 
-export function createSupabaseServiceRoleClient() {
+export function createSupabaseServiceRoleClient(diagnosticFetch?: typeof fetch) {
   const url = requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const anonKey = requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
@@ -17,6 +17,7 @@ export function createSupabaseServiceRoleClient() {
 
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    ...(diagnosticFetch ? { global: { fetch: diagnosticFetch } } : {}),
   });
 }
 

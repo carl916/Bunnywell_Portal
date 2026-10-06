@@ -1,0 +1,1131 @@
+{
+  "deploymentId": "dpl_5hFWn1r6y1FW7VjbwVgcixBFt9GR",
+  "queriedAt": "2026-10-04T19:06:10.643Z",
+  "queryWindowStart": "2026-10-04T18:06:10.643Z",
+  "queryWindowEnd": "2026-10-04T19:06:10.643Z",
+  "query": {
+    "query": "\"metric\"",
+    "limit": 100
+  },
+  "recordCount": 100,
+  "allPayloadsAllowed": true,
+  "observedRoutes": [
+    "other",
+    "request-access",
+    "portal"
+  ],
+  "observedMetrics": [
+    "TTFB",
+    "CLS",
+    "INP",
+    "LCP"
+  ],
+  "caveats": [
+    "Bounded runtime query is a sample, not the complete export.",
+    "Connector output contains repeated entries; retained without claiming distinct navigations.",
+    "Status 0 is incomplete platform status metadata, not a successful HTTP response.",
+    "Controlled runs dominate this observation; real users cannot be separated from synthetic runs using the permitted payload."
+  ],
+  "records": [
+    {
+      "time": "19:06:02",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 53.700000047683716,
+        "rating": "good",
+        "route": "other"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 392,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:05:58",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 62.799999952316284,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.00023415374755859371,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 336,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:55",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 53.799999952316284,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:33",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3672,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 18.299999952316284,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.7707438282510299,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 40,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:21",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4372,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 16.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.7027078549506168,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:06",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3576,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 35.199999928474426,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1890042670730436,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 32,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:55",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4328,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 16.399999976158142,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.3734323258445741,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:43",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3632,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:40",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 17.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:39",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.11587497645431945,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:39",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:31",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4376,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 65.30000007152557,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.24179643292793548,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:21",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3604,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 15.600000023841858,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1580171160359574,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 6988,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:08",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 55.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:05",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.11509954290783404,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:05",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:04",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3700,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 15.300000071525574,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1580171160359574,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 24,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:53",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3580,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:49",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 30.899999976158142,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:49",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 48,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:49",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.7707438282510299,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:42",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4260,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:38",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 35.300000071525574,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:06:03",
+      "status": 0,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0,
+        "rating": "good",
+        "route": "other"
+      }
+    },
+    {
+      "time": "19:06:03",
+      "status": 0,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "other"
+      }
+    },
+    {
+      "time": "19:06:03",
+      "status": 0,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 240,
+        "rating": "good",
+        "route": "other"
+      }
+    },
+    {
+      "time": "19:06:02",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 53.700000047683716,
+        "rating": "good",
+        "route": "other"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:06:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 392,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:05:58",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 62.799999952316284,
+        "rating": "good",
+        "route": "request-access"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.00023415374755859371,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:56",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 336,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:55",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 53.799999952316284,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:33",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3672,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 18.299999952316284,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.7707438282510299,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:30",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 40,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:21",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4372,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 16.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "19:05:17",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.7027078549506168,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:06",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3576,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 35.199999928474426,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1890042670730436,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:58:03",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 32,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:55",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4328,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 16.399999976158142,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:50",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.3734323258445741,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:43",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3632,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:40",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 17.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:39",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.11587497645431945,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:39",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:31",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 4376,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 65.30000007152557,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.24179643292793548,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:27",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:21",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3604,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 15.600000023841858,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1580171160359574,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:14",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 6988,
+        "rating": "poor",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:08",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 55.5,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:05",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.11509954290783404,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:05",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 16,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:04",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3700,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 15.300000071525574,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "CLS",
+        "value": 0.1580171160359574,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:57:00",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 24,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:53",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "LCP",
+        "value": 3580,
+        "rating": "needs-improvement",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:49",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "TTFB",
+        "value": 30.899999976158142,
+        "rating": "good",
+        "route": "portal"
+      }
+    },
+    {
+      "time": "18:56:49",
+      "status": 204,
+      "source": "info/serverless",
+      "payload": {
+        "metric": "INP",
+        "value": 48,
+        "rating": "good",
+        "route": "portal"
+      }
+    }
+  ]
+}

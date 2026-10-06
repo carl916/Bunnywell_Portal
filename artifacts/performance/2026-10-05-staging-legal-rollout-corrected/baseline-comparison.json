@@ -1,0 +1,60 @@
+{
+  "comparedAt": "2026-10-05T18:04:16.537Z",
+  "baseline": {
+    "documentation": "docs/sales-performance-baseline-2026-10-04.md",
+    "payloads": 274,
+    "observed204": 132,
+    "withoutObservedResponse": 142,
+    "missingResponseMeaning": "unknown; not proof of failed delivery or successful acceptance"
+  },
+  "collector": {
+    "documentation": "docs/staging-performance-baseline.md",
+    "source": "src/components/performance/StagingWebVitals.tsx",
+    "sameOriginKeepalive": true,
+    "hostname": "staging.bunnywell.co.uk",
+    "acceptedStatus": 204
+  },
+  "previewDifference": "A/B preview hostnames are outside the client and collector allowlist; the previous preview tests did not emit these telemetry requests.",
+  "originalFailure": {
+    "actionSamples": 1,
+    "applicationReadinessPassed": true,
+    "httpErrors": 0,
+    "aborts": [
+      {
+        "id": "original-1",
+        "requestType": "web-vitals-telemetry",
+        "metric": "unknown; original capture did not retain metric name",
+        "endpoint": "/api/performance/vitals",
+        "status": null,
+        "failure": "net::ERR_ABORTED",
+        "collectorOutcome": "unknown",
+        "executionRegion": null,
+        "vercelId": null
+      },
+      {
+        "id": "original-2",
+        "requestType": "web-vitals-telemetry",
+        "metric": "unknown; original capture did not retain metric name",
+        "endpoint": "/api/performance/vitals",
+        "status": null,
+        "failure": "net::ERR_ABORTED",
+        "collectorOutcome": "unknown",
+        "executionRegion": null,
+        "vercelId": null
+      },
+      {
+        "id": "original-3",
+        "requestType": "web-vitals-telemetry",
+        "metric": "unknown; original capture did not retain metric name",
+        "endpoint": "/api/performance/vitals",
+        "status": 204,
+        "failure": "net::ERR_ABORTED",
+        "collectorOutcome": "accepted",
+        "executionRegion": "iad1",
+        "vercelId": "lhr1::iad1::67hgm-1791221419787-ef71af6240e3"
+      }
+    ],
+    "note": "Original artifacts did not record lifecycle evidence. Their unload association follows timing around the explicit cold reload; new runs capture lifecycle boundaries."
+  },
+  "correction": "A same-origin Web Vitals POST aborted with ERR_ABORTED after observed 204 is recorded as accepted telemetry with an aborted browser transport. A response-less telemetry abort is exempt only with an observed pagehide/navigation-start within 1000 ms; acceptance and execution region remain unknown. HTTP errors and any observed incorrect/missing function execution region always fail. Application failures and displayed-state/readiness gates are unchanged. Setup/warmup/cleanup cancellations are retained separately from measured action failures, as setup was excluded from October action timings."
+}

@@ -1,3 +1,4 @@
+import { legalActionSql } from "./helpers/legal-sql.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -11,6 +12,7 @@ import {
 import { canPerformSalesAction } from "../src/lib/sales/permissions.ts";
 import { calculateAgentInvoicePreview } from "../src/lib/sales/commercial-model.ts";
 
+const refreshSource = readFileSync("src/lib/sales/action-refresh.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
@@ -27,11 +29,11 @@ function functionBody(source, name) {
 }
 
 test("Exchange lifecycle completes independently of agent fee payment", () => {
-  const recordExchangeBody = functionBody(routeSource, "recordExchange");
-  assert.match(recordExchangeBody, /workflow_status: "exchanged"/);
+  const recordExchangeBody = legalActionSql("confirm_exchange");
+  assert.match(recordExchangeBody, /workflow_status='exchanged'/);
   assert.match(recordExchangeBody, /sales_workflow_mark_unit_exchanged/);
   assert.doesNotMatch(recordExchangeBody, /unit_sale_invoice_payments/);
-  assert.match(workflowSource, /status: completionRecorded \? "Completed" : exchangeRecorded \? "Documents required" : "Locked"/);
+  assert.match(workflowSource, /status: completionRecorded \? "Completed" : exchangeRecorded \? "Completion arrangements" : "Locked"/);
   assert.doesNotMatch(workflowSource, /label: "Invoice payment"/);
 });
 
@@ -151,7 +153,9 @@ test("payments append transactionally and survive client reload", () => {
   assert.match(migrationSource, /client_reference = p_client_reference/);
   assert.match(migrationSource, /unit_sale_invoice_payments_client_reference_idx/);
   assert.match(migrationSource, /drop policy if exists "commercial admins manage sale invoice payments"/);
-  assert.match(workflowSource, /unit_sale_invoice_payments"\)\.select\("\*"\)/);
+  assert.match(refreshSource, /unit_sale_invoice_payments"\)\.select\("\*"\)\.in\("sale_attempt_id", sales\)/);
+  assert.match(workflowSource, /loadBuildingSalesData/);
+  assert.match(workflowSource, /setInvoicePayments\(fresh.payments/);
   assert.match(workflowSource, /await Promise\.all\(\[loadSalesData\(\), reloadPortalData\(\)\]\)/);
 });
 
@@ -205,18 +209,18 @@ test("Completion invoice submission is allowed after Exchange and before or afte
 });
 
 test("legal Completion can be recorded with no Completion invoice", () => {
-  const completionBody = functionBody(routeSource, "recordCompletion");
-  assert.match(completionBody, /workflow_status === "completed"/);
-  assert.match(completionBody, /workflow_status !== "completion_pending"/);
+  const completionBody = legalActionSql("confirm_completion");
+  assert.match(completionBody, /alreadyCompleted/);
+  assert.match(completionBody, /approved_version_id/);
   assert.doesNotMatch(completionBody, /unit_sale_invoices/);
   assert.doesNotMatch(completionBody, /completion_agent_invoice/);
 });
 
 test("legal Completion can be recorded while a Completion invoice is unpaid", () => {
-  const completionBody = functionBody(routeSource, "recordCompletion");
+  const completionBody = legalActionSql("confirm_completion");
   assert.doesNotMatch(completionBody, /unit_sale_invoice_payments/);
   assert.doesNotMatch(completionBody, /outstanding/);
-  assert.match(completionBody, /workflow_status: "completed"/);
+  assert.match(completionBody, /workflow_status='completed'/);
 });
 
 test("Completion invoice approval changes invoice and document state but not legal Completion state", () => {
@@ -320,7 +324,7 @@ test("rejected invoice replacement retains document version audit history", () =
   assert.match(uploadInvoiceBody, /existingInvoice\.data\.status !== "query_raised"/);
   assert.match(uploadDocumentBody, /versionNumber = .* \+ 1/);
   assert.match(uploadDocumentBody, /is_current: false/);
-  assert.match(uploadDocumentBody, /agent_invoice.*replaced|documentType}_replaced/);
+  assert.match(readFileSync("supabase/migrations/20260907b_sale_activity_projection.sql", "utf8"), /d.document_type\|\|'_'\|\|kind/);
   assert.match(workflowSource, />Document history</);
 });
 
@@ -347,7 +351,7 @@ test("existing Exchange invoice and payment behavior remains milestone-aware", (
 });
 
 test("no Agent Fees status or balance gates legal Completion", () => {
-  const completionBody = functionBody(routeSource, "recordCompletion");
+  const completionBody = legalActionSql("confirm_completion");
   for (const forbidden of ["agent_invoice", "invoiceId", "paymentStatus", "outstandingBalance", "fee_milestone"]) {
     assert.doesNotMatch(completionBody, new RegExp(forbidden));
   }
@@ -366,7 +370,7 @@ test("RLS and server permissions keep Completion review and payments developer-o
 
 test("Completion invoice activity covers submit, replacement, reject, approve, payment and fully paid", () => {
   assert.match(routeSource, /documentTitle: `\$\{milestoneLabel\} agent invoice`/);
-  assert.match(routeSource, /type: isReplacement \? `\$\{documentType\}_replaced` : `\$\{documentType\}_uploaded`/);
+  assert.match(readFileSync("supabase/migrations/20260907b_sale_activity_projection.sql", "utf8"), /version_number>1 then 'replaced' else 'uploaded'/);
   assert.match(routeSource, /completion_agent_invoice_rejected/);
   assert.match(routeSource, /completion_agent_invoice_approved/);
   assert.match(routeSource, /agent_fee_payment_recorded/);
@@ -387,5 +391,5 @@ test("Exchange and Completion share one persisted payment component", () => {
   assert.match(workflowSource, /function AgentInvoicePaymentSection/);
   const uses = workflowSource.match(/<AgentInvoicePaymentSection/g) ?? [];
   assert.equal(uses.length, 2);
-  assert.match(workflowSource, /<details className="group/);
+  assert.match(workflowSource, /<SaleConversationLayout/);
 });

@@ -1,0 +1,277 @@
+{
+  "verifiedAt": "2026-10-05T18:59:14.746Z",
+  "phases": [
+    {
+      "variant": "before",
+      "action": "navigation.cold",
+      "n": 5,
+      "jsCompleteMs": 3380.899999976158,
+      "authRestoredMs": 3714.8000000715256,
+      "portalReadsMs": 1696.1000000238419,
+      "portalToSalesStartMs": 34.299999952316284,
+      "salesReadsMs": 1406.6000000238419,
+      "salesPublishedMs": 6851.900000095367,
+      "publicationToObservedReadinessMs": 124.55009990464896
+    },
+    {
+      "variant": "before",
+      "action": "navigation.repeat",
+      "n": 5,
+      "jsCompleteMs": 220.39999997615814,
+      "authRestoredMs": 535.4000000953674,
+      "portalReadsMs": 1625.7000000476837,
+      "portalToSalesStartMs": 31,
+      "salesReadsMs": 1309.3999999761581,
+      "salesPublishedMs": 3522.600000023842,
+      "publicationToObservedReadinessMs": 276.39649999997346
+    },
+    {
+      "variant": "before",
+      "action": "sales.entry",
+      "n": 5,
+      "jsCompleteMs": null,
+      "authRestoredMs": null,
+      "portalReadsMs": null,
+      "portalToSalesStartMs": null,
+      "salesReadsMs": 3289.600000023842,
+      "salesPublishedMs": null,
+      "publicationToObservedReadinessMs": null
+    },
+    {
+      "variant": "after",
+      "action": "navigation.cold",
+      "n": 5,
+      "jsCompleteMs": 2691,
+      "authRestoredMs": 2994.7999999523163,
+      "portalReadsMs": 1775.2000000476837,
+      "portalToSalesStartMs": 37.39999997615814,
+      "salesReadsMs": 1413.2999999523163,
+      "salesPublishedMs": 6213,
+      "publicationToObservedReadinessMs": 421.10860007151496
+    },
+    {
+      "variant": "after",
+      "action": "navigation.repeat",
+      "n": 5,
+      "jsCompleteMs": 221.59999990463257,
+      "authRestoredMs": 495.39999997615814,
+      "portalReadsMs": 1656.2999999523163,
+      "portalToSalesStartMs": 25.300000071525574,
+      "salesReadsMs": 1428.1000000238419,
+      "salesPublishedMs": 3596,
+      "publicationToObservedReadinessMs": 177.66980002383934
+    },
+    {
+      "variant": "after",
+      "action": "sales.entry",
+      "n": 5,
+      "jsCompleteMs": null,
+      "authRestoredMs": null,
+      "portalReadsMs": null,
+      "portalToSalesStartMs": null,
+      "salesReadsMs": 3298.0999999046326,
+      "salesPublishedMs": null,
+      "publicationToObservedReadinessMs": null
+    }
+  ],
+  "sampleCounts": {
+    "main": 80,
+    "perVariantProfileAction": 5,
+    "traceRunActions": 8,
+    "chromeTraceFiles": 6,
+    "lcpDiagnostic": 16
+  },
+  "displayedSnapshotsMatched": true,
+  "stateUnchanged": true,
+  "applicationFailures": 0,
+  "httpErrors": 0,
+  "abortedMeasuredRequests": [],
+  "telemetry": {
+    "requests": 0,
+    "accepted204": 0,
+    "unknown": 0
+  },
+  "mainLegalInvocations": 20,
+  "mainOtherFunctionInvocations": 40,
+  "allMeasuredLegalInvocations": 26,
+  "allMeasuredOtherFunctionInvocations": 52,
+  "regionsVerified": true,
+  "stagingSupabaseVerified": true,
+  "initialPdfLibraryRemoved": true,
+  "assetHashesMatched": true,
+  "configUnchanged": true,
+  "safeTraces": true,
+  "browserTests": {
+    "passed": 24,
+    "failed": 1,
+    "baselineReproduced": "Agent Fees pagination after Refresh resets to the first page instead of clamping to page two"
+  },
+  "nodeTests": {
+    "sales": 261,
+    "focused": 40,
+    "failed": 0
+  },
+  "typescript": {
+    "passed": true
+  },
+  "aliases": {
+    "changedByThisTask": false,
+    "staging": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+    "stagingLegalRegion": "fra1",
+    "production": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+  },
+  "lcpAttribution": [
+    {
+      "variant": "before",
+      "run": 1,
+      "action": "navigation.cold",
+      "candidates": [
+        {
+          "at": 932,
+          "size": 3204,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 5476,
+          "size": 12198,
+          "tag": "P",
+          "classes": "mt-2 text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "before",
+      "run": 1,
+      "action": "navigation.repeat",
+      "candidates": [
+        {
+          "at": 208,
+          "size": 3168,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 2244,
+          "size": 12198,
+          "tag": "P",
+          "classes": "mt-2 text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "after",
+      "run": 1,
+      "action": "navigation.cold",
+      "candidates": [
+        {
+          "at": 908,
+          "size": 3204,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 6220,
+          "size": 7040,
+          "tag": "P",
+          "classes": "text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "after",
+      "run": 1,
+      "action": "navigation.repeat",
+      "candidates": [
+        {
+          "at": 216,
+          "size": 3168,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 3556,
+          "size": 7040,
+          "tag": "P",
+          "classes": "text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "after",
+      "run": 2,
+      "action": "navigation.cold",
+      "candidates": [
+        {
+          "at": 880,
+          "size": 3204,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 4760,
+          "size": 12198,
+          "tag": "P",
+          "classes": "mt-2 text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "after",
+      "run": 2,
+      "action": "navigation.repeat",
+      "candidates": [
+        {
+          "at": 228,
+          "size": 3168,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 2236,
+          "size": 12198,
+          "tag": "P",
+          "classes": "mt-2 text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "before",
+      "run": 2,
+      "action": "navigation.cold",
+      "candidates": [
+        {
+          "at": 872,
+          "size": 3204,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 6924,
+          "size": 7040,
+          "tag": "P",
+          "classes": "text-sm text-[#617169]"
+        }
+      ]
+    },
+    {
+      "variant": "before",
+      "run": 2,
+      "action": "navigation.repeat",
+      "candidates": [
+        {
+          "at": 228,
+          "size": 3168,
+          "tag": "SPAN",
+          "classes": "flex items-center gap-2"
+        },
+        {
+          "at": 2212,
+          "size": 12198,
+          "tag": "P",
+          "classes": "mt-2 text-sm text-[#617169]"
+        }
+      ]
+    }
+  ]
+}

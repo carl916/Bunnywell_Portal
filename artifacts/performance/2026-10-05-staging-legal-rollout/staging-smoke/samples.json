@@ -1,0 +1,1848 @@
+[
+  {
+    "region": "fra1",
+    "profile": "desktop",
+    "run": 1,
+    "action": "navigation.cold",
+    "startedAt": "2026-10-05T17:30:19.683Z",
+    "status": "ok",
+    "readyMs": 2112.924000000001,
+    "readyRequests": 57,
+    "lastRequestEndMs": 2112.924000000001,
+    "quietBoundaryMs": 3563.7606000000014,
+    "settledRequests": 57,
+    "timedOut": false,
+    "failures": 3,
+    "requests": [
+      {
+        "category": "vercel-static-document",
+        "endpoint": "document/asset",
+        "method": "GET",
+        "offsetMs": 2.220500000001266,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::kh6c7-1791221419534-0883fcf1723b",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 30.858000000000175,
+        "durationMs": 28.63749999999891,
+        "browserTiming": {
+          "startTime": 1791221419686.6848,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.64,
+          "responseStart": 21.987,
+          "responseEnd": 23.837
+        },
+        "responseBytes": 3804,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-function",
+        "endpoint": "/api/performance/vitals",
+        "method": "POST",
+        "offsetMs": 27.579500000001644,
+        "status": null,
+        "finished": false,
+        "failed": true,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": null,
+        "executionRegion": null,
+        "endMs": 27.75920000000042,
+        "durationMs": 0.17969999999877473,
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "category": "vercel-function",
+        "endpoint": "/api/performance/vitals",
+        "method": "POST",
+        "offsetMs": 27.658400000000256,
+        "status": null,
+        "finished": false,
+        "failed": true,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": null,
+        "executionRegion": null,
+        "endMs": 27.72200000000157,
+        "durationMs": 0.0636000000013155,
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "document/asset",
+        "method": "GET",
+        "offsetMs": 30.03150000000096,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::xvx8p-1791221419563-b7befc3a0164",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 60.356000000001586,
+        "durationMs": 30.324500000000626,
+        "browserTiming": {
+          "startTime": 1791221419712.6492,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.64,
+          "responseStart": 21.726,
+          "responseEnd": 28.427
+        },
+        "responseBytes": 23350,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "document/asset",
+        "method": "GET",
+        "offsetMs": 30.27810000000136,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::5t9hr-1791221419562-28f9e5ca305c",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 74.91440000000148,
+        "durationMs": 44.63630000000012,
+        "browserTiming": {
+          "startTime": 1791221419712.7349,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.628,
+          "responseStart": 40.387,
+          "responseEnd": 43.582
+        },
+        "responseBytes": 29550,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "document/asset",
+        "method": "GET",
+        "offsetMs": 30.3038000000015,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::2gtgz-1791221419562-46664c48a257",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 77.90460000000166,
+        "durationMs": 47.60080000000016,
+        "browserTiming": {
+          "startTime": 1791221419713.2083,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.489,
+          "responseStart": 42.892,
+          "responseEnd": 47.01
+        },
+        "responseBytes": 13432,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 30.32390000000123,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::2gtgz-1791221419562-1d4b0409b57f",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 70.44300000000112,
+        "durationMs": 40.11909999999989,
+        "browserTiming": {
+          "startTime": 1791221419712.806,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.646,
+          "responseStart": 28.058,
+          "responseEnd": 40.767
+        },
+        "responseBytes": 15478,
+        "requestBytes": 0,
+        "assetSha256": "41cfb2ce850741d385279322caf0e20bd0ab46c71642ee345233dc7010508fe1",
+        "assetPath": "/_next/static/chunks/02662_95fqwrd.css"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "stylesheet",
+        "method": "GET",
+        "offsetMs": 30.343700000001263,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::mmpsg-1791221419562-c7e084a17afd",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 57.24200000000019,
+        "durationMs": 26.898299999998926,
+        "browserTiming": {
+          "startTime": 1791221419712.92,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.701,
+          "responseStart": 20.541,
+          "responseEnd": 28.077
+        },
+        "responseBytes": 3681,
+        "requestBytes": 0,
+        "assetSha256": "89a081897cac38bab4d1200a6eefeba93501a1be24aa0f4e75eff00235104ed9",
+        "assetPath": "/_next/static/chunks/23cfdszdkj9w9.css"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.367700000000696,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::8fsnd-1791221419563-30636af4df03",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 78.52920000000086,
+        "durationMs": 48.16150000000016,
+        "browserTiming": {
+          "startTime": 1791221419714.897,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.586,
+          "responseStart": 44.639,
+          "responseEnd": 48.693
+        },
+        "responseBytes": 6542,
+        "requestBytes": 0,
+        "assetSha256": "978ed291ec740eaea49683b73be763342fda4bc0447cb46a03ef22c0cf6f23eb",
+        "assetPath": "/_next/static/chunks/0_a3f2s3xcdlr.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.40060000000085,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::2gtgz-1791221419588-69b332491b2b",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 97.9314000000013,
+        "durationMs": 67.53080000000045,
+        "browserTiming": {
+          "startTime": 1791221419740.7278,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.678,
+          "responseStart": 20.615,
+          "responseEnd": 67.999
+        },
+        "responseBytes": 51555,
+        "requestBytes": 0,
+        "assetSha256": "05fbb37d3b994dc5592ccb971879139dd963be8b7740a248bba6d619a53b494d",
+        "assetPath": "/_next/static/chunks/1bzqw010xzs8k.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.423800000000483,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::8fsnd-1791221419588-9409e3dd899e",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 112.65640000000167,
+        "durationMs": 82.23260000000118,
+        "browserTiming": {
+          "startTime": 1791221419740.768,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.687,
+          "responseStart": 29.368,
+          "responseEnd": 82.648
+        },
+        "responseBytes": 72564,
+        "requestBytes": 0,
+        "assetSha256": "ea8ff8b3e535f36470c1ca9fafcdb76f1d89f8fcc27c3aef8a5ae094b1acadca",
+        "assetPath": "/_next/static/chunks/3n7dm2ojtyzwn.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.64230000000134,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::bmqdp-1791221419600-716f6632a9c8",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 113.4869000000017,
+        "durationMs": 82.84460000000036,
+        "browserTiming": {
+          "startTime": 1791221419753.3782,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.81,
+          "responseStart": 42.019,
+          "responseEnd": 83.587
+        },
+        "responseBytes": 4639,
+        "requestBytes": 0,
+        "assetSha256": "2db22424a7f10920ebde9d07c437b0f503fc7ae016ce55469c85099097f69df7",
+        "assetPath": "/_next/static/chunks/turbopack-2_9az3epal9fr.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.65780000000086,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::bmqdp-1791221419603-3f471adfdca6",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 115.97180000000117,
+        "durationMs": 85.3140000000003,
+        "browserTiming": {
+          "startTime": 1791221419756.151,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.625,
+          "responseStart": 40.162,
+          "responseEnd": 84.788
+        },
+        "responseBytes": 3873,
+        "requestBytes": 0,
+        "assetSha256": "4d7ee42e95b85748ff55252a1640f87c4e825f806a8c1fb344cec8c4b15f1c5a",
+        "assetPath": "/_next/static/chunks/40vfej7y8kg94.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.672600000001694,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::bmqdp-1791221419606-024406d913c8",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 119.30950000000121,
+        "durationMs": 88.63689999999951,
+        "browserTiming": {
+          "startTime": 1791221419759.5652,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.541,
+          "responseStart": 38.007,
+          "responseEnd": 89.584
+        },
+        "responseBytes": 14528,
+        "requestBytes": 0,
+        "assetSha256": "59d6d2186868625417737f3f33980e55f778eb3672cd03a10cf26b1259ca2314",
+        "assetPath": "/_next/static/chunks/158myu8e_yme3.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.68880000000172,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::2gtgz-1791221419608-abbb5c9f434e",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 119.94290000000001,
+        "durationMs": 89.25409999999829,
+        "browserTiming": {
+          "startTime": 1791221419761.376,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.659,
+          "responseStart": 41.017,
+          "responseEnd": 90.081
+        },
+        "responseBytes": 2206,
+        "requestBytes": 0,
+        "assetSha256": "3f3ba2210c567a0ac665cab251e5383126c521ff654d10332c8d59262b4c8794",
+        "assetPath": "/_next/static/chunks/11w-5de_dfbvr.js"
+      },
+      {
+        "category": "vercel-static-document",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 30.722999999999956,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::txg7h-1791221419627-459b5db7e3cf",
+        "executionRegion": null,
+        "cache": "HIT",
+        "endMs": 224.65740000000005,
+        "durationMs": 193.9344000000001,
+        "browserTiming": {
+          "startTime": 1791221419780.725,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.533,
+          "responseStart": 21.72,
+          "responseEnd": 191.606
+        },
+        "responseBytes": 355386,
+        "requestBytes": 0,
+        "assetSha256": "a03613962a6f0925130c8e2bddede23b5e0d6761f7a802efc1fc2459c7f9988d",
+        "assetPath": "/_next/static/chunks/3icpmwynur7oe.js"
+      },
+      {
+        "category": "other-host",
+        "endpoint": "javascript",
+        "method": "GET",
+        "offsetMs": 115.63130000000092,
+        "status": 204,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::wgkgs-1791221419647-26d4538466f6",
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 166.76780000000144,
+        "durationMs": 51.136500000000524,
+        "browserTiming": {
+          "startTime": 1791221419798.105,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.438,
+          "responseStart": 51.8,
+          "responseEnd": 52.509
+        },
+        "responseBytes": 78,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-auth",
+        "endpoint": "auth",
+        "method": "GET",
+        "offsetMs": 259.6092000000008,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 341.2928000000011,
+        "durationMs": 81.6836000000003,
+        "browserTiming": {
+          "startTime": 1791221419970.9229,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.334,
+          "responseStart": 52.593,
+          "responseEnd": 93.156
+        },
+        "responseBytes": 1132,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-function",
+        "endpoint": "/api/performance/vitals",
+        "method": "POST",
+        "offsetMs": 259.70250000000124,
+        "status": 204,
+        "finished": false,
+        "failed": true,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::iad1::67hgm-1791221419787-ef71af6240e3",
+        "executionRegion": "iad1",
+        "cache": "MISS",
+        "edgeRegion": "lhr1",
+        "endMs": 373.66020000000026,
+        "durationMs": 113.95769999999902,
+        "failure": "net::ERR_ABORTED"
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 342.02250000000095,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 462.8675000000003,
+        "durationMs": 120.84499999999935,
+        "browserTiming": {
+          "startTime": 1791221420055.1929,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.271,
+          "responseStart": 90.472,
+          "responseEnd": 120.836
+        },
+        "responseBytes": 1194,
+        "requestBytes": 0
+      },
+      {
+        "category": "vercel-function",
+        "endpoint": "/api/auth/activity",
+        "method": "POST",
+        "offsetMs": 342.53210000000036,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": null,
+        "spans": {},
+        "vercelId": "lhr1::iad1::f6gcp-1791221419876-00b7cf8943e0",
+        "executionRegion": "iad1",
+        "cache": "MISS",
+        "edgeRegion": "lhr1",
+        "endMs": 1571.964100000001,
+        "durationMs": 1229.4320000000007,
+        "browserTiming": {
+          "startTime": 1791221420026.5332,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.506,
+          "responseStart": 1227.462,
+          "responseEnd": 1229.72
+        },
+        "responseBytes": 194,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 470.8217000000004,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 959.8244000000013,
+        "durationMs": 489.0027000000009,
+        "browserTiming": {
+          "startTime": 1791221420184.512,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.321,
+          "responseStart": 424.277,
+          "responseEnd": 492.809
+        },
+        "responseBytes": 63891,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "buildings",
+        "method": "GET",
+        "offsetMs": 470.8509000000013,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 595.0950000000012,
+        "durationMs": 124.24409999999989,
+        "browserTiming": {
+          "startTime": 1791221420184.7788,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.382,
+          "responseStart": 92.992,
+          "responseEnd": 127.501
+        },
+        "responseBytes": 1662,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "units",
+        "method": "GET",
+        "offsetMs": 470.8693000000003,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 760.4225000000006,
+        "durationMs": 289.5532000000003,
+        "browserTiming": {
+          "startTime": 1791221420189.7788,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.992,
+          "responseStart": 251.557,
+          "responseEnd": 293.546
+        },
+        "responseBytes": 9580,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "building_floors",
+        "method": "GET",
+        "offsetMs": 470.89220000000023,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 643.119200000001,
+        "durationMs": 172.22700000000077,
+        "browserTiming": {
+          "startTime": 1791221420190.048,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.828,
+          "responseStart": 136.4,
+          "responseEnd": 175.784
+        },
+        "responseBytes": 1583,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_types",
+        "method": "GET",
+        "offsetMs": 470.90970000000016,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 641.8713000000007,
+        "durationMs": 170.96160000000054,
+        "browserTiming": {
+          "startTime": 1791221420193.218,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.042,
+          "responseStart": 132.003,
+          "responseEnd": 174.421
+        },
+        "responseBytes": 1180,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_type_areas",
+        "method": "GET",
+        "offsetMs": 470.926300000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 560.4768000000004,
+        "durationMs": 89.55049999999937,
+        "browserTiming": {
+          "startTime": 1791221420191.696,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.754,
+          "responseStart": 51.374,
+          "responseEnd": 92.486
+        },
+        "responseBytes": 2024,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "trades",
+        "method": "GET",
+        "offsetMs": 470.9429,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 567.4847000000009,
+        "durationMs": 96.54180000000088,
+        "browserTiming": {
+          "startTime": 1791221420192.337,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.452,
+          "responseStart": 58.335,
+          "responseEnd": 99.799
+        },
+        "responseBytes": 1219,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "organisations",
+        "method": "GET",
+        "offsetMs": 470.95920000000115,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 689.7847000000002,
+        "durationMs": 218.825499999999,
+        "browserTiming": {
+          "startTime": 1791221420192.6812,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.303,
+          "responseStart": 180.129,
+          "responseEnd": 221.859
+        },
+        "responseBytes": 1627,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "building_organisations",
+        "method": "GET",
+        "offsetMs": 470.9772000000012,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 663.760400000001,
+        "durationMs": 192.78319999999985,
+        "browserTiming": {
+          "startTime": 1791221420194.236,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.416,
+          "responseStart": 152.797,
+          "responseEnd": 195.918
+        },
+        "responseBytes": 1368,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "profiles",
+        "method": "GET",
+        "offsetMs": 470.9953000000005,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 639.5390000000007,
+        "durationMs": 168.54370000000017,
+        "browserTiming": {
+          "startTime": 1791221420193.1482,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.956,
+          "responseStart": 129.588,
+          "responseEnd": 171.627
+        },
+        "responseBytes": 2174,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 471.01290000000154,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 641.0293000000001,
+        "durationMs": 170.0163999999986,
+        "browserTiming": {
+          "startTime": 1791221420193.22,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.129,
+          "responseStart": 131.095,
+          "responseEnd": 172.923
+        },
+        "responseBytes": 1392,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 471.02950000000055,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 620.25,
+        "durationMs": 149.22049999999945,
+        "browserTiming": {
+          "startTime": 1791221420193.583,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.81,
+          "responseStart": 109.635,
+          "responseEnd": 151.8
+        },
+        "responseBytes": 1100,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "resident_access_requests",
+        "method": "GET",
+        "offsetMs": 471.0488000000005,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 638.6394,
+        "durationMs": 167.59059999999954,
+        "browserTiming": {
+          "startTime": 1791221420193.2668,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.172,
+          "responseStart": 127.893,
+          "responseEnd": 169.529
+        },
+        "responseBytes": 1299,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "snags",
+        "method": "GET",
+        "offsetMs": 471.0670000000009,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 769.5465000000004,
+        "durationMs": 298.47949999999946,
+        "browserTiming": {
+          "startTime": 1791221420194.3682,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.68,
+          "responseStart": 255.391,
+          "responseEnd": 301.213
+        },
+        "responseBytes": 13590,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "snag_photos",
+        "method": "GET",
+        "offsetMs": 471.1032000000014,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 837.3156000000017,
+        "durationMs": 366.21240000000034,
+        "browserTiming": {
+          "startTime": 1791221420198.159,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 1.208,
+          "responseStart": 318.181,
+          "responseEnd": 368.844
+        },
+        "responseBytes": 18229,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "snag_events",
+        "method": "GET",
+        "offsetMs": 471.1245000000017,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 906.5537000000004,
+        "durationMs": 435.4291999999987,
+        "browserTiming": {
+          "startTime": 1791221420199.544,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.504,
+          "responseStart": 385.005,
+          "responseEnd": 437.723
+        },
+        "responseBytes": 27034,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "audit_events",
+        "method": "GET",
+        "offsetMs": 471.14760000000024,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 828.8183000000008,
+        "durationMs": 357.6707000000006,
+        "browserTiming": {
+          "startTime": 1791221420194.5059,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.651,
+          "responseStart": 310.255,
+          "responseEnd": 360.061
+        },
+        "responseBytes": 29004,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "handovers",
+        "method": "GET",
+        "offsetMs": 471.1732000000011,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 711.7124000000003,
+        "durationMs": 240.53919999999925,
+        "browserTiming": {
+          "startTime": 1791221420199.6792,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.508,
+          "responseStart": 194.289,
+          "responseEnd": 243.035
+        },
+        "responseBytes": 5911,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "handover_key_items",
+        "method": "GET",
+        "offsetMs": 471.1909000000014,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 668.8999000000003,
+        "durationMs": 197.70899999999892,
+        "browserTiming": {
+          "startTime": 1791221420200.5552,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.375,
+          "responseStart": 151.557,
+          "responseEnd": 199.763
+        },
+        "responseBytes": 871,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "handover_photos",
+        "method": "GET",
+        "offsetMs": 471.20859999999993,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 665.3392000000003,
+        "durationMs": 194.1306000000004,
+        "browserTiming": {
+          "startTime": 1791221420200.161,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.631,
+          "responseStart": 148.53,
+          "responseEnd": 196.084
+        },
+        "responseBytes": 866,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "meter_readings",
+        "method": "GET",
+        "offsetMs": 471.22520000000077,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 653.9044000000013,
+        "durationMs": 182.6792000000005,
+        "browserTiming": {
+          "startTime": 1791221420194.792,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.434,
+          "responseStart": 142.245,
+          "responseEnd": 184.551
+        },
+        "responseBytes": 868,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "user_unit_access",
+        "method": "GET",
+        "offsetMs": 471.2429000000011,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 690.5081000000009,
+        "durationMs": 219.26519999999982,
+        "browserTiming": {
+          "startTime": 1791221420200.298,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.577,
+          "responseStart": 173.425,
+          "responseEnd": 220.996
+        },
+        "responseBytes": 890,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "user_building_access",
+        "method": "GET",
+        "offsetMs": 471.2602000000006,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 619.7882000000009,
+        "durationMs": 148.52800000000025,
+        "browserTiming": {
+          "startTime": 1791221420199.958,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.462,
+          "responseStart": 102.751,
+          "responseEnd": 149.943
+        },
+        "responseBytes": 897,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "areas",
+        "method": "GET",
+        "offsetMs": 960.7198000000008,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1205.4832000000006,
+        "durationMs": 244.76339999999982,
+        "browserTiming": {
+          "startTime": 1791221420686.902,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.389,
+          "responseStart": 201.102,
+          "responseEnd": 244.402
+        },
+        "responseBytes": 4835,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "building_sale_defaults",
+        "method": "GET",
+        "offsetMs": 1214.014000000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1286.3778000000002,
+        "durationMs": 72.36379999999917,
+        "browserTiming": {
+          "startTime": 1791221420923.4778,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.415,
+          "responseStart": 45.908,
+          "responseEnd": 71.796
+        },
+        "responseBytes": 1307,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_attempts",
+        "method": "GET",
+        "offsetMs": 1287.215900000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1410.6767,
+        "durationMs": 123.46079999999893,
+        "browserTiming": {
+          "startTime": 1791221421000.265,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.373,
+          "responseStart": 89.984,
+          "responseEnd": 123.314
+        },
+        "responseBytes": 17983,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_terms",
+        "method": "GET",
+        "offsetMs": 1415.110200000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1562.4180000000015,
+        "durationMs": 147.3078000000005,
+        "browserTiming": {
+          "startTime": 1791221421128.9072,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.273,
+          "responseStart": 114.949,
+          "responseEnd": 149.191
+        },
+        "responseBytes": 8894,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_payment_schedule",
+        "method": "GET",
+        "offsetMs": 1415.1449000000011,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1638.4495000000006,
+        "durationMs": 223.30459999999948,
+        "browserTiming": {
+          "startTime": 1791221421135.7988,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.291,
+          "responseStart": 181.79,
+          "responseEnd": 224.961
+        },
+        "responseBytes": 19194,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_documents",
+        "method": "GET",
+        "offsetMs": 1415.1689000000006,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1647.1016,
+        "durationMs": 231.9326999999994,
+        "browserTiming": {
+          "startTime": 1791221421138.5688,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.377,
+          "responseStart": 189.788,
+          "responseEnd": 233.677
+        },
+        "responseBytes": 12378,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_invoices",
+        "method": "GET",
+        "offsetMs": 1415.183500000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1531.1668000000009,
+        "durationMs": 115.98329999999987,
+        "browserTiming": {
+          "startTime": 1791221421135.298,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.428,
+          "responseStart": 78.293,
+          "responseEnd": 117.136
+        },
+        "responseBytes": 3800,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_invoice_payments",
+        "method": "GET",
+        "offsetMs": 1415.2039000000004,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1552.8333000000002,
+        "durationMs": 137.6293999999998,
+        "browserTiming": {
+          "startTime": 1791221421141.0178,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.262,
+          "responseStart": 94.963,
+          "responseEnd": 138.826
+        },
+        "responseBytes": 3736,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "sale_actor_names",
+        "method": "POST",
+        "offsetMs": 1415.2183000000005,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1754.903400000001,
+        "durationMs": 339.6851000000006,
+        "browserTiming": {
+          "startTime": 1791221421135.162,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.39,
+          "responseStart": 302.342,
+          "responseEnd": 340.317
+        },
+        "responseBytes": 993,
+        "requestBytes": 2431
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "sale_exchange_deposit_receipts",
+        "method": "GET",
+        "offsetMs": 1415.2367000000013,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 1532.8590000000004,
+        "durationMs": 117.62229999999909,
+        "browserTiming": {
+          "startTime": 1791221421161.3118,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.251,
+          "responseStart": 54.746,
+          "responseEnd": 118.492
+        },
+        "responseBytes": 2609,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "unit_sale_document_versions",
+        "method": "GET",
+        "offsetMs": 1755.801300000001,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 2007.3825000000015,
+        "durationMs": 251.58120000000054,
+        "browserTiming": {
+          "startTime": 1791221421506.922,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.397,
+          "responseStart": 177.89,
+          "responseEnd": 251.699
+        },
+        "responseBytes": 26626,
+        "requestBytes": 0
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "sale_mentions_inbox",
+        "method": "POST",
+        "offsetMs": 2021.9516000000003,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 2098.6189000000013,
+        "durationMs": 76.66730000000098,
+        "browserTiming": {
+          "startTime": 1791221421727.508,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.302,
+          "responseStart": 54.281,
+          "responseEnd": 76.929
+        },
+        "responseBytes": 821,
+        "requestBytes": 2
+      },
+      {
+        "category": "browser-supabase-data",
+        "endpoint": "sale_comment_unread",
+        "method": "POST",
+        "offsetMs": 2021.9689000000017,
+        "status": 200,
+        "finished": true,
+        "failed": false,
+        "serverTimingHeader": "cfExtPri",
+        "spans": {
+          "cfExtPri": {
+            "durationMs": null,
+            "calls": null
+          }
+        },
+        "vercelId": null,
+        "executionRegion": null,
+        "cache": null,
+        "endMs": 2118.6302000000014,
+        "durationMs": 96.66129999999976,
+        "browserTiming": {
+          "startTime": 1791221421730.4739,
+          "domainLookupStart": -1,
+          "domainLookupEnd": -1,
+          "connectStart": -1,
+          "secureConnectionStart": -1,
+          "connectEnd": -1,
+          "requestStart": 0.269,
+          "responseStart": 71.336,
+          "responseEnd": 96.839
+        },
+        "responseBytes": 2250,
+        "requestBytes": 2431
+      }
+    ],
+    "regionsVerified": false,
+    "displayedStateChecked": true
+  }
+]

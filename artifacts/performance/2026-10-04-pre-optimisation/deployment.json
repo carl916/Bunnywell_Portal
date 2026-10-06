@@ -1,0 +1,24 @@
+{
+  "commit": "b883040b9bfc7b66084d1c4af73c13a179af578b",
+  "deploymentId": "dpl_5hFWn1r6y1FW7VjbwVgcixBFt9GR",
+  "deploymentUrl": "https://bunnywell-portal-i0gxaiq18-carl-gilbert-s-projects.vercel.app",
+  "alias": "https://staging.bunnywell.co.uk",
+  "region": "iad1",
+  "stagingProjectMatched": true,
+  "verifiedAt": "2026-10-04T18:38:47.262Z",
+  "browserVersion": "149.0.7827.55",
+  "nodeVersion": "v24.19.0",
+  "freshAuthorisedUnits": [
+    107,
+    108,
+    109,
+    110
+  ],
+  "originalCompletedUnitsExcluded": [
+    102,
+    103,
+    104,
+    105,
+    106
+  ]
+}

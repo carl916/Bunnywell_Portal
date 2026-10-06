@@ -1,0 +1,59 @@
+{
+  "id": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH",
+  "name": "bunnywell-portal",
+  "url": "bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app",
+  "type": "LAMBDAS",
+  "state": "READY",
+  "createdAt": 1791221092239,
+  "creator": {
+    "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+    "username": "carl916"
+  },
+  "project": {
+    "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+    "name": "bunnywell-portal",
+    "framework": "nextjs"
+  },
+  "meta": {
+    "githubCommitRef": "codex/staging-legal-fra1-87d83c7",
+    "githubCommitSha": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+    "githubCommitMessage": "Apply opt-in legal region to isolated staging preview",
+    "githubRepo": "Bunnywell_Portal",
+    "githubOrg": "carl916"
+  },
+  "alias": [
+    "bunnywell-portal-git-codex-stagi-775707-carl-gilbert-s-projects.vercel.app"
+  ],
+  "target": null,
+  "regions": [
+    "iad1"
+  ],
+  "buildingAt": 1791221093366,
+  "ready": 1791221135415,
+  "readyState": "READY",
+  "source": "git",
+  "aliasError": null,
+  "origin": "https://bunnywell-portal-jle04cnjl-carl-gilbert-s-projects.vercel.app",
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "legalRegion": "fra1",
+  "diagnosticEnvironment": [
+    {
+      "key": "STAGING_WEB_VITALS",
+      "id": "VysLDcttlDnxQUVM",
+      "value": "1",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7"
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "id": "QT4d14wMEj4kQzj7",
+      "value": "1",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7"
+    }
+  ]
+}

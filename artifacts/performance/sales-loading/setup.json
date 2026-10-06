@@ -1,0 +1,27 @@
+{
+  "baseCommit": "b5507f9",
+  "branch": "codex/sales-loading-trace",
+  "baselineCommit": "3b9b10fd90ee54f6f5c3d4d6b4c0fa0e7874e9bf",
+  "applicationCommit": "8a9dbeb87707f3d9dcd320f80f4f79efdc88f0d1",
+  "baselineBuildReady": true,
+  "changedBuildReady": true,
+  "region": "iad1",
+  "supabaseHost": "vxkpvdtrldwwqiddoyof.supabase.co",
+  "branchSpecificEnvironmentOverrides": [],
+  "environmentMetadataInspected": true,
+  "profiles": {
+    "desktop": { "viewport": { "width": 1280, "height": 900 }, "network": "ordinary", "cpuRate": 1 },
+    "mobile-throttled": { "viewport": { "width": 390, "height": 844 }, "latencyMs": 150, "downloadBytesPerSecond": 200000, "uploadBytesPerSecond": 93750, "cpuRate": 4 }
+  },
+  "coldCache": "Chromium cache cleared before reload; does not force a Vercel function cold start",
+  "repeatCache": "Browser cache retained immediately after cold reload",
+  "fixtures": [107, 108, 109, 110],
+  "timedFixture": 107,
+  "beforeAfterOrder": "alternates by round",
+  "readOnlySalesGuard": true,
+  "databasePermissionsChanged": false,
+  "databaseRpcsChanged": false,
+  "stagingAliasChanged": false,
+  "productionDeployed": false,
+  "localBrowserTestTeardown": "17 tests passed; Windows dev-server teardown stalled until this suite's own server was terminated. No local tests or builds ran during the matched measurements."
+}

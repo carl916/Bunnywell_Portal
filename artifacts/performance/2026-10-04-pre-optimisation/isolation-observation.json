@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-04T19:07:39.1713330Z",
+  "diagnosticOrBuildProcesses": [],
+  "playwrightBrowserCount": 0,
+  "notes": [
+    "Before-run census showed normal Chrome and Codex CUA runtime processes, with no separate performance/build/test process.",
+    "Measured jobs were run sequentially; post-journey route checks and runtime queries ran after all measurements.",
+    "Normal desktop applications remained open; external staging traffic was not excluded."
+  ]
+}

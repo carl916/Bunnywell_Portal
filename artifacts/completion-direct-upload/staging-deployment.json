@@ -1,0 +1,11 @@
+{
+  "verifiedAt": "2026-09-22T20:24:15.241Z",
+  "environment": "staging",
+  "url": "https://staging.bunnywell.co.uk",
+  "commit": "c7876b0054cc8dccd9c0eae1d765fed0c9bf760b",
+  "deploymentId": "dpl_4jQSjWPYBdoD9Zqn33FUuMEcaAJv",
+  "state": "READY",
+  "productionChanged": false,
+  "cleanupSchedule": "15 3 * * *",
+  "note": "The original hourly cleanup schedule blocked deployment on Vercel Hobby. Daily cleanup is compatible; preview cron scheduling does not run automatically."
+}

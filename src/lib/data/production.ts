@@ -5,6 +5,10 @@ export type RentalPortfolioStatus = "not_in_portfolio" | "active" | "exited";
 
 export type Building = {
   id: string;
+  conveyancer_organisation_id?: string | null;
+  sales_agent_organisation_id?: string | null;
+  seller_name?: string | null;
+  completion_information?: string | null;
   created_at?: string | null;
   name: string;
   address_line_1: string | null;
@@ -29,6 +33,7 @@ export type Building = {
 
 export type Organisation = {
   id: string;
+  shared_system_email?: string | null;
   name: string;
   type: string;
   main_contact_name: string | null;

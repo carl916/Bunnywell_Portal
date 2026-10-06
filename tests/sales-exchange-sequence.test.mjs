@@ -1,9 +1,11 @@
+import { legalSql, legalActionSql } from "./helpers/legal-sql.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
+const legalSource = readFileSync("src/components/portal/sales/SalesLegalWorkflow.tsx", "utf8");
 
 function functionBody(source, name) {
   const start = source.indexOf(`async function ${name}`);
@@ -13,13 +15,11 @@ function functionBody(source, name) {
 }
 
 test("exchange panel contains legal-readiness activities only", () => {
-  const exchangeStart = workflowSource.indexOf('activeWorkflowStage === "exchange"');
-  const completionStart = workflowSource.indexOf('activeWorkflowStage === "completion"', exchangeStart);
-  const exchangePanel = workflowSource.slice(exchangeStart, completionStart);
-  assert.match(exchangePanel, />Confirm commercial terms</);
-  assert.match(exchangePanel, />Record exchange</);
-  assert.match(exchangePanel, /label: "Exchange deposit due"/);
-  assert.doesNotMatch(exchangePanel, /Agent invoice|invoice approval|invoice payment/i);
+  assert.match(workflowSource, /<SalesLegalWorkflow/);
+  assert.match(legalSource, /1\. Authority request/);
+  assert.match(legalSource, /2\. Authority issued/);
+  assert.match(legalSource, /3\. Exchange confirmed/);
+  assert.doesNotMatch(legalSource, /Agent invoice|invoice approval|invoice payment/i);
   assert.doesNotMatch(workflowSource, /exchangeProcessStep/);
 });
 
@@ -29,11 +29,10 @@ test("sale stages and selected stage workspace have distinct hierarchy", () => {
   assert.match(workflowSource, /min-w-0 flex-wrap items-center justify-between/);
   assert.match(workflowSource, /max-w-full shrink-0 whitespace-normal break-words/);
   assert.match(workflowSource, />Selected sales stage</);
-  assert.match(workflowSource, />Exchange tasks</);
+  assert.match(legalSource, /aria-label="Exchange tasks"/);
   assert.match(workflowSource, /taskLabel = "Current task"/);
   assert.match(workflowSource, /title="Reservation"/);
-  assert.match(workflowSource, /title="Exchange"/);
-  assert.match(workflowSource, /title="Completion"/);
+  assert.match(legalSource, /aria-label="Completion tasks"/);
   assert.match(workflowSource, /title="Handover"/);
   assert.doesNotMatch(workflowSource, /Complete the next required activity/);
   assert.doesNotMatch(workflowSource, /Selected workflow step/);
@@ -68,7 +67,7 @@ test("developer can reject an agent invoice with a reason and request a replacem
   const clientBody = functionBody(workflowSource, "rejectAgentInvoice");
   const routeBody = functionBody(routeSource, "rejectAgentInvoice");
   const approvalBody = functionBody(routeSource, "approveAgentInvoice");
-  const commercialApprovalBody = functionBody(routeSource, "approveCommercialPackage");
+  const commercialApprovalBody = legalSql.slice(legalSql.indexOf("create function public.sales_legal_dispatch"), legalSql.indexOf("create function public.sales_legal_action"));
 
   assert.match(clientBody, /action: "reject_agent_invoice"/);
   assert.match(clientBody, /invoiceMilestone: milestone/);
@@ -86,14 +85,13 @@ test("developer can reject an agent invoice with a reason and request a replacem
   assert.match(workflowSource, /Upload \$\{isReplacement \? "corrected " : ""\}\$\{label\} invoice PDF/);
 });
 
-test("exchange requires deposit confirmation and keeps agent fee payment separate", () => {
-  const clientExchangeBody = functionBody(workflowSource, "recordExchange");
-  const routeExchangeBody = functionBody(routeSource, "recordExchange");
+test("exchange no longer requires deposit confirmation and keeps agent fee payment separate", () => {
+  const clientExchangeBody = legalSource;
+  const routeExchangeBody = legalActionSql("confirm_exchange");
   const paymentBody = functionBody(workflowSource, "recordAgentFeePayment");
 
-  assert.match(clientExchangeBody, /exchangeDepositConfirmed/);
-  assert.match(routeExchangeBody, /payload\.exchangeDepositConfirmed !== true/);
-  assert.match(routeExchangeBody, /exchangeDepositConfirmed: true/);
+  assert.doesNotMatch(clientExchangeBody, /depositConfirmed:/);
+  assert.match(routeExchangeBody, /e\.expires_at<=now\(\)/);
   assert.match(paymentBody, /action: "record_agent_fee_payment"/);
   assert.match(paymentBody, /paymentClientReference/);
   assert.match(workflowSource, />Outstanding</);

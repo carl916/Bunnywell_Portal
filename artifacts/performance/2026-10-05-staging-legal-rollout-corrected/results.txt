@@ -1,0 +1,135 @@
+Targeted legal region trial: PASSED
+Final alias: https://staging.bunnywell.co.uk
+Final deployment: dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH
+Deployment commit: 78eede073c25ac823ad7236ff44ae533c21cb34e
+Application baseline: 87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d
+Legal: fra1; other sampled functions: iad1; Supabase: vxkpvdtrldwwqiddoyof.supabase.co
+
+Final preview: 12/12 desktop/mobile actions passed. Final staging: 12/12 passed.
+Zero measured application failures, HTTP errors, region mismatches or displayed-state failures.
+Sale fingerprints unchanged; units 107 and 209 read/previewed; 210/211 not opened or mutated.
+No mutation, email send or Storage write. Production, project defaults, shared root Vercel configuration and three crons unchanged.
+Only staging.bunnywell.co.uk changed; the normal Git staging alias stays on dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC.
+
+Baseline: 4 October deployed observations had 274 telemetry payloads, 132 observed 204s, 142 missing responses.
+The 5 October A/B preview hostnames did not collect Web Vitals. Missing responses remain unknown.
+204 counts as collector acceptance even when the browser subsequently reports ERR_ABORTED.
+Response-less telemetry is exempt only with observed unload/navigation evidence; its region stays unknown.
+HTTP errors, application failures and every observed function execution region remain strict.
+
+Final staging telemetry: 44 aborted requests: 20 observed 204 acceptances, 24 unknown without a response.
+By metric: TTFB 12 accepted; LCP 8 accepted and 4 unknown; INP 8 unknown; CLS 12 unknown.
+Final preview/staging also recorded 14 setup/cleanup cancellations: 4 auth activity, 10 direct Supabase reads.
+These are outside measured actions, never counted as successful responses.
+All 100 aborts across original and current attempts are enumerated below and in trial-result.json.
+
+Retained attempts:
+preview-smoke: actions=12, completed=true, gate failures=0, state unchanged=true
+preview-smoke-attempt1: actions=12, completed=true, gate failures=0, state unchanged=true
+preview-smoke-attempt2: actions=10, completed=false, gate failures=0, state unchanged=true
+staging-smoke: actions=12, completed=true, gate failures=0, state unchanged=true
+staging-smoke-attempt1: actions=3, completed=false, gate failures=1, state unchanged=true
+The first staging retry incorrectly failed an accepted LCP telemetry abort and was rolled back.
+One preview retry ended after 10 passing actions; the original logger did not retain its underlying runner error. A fresh complete run passed.
+
+Every aborted request (phase, audit ID, profile, scope, type/endpoint, metric, response, classification):
+original-staging-smoke | original-1 | original desktop | measured navigation | web-vitals-telemetry | /api/performance/vitals | unknown; original capture did not retain metric name | status=null | outcome=unknown | unload-telemetry-unknown-inferred
+original-staging-smoke | original-2 | original desktop | measured navigation | web-vitals-telemetry | /api/performance/vitals | unknown; original capture did not retain metric name | status=null | outcome=unknown | unload-telemetry-unknown-inferred
+original-staging-smoke | original-3 | original desktop | measured navigation | web-vitals-telemetry | /api/performance/vitals | unknown; original capture did not retain metric name | status=204 | outcome=accepted | accepted-telemetry-abort
+preview-smoke | 19 | desktop | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 20 | desktop | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 34 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_photos | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 35 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 36 | desktop | setup/warmup/cleanup | browser-supabase-data | audit_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 337 | mobile-throttled | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 338 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke | 353 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 18 | desktop | setup/warmup/cleanup | browser-supabase-data | profiles | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 19 | desktop | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 314 | mobile-throttled | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 315 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 317 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | units | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 328 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snags | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 329 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snag_photos | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 330 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 331 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | audit_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt1 | 332 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | handovers | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 19 | desktop | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 20 | desktop | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 34 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_photos | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 35 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 36 | desktop | setup/warmup/cleanup | browser-supabase-data | audit_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 337 | mobile-throttled | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 353 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+preview-smoke-attempt2 | 362 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 16 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 18 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 21 | desktop | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 22 | desktop | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 37 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 46 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 47 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 63 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 102 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 103 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 120 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 159 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 161 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 162 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 178 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 218 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 219 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 235 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 275 | desktop | exchange.entry | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 278 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 279 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 295 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 335 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 339 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 340 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 356 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 358 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 361 | mobile-throttled | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 362 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 377 | mobile-throttled | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke | 386 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 387 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 403 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 442 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 443 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 460 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 499 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 501 | mobile-throttled | navigation.cold | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 502 | mobile-throttled | navigation.cold | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 518 | mobile-throttled | navigation.cold | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 558 | mobile-throttled | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 559 | mobile-throttled | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 575 | mobile-throttled | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 615 | mobile-throttled | exchange.entry | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 618 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 619 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 635 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 675 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke | 679 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke | 680 | mobile-throttled | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 16 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 18 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 21 | desktop | setup/warmup/cleanup | vercel-function | /api/auth/activity | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke-attempt1 | 22 | desktop | setup/warmup/cleanup | browser-supabase-data | areas | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke-attempt1 | 36 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_photos | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke-attempt1 | 37 | desktop | setup/warmup/cleanup | browser-supabase-data | snag_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke-attempt1 | 38 | desktop | setup/warmup/cleanup | browser-supabase-data | audit_events | n/a | status=null | outcome=no observed response | unmeasured-harness-transition-cancellation
+staging-smoke-attempt1 | 46 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 47 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 63 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 102 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 103 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 120 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 159 | desktop | setup/warmup/cleanup | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 161 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | INP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 162 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 178 | desktop | navigation.cold | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 218 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | LCP | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 219 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | CLS | status=null | outcome=unknown | unload-telemetry-unknown
+staging-smoke-attempt1 | 235 | desktop | navigation.repeat | web-vitals-telemetry | /api/performance/vitals | TTFB | status=204 | outcome=accepted | accepted-telemetry-abort
+staging-smoke-attempt1 | 275 | desktop | exchange.entry | web-vitals-telemetry | /api/performance/vitals | LCP | status=204 | outcome=accepted | accepted-telemetry-abort

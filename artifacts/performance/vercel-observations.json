@@ -1,0 +1,15 @@
+{
+  "capturedAt": "2026-09-22T19:17:28Z",
+  "environment": "staging",
+  "commit": "e70c840cec437ba3e80ccf74d6e128deae92dd65",
+  "functionRegions": ["iad1"],
+  "databaseRegion": "eu-central-1",
+  "legalRouteCountsEarlierSnapshot": {"200": 99, "413": 6},
+  "legalRouteCountsAfterJourneys": {"200": 167, "413": 10},
+  "afterJourneysScope": {"environment": "preview", "deployment": "dpl_E7ceSggd2QkNvLGC2xeajfMuoRhg", "since": "2026-09-22T18:00:00Z", "until": "2026-09-22T20:00:00Z"},
+  "countScope": "Project legal-route query, preceding two hours; includes diagnostic traffic; response noted three distinct values but displayed two",
+  "runtimeErrorClusters": 0,
+  "individualRuntimeLogs": "Two-hour, ten-minute and successful-response two-minute queries timed out. A one-entry query over 19:29–19:31 UTC returned a 413 entry without invocation duration or start type.",
+  "coldStartAndFunctionDurationMetrics": "Unavailable through returned connector results",
+  "notes": "Browser timings must not be presented as pure server duration or proof of cold starts. No new deployment or monitoring service was enabled."
+}

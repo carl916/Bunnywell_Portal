@@ -1,0 +1,17 @@
+{
+  "verifiedAt": "2026-10-05T20:30:25.668Z",
+  "staging": {
+    "deploymentId": "dpl_ARfGXsgUebFDfurxChzetYSVmhTV",
+    "commit": "b5507f90e0f4a2074499005a18218a0a211df2cb",
+    "branch": "staging",
+    "state": "READY",
+    "alias": "staging.bunnywell.co.uk"
+  },
+  "production": {
+    "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "commit": "d37ab6518a2f28640a0e5435ce0d84daaf1ee39c",
+    "branch": "main",
+    "state": "READY",
+    "alias": "portal.bunnywell.co.uk"
+  }
+}

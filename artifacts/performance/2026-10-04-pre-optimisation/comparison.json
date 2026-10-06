@@ -1,0 +1,742 @@
+[
+  {
+    "action": "sale.open.in_app",
+    "label": "Open another sale",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 33.800000071525574,
+        "originalMedianMs": 33.89999997615814,
+        "maxMs": 34.89999997615814,
+        "requests": "1–17",
+        "finishedNonVitalRequests": "0",
+        "originalRequests": "0",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 0,
+        "responseBytesKnown": "0",
+        "statuses": [],
+        "originalStatuses": []
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 72.29999995231628,
+        "originalMedianMs": 69.60000002384186,
+        "maxMs": 73.89999997615814,
+        "requests": "0–1",
+        "finishedNonVitalRequests": "0",
+        "originalRequests": "0",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 0,
+        "responseBytesKnown": "0",
+        "statuses": [],
+        "originalStatuses": []
+      }
+    ]
+  },
+  {
+    "action": "sale_file.navigation.cold",
+    "label": "Cold page → sale controls",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 2299,
+        "originalMedianMs": 2087.2000000476837,
+        "maxMs": 2564,
+        "requests": "101–117",
+        "finishedNonVitalRequests": "96–107",
+        "originalRequests": "95–99",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 17,
+        "vitalBrowserFailures": 15,
+        "medianResponseBytes": 1170976,
+        "responseBytesKnown": "96–107",
+        "statuses": [],
+        "originalStatuses": []
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 7907,
+        "originalMedianMs": 7816.700000047684,
+        "maxMs": 7924,
+        "requests": "101–117",
+        "finishedNonVitalRequests": "95–96",
+        "originalRequests": "93–95",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 79,
+        "vitalBrowserFailures": 15,
+        "medianResponseBytes": 1170706,
+        "responseBytesKnown": "95–96",
+        "statuses": [],
+        "originalStatuses": []
+      }
+    ]
+  },
+  {
+    "action": "sale_file.navigation.repeat",
+    "label": "Repeat page → sale controls",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 1914,
+        "originalMedianMs": 1912.3999999761581,
+        "maxMs": 1966,
+        "requests": "109–117",
+        "finishedNonVitalRequests": "96–101",
+        "originalRequests": "95–104",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 23,
+        "vitalBrowserFailures": 15,
+        "medianResponseBytes": 595298,
+        "responseBytesKnown": "96–101",
+        "statuses": [],
+        "originalStatuses": []
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 4813,
+        "originalMedianMs": 4806.799999952316,
+        "maxMs": 4828,
+        "requests": "101–108",
+        "finishedNonVitalRequests": "96",
+        "originalRequests": "95–97",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 23,
+        "vitalBrowserFailures": 15,
+        "medianResponseBytes": 566892,
+        "responseBytesKnown": "96",
+        "statuses": [],
+        "originalStatuses": []
+      }
+    ]
+  },
+  {
+    "action": "progression.stage_change",
+    "label": "Enter Exchange",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 1346.9000000953674,
+        "originalMedianMs": 4380.100000023842,
+        "maxMs": 1863.5999999046326,
+        "requests": "3",
+        "finishedNonVitalRequests": "3",
+        "originalRequests": "3–18",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 35138,
+        "responseBytesKnown": "3",
+        "statuses": [],
+        "originalStatuses": []
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 1440.7000000476837,
+        "originalMedianMs": 1904,
+        "maxMs": 1889.3999999761581,
+        "requests": "3",
+        "finishedNonVitalRequests": "3",
+        "originalRequests": "3–11",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 35153,
+        "responseBytesKnown": "3",
+        "statuses": [],
+        "originalStatuses": []
+      }
+    ]
+  },
+  {
+    "action": "authority.preview_open",
+    "label": "Authority preview",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 1079.3999999761581,
+        "originalMedianMs": 847.7000000476837,
+        "maxMs": 1329.3999999761581,
+        "requests": "1",
+        "finishedNonVitalRequests": "1",
+        "originalRequests": "1",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 3716.5,
+        "responseBytesKnown": "1",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 842,
+        "originalMedianMs": 846.9999999403954,
+        "maxMs": 842.3999999761581,
+        "requests": "1",
+        "finishedNonVitalRequests": "1",
+        "originalRequests": "1",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 3698,
+        "responseBytesKnown": "1",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "authority.request",
+    "label": "Request authority",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 4653.949999988079,
+        "originalMedianMs": 5445.100000023842,
+        "maxMs": 4928.200000047684,
+        "requests": "39",
+        "finishedNonVitalRequests": "38",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 2,
+        "vitalBrowserFailures": 2,
+        "medianResponseBytes": 184484.5,
+        "responseBytesKnown": "38",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 5472.349999964237,
+        "originalMedianMs": 6747.450000047684,
+        "maxMs": 5505.599999904633,
+        "requests": "38",
+        "finishedNonVitalRequests": "37",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 2,
+        "vitalBrowserFailures": 2,
+        "medianResponseBytes": 186843,
+        "responseBytesKnown": "37",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "authority.issue",
+    "label": "Issue authority",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 4429.849999964237,
+        "originalMedianMs": 5429.299999952316,
+        "maxMs": 4946.799999952316,
+        "requests": "38",
+        "finishedNonVitalRequests": "38",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 271069,
+        "responseBytesKnown": "38",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 5258.699999988079,
+        "originalMedianMs": 5491.800000011921,
+        "maxMs": 5558.5,
+        "requests": "37",
+        "finishedNonVitalRequests": "37",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 273507.5,
+        "responseBytesKnown": "37",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "exchange.record",
+    "label": "Record exchange",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 3905.0499999523163,
+        "originalMedianMs": 4429.800000071526,
+        "maxMs": 4396.899999976158,
+        "requests": "37",
+        "finishedNonVitalRequests": "37",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 187401.5,
+        "responseBytesKnown": "37",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 5004.5,
+        "originalMedianMs": 5222.050000011921,
+        "maxMs": 5053.5,
+        "requests": "37",
+        "finishedNonVitalRequests": "37",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 192325.5,
+        "responseBytesKnown": "37",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.open",
+    "label": "Exchange → Completion",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 30.600000023841858,
+        "originalMedianMs": 30.399999976158142,
+        "maxMs": 31.59999990463257,
+        "requests": "0",
+        "finishedNonVitalRequests": "0",
+        "originalRequests": "0",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 0,
+        "responseBytesKnown": "0",
+        "statuses": [],
+        "originalStatuses": []
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 5,
+        "originalN": 5,
+        "medianMs": 59.700000047683716,
+        "originalMedianMs": 73.10000002384186,
+        "maxMs": 74.10000002384186,
+        "requests": "0",
+        "finishedNonVitalRequests": "0",
+        "originalRequests": "0",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 0,
+        "responseBytesKnown": "0",
+        "statuses": [],
+        "originalStatuses": []
+      }
+    ]
+  },
+  {
+    "action": "completion.documents_upload.one-1MiB",
+    "label": "Upload one 1 MiB PDF",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 10304.25,
+        "originalMedianMs": 7778.100000023842,
+        "maxMs": 10779.200000047684,
+        "requests": "40",
+        "finishedNonVitalRequests": "40",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 207127.5,
+        "responseBytesKnown": "40",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 20099.30000001192,
+        "originalMedianMs": 19073.600000023842,
+        "maxMs": 20208.600000023842,
+        "requests": "40–41",
+        "finishedNonVitalRequests": "40–41",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 196271,
+        "responseBytesKnown": "40–41",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.documents_upload.two-1MiB",
+    "label": "Upload two 1 MiB PDFs",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 14653.949999988079,
+        "originalMedianMs": 9912.5,
+        "maxMs": 15545.399999976158,
+        "requests": "40–41",
+        "finishedNonVitalRequests": "40–41",
+        "originalRequests": "37–39",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 193227,
+        "responseBytesKnown": "40–41",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 34516.65000003576,
+        "originalMedianMs": 30871.350000023842,
+        "maxMs": 34559.200000047684,
+        "requests": "43–44",
+        "finishedNonVitalRequests": "43–44",
+        "originalRequests": "39",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 202903.5,
+        "responseBytesKnown": "43–44",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.documents_upload.two-5MiB",
+    "label": "Upload two 5 MiB PDFs",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 23861.649999976158,
+        "originalMedianMs": 11813.800000071526,
+        "maxMs": 24428.799999952316,
+        "requests": "41–42",
+        "finishedNonVitalRequests": "41–42",
+        "originalRequests": "1–3",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 197044,
+        "responseBytesKnown": "41–42",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          413
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 125377.94999992847,
+        "originalMedianMs": 112310.80000001192,
+        "maxMs": 125854.19999992847,
+        "requests": "48",
+        "finishedNonVitalRequests": "48",
+        "originalRequests": "7",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 209103,
+        "responseBytesKnown": "48",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          413
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.documents_upload.two-near-10MiB",
+    "label": "Upload two near-10 MiB PDFs",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 37821.19999998808,
+        "originalMedianMs": 24328.899999976158,
+        "maxMs": 37862.89999997616,
+        "requests": "46",
+        "finishedNonVitalRequests": "46",
+        "originalRequests": "3",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 201700.5,
+        "responseBytesKnown": "46",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          413
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 238694.60000002384,
+        "originalMedianMs": 224244.60000002384,
+        "maxMs": 239114.30000007153,
+        "requests": "59",
+        "finishedNonVitalRequests": "59",
+        "originalRequests": "12–13",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 221432,
+        "responseBytesKnown": "59",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          413
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.documents_approve",
+    "label": "Approve documents",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 3637.350000023842,
+        "originalMedianMs": 3964.1999999284744,
+        "maxMs": 3896.3000000715256,
+        "requests": "38",
+        "finishedNonVitalRequests": "38",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 272029,
+        "responseBytesKnown": "38",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 5249.350000023842,
+        "originalMedianMs": 5770.399999976158,
+        "maxMs": 5507.200000047684,
+        "requests": "37",
+        "finishedNonVitalRequests": "37",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 273499,
+        "responseBytesKnown": "37",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  },
+  {
+    "action": "completion.record",
+    "label": "Record completion",
+    "values": [
+      {
+        "profile": "desktop",
+        "n": 2,
+        "originalN": 3,
+        "medianMs": 4396.699999988079,
+        "originalMedianMs": 4932.200000047684,
+        "maxMs": 4913.799999952316,
+        "requests": "38–39",
+        "finishedNonVitalRequests": "38–39",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 202333,
+        "responseBytesKnown": "38–39",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      },
+      {
+        "profile": "mobile-throttled",
+        "n": 2,
+        "originalN": 2,
+        "medianMs": 5499.350000023842,
+        "originalMedianMs": 8864.899999976158,
+        "maxMs": 5991.900000095367,
+        "requests": "37–38",
+        "finishedNonVitalRequests": "37–38",
+        "originalRequests": "37",
+        "workflowFailures": 0,
+        "httpFailures": 0,
+        "browserFailures": 0,
+        "vitalBrowserFailures": 0,
+        "medianResponseBytes": 196224,
+        "responseBytesKnown": "37–38",
+        "statuses": [
+          200
+        ],
+        "originalStatuses": [
+          200
+        ]
+      }
+    ]
+  }
+]

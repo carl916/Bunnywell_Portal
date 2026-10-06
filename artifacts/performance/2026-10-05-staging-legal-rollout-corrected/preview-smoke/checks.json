@@ -1,0 +1,338 @@
+{
+  "verifiedAt": "2026-10-05T18:13:49.255Z",
+  "phase": "preview-smoke",
+  "passed": true,
+  "applicationCommit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+  "deploymentCommit": "78eede073c25ac823ad7236ff44ae533c21cb34e",
+  "salesOpened": [
+    107,
+    209
+  ],
+  "excludedTestSales": [
+    210,
+    211
+  ],
+  "actions": 12,
+  "failures": 0,
+  "legalGetChecks": 4,
+  "legalPreviewPostChecks": 2,
+  "legalRegion": "fra1",
+  "otherMeasuredFunctions": 4,
+  "otherGetChecks": 6,
+  "otherRegion": "iad1",
+  "stagingEnvironmentVerified": true,
+  "displayedStatesPassed": true,
+  "saleStateUnchanged": true,
+  "rootConfigUnchanged": true,
+  "telemetry": {
+    "requests": 0,
+    "accepted204": 0,
+    "unknownNoResponse": 0,
+    "unloadAborted": 0,
+    "regionUnknown": 0
+  },
+  "abortedRequests": [
+    {
+      "requestAuditId": 19,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/auth/activity",
+      "requestType": "vercel-function",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.116700000000037
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 20,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "areas",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2498999999997977
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 34,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "snag_photos",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2588000000000648
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 35,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "snag_events",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.263600000000224
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 36,
+      "profile": "desktop",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "audit_events",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 1.2683000000001812
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 337,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "/api/auth/activity",
+      "requestType": "vercel-function",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.756999999997788
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 338,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "areas",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.744200000001001
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    },
+    {
+      "requestAuditId": 353,
+      "profile": "mobile-throttled",
+      "action": "setup/warmup/cleanup",
+      "endpoint": "snag_events",
+      "requestType": "browser-supabase-data",
+      "metric": null,
+      "status": null,
+      "failure": "net::ERR_ABORTED",
+      "unloadAssociated": false,
+      "classification": "application-abort",
+      "unloadEvidence": {
+        "type": "pagehide",
+        "deltaMs": 3.7634000000034575
+      },
+      "collectorOutcome": null,
+      "executionRegion": null
+    }
+  ],
+  "timingSamples": [
+    {
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "readyMs": 2608.7440000000006,
+      "completeMs": 2608.7440000000006,
+      "settledRequests": 54
+    },
+    {
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "readyMs": 1978.053600000001,
+      "completeMs": 1978.053600000001,
+      "settledRequests": 54
+    },
+    {
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "readyMs": 878.4784999999974,
+      "completeMs": 878.4784999999974,
+      "settledRequests": 1
+    },
+    {
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "readyMs": 288.70630000000165,
+      "completeMs": 288.70630000000165,
+      "settledRequests": 1
+    },
+    {
+      "profile": "desktop",
+      "action": "completion.entry",
+      "readyMs": 51.23790000000008,
+      "completeMs": 51.23790000000008,
+      "settledRequests": 0
+    },
+    {
+      "profile": "desktop",
+      "action": "authority.preview",
+      "readyMs": 249.79149999999936,
+      "completeMs": 249.79149999999936,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "readyMs": 6961.411900000006,
+      "completeMs": 6961.411900000006,
+      "settledRequests": 54
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "readyMs": 3786.2704000000085,
+      "completeMs": 3786.2704000000085,
+      "settledRequests": 54
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "readyMs": 928.3304999999964,
+      "completeMs": 928.3304999999964,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "readyMs": 432.25190000000293,
+      "completeMs": 432.25190000000293,
+      "settledRequests": 1
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "completion.entry",
+      "readyMs": 141.71650000000955,
+      "completeMs": 141.71650000000955,
+      "settledRequests": 0
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "readyMs": 873.6505000000034,
+      "completeMs": 873.6505000000034,
+      "settledRequests": 1
+    }
+  ],
+  "functionInvocations": [
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::t6hbc-1791223895684-622919079c1d",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::v5zkh-1791223899124-ab5d82932aed",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::x2xk9-1791223902414-3bb9b456f230",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::628wd-1791223904372-a6c84fc632c0",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::bmqdp-1791223912012-445fed4158cc",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::dxqj6-1791223958627-4ee29e7ed294",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::iad1::dxqj6-1791223963851-3210b074627d",
+      "executionRegion": "iad1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::mmpsg-1791223968457-dd8dfcd9e3b4",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "status": 200,
+      "vercelId": "lhr1::fra1::24nf7-1791223970423-3ff36a7ca4c9",
+      "executionRegion": "fra1"
+    },
+    {
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "status": 200,
+      "vercelId": "lhr1::fra1::ltnqj-1791223980005-00a8cff41bc6",
+      "executionRegion": "fra1"
+    }
+  ]
+}

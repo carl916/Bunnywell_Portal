@@ -1,0 +1,139 @@
+{
+  "inspectedAt": "2026-10-05T16:22:27.344Z",
+  "phase": "before mutations",
+  "rows": [
+    {
+      "unit": 210,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 211,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 212,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 213,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 214,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 215,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 301,
+      "workflow_status": "awaiting_approval",
+      "hasBuyer": true,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 1,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 302,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 303,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 304,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 305,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    },
+    {
+      "unit": 306,
+      "workflow_status": "draft",
+      "hasBuyer": false,
+      "redacted": false,
+      "hasAuthorityRequest": false,
+      "exchanged": false,
+      "completed": false,
+      "documentCount": 0,
+      "legalEmailCount": 0
+    }
+  ],
+  "unusedDraftsRemainEmpty": true
+}

@@ -1,0 +1,46 @@
+[WebServer] (node:7236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:23988) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:7916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 21 tests using 1 worker
+
+(node:5192) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\sales-actor-names.spec.ts:22:7 › Completion resolves historical approver and completer missing from profiles for sales_agent (1.3s)
+  ok  2 [chromium] › tests\sales-actor-names.spec.ts:22:7 › Completion resolves historical approver and completer missing from profiles for conveyancer (1.3s)
+  ok  3 [chromium] › tests\sales-actor-names.spec.ts:45:5 › Completion uses workflow names without a profile lookup and keeps null IDs unknown (1.3s)
+  ok  4 [chromium] › tests\sales-discussion.spec.ts:28:5 › continuous comments omit stage controls and payloads across desktop and mobile (3.1s)
+  ok  5 [chromium] › tests\sales-discussion.spec.ts:84:5 › a replacement sale on the same unit has a separate thread and earlier comments stay historical (2.6s)
+  ok  6 [chromium] › tests\sales-discussion.spec.ts:111:5 › docking, drawer fallback, mobile, draft and unsaved commercial values survive presentation changes (2.6s)
+  ok  7 [chromium] › tests\sales-discussion.spec.ts:149:5 › activity keeps earlier pages and scroll, identifies document subjects and links to the recorded version (2.3s)
+  ok  8 [chromium] › tests\sales-discussion.spec.ts:179:5 › hidden panel and Activity do not read comments; visible comments acknowledge presented messages (5.9s)
+  ok  9 [chromium] › tests\sales-discussion.spec.ts:197:5 › plain text, mentions, lost-response retry, reply, edit and revision history work against the SQL actions (2.2s)
+  ok 10 [chromium] › tests\sales-discussion.spec.ts:228:5 › pagination and incoming messages preserve older reading position and separate activity scroll (18.6s)
+  ok 11 [chromium] › tests\sales-discussion.spec.ts:249:5 › overview indicator and comment deep link open the correct sale and retain stage changes (3.6s)
+  ok 12 [chromium] › tests\sales-legal-workflow.spec.ts:35:5 › developer reviews exact recipients, confirms and preserves the sent authority (1.5s)
+  ok 13 [chromium] › tests\sales-legal-workflow.spec.ts:53:5 › missing recipient blocks email review and offers organisation settings (950ms)
+  ok 14 [chromium] › tests\sales-legal-workflow.spec.ts:61:5 › agent can request authority; conveyancer confirms exchange only while authority is valid (1.3s)
+  ok 15 [chromium] › tests\sales-legal-workflow.spec.ts:71:5 › completion statement approval does not release keys; conveyancer legal confirmation does (1.5s)
+  ok 16 [chromium] › tests\sales-legal-workflow.spec.ts:90:5 › historical completion retains dates and actor names with no invented timestamp (905ms)
+[WebServer] [browser] Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database. {
+[WebServer]   code: 'PGRST202',
+[WebServer]   message: 'Could not find the function public.sale_actor_names(p_sales) in the schema cache'
+[WebServer] } (src/components/portal/sales/SalesReservationWorkflow.tsx:1824:17)
+[WebServer] [browser] Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database. {
+[WebServer]   code: 'PGRST202',
+[WebServer]   message: 'Could not find the function public.sale_actor_names(p_sales) in the schema cache'
+[WebServer] } (src/components/portal/sales/SalesReservationWorkflow.tsx:1824:17)
+[WebServer] [browser] Sale actor names are unavailable. Apply supabase/migrations/20260908b_sale_actor_names.sql to this database. {
+[WebServer]   code: 'PGRST202',
+[WebServer]   message: 'Could not find the function public.sale_actor_names(p_sales) in the schema cache'
+[WebServer] } (src/components/portal/sales/SalesReservationWorkflow.tsx:1824:17)
+  ok 17 [chromium] › tests\sales-loading.spec.ts:4:5 › staging without the name lookup still loads the Sales figures (1.0s)
+  ok 18 [chromium] › tests\sales-loading.spec.ts:16:5 › Sales displays the underlying database error for failed required queries (1.0s)
+  ok 19 [chromium] › tests\sales-stage-tasks.spec.ts:10:5 › reservation and exchange show their saved milestones, rejection and completed history (2.7s)
+  ok 20 [chromium] › tests\sales-stage-tasks.spec.ts:48:5 › completion survives reload through upload, query, replacement, approval and recording (2.9s)
+  ok 21 [chromium] › tests\sales-stage-tasks.spec.ts:104:5 › task cards use available width without overflow at desktop, tablet and mobile sizes (1.9s)
+
+  21 passed (1.1m)

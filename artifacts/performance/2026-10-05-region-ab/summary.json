@@ -1,0 +1,3980 @@
+{
+  "groups": [
+    {
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 2121.2025499999872,
+          "p25": 2096.4088999999967,
+          "p75": 2739.1153250000207,
+          "min": 2086.1382999999914,
+          "max": 3549.0545000000275
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1967.0595000000249,
+          "p25": 1934.8398250000173,
+          "p75": 2320.209350000063,
+          "min": 1894.204299999983,
+          "max": 3148.6315000000177
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 2121.2025499999872,
+          "p25": 2096.4088999999967,
+          "p75": 2739.1153250000207,
+          "min": 2086.1382999999914,
+          "max": 3549.0545000000275
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 4457.828799999967,
+          "p25": 3511.941449999955,
+          "p75": 4728.838275000002,
+          "min": 3270.6340000000782,
+          "max": 6423.798700000043
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 4156.644049999944,
+          "p25": 3305.2017249999335,
+          "p75": 4331.364375000016,
+          "min": 3082.648199999996,
+          "max": 5924.1054
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 4457.828799999967,
+          "p25": 3511.941449999955,
+          "p75": 4728.838275000002,
+          "min": 3270.6340000000782,
+          "max": 6423.798700000043
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": 1551.1659499999369,
+        "p25": 1180.3057500000286,
+        "p75": 2604.3051499999947,
+        "min": 149.0154999999795,
+        "max": 4337.660400000052
+      },
+      "fraFasterPairs": 0
+    },
+    {
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 1902.3598499999935,
+          "p25": 1878.2050750000117,
+          "p75": 1907.1130500000145,
+          "min": 1873.858799999929,
+          "max": 2478.330799999996
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1601.311800000025,
+          "p25": 1510.5857000000542,
+          "p75": 1627.205025000003,
+          "min": 1416.7020000000193,
+          "max": 2084.785199999984
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 1902.3598499999935,
+          "p25": 1878.2050750000117,
+          "p75": 1907.1130500000145,
+          "min": 1873.858799999929,
+          "max": 2478.330799999996
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 2516.9910499999824,
+          "p25": 2386.0032750000028,
+          "p75": 2544.323475000012,
+          "min": 1960.0533000000287,
+          "max": 3021.5915000000095
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 2130.4768500000355,
+          "p25": 1975.4173499999997,
+          "p75": 2289.145149999982,
+          "min": 1809.703600000008,
+          "max": 2618.186300000001
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 2516.9910499999824,
+          "p25": 2386.0032750000028,
+          "p75": 2544.323475000012,
+          "min": 1960.0533000000287,
+          "max": 3021.5915000000095
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": 591.7992499999527,
+        "p25": 454.20997500000794,
+        "p75": 635.1680000000197,
+        "min": 55.54990000001271,
+        "max": 705.769200000097
+      },
+      "fraFasterPairs": 0
+    },
+    {
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 1896.116149999987,
+          "p25": 1885.2629000000306,
+          "p75": 2393.573199999997,
+          "min": 1380.7434999999823,
+          "max": 2419.571200000006
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1688.339800000016,
+          "p25": 1582.52355000002,
+          "p75": 1934.3408000000072,
+          "min": 1201.2269000000088,
+          "max": 2124.689699999988
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 1896.116149999987,
+          "p25": 1885.2629000000306,
+          "p75": 2393.573199999997,
+          "min": 1380.7434999999823,
+          "max": 2419.571200000006
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 864.9845999999961,
+          "p25": 859.079224999994,
+          "p75": 874.1792999999598,
+          "min": 858.688300000038,
+          "max": 885.9329000000143
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 455.75334999996994,
+          "p25": 436.31282500001544,
+          "p75": 481.2298999999475,
+          "min": 412.6427000000258,
+          "max": 619.7626999999629
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 864.9845999999961,
+          "p25": 859.079224999994,
+          "p75": 874.1792999999598,
+          "min": 858.688300000038,
+          "max": 885.9329000000143
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -1023.6552500000107,
+        "p25": -1533.0378499999915,
+        "p75": -1015.6990500000102,
+        "min": -1560.8828999999678,
+        "max": -497.44330000004265
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 1658.1194499999983,
+          "p25": 1382.6449750000174,
+          "p75": 1827.6268499999924,
+          "min": 1111.1990000000224,
+          "max": 2019.8620000000228
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1650.8554000000295,
+          "p25": 1375.6246250000113,
+          "p75": 1808.9828749999979,
+          "min": 1106.0624000000535,
+          "max": 2007.4451000000117
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 1658.1194499999983,
+          "p25": 1382.6449750000174,
+          "p75": 1827.6268499999924,
+          "min": 1111.1990000000224,
+          "max": 2019.8620000000228
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 424.4904000000097,
+          "p25": 410.77122500000405,
+          "p75": 444.90922500001034,
+          "min": 315.5774000000092,
+          "max": 472.11040000000503
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 418.58750000000873,
+          "p25": 397.04769999999553,
+          "p75": 436.34689999998955,
+          "min": 305.46570000000065,
+          "max": 464.7324999999837
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 424.4904000000097,
+          "p25": 410.77122500000405,
+          "p75": 444.90922500001034,
+          "min": 315.5774000000092,
+          "max": 472.11040000000503
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -1213.5564000000013,
+        "p25": -1429.991499999981,
+        "p75": -936.1686750000081,
+        "min": -1627.8241999999736,
+        "max": -669.3103000000119
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "desktop",
+      "action": "completion.entry",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 44.5344000000041,
+          "p25": 41.152774999998655,
+          "p75": 49.08307499998773,
+          "min": 40.936299999943,
+          "max": 54.09909999999218
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 44.5344000000041,
+          "p25": 41.152774999998655,
+          "p75": 49.08307499998773,
+          "min": 40.936299999943,
+          "max": 54.09909999999218
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {}
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 50.98925000001327,
+          "p25": 46.253275000010035,
+          "p75": 54.01375000000553,
+          "min": 42.93660000001546,
+          "max": 56.8707000000868
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 50.98925000001327,
+          "p25": 46.253275000010035,
+          "p75": 54.01375000000553,
+          "min": 42.93660000001546,
+          "max": 56.8707000000868
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {}
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": 5.977950000014971,
+        "p25": -1.2728249999927357,
+        "p75": 8.773200000014185,
+        "min": -7.7963000000454485,
+        "max": 15.934400000143796
+      },
+      "fraFasterPairs": 2
+    },
+    {
+      "profile": "desktop",
+      "action": "authority.preview",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 853.8128500000166,
+          "p25": 847.5529499999539,
+          "p75": 976.8962999999785,
+          "min": 838.1300000000047,
+          "max": 1365.6532000000007
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 726.3920500000095,
+          "p25": 668.3025750000088,
+          "p75": 758.6167750000241,
+          "min": 508.44389999995474,
+          "max": 969.7468000000008
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 853.8128500000166,
+          "p25": 847.5529499999539,
+          "p75": 976.8962999999785,
+          "min": 838.1300000000047,
+          "max": 1365.6532000000007
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 350.3176999999923,
+          "p25": 342.2964250000223,
+          "p75": 359.4598749999859,
+          "min": 328.8264999999665,
+          "max": 849.155700000003
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 253.06320000003325,
+          "p25": 241.33084999999846,
+          "p75": 279.24502499999653,
+          "min": 229.9499000000069,
+          "max": 389.7893000000622
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 350.3176999999923,
+          "p25": 342.2964250000223,
+          "p75": 359.4598749999859,
+          "min": 328.8264999999665,
+          "max": 849.155700000003
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -502.0974500000302,
+        "p25": -637.3848249999282,
+        "p75": -493.13277499996184,
+        "min": -1021.3741000000009,
+        "max": 8.100899999961257
+      },
+      "fraFasterPairs": 7
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 6845.7799499999965,
+          "p25": 6819.602200000139,
+          "p75": 6865.60097499995,
+          "min": 6795.371100000106,
+          "max": 7340.194499999983
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 6762.023250000086,
+          "p25": 6727.401425000047,
+          "p75": 6789.1389999999665,
+          "min": 6642.235500000184,
+          "max": 6824.011399999959
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 6845.7799499999965,
+          "p25": 6819.602200000139,
+          "p75": 6865.60097499995,
+          "min": 6795.371100000106,
+          "max": 7340.194499999983
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 6844.732399999979,
+          "p25": 6811.710599999991,
+          "p75": 7329.4895999999135,
+          "min": 6799.529500000179,
+          "max": 7361.514300000155
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 6739.334799999953,
+          "p25": 6734.544850000006,
+          "p75": 6837.35792499996,
+          "min": 6705.944799999939,
+          "max": 7126.540400000056
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 6844.732399999979,
+          "p25": 6811.710599999991,
+          "p75": 7329.4895999999135,
+          "min": 6799.529500000179,
+          "max": 7361.514300000155
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": 5.957900000037625,
+        "p25": -50.03609999996843,
+        "p75": 484.30489999987185,
+        "min": -524.625,
+        "max": 540.9011999999639
+      },
+      "fraFasterPairs": 3
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 3771.7121499999193,
+          "p25": 3738.9128500000224,
+          "p75": 3778.6809999999823,
+          "min": 3726.2393000000156,
+          "max": 3791.2959999998566
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 3472.605450000032,
+          "p25": 3449.389675000042,
+          "p75": 3527.699125000043,
+          "min": 3406.461899999995,
+          "max": 3647.9867000000086
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 3771.7121499999193,
+          "p25": 3738.9128500000224,
+          "p75": 3778.6809999999823,
+          "min": 3726.2393000000156,
+          "max": 3791.2959999998566
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 3777.373799999943,
+          "p25": 3771.8708500000066,
+          "p75": 3782.494725000055,
+          "min": 3757.7010999999475,
+          "max": 4233.161400000099
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 3456.696099999943,
+          "p25": 3446.190575000015,
+          "p75": 3473.7472249998827,
+          "min": 3402.5953000000445,
+          "max": 3794.5463000000454
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 3777.373799999943,
+          "p25": 3771.8708500000066,
+          "p75": 3782.494725000055,
+          "min": 3757.7010999999475,
+          "max": 4233.161400000099
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 54,
+          "p25": 54,
+          "p75": 54,
+          "min": 54,
+          "max": 54
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-static-document": 112,
+          "other-host": 8,
+          "browser-supabase-auth": 8,
+          "browser-supabase-data": 296,
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": 21.17185000004247,
+        "p25": -4.2421499998890795,
+        "p75": 44.874949999852106,
+        "min": -19.811699999962002,
+        "max": 460.70280000031926
+      },
+      "fraFasterPairs": 3
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 2166.0344500000356,
+          "p25": 1919.2501249999623,
+          "p75": 2411.6319749999384,
+          "min": 1911.5196999998298,
+          "max": 2438.1991000000853
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1891.7469499999424,
+          "p25": 1642.2292000000016,
+          "p75": 2017.5496750000457,
+          "min": 1399.3956999999937,
+          "max": 2219.375800000038
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 2166.0344500000356,
+          "p25": 1919.2501249999623,
+          "p75": 2411.6319749999384,
+          "min": 1911.5196999998298,
+          "max": 2438.1991000000853
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 894.9557999999961,
+          "p25": 887.4235000000335,
+          "p75": 902.1323749999865,
+          "min": 876.279399999883,
+          "max": 904.9869000001345
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 453.0878499998944,
+          "p25": 421.70127500005765,
+          "p75": 491.0238750000717,
+          "min": 420.4860000000335,
+          "max": 562.0165999999736
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 894.9557999999961,
+          "p25": 887.4235000000335,
+          "p75": 902.1323749999865,
+          "min": 876.279399999883,
+          "max": 904.9869000001345
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -1267.6092999998946,
+        "p25": -1511.9789999999048,
+        "p75": -1031.378075000015,
+        "min": -1552.190100000007,
+        "max": -1016.0230999998748
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 1551.8764999998966,
+          "p25": 1387.8989499999443,
+          "p75": 1727.9106499999762,
+          "min": 1198.527699999977,
+          "max": 1800.6933999999892
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 1538.6345499999588,
+          "p25": 1371.5499749999144,
+          "p75": 1717.091674999916,
+          "min": 1181.219100000104,
+          "max": 1795.2945000000764
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 1551.8764999998966,
+          "p25": 1387.8989499999443,
+          "p75": 1727.9106499999762,
+          "min": 1198.527699999977,
+          "max": 1800.6933999999892
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 363.99459999997634,
+          "p25": 351.8025750000379,
+          "p75": 389.15072499995586,
+          "min": 320.38770000007935,
+          "max": 477.3185999999987
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 349.3626499999082,
+          "p25": 335.56670000002487,
+          "p75": 383.39427499996964,
+          "min": 311.8799000000581,
+          "max": 467.6635000000242
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 363.99459999997634,
+          "p25": 351.8025750000379,
+          "p75": 389.15072499995586,
+          "min": 320.38770000007935,
+          "max": 477.3185999999987
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -1187.8818999999203,
+        "p25": -1278.2358250000107,
+        "p75": -1011.3505499999737,
+        "min": -1458.7651999997906,
+        "max": -841.2246999999043
+      },
+      "fraFasterPairs": 8
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "completion.entry",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 86.23110000009183,
+          "p25": 82.0663750001113,
+          "p75": 90.76595000002999,
+          "min": 77.78469999996014,
+          "max": 92.87120000005234
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 86.23110000009183,
+          "p25": 82.0663750001113,
+          "p75": 90.76595000002999,
+          "min": 77.78469999996014,
+          "max": 92.87120000005234
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {}
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 84.58874999999534,
+          "p25": 82.64167499996256,
+          "p75": 89.12524999992456,
+          "min": 78.01100000017323,
+          "max": 90.4106000000611
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 84.58874999999534,
+          "p25": 82.64167499996256,
+          "p75": 89.12524999992456,
+          "min": 78.01100000017323,
+          "max": 90.4106000000611
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 0,
+          "p25": 0,
+          "p75": 0,
+          "min": 0,
+          "max": 0
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {}
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -0.4051000000908971,
+        "p25": -3.4641499999852385,
+        "p75": 2.5492999999551103,
+        "min": -12.340100000146776,
+        "max": 6.069499999983236
+      },
+      "fraFasterPairs": 5
+    },
+    {
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "iad1": {
+        "readyMs": {
+          "n": 8,
+          "median": 905.5713500001002,
+          "p25": 891.320000000007,
+          "p75": 1057.8358749999898,
+          "min": 866.219700000016,
+          "max": 1404.685700000031
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 815.0582999999751,
+          "p25": 603.8275000000722,
+          "p75": 836.9118749999907,
+          "min": 577.9760000000242,
+          "max": 1036.0746999999974
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 905.5713500001002,
+          "p25": 891.320000000007,
+          "p75": 1057.8358749999898,
+          "min": 866.219700000016,
+          "max": 1404.685700000031
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "fra1": {
+        "readyMs": {
+          "n": 8,
+          "median": 370.4159500000533,
+          "p25": 341.1314999999595,
+          "p75": 417.90580000000773,
+          "min": 323.7210999999661,
+          "max": 442.0468000001274
+        },
+        "lastRequestEndMs": {
+          "n": 8,
+          "median": 285.5839500001166,
+          "p25": 260.583299999882,
+          "p75": 299.40700000012293,
+          "min": 244.76740000001155,
+          "max": 341.9216000000015
+        },
+        "settledActionCompletionMs": {
+          "n": 8,
+          "median": 370.4159500000533,
+          "p25": 341.1314999999595,
+          "p75": 417.90580000000773,
+          "min": 323.7210999999661,
+          "max": 442.0468000001274
+        },
+        "readyRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "settledRequests": {
+          "n": 8,
+          "median": 1,
+          "p25": 1,
+          "p75": 1,
+          "min": 1,
+          "max": 1
+        },
+        "failures": 0,
+        "failedActions": 0,
+        "settlementTimeouts": 0,
+        "categories": {
+          "vercel-function": 8
+        }
+      },
+      "pairedFraMinusIadMs": {
+        "n": 8,
+        "median": -564.5225000000792,
+        "p25": -693.1047999999719,
+        "p75": -485.51725000009174,
+        "min": -1050.748499999987,
+        "max": -424.1728999998886
+      },
+      "fraFasterPairs": 8
+    }
+  ],
+  "functionGroups": [
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 952.4482000000135,
+        "p25": 777.308799999977,
+        "p75": 979.9297000000661,
+        "min": 632.0280000000494,
+        "max": 1202.8109999999979
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 950.5139999999999,
+        "p25": 773.911,
+        "p75": 978.1435,
+        "min": 629.9739999999999,
+        "max": 1201.286
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 1006.6734500000166,
+        "p25": 917.0505500000145,
+        "p75": 1072.5416250000198,
+        "min": 739.1244000000879,
+        "max": 1182.3246
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 1005.2535,
+        "p25": 915.086,
+        "p75": 1070.661,
+        "min": 737.223,
+        "max": 1180.31
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 1665.8735999999917,
+        "p25": 1556.7821000000113,
+        "p75": 1917.485725000004,
+        "min": 1182.214799999958,
+        "max": 2103.5352999999886
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 1663.3035,
+        "p25": 1532.463,
+        "p75": 1914.2785000000001,
+        "min": 1179.4070000000002,
+        "max": 2024.133
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 131.76850000000002,
+        "p25": 126.29575000000011,
+        "p75": 152.37975000000006,
+        "min": 114.3789999999999,
+        "max": 243.375
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 1523.29,
+            "p25": 1346.8200000000002,
+            "p75": 1783.575,
+            "min": 1050.72,
+            "max": 1895.16
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 132.845,
+            "p25": 123.6475,
+            "p75": 207.53,
+            "min": 120.03,
+            "max": 345.98
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 133.45499999999998,
+            "p25": 123.9075,
+            "p75": 208.0475,
+            "min": 120.38,
+            "max": 346.22
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 2443.485,
+            "p25": 2165.92,
+            "p75": 2687.035,
+            "min": 1605.15,
+            "max": 3088.39
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 1522.265,
+            "p25": 1345.6425,
+            "p75": 1782.1475,
+            "min": 1049.72,
+            "max": 1893.86
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 313.21,
+            "p25": 259.235,
+            "p75": 336.28499999999997,
+            "min": 130.3,
+            "max": 353.98
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 936.435,
+            "p25": 857.9775,
+            "p75": 1085.8925000000002,
+            "min": 533.98,
+            "max": 1328.91
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 1649.2960000000312,
+        "p25": 1374.1969750000208,
+        "p75": 1807.3327499999987,
+        "min": 1104.485500000068,
+        "max": 2006.0046999999904
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 1645.2579999999998,
+        "p25": 1370.3225,
+        "p75": 1803.7905,
+        "min": 1101.425,
+        "max": 2002.17
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 158.07149999999984,
+        "p25": 118.25499999999988,
+        "p75": 195.24200000000008,
+        "min": 115.56699999999978,
+        "max": 238.06500000000005
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 1449.825,
+            "p25": 1252.0675,
+            "p75": 1596.3500000000001,
+            "min": 961.07,
+            "max": 1813.54
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 235.37,
+            "p25": 149.36249999999998,
+            "p75": 318.2325,
+            "min": 111.76,
+            "max": 329.6
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 235.68,
+            "p25": 149.6275,
+            "p75": 318.57,
+            "min": 112.06,
+            "max": 329.84
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 2050.355,
+            "p25": 1734.175,
+            "p75": 2315.22,
+            "min": 1387.2,
+            "max": 2764.01
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 1448.125,
+            "p25": 1250.96,
+            "p75": 1595.01,
+            "min": 959.87,
+            "max": 1811.98
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 318,
+            "p25": 141.97,
+            "p75": 325.04249999999996,
+            "min": 138.23,
+            "max": 377.75
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 915.8050000000001,
+            "p25": 774.6225000000001,
+            "p75": 1080.685,
+            "min": 547.32,
+            "max": 1091.7
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "authority.preview",
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 710.9575000000186,
+        "p25": 658.3913750000065,
+        "p75": 745.1588249999913,
+        "min": 485.7730000000447,
+        "max": 948.317200000005
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 707.9425000000001,
+        "p25": 655.54075,
+        "p75": 742.2475,
+        "min": 482.852,
+        "max": 945.744
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 121.40899999999999,
+        "p25": 116.74049999999997,
+        "p75": 142.62000000000003,
+        "min": 112.892,
+        "max": 257.40999999999997
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 577.63,
+            "p25": 517.24,
+            "p75": 590.465,
+            "min": 369.96,
+            "max": 821.95
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 125.275,
+            "p25": 118.10499999999999,
+            "p75": 131.615,
+            "min": 115.04,
+            "max": 319.93
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 125.62,
+            "p25": 118.38499999999999,
+            "p75": 131.8775,
+            "min": 115.29,
+            "max": 321.18
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 446.08,
+            "p25": 391.30999999999995,
+            "p75": 459.61,
+            "min": 250.98,
+            "max": 464.74
+          },
+          "calls": {
+            "n": 8,
+            "median": 2,
+            "p25": 2,
+            "p75": 2,
+            "min": 2,
+            "max": 2
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 574.855,
+            "p25": 514.6175,
+            "p75": 587.8175,
+            "min": 367.56,
+            "max": 782.31
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "body_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.195,
+            "p25": 0.185,
+            "p75": 0.215,
+            "min": 0.15,
+            "max": 0.72
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "body_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 262.555,
+            "p25": 245.9275,
+            "p75": 445.83000000000004,
+            "min": 233.21,
+            "max": 468.01
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "json_parse": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.02,
+            "p25": 0.01,
+            "p75": 0.02,
+            "min": 0.01,
+            "max": 0.05
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "json_parse_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 262.565,
+            "p25": 245.95499999999998,
+            "p75": 445.8425,
+            "min": 233.23,
+            "max": 468.06
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 850.9664500000072,
+        "p25": 831.7005250000511,
+        "p75": 914.495024999982,
+        "min": 804.6659000001382,
+        "max": 1045.4187000000384
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 848.7955,
+        "p25": 829.60825,
+        "p75": 912.21575,
+        "min": 802.78,
+        "max": 1043.055
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 810.907600000035,
+        "p25": 727.896449999942,
+        "p75": 1075.05685000011,
+        "min": 671.6972999999998,
+        "max": 1170.0751000000164
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 808.3075,
+        "p25": 725.889,
+        "p75": 1072.3812500000001,
+        "min": 669.64,
+        "max": 1167.363
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 1860.5441500000888,
+        "p25": 1608.9041500000167,
+        "p75": 1981.9033250000793,
+        "min": 1364.029899999965,
+        "max": 2182.409400000004
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 1845.6,
+        "p25": 1582.2952500000001,
+        "p75": 1956.06,
+        "min": 1333.483,
+        "max": 2167.3830000000003
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 138.485,
+        "p25": 133.64775000000003,
+        "p75": 145.90100000000018,
+        "min": 127.33999999999992,
+        "max": 223.41000000000008
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 1695.49,
+            "p25": 1436.975,
+            "p75": 1805.7475,
+            "min": 1200.28,
+            "max": 2021.89
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 335.255,
+            "p25": 272.2075,
+            "p75": 352.075,
+            "min": 156.13,
+            "max": 361.56
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 335.49,
+            "p25": 272.53000000000003,
+            "p75": 352.3925,
+            "min": 156.37,
+            "max": 361.8
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 2123.085,
+            "p25": 1947.3925000000002,
+            "p75": 2238.595,
+            "min": 1886.14,
+            "max": 2704.08
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 1694.49,
+            "p25": 1436.0100000000002,
+            "p75": 1804.7525,
+            "min": 1199.29,
+            "max": 2020.81
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 232.43,
+            "p25": 134.6925,
+            "p75": 326.8525,
+            "min": 123.7,
+            "max": 342.98
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 1094.5749999999998,
+            "p25": 889.6575,
+            "p75": 1151.5324999999998,
+            "min": 643.77,
+            "max": 1358.81
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 1535.8511500000022,
+        "p25": 1368.1479749999125,
+        "p75": 1713.671074999991,
+        "min": 1178.3301000001375,
+        "max": 1791.968899999978
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 1517.1045000000001,
+        "p25": 1345.05825,
+        "p75": 1694.538,
+        "min": 1158.9170000000001,
+        "max": 1763.705
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 164.62350000000026,
+        "p25": 154.65700000000004,
+        "p75": 168.2575,
+        "min": 134.32200000000012,
+        "max": 228.44100000000003
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 1321.385,
+            "p25": 1194.2475,
+            "p75": 1528.1999999999998,
+            "min": 1009.21,
+            "max": 1590.49
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 117.715,
+            "p25": 112.43,
+            "p75": 127.38499999999999,
+            "min": 109.24,
+            "max": 324.97
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 117.97,
+            "p25": 112.7275,
+            "p75": 127.6225,
+            "min": 109.48,
+            "max": 325.28
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 1878.785,
+            "p25": 1720.62,
+            "p75": 2046.3075000000001,
+            "min": 1562.85,
+            "max": 2466.42
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 1320.1550000000002,
+            "p25": 1193.2125,
+            "p75": 1527.06,
+            "min": 1008.11,
+            "max": 1589.46
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 221.8,
+            "p25": 128.3075,
+            "p75": 301.96999999999997,
+            "min": 118.6,
+            "max": 314.33
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 792.35,
+            "p25": 694.6975,
+            "p75": 922.705,
+            "min": 535.36,
+            "max": 1123.86
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 773.6032000000123,
+        "p25": 572.2774750000681,
+        "p75": 807.7104999999865,
+        "min": 549.1781999999657,
+        "max": 997.1122999999207
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 748.6985000000001,
+        "p25": 554.9665,
+        "p75": 789.80275,
+        "min": 531.491,
+        "max": 993.187
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 155.45749999999998,
+        "p25": 143.68874999999997,
+        "p75": 168.56025000000005,
+        "min": 135.11400000000003,
+        "max": 214.71300000000008
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 573.7850000000001,
+            "p25": 394.675,
+            "p75": 632.315,
+            "min": 387.79,
+            "max": 816.46
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 131.985,
+            "p25": 119.7175,
+            "p75": 209.6,
+            "min": 113.13,
+            "max": 319.74
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 132.245,
+            "p25": 119.95,
+            "p75": 209.84,
+            "min": 113.45,
+            "max": 320.05
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 372.81,
+            "p25": 265.305,
+            "p75": 475.6025,
+            "min": 253.47,
+            "max": 493.28
+          },
+          "calls": {
+            "n": 8,
+            "median": 2,
+            "p25": 2,
+            "p75": 2,
+            "min": 2,
+            "max": 2
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 571.4200000000001,
+            "p25": 392.3675,
+            "p75": 630.02,
+            "min": 385.38,
+            "max": 814.43
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "body_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.13,
+            "p25": 0.1075,
+            "p75": 0.14,
+            "min": 0.1,
+            "max": 0.16
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "body_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 281.275,
+            "p25": 261.84749999999997,
+            "p75": 436.33750000000003,
+            "min": 234.07,
+            "max": 472.47
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "json_parse": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.02,
+            "p25": 0.01,
+            "p75": 0.02,
+            "min": 0.01,
+            "max": 0.03
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "json_parse_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 281.3,
+            "p25": 261.8675,
+            "p75": 436.3575,
+            "min": 234.08,
+            "max": 472.48
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 311.0540500000352,
+        "p25": 260.3605499999976,
+        "p75": 374.09075000000666,
+        "min": 251.37719999998808,
+        "max": 486.5485000000044
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 309.15250000000003,
+        "p25": 258.60575,
+        "p75": 372.36175,
+        "min": 249.64999999999998,
+        "max": 485.34200000000004
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 366.04490000000806,
+        "p25": 325.5590000000011,
+        "p75": 402.5909500000198,
+        "min": 207.37979999999516,
+        "max": 573.1450999999652
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 364.121,
+        "p25": 323.86175000000003,
+        "p75": 401.16025,
+        "min": 205.51799999999997,
+        "max": 566.9350000000001
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "exchange.entry",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 433.7632500000109,
+        "p25": 422.7220250000537,
+        "p75": 461.076774999965,
+        "min": 386.516100000008,
+        "max": 597.1322999999975
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 431.156,
+        "p25": 420.2935,
+        "p75": 458.04675000000003,
+        "min": 383.969,
+        "max": 593.893
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 137.6845,
+        "p25": 101.71675,
+        "p75": 144.31,
+        "min": 86.58400000000006,
+        "max": 149.52300000000002
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 310.135,
+            "p25": 289.045,
+            "p75": 341.9575,
+            "min": 279.38,
+            "max": 444.37
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 43.515,
+            "p25": 33.2425,
+            "p75": 46.445,
+            "min": 24.91,
+            "max": 55.6
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 43.76,
+            "p25": 33.4975,
+            "p75": 46.69,
+            "min": 25.87,
+            "max": 55.84
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 568.1600000000001,
+            "p25": 556.3824999999999,
+            "p75": 650.53,
+            "min": 534.64,
+            "max": 683.36
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 308.48,
+            "p25": 287.78499999999997,
+            "p75": 340.8025,
+            "min": 277.94,
+            "max": 443.35
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 31.89,
+            "p25": 30.0975,
+            "p75": 34.47,
+            "min": 26.8,
+            "max": 43.31
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 160.735,
+            "p25": 148.635,
+            "p75": 189.345,
+            "min": 131.51,
+            "max": 195.87
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "legal.context_get",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 417.0825999999943,
+        "p25": 395.5780749999394,
+        "p75": 434.7966249999736,
+        "min": 303.7509999999893,
+        "max": 463.23279999999795
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 413.185,
+        "p25": 392.35949999999997,
+        "p75": 420.4285,
+        "min": 299.471,
+        "max": 460.382
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 125.89099999999999,
+        "p25": 120.78425,
+        "p75": 141.37725,
+        "min": 88.971,
+        "max": 178.98600000000002
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 269.89,
+            "p25": 239.5325,
+            "p75": 296.065,
+            "min": 210.5,
+            "max": 334.35
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 36.795,
+            "p25": 29.045,
+            "p75": 38.3675,
+            "min": 26.6,
+            "max": 47.27
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 37.07,
+            "p25": 29.28,
+            "p75": 38.7175,
+            "min": 27.03,
+            "max": 47.58
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 416.585,
+            "p25": 385.4375,
+            "p75": 442.8975,
+            "min": 360.18,
+            "max": 500.47
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 268.74,
+            "p25": 238.46249999999998,
+            "p75": 294.7925,
+            "min": 209.59,
+            "max": 333.11
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 36.30500000000001,
+            "p25": 32.595,
+            "p75": 38.834999999999994,
+            "min": 25.09,
+            "max": 92.19
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 150.89,
+            "p25": 144.5125,
+            "p75": 164.5825,
+            "min": 122.56,
+            "max": 197.83
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "authority.preview",
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 243.15010000002803,
+        "p25": 226.94024999999237,
+        "p75": 265.74520000000484,
+        "min": 214.22259999997914,
+        "max": 369.46790000004694
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 240.09249999999997,
+        "p25": 224.31775,
+        "p75": 262.7415,
+        "min": 211.61,
+        "max": 366.533
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 130.323,
+        "p25": 116.44225000000002,
+        "p75": 138.36725,
+        "min": 95.47699999999999,
+        "max": 176.47199999999998
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 110.395,
+            "p25": 107.26,
+            "p75": 114.98,
+            "min": 91.48,
+            "max": 245.97
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 30.015,
+            "p25": 22.1175,
+            "p75": 33.512499999999996,
+            "min": 19.4,
+            "max": 133.7
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 30.285,
+            "p25": 22.447499999999998,
+            "p75": 33.7825,
+            "min": 20.55,
+            "max": 134.9
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 73.535,
+            "p25": 68.95249999999999,
+            "p75": 77.4225,
+            "min": 60.55,
+            "max": 107.42
+          },
+          "calls": {
+            "n": 8,
+            "median": 2,
+            "p25": 2,
+            "p75": 2,
+            "min": 2,
+            "max": 2
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 105.69,
+            "p25": 100.2225,
+            "p75": 109.7975,
+            "min": 83.34,
+            "max": 243.59
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "body_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.175,
+            "p25": 0.1475,
+            "p75": 0.1925,
+            "min": 0.13,
+            "max": 0.52
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "body_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 60.885000000000005,
+            "p25": 56.625,
+            "p75": 71.145,
+            "min": 42.54,
+            "max": 201.73
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "json_parse": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.015,
+            "p25": 0.01,
+            "p75": 0.02,
+            "min": 0.01,
+            "max": 0.04
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "json_parse_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 60.905,
+            "p25": 56.6375,
+            "p75": 71.16499999999999,
+            "min": 42.58,
+            "max": 201.74
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 257.0257499999134,
+        "p25": 233.53689999994822,
+        "p75": 291.14917499996955,
+        "min": 198.22329999995418,
+        "max": 333.8967999999877
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 253.71550000000002,
+        "p25": 227.26999999999998,
+        "p75": 288.79475,
+        "min": 195,
+        "max": 331.62199999999996
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "endpoint": "/api/auth/activity",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 239.86475000006612,
+        "p25": 222.23399999999674,
+        "p75": 242.40727499994682,
+        "min": 216.60740000009537,
+        "max": 244.16609999991488
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 237.56799999999998,
+        "p25": 219.952,
+        "p75": 240.14125,
+        "min": 214.435,
+        "max": 242.014
+      },
+      "nonRouteTtfbMs": {
+        "n": 0,
+        "median": null,
+        "p25": null,
+        "p75": null,
+        "min": null,
+        "max": null
+      },
+      "spans": {},
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "exchange.entry",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 418.5722000000533,
+        "p25": 392.38570000010077,
+        "p75": 452.3791500001098,
+        "min": 379.95230000000447,
+        "max": 524.2079999998678
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 403.387,
+        "p25": 364.43674999999996,
+        "p75": 430.16200000000003,
+        "min": 357.741,
+        "max": 509.325
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 73.826,
+        "p25": 61.218999999999994,
+        "p75": 78.72574999999996,
+        "min": 53.525000000000034,
+        "max": 91.21499999999997
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 329.11,
+            "p25": 304.6675,
+            "p75": 370.6525,
+            "min": 285.26,
+            "max": 418.11
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 58.260000000000005,
+            "p25": 49.76,
+            "p75": 70.5,
+            "min": 44.78,
+            "max": 77.93
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 58.485,
+            "p25": 50.15,
+            "p75": 70.7375,
+            "min": 45.01,
+            "max": 78.17
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 556.485,
+            "p25": 520.695,
+            "p75": 637.4025,
+            "min": 504.83,
+            "max": 677.82
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 328.15999999999997,
+            "p25": 303.515,
+            "p75": 369.6625,
+            "min": 284.35,
+            "max": 417.19
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 31.020000000000003,
+            "p25": 29.345,
+            "p75": 35.33,
+            "min": 25.16,
+            "max": 45.91
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 194.83499999999998,
+            "p25": 188.07,
+            "p75": 210.785,
+            "min": 175.8,
+            "max": 266.1
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "legal.context_get",
+      "endpoint": "/api/sales/legal",
+      "method": "GET",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 346.6645499999868,
+        "p25": 332.5672750000376,
+        "p75": 380.5969000000041,
+        "min": 308.66849999991246,
+        "max": 463.53899999998976
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 320.221,
+        "p25": 310.82675,
+        "p75": 363.14250000000004,
+        "min": 283.318,
+        "max": 445.876
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 79.09099999999998,
+        "p25": 69.16399999999997,
+        "p75": 100.20875000000001,
+        "min": 50.607999999999976,
+        "max": 213.62599999999998
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 234.235,
+            "p25": 227.7,
+            "p75": 260.725,
+            "min": 191.78,
+            "max": 290.23
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 32.105000000000004,
+            "p25": 21.08,
+            "p75": 44.019999999999996,
+            "min": 18.9,
+            "max": 61.7
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 32.365,
+            "p25": 21.36,
+            "p75": 44.3225,
+            "min": 19.23,
+            "max": 61.97
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 366.875,
+            "p25": 346.3225,
+            "p75": 431.63,
+            "min": 330.96,
+            "max": 454.59
+          },
+          "calls": {
+            "n": 8,
+            "median": 9,
+            "p25": 9,
+            "p75": 9,
+            "min": 9,
+            "max": 9
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 233.34,
+            "p25": 226.78,
+            "p75": 259.89,
+            "min": 190.71,
+            "max": 289.35
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_mutation": {
+          "durationMs": {
+            "n": 8,
+            "median": 28.145000000000003,
+            "p25": 24.8375,
+            "p75": 31.67,
+            "min": 21.53,
+            "max": 55.74
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "db_mutation_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 140.655,
+            "p25": 130.2225,
+            "p75": 153.7625,
+            "min": 115.2,
+            "max": 171.41
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "authority.preview",
+      "endpoint": "/api/sales/legal",
+      "method": "POST",
+      "n": 8,
+      "durationMs": {
+        "n": 8,
+        "median": 215.7333000000217,
+        "p25": 201.3916999999783,
+        "p75": 237.17017500009388,
+        "min": 190.66090000001714,
+        "max": 266.5712999999523
+      },
+      "ttfbMs": {
+        "n": 8,
+        "median": 194.40800000000002,
+        "p25": 185.79949999999997,
+        "p75": 218.90650000000002,
+        "min": 173.125,
+        "max": 249.153
+      },
+      "nonRouteTtfbMs": {
+        "n": 8,
+        "median": 88.9135,
+        "p25": 81.94174999999998,
+        "p75": 96.4225,
+        "min": 62.465,
+        "max": 101.20100000000001
+      },
+      "spans": {
+        "route": {
+          "durationMs": {
+            "n": 8,
+            "median": 112.475,
+            "p25": 99.275,
+            "p75": 119.655,
+            "min": 92.99,
+            "max": 167.13
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "auth": {
+          "durationMs": {
+            "n": 8,
+            "median": 37.129999999999995,
+            "p25": 36.487500000000004,
+            "p75": 43.082499999999996,
+            "min": 29.77,
+            "max": 99.99
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "auth_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 37.370000000000005,
+            "p25": 36.7325,
+            "p75": 43.3125,
+            "min": 30,
+            "max": 101.11
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "db_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 61.935,
+            "p25": 60.54,
+            "p75": 68.6825,
+            "min": 53.2,
+            "max": 90.91
+          },
+          "calls": {
+            "n": 8,
+            "median": 2,
+            "p25": 2,
+            "p75": 2,
+            "min": 2,
+            "max": 2
+          }
+        },
+        "db_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 110.435,
+            "p25": 97.14,
+            "p75": 117.4025,
+            "min": 90.72,
+            "max": 164.91
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "body_read": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.125,
+            "p25": 0.1075,
+            "p75": 0.1575,
+            "min": 0.09,
+            "max": 0.19
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "body_read_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 70.315,
+            "p25": 62.265,
+            "p75": 77.2175,
+            "min": 50.89,
+            "max": 128.12
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        },
+        "json_parse": {
+          "durationMs": {
+            "n": 8,
+            "median": 0.015,
+            "p25": 0.01,
+            "p75": 0.02,
+            "min": 0.01,
+            "max": 0.03
+          },
+          "calls": {
+            "n": 8,
+            "median": 1,
+            "p25": 1,
+            "p75": 1,
+            "min": 1,
+            "max": 1
+          }
+        },
+        "json_parse_end": {
+          "durationMs": {
+            "n": 8,
+            "median": 70.33500000000001,
+            "p25": 62.290000000000006,
+            "p75": 77.22749999999999,
+            "min": 50.92,
+            "max": 128.14
+          },
+          "calls": {
+            "n": 0,
+            "median": null,
+            "p25": null,
+            "p75": null,
+            "min": null,
+            "max": null
+          }
+        }
+      },
+      "regionMatches": 8,
+      "failures": 0
+    }
+  ],
+  "navigationPhases": [
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 248.78474999999162,
+        "p25": 232.89427499996964,
+        "p75": 368.7802250000168,
+        "min": 226.18250000000262,
+        "max": 798.6269000000029
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 361.9260999999533,
+        "p25": 334.35062500002095,
+        "p75": 514.3187750000216,
+        "min": 328.32190000000264,
+        "max": 966.2673000000068
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 1967.0595000000249,
+        "p25": 1934.8398250000173,
+        "p75": 2320.209350000063,
+        "min": 1894.204299999983,
+        "max": 3148.6315000000177
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "iad1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 50.910450000010314,
+        "p25": 47.71442500001285,
+        "p75": 59.841599999999744,
+        "min": 42.91119999997318,
+        "max": 129.30489999998827
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 118.56895000001532,
+        "p25": 98.91010000003735,
+        "p75": 148.9111749999829,
+        "min": 95.26870000001509,
+        "max": 185.59349999998813
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 1601.311800000025,
+        "p25": 1510.5857000000542,
+        "p75": 1627.205025000003,
+        "min": 1416.7020000000193,
+        "max": 2084.785199999984
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 3401.5340500000166,
+        "p25": 3398.3152000001573,
+        "p75": 3403.4026750000776,
+        "min": 3377.2102000000887,
+        "max": 3417.465599999996
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 3640.6434500000323,
+        "p25": 3632.364375000121,
+        "p75": 3647.8976499999408,
+        "min": 3625.619799999986,
+        "max": 3648.7802000000374
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 6762.023250000086,
+        "p25": 6727.401425000047,
+        "p75": 6789.1389999999665,
+        "min": 6642.235500000184,
+        "max": 6824.011399999959
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "iad1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 362.98439999995753,
+        "p25": 359.8943999998737,
+        "p75": 369.96467500005383,
+        "min": 341.41849999991246,
+        "max": 374.1481999999378
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 466.1836999999359,
+        "p25": 461.6760499999509,
+        "p75": 471.2482749999617,
+        "min": 456.9703000000445,
+        "max": 473.4287999998778
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 3472.605450000032,
+        "p25": 3449.389675000042,
+        "p75": 3527.699125000043,
+        "min": 3406.461899999995,
+        "max": 3647.9867000000086
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.cold",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 1312.6644499999966,
+        "p25": 1140.336100000015,
+        "p75": 1617.8227249999763,
+        "min": 447.6215999999986,
+        "max": 2529.3480000000563
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 1580.6898499999952,
+        "p25": 1317.622924999945,
+        "p75": 1819.194824999995,
+        "min": 605.7685999999958,
+        "max": 2827.2723000000115
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 4156.644049999944,
+        "p25": 3305.2017249999335,
+        "p75": 4331.364375000016,
+        "min": 3082.648199999996,
+        "max": 5924.1054
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "fra1",
+      "profile": "desktop",
+      "action": "navigation.repeat",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 164.22255000000587,
+        "p25": 129.36302499994054,
+        "p75": 180.87094999998226,
+        "min": 87.15200000000186,
+        "max": 220.22729999999865
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 226.9854500000074,
+        "p25": 182.8422000000137,
+        "p75": 235.95685000005324,
+        "min": 148.82670000003418,
+        "max": 268.0419000000111
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 2130.4768500000355,
+        "p25": 1975.4173499999997,
+        "p75": 2289.145149999982,
+        "min": 1809.703600000008,
+        "max": 2618.186300000001
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.cold",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 3402.1898999999976,
+        "p25": 3398.392824999988,
+        "p75": 3409.5329499999934,
+        "min": 3390.0261000001337,
+        "max": 3424.1186000001617
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 3645.9250999998767,
+        "p25": 3639.3619249998883,
+        "p75": 3650.9967250000336,
+        "min": 3627.7933000000194,
+        "max": 3680.4321000000928
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 6739.334799999953,
+        "p25": 6734.544850000006,
+        "p75": 6837.35792499996,
+        "min": 6705.944799999939,
+        "max": 7126.540400000056
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    },
+    {
+      "region": "fra1",
+      "profile": "mobile-throttled",
+      "action": "navigation.repeat",
+      "n": 8,
+      "staticLastEndMs": {
+        "n": 8,
+        "median": 371.8148499999661,
+        "p25": 361.666300000099,
+        "p75": 373.3796250000887,
+        "min": 343.877000000095,
+        "max": 375.67359999986365
+      },
+      "supabaseFirstStartMs": {
+        "n": 8,
+        "median": 470.82700000004843,
+        "p25": 467.0394999998971,
+        "p75": 471.4296499999764,
+        "min": 457.49380000005476,
+        "max": 474.3295999998227
+      },
+      "supabaseLastEndMs": {
+        "n": 8,
+        "median": 3456.696099999943,
+        "p25": 3446.190575000015,
+        "p75": 3473.7472249998827,
+        "min": 3402.5953000000445,
+        "max": 3794.5463000000454
+      },
+      "staticCacheHits": 112,
+      "staticRequestCount": 112
+    }
+  ],
+  "verification": {
+    "measuredFunctionRequests": 160,
+    "matchingExecutionRegion": 160,
+    "missingRegion": 0,
+    "mismatchedRegion": 0,
+    "edgeRegions": [
+      "lhr1"
+    ],
+    "executionRegions": [
+      "iad1",
+      "fra1"
+    ]
+  },
+  "sampleCount": 192,
+  "storageRequests": 0,
+  "failures": 0
+}

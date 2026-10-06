@@ -1,0 +1,55 @@
+{
+  "completed": true,
+  "unchanged": true,
+  "before": {
+    "attempts": "3f6c9ed15142adbda3b8ceadc243059e7a0ce22016a2d1b5468bdc39a837d498",
+    "units": "c091d974db333204ed816071ad35ad7c46938815e12fe6da6832631ca93490d9",
+    "emails": "549b0e587d97dc8713feee38689e51b2dee0c3dec7d8768b7008dfc79730f436",
+    "events": "30761500de4c1127912a8c9a8c7b611b48545135df4ba84c4fd3bc1763a3d944",
+    "documents": "b626edb93fe31c198a55171f799de7d96b2d8962064562b3399c70b94e708414"
+  },
+  "after": {
+    "attempts": "3f6c9ed15142adbda3b8ceadc243059e7a0ce22016a2d1b5468bdc39a837d498",
+    "units": "c091d974db333204ed816071ad35ad7c46938815e12fe6da6832631ca93490d9",
+    "emails": "549b0e587d97dc8713feee38689e51b2dee0c3dec7d8768b7008dfc79730f436",
+    "events": "30761500de4c1127912a8c9a8c7b611b48545135df4ba84c4fd3bc1763a3d944",
+    "documents": "b626edb93fe31c198a55171f799de7d96b2d8962064562b3399c70b94e708414"
+  },
+  "violations": 0,
+  "browser": "149.0.7827.55",
+  "fixtures": [
+    107,
+    108,
+    109,
+    110
+  ],
+  "readOnly": true,
+  "profiles": "mobile-throttled",
+  "variants": {
+    "before": {
+      "origin": "https://bunnywell-portal-nlg51jyrp-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+      "commit": "87d83c7eda8bb2ff9df4d63b7a5760b9c7abd52d",
+      "region": "iad1"
+    }
+  },
+  "gates": [
+    {
+      "variant": "before",
+      "profile": "mobile-throttled",
+      "run": 1,
+      "exchangeDisplayed": true,
+      "sampledRegions": []
+    }
+  ],
+  "sessions": [
+    {
+      "variant": "before",
+      "profile": "mobile-throttled",
+      "projects": [
+        "vxkpvdtrldwwqiddoyof.supabase.co"
+      ],
+      "pageErrors": 0
+    }
+  ]
+}

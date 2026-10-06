@@ -1,0 +1,11 @@
+{
+  "environment": "staging",
+  "unauthenticatedEndpointStatus": 401,
+  "expiredFixtureCleaned": true,
+  "quarantineRemoved": true,
+  "unregisteredFinalCopyRemoved": true,
+  "issuedCapabilities": 0,
+  "authenticatedEndpointVerified": false,
+  "workerVerified": true,
+  "remaining": "Authenticated deployed endpoint check needs staging CRON_SECRET. Vercel preview cron scheduling does not run automatically."
+}

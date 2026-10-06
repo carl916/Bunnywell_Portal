@@ -8,6 +8,7 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: "**/diagnostics/**",
   timeout: 90_000,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

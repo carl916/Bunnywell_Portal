@@ -4,8 +4,10 @@ import type { AppRole } from "@/lib/data/production";
 import { canCreateSaleAttempt } from "@/lib/units/commercial-allocation";
 import { canPerformSalesAction, canViewSalesBuilding, isSalesInternalRole } from "@/lib/sales/permissions";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
+
 import { buildDepositStructure, buildPaymentScheduleRows, paymentScheduleSummary } from "@/lib/sales/deal-structure";
 import { parseGbpInput } from "@/lib/sales/currency";
+import { parsePercentInput } from "@/lib/sales/percentages";
 import { calculateMilestoneFee, validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { createSupabaseServiceRoleClient, requiredEnv } from "@/lib/supabase/admin";
 
@@ -109,9 +111,7 @@ function normaliseMoney(value?: string | number | null) {
 }
 
 function normalisePercent(value?: string | number | null) {
-  const numeric = normaliseMoney(value);
-  if (numeric === null || numeric > 100) return null;
-  return numeric;
+  return parsePercentInput(value);
 }
 
 function normaliseInteger(value?: string | number | null) {
@@ -191,18 +191,7 @@ function calculateAgentInvoiceValues(input: {
   };
 }
 
-function calculateScheduleAmount(row: {
-  expected_amount?: number | null;
-  fixed_amount?: number | null;
-  percent_of_contract_price?: number | null;
-}, contractPrice?: number | null) {
-  if (row.expected_amount !== null && row.expected_amount !== undefined) return Number(row.expected_amount);
-  if (row.fixed_amount !== null && row.fixed_amount !== undefined) return Number(row.fixed_amount);
-  if (row.percent_of_contract_price !== null && row.percent_of_contract_price !== undefined && contractPrice) {
-    return Number(contractPrice) * (Number(row.percent_of_contract_price) / 100);
-  }
-  return 0;
-}
+
 
 async function getRequester(request: Request, adminClient: SupabaseClient) {
   const token = request.headers.get("authorization")?.replace("Bearer ", "");
@@ -399,7 +388,7 @@ function termsSnapshotFromDefaults(input: {
   const payloadExchangeDeposit = usePayloadCommercials ? normalisePercent(payload?.exchangeDepositPercent) : null;
   const payloadSecondDepositPercent = usePayloadCommercials ? normalisePercent(payload?.secondDepositPercent) : null;
   const payloadSecondDepositMonths = usePayloadCommercials ? normaliseInteger(payload?.secondDepositMonthsAfterExchange) : null;
-  const payloadSecondDepositEnabled = usePayloadCommercials ? Boolean(payload?.secondDepositEnabled) : null;
+  const payloadSecondDepositEnabled = usePayloadCommercials && hasPayloadValue("secondDepositEnabled") ? Boolean(payload?.secondDepositEnabled) : null;
 
   const currentContractPrice = toNullableNumber(currentTerms?.contract_price ?? currentTerms?.list_price_at_offer);
   const contractPrice = usePayloadCommercials
@@ -432,14 +421,19 @@ function termsSnapshotFromDefaults(input: {
   });
 
   if (!depositStructure.isValid) throw new Error(depositStructure.error ?? "Payment schedule is invalid.");
+  for (const key of ["agentFeePercent", "exchangeAgentFeePercent", "completionAgentFeePercent"] as const) {
+    if (usePayloadCommercials && hasPayloadValue(key) && payload?.[key] !== null && payload?.[key] !== undefined && payload[key]?.toString().trim() !== "" && normalisePercent(payload[key]) === null) {
+      throw new Error("Agent fee percentages must be numbers between 0% and 100%.");
+    }
+  }
   const totalAgentFeePercent = usePayloadCommercials && hasPayloadValue("agentFeePercent")
-    ? normalisePercent(payload?.agentFeePercent)
+    ? normalisePercent(payload?.agentFeePercent) ?? Number(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent ?? 0)
     : Number(currentTerms?.agent_fee_percent ?? defaults?.default_agent_fee_percent ?? 0);
   const exchangeAgentFeePercent = usePayloadCommercials && hasPayloadValue("exchangeAgentFeePercent")
-    ? normalisePercent(payload?.exchangeAgentFeePercent)
+    ? normalisePercent(payload?.exchangeAgentFeePercent) ?? Number(currentTerms?.exchange_agent_fee_percent ?? defaults?.default_exchange_agent_fee_percent ?? totalAgentFeePercent ?? 0)
     : Number(currentTerms?.exchange_agent_fee_percent ?? defaults?.default_exchange_agent_fee_percent ?? totalAgentFeePercent ?? 0);
   const completionAgentFeePercent = usePayloadCommercials && hasPayloadValue("completionAgentFeePercent")
-    ? normalisePercent(payload?.completionAgentFeePercent)
+    ? normalisePercent(payload?.completionAgentFeePercent) ?? Number(currentTerms?.completion_agent_fee_percent ?? defaults?.default_completion_agent_fee_percent ?? 0)
     : Number(currentTerms?.completion_agent_fee_percent ?? defaults?.default_completion_agent_fee_percent ?? 0);
   const feeStructure = validateAgentFeeStructure({
     totalFeePercent: totalAgentFeePercent,
@@ -728,7 +722,6 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   }
   await ensureSaleDocumentsBucket(adminClient);
 
-  const isReplacement = Boolean(document);
   if (!document) {
     const { data, error } = await adminClient.from("unit_sale_documents").insert({
       sale_attempt_id: saleAttemptId,
@@ -746,6 +739,7 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
     const { error } = await adminClient.from("unit_sale_documents").update({
       status: "uploaded",
       query_note: null,
+      ...(requiredAction === "submit_completion_documents" ? { approved_at: null, approved_by_user_id: null } : {}),
       updated_by_user_id: requester.id,
       updated_at: new Date().toISOString(),
     }).eq("id", document.id);
@@ -787,11 +781,8 @@ async function uploadSaleDocument(adminClient: SupabaseClient, requester: Reques
   });
   if (insertVersionError) throw insertVersionError;
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: isReplacement ? `${documentType}_replaced` : `${documentType}_uploaded`,
-    summary: `${documentTitle} ${isReplacement ? "replaced" : "uploaded"}.`,
-    metadata: { fileName: safeFileName, versionNumber, feeMilestone },
-  });
+  // The version insert records a document-specific event in the same database
+  // transaction, including the exact version ID and filename.
 
   return { saleAttemptId, documentId: document.id };
 }
@@ -913,26 +904,7 @@ async function uploadAgentInvoice(adminClient: SupabaseClient, requester: Reques
   return result;
 }
 
-async function uploadCompletionDocument(adminClient: SupabaseClient, requester: Requester, formData: FormData) {
-  const documentType = formData.get("documentType")?.toString();
-  if (documentType !== "completion_statement" && documentType !== "statement_of_account") {
-    throw new Error("Choose a valid completion document type.");
-  }
 
-  const saleAttemptId = formData.get("saleAttemptId")?.toString();
-  if (!saleAttemptId) throw new Error("Sale attempt is required.");
-  const attempt = await loadSaleAttempt(adminClient, saleAttemptId);
-  if (attempt.workflow_status !== "exchanged") {
-    throw new Error("Exchange must be recorded before completion documents are uploaded.");
-  }
-
-  return uploadSaleDocument(adminClient, requester, formData, {
-    documentType,
-    documentTitle: documentType === "completion_statement" ? "Completion statement" : "Statement of account",
-    requiredAction: "submit_completion_documents",
-    storagePrefix: documentType === "completion_statement" ? "completion-statement" : "statement-of-account",
-  });
-}
 
 async function approveReservation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "approve_reservation")) throw new Error("Only developers can approve reservations.");
@@ -952,7 +924,7 @@ async function approveReservation(adminClient: SupabaseClient, requester: Reques
 
   const { data: reservationVersion, error: reservationVersionError } = await adminClient
     .from("unit_sale_document_versions")
-    .select("id,unit_sale_documents!inner(sale_attempt_id,document_type)")
+    .select("id,unit_sale_documents!unit_sale_document_versions_document_id_fkey!inner(sale_attempt_id,document_type)")
     .eq("unit_sale_documents.sale_attempt_id", attempt.id)
     .eq("unit_sale_documents.document_type", "reservation_form")
     .eq("is_current", true)
@@ -1318,46 +1290,6 @@ async function markMilestoneInvoiceRejected(adminClient: SupabaseClient, request
   if (invoiceError) throw invoiceError;
 }
 
-async function approveCommercialPackage(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "approve_commercial_package")) throw new Error("Only developers can approve the commercial package.");
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
-
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt.workflow_status)) {
-    throw new Error("Approve the reservation before commercial approval.");
-  }
-
-  const currentTerms = await currentTermsForAttempt(adminClient, attempt.id);
-  if (!currentTerms?.contract_price) throw new Error("Contract price is required before commercial approval.");
-
-  const now = new Date().toISOString();
-  const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
-    workflow_status: "ready_for_exchange",
-    commercial_approved_at: now,
-    commercial_approved_by_user_id: requester.id,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", attempt.id).select("*").single();
-  if (attemptError) throw attemptError;
-
-  await adminClient.from("unit_sale_terms").update({
-    status: "approved",
-    approved_by_user_id: requester.id,
-    approved_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", currentTerms.id);
-
-  await insertEvent(adminClient, attempt, requester, {
-    type: "commercial_package_approved",
-    toStatus: "ready_for_exchange",
-    summary: "Commercial package approved. Sale is Ready for Exchange.",
-  });
-
-  return { saleAttemptId: updatedAttempt.id };
-}
-
 async function approveAgentInvoice(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "approve_agent_invoice")) throw new Error("Only developers can approve agent invoices.");
   if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
@@ -1430,48 +1362,7 @@ async function rejectAgentInvoice(adminClient: SupabaseClient, requester: Reques
   return { saleAttemptId: attempt.id };
 }
 
-async function recordExchange(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "record_exchange")) throw new Error("Only developers or conveyancers can record exchange.");
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
 
-  const exchangeDate = normaliseDate(payload.exchangeDate);
-  if (!exchangeDate) throw new Error("Enter a valid exchange date.");
-  if (payload.exchangeDepositConfirmed !== true) throw new Error("Confirm that the exchange deposit has been received.");
-  const today = new Date().toISOString().slice(0, 10);
-  if (exchangeDate > today) throw new Error("Exchange date cannot be in the future.");
-
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (!["ready_for_exchange", "exchanged"].includes(attempt.workflow_status)) {
-    throw new Error("Commercial approval is required before recording exchange.");
-  }
-
-  const now = new Date().toISOString();
-  const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
-    workflow_status: "exchanged",
-    exchanged_at: exchangeDate,
-    stage_entered_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", attempt.id).select("*").single();
-  if (attemptError) throw attemptError;
-
-  await applyProtectedSaleStatus(adminClient, requester, {
-    rpc: "sales_workflow_mark_unit_exchanged",
-    unitId: attempt.unit_id,
-    saleAttemptId: attempt.id,
-    source: "exchange_recorded",
-  });
-
-  await insertEvent(adminClient, attempt, requester, {
-    type: "exchange_recorded",
-    toStatus: "exchanged",
-    summary: "Exchange recorded. Unit marked Exchanged.",
-    metadata: { exchangeDate, exchangeDepositConfirmed: true },
-  });
-
-  return { saleAttemptId: updatedAttempt.id };
-}
 
 async function recordAgentFeePayment(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "record_agent_fee_payment")) {
@@ -1593,169 +1484,17 @@ async function voidAgentFeePayment(adminClient: SupabaseClient, requester: Reque
   };
 }
 
-async function loadCompletionDocuments(adminClient: SupabaseClient, saleAttemptId: string) {
-  const { data, error } = await adminClient
-    .from("unit_sale_documents")
-    .select("id,document_type,status")
-    .eq("sale_attempt_id", saleAttemptId)
-    .in("document_type", ["completion_statement", "statement_of_account"])
-    .is("redacted_at", null);
-  if (error) throw error;
-  return data ?? [];
-}
 
-async function currentDocumentVersionExists(adminClient: SupabaseClient, documentId: string) {
-  const { data, error } = await adminClient
-    .from("unit_sale_document_versions")
-    .select("id")
-    .eq("document_id", documentId)
-    .eq("is_current", true)
-    .is("redacted_at", null)
-    .maybeSingle();
-  if (error) throw error;
-  return Boolean(data);
-}
 
-async function approveCompletionDocuments(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "approve_completion_documents")) throw new Error("Only developers can approve completion documents.");
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
 
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (attempt.workflow_status === "completed") return { saleAttemptId: attempt.id, alreadyApproved: true };
-  if (!["exchanged", "completion_pending"].includes(attempt.workflow_status)) {
-    throw new Error("Exchange must be recorded before completion documents can be approved.");
-  }
 
-  const completionDocuments = await loadCompletionDocuments(adminClient, attempt.id);
-  const completionStatement = completionDocuments.find((document) => document.document_type === "completion_statement");
-  const statementOfAccount = completionDocuments.find((document) => document.document_type === "statement_of_account");
-  if (completionStatement?.status === "approved" && statementOfAccount?.status === "approved") {
-    return { saleAttemptId: attempt.id, alreadyApproved: true };
-  }
-  if (!completionStatement || !(await currentDocumentVersionExists(adminClient, completionStatement.id))) {
-    throw new Error("Upload the completion statement before approval.");
-  }
-  if (!statementOfAccount || !(await currentDocumentVersionExists(adminClient, statementOfAccount.id))) {
-    throw new Error("Upload the statement of account before approval.");
-  }
 
-  const now = new Date().toISOString();
-  const documentIds = [completionStatement.id, statementOfAccount.id];
-  const { error: documentError } = await adminClient.from("unit_sale_documents").update({
-    status: "approved",
-    query_note: null,
-    approved_by_user_id: requester.id,
-    approved_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).in("id", documentIds);
-  if (documentError) throw documentError;
 
-  const { error: attemptError } = await adminClient.from("unit_sale_attempts").update({
-    workflow_status: attempt.workflow_status === "completed" ? "completed" : "completion_pending",
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", attempt.id);
-  if (attemptError) throw attemptError;
 
-  await insertEvent(adminClient, attempt, requester, {
-    type: "completion_documents_approved",
-    toStatus: attempt.workflow_status === "completed" ? "completed" : "completion_pending",
-    summary: "Completion statement and statement of account approved.",
-  });
 
-  return { saleAttemptId: attempt.id };
-}
 
-async function queryCompletionDocuments(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "approve_completion_documents")) throw new Error("Only developers can query completion documents.");
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
-  const queryNote = normaliseText(payload.completionQueryNote);
-  if (!queryNote) throw new Error("Add a completion document query note.");
 
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (attempt.workflow_status !== "exchanged") {
-    throw new Error("Exchange must be recorded before completion documents can be queried.");
-  }
-
-  const completionDocuments = await loadCompletionDocuments(adminClient, attempt.id);
-  if (completionDocuments.length === 0) throw new Error("Upload completion documents before raising a query.");
-
-  const now = new Date().toISOString();
-  const { error: documentError } = await adminClient.from("unit_sale_documents").update({
-    status: "query_raised",
-    query_note: queryNote,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).in("id", completionDocuments.map((document) => document.id));
-  if (documentError) throw documentError;
-
-  await adminClient.from("unit_sale_notes").insert({
-    sale_attempt_id: attempt.id,
-    building_id: attempt.building_id,
-    unit_id: attempt.unit_id,
-    category: "solicitor_update",
-    visibility: "shared_sale_file",
-    body: queryNote,
-    created_by_user_id: requester.id,
-  });
-
-  await insertEvent(adminClient, attempt, requester, {
-    type: "completion_documents_query_raised",
-    toStatus: attempt.workflow_status,
-    summary: "Completion document query raised.",
-    metadata: { queryNote },
-  });
-
-  return { saleAttemptId: attempt.id };
-}
-
-async function recordCompletion(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
-  if (!canPerformSalesAction(requester.role, "record_completion")) throw new Error("Only developers or conveyancers can record completion.");
-  if (!payload.saleAttemptId) throw new Error("Sale attempt is required.");
-
-  const completionDate = normaliseDate(payload.completionDate);
-  if (!completionDate) throw new Error("Enter a valid completion date.");
-  const today = new Date().toISOString().slice(0, 10);
-  if (completionDate > today) throw new Error("Completion date cannot be in the future.");
-
-  const attempt = await loadSaleAttempt(adminClient, payload.saleAttemptId);
-  await assertCanUseBuilding(adminClient, requester, attempt.building_id);
-  if (attempt.workflow_status === "completed") return { saleAttemptId: attempt.id, alreadyCompleted: true };
-  if (attempt.workflow_status !== "completion_pending") {
-    throw new Error("Completion documents must be approved before recording completion.");
-  }
-
-  const now = new Date().toISOString();
-  const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
-    workflow_status: "completed",
-    completed_at: completionDate,
-    stage_entered_at: now,
-    updated_by_user_id: requester.id,
-    updated_at: now,
-  }).eq("id", attempt.id).select("*").single();
-  if (attemptError) throw attemptError;
-
-  await applyProtectedSaleStatus(adminClient, requester, {
-    rpc: "sales_workflow_mark_unit_completed",
-    unitId: attempt.unit_id,
-    saleAttemptId: attempt.id,
-    source: "sales_workflow_completion",
-  });
-
-  await insertEvent(adminClient, attempt, requester, {
-    type: "completion_recorded",
-    toStatus: "completed",
-    summary: "Completion recorded. Unit marked Completed.",
-    metadata: { completionDate },
-  });
-
-  return { saleAttemptId: updatedAttempt.id };
-}
-
-async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: Requester, versionId: string | null) {
+async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: Requester, versionId: string | null, discussionSaleId: string | null = null) {
   if (!versionId) throw new Error("Document version is required.");
 
   const { data: version, error: versionError } = await adminClient
@@ -1768,11 +1507,18 @@ async function signedDocumentVersionUrl(adminClient: SupabaseClient, requester: 
 
   const { data: document, error: documentError } = await adminClient
     .from("unit_sale_documents")
-    .select("id,sale_attempt_id,redacted_at")
+    .select("id,sale_attempt_id,redacted_at,visibility")
     .eq("id", version.document_id)
     .maybeSingle();
   if (documentError) throw documentError;
   if (!document || document.redacted_at) throw new Error("Document not found.");
+
+  if (discussionSaleId) {
+    if (document.sale_attempt_id !== discussionSaleId) throw new Error("Document does not belong to this sale.");
+    const { data: allowed, error } = await adminClient.rpc("sale_discussion_access", { p_sale: discussionSaleId, p_user: requester.id });
+    if (error || !allowed) throw new Error("You no longer have access to this sale discussion.");
+    if (!isSalesInternalRole(requester.role) && document.visibility !== "shared_sale_file" && document.visibility !== requester.role) throw new Error("Document access denied.");
+  }
 
   const attempt = await loadSaleAttempt(adminClient, document.sale_attempt_id as string);
   await assertCanUseBuilding(adminClient, requester, attempt.building_id);
@@ -1793,7 +1539,7 @@ export async function GET(request: Request) {
     if (response || !requester) return response;
 
     const url = new URL(request.url);
-    return NextResponse.json(await signedDocumentVersionUrl(adminClient, requester, url.searchParams.get("versionId")));
+    return NextResponse.json(await signedDocumentVersionUrl(adminClient, requester, url.searchParams.get("versionId"), url.searchParams.get("discussionSaleId")));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Document link could not be created." }, { status: 400 });
   }
@@ -1811,31 +1557,28 @@ export async function POST(request: Request) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const action = formData.get("action")?.toString();
+      if (action === "upload_completion_document") throw new Error("Use the Completion legal workflow to upload a document version.");
       const result = action === "upload_agent_invoice"
         ? await uploadAgentInvoice(adminClient, requester, formData)
-        : action === "upload_completion_document"
-          ? await uploadCompletionDocument(adminClient, requester, formData)
-          : await uploadReservationForm(adminClient, requester, formData);
+        : await uploadReservationForm(adminClient, requester, formData);
       return NextResponse.json(result);
     }
 
     const payload = (await request.json()) as ReservationPayload;
     action = payload.action ?? "save_reservation";
+    if (["approve_commercial_package", "record_exchange", "approve_completion_documents", "query_completion_documents", "record_completion"].includes(action)) {
+      throw new Error("Use the current Exchange or Completion legal workflow for this action.");
+    }
     if (action === "save_reservation") return NextResponse.json(await saveReservation(adminClient, requester, payload));
     if (action === "approve_reservation") return NextResponse.json(await approveReservation(adminClient, requester, payload));
     if (action === "reject_reservation") return NextResponse.json(await rejectReservation(adminClient, requester, payload));
     if (action === "query_reservation") return NextResponse.json(await queryReservation(adminClient, requester, payload));
     if (action === "fail_reservation" || action === "return_unit_for_sale") return NextResponse.json(await returnUnitToForSale(adminClient, requester, payload));
     if (action === "save_setup_unit_price" || action === "save_commercial_model" || action === "save_commercial_package") return NextResponse.json(await saveCommercialModel(adminClient, requester, payload));
-    if (action === "approve_commercial_package") return NextResponse.json(await approveCommercialPackage(adminClient, requester, payload));
     if (action === "approve_agent_invoice") return NextResponse.json(await approveAgentInvoice(adminClient, requester, payload));
     if (action === "reject_agent_invoice") return NextResponse.json(await rejectAgentInvoice(adminClient, requester, payload));
-    if (action === "record_exchange") return NextResponse.json(await recordExchange(adminClient, requester, payload));
     if (action === "record_agent_fee_payment") return NextResponse.json(await recordAgentFeePayment(adminClient, requester, payload));
     if (action === "void_agent_fee_payment") return NextResponse.json(await voidAgentFeePayment(adminClient, requester, payload));
-    if (action === "approve_completion_documents") return NextResponse.json(await approveCompletionDocuments(adminClient, requester, payload));
-    if (action === "query_completion_documents") return NextResponse.json(await queryCompletionDocuments(adminClient, requester, payload));
-    if (action === "record_completion") return NextResponse.json(await recordCompletion(adminClient, requester, payload));
 
     return NextResponse.json({ error: "Unsupported reservation action." }, { status: 400 });
   } catch (error) {

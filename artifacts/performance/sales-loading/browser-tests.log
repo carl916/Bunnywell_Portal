@@ -1,0 +1,37 @@
+
+[WebServer] (node:28932) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:15388) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:624) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:28336) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 17 tests using 1 worker
+
+
+(node:19564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/17] [chromium] › tests\portal-load-lifecycle.spec.ts:11:5 › direct entry restores one portal snapshot and mounts Sales only in the resolved building
+[2/17] [chromium] › tests\portal-load-lifecycle.spec.ts:19:5 › Refresh reloads portal and Sales once; a unit price/status edit does not trigger another broad Sales load
+[3/17] [chromium] › tests\portal-load-lifecycle.spec.ts:28:5 › a late old Sales snapshot cannot replace refreshed figures or expose incomplete controls
+[4/17] [chromium] › tests\portal-load-lifecycle.spec.ts:48:5 › permission revocation on Refresh removes Sales even if an old read finishes later
+[5/17] [chromium] › tests\portal-load-lifecycle.spec.ts:63:5 › deactivated profile signs out and old portal/Sales reads do not restore it
+[6/17] [chromium] › tests\portal-load-lifecycle.spec.ts:70:5 › an access-read failure hides stale Sales and an explicit retry restores a complete snapshot
+[7/17] [chromium] › tests\portal-load-lifecycle.spec.ts:84:5 › token refresh loads one fresh snapshot; focus with changed role removes Sales
+[8/17] [chromium] › tests\portal-load-lifecycle.spec.ts:103:5 › saved building restores before Sales mounts; a building switch loads only the new Sales scope
+[9/17] [chromium] › tests\portal-load-lifecycle.spec.ts:119:5 › equal-count replacement uses fresh accessible membership; unrelated units do not cause another load
+[10/17] [chromium] › tests\portal-load-lifecycle.spec.ts:130:5 › sign-out during a delayed portal refresh cannot resurrect the previous profile
+[11/17] [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › request_authority preserves the four/five-request legal refresh without a broad reload
+[12/17] [chromium] › tests\portal-load-lifecycle.spec.ts:143:69 › confirm_exchange preserves the four/five-request legal refresh without a broad reload
+[13/17] [chromium] › tests\sales-loading.spec.ts:8:5 › pending defaults allow sale/version reads but do not expose a complete workspace
+[14/17] [chromium] › tests\sales-loading.spec.ts:24:5 › switching sale while an old concurrent snapshot loads retains the new selection and figures
+[15/17] [chromium] › tests\sales-loading.spec.ts:58:5 › failed version read keeps the workspace incomplete and an explicit retry recovers
+[16/17] [chromium] › tests\sales-loading.spec.ts:72:5 › staging without the name lookup still loads the Sales figures
+[17/17] [chromium] › tests\sales-loading.spec.ts:84:5 › Sales displays the underlying database error for failed required queries
+  17 passed (2.5m)

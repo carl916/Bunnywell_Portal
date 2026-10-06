@@ -1,0 +1,7 @@
+{
+  "resource": "versions",
+  "role": "postgres diagnostic only",
+  "executionMs": 0.311,
+  "planningMs": 1.094,
+  "rows": 168
+}

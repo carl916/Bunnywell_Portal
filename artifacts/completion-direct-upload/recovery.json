@@ -1,0 +1,39 @@
+[
+  {
+    "check": "anonymous denied",
+    "pass": true
+  },
+  {
+    "check": "admin denied",
+    "pass": true
+  },
+  {
+    "check": "agent denied",
+    "pass": true
+  },
+  {
+    "check": "invalid count, duplicate type, over-limit and MIME rejected before transfer",
+    "pass": true
+  },
+  {
+    "check": "signed capability rejects a different object path",
+    "pass": true
+  },
+  {
+    "check": "pause retains the selected PDF",
+    "pass": true
+  },
+  {
+    "check": "interrupted TUS resumes from retained offset",
+    "pass": true,
+    "offset": 6291456
+  },
+  {
+    "check": "lost final response and concurrent duplicate finalisation do not duplicate versions",
+    "pass": true
+  },
+  {
+    "check": "private objects and service-only session RPC deny browser reads and direct invocation",
+    "pass": true
+  }
+]

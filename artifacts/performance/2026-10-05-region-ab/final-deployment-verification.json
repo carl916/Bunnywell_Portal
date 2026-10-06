@@ -1,0 +1,398 @@
+{
+  "verifiedAt": "2026-10-05T15:31:33.861Z",
+  "production": {
+    "id": "dpl_71MV1EATioHy8bBiNornLF5hzu7m",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-7iq0pvltz-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1790084616512,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "main",
+      "githubCommitSha": "d37ab6518a2f28640a0e5435ce0d84daaf1ee39c",
+      "githubCommitMessage": "Merge pull request #16 from carl916/staging\n\nStaging",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk",
+      "bunnywell-portal.vercel.app",
+      "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1790084618839,
+    "ready": 1790084665359,
+    "readyState": "READY",
+    "source": "redeploy",
+    "aliasError": null
+  },
+  "staging": {
+    "id": "dpl_HUYPJC3ze6AKKpon5VFmjZHFEWdo",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-i8v4k1akz-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791211367417,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "staging",
+      "githubCommitSha": "9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2",
+      "githubCommitMessage": "documentation and diagnostics",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "staging.bunnywell.co.uk",
+      "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791211429485,
+    "ready": 1791211529772,
+    "readyState": "READY",
+    "source": "git",
+    "aliasError": null
+  },
+  "environment": {
+    "existingMetadataUnchanged": true,
+    "envs": [
+      {
+        "id": "5uK31WaQGQBEcFqU",
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "id": "6DAyn7lBxItPRpf9",
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783521314095
+      },
+      {
+        "id": "9mpDiDuILBwMK8V7",
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783521368387
+      },
+      {
+        "id": "ApeHNXXwgkMcAmuH",
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "id": "Ck2CyYW4DFohNWF9",
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "staging",
+        "updatedAt": 1791138465871
+      },
+      {
+        "id": "CXfiIFXaCwnW4u2R",
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783519084547
+      },
+      {
+        "id": "fZFbTKr7CAv54Qyi",
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1780859262742
+      },
+      {
+        "id": "H5ZFTd3W0iSG9Kly",
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-iad1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "id": "hfo5k0jH7G0T1VbF",
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "conveyancing-poc",
+        "updatedAt": 1783521368387
+      },
+      {
+        "id": "iQe2uzh9XKolwNor",
+        "key": "CRON_SECRET",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783009975346
+      },
+      {
+        "id": "jAsqGmUSQXmkaq4e",
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1782477349690
+      },
+      {
+        "id": "JFZBcAfxIDspExpN",
+        "key": "DIGEST_EMAILS_ENABLED",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783009975346
+      },
+      {
+        "id": "kA6bwlFS53ZVWKTE",
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783510471438
+      },
+      {
+        "id": "LCgtj91n2sGdNdkg",
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783510483579
+      },
+      {
+        "id": "morCR0FMsSnZGQcG",
+        "key": "NEXT_PUBLIC_PORTAL_ENV",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783521338994
+      },
+      {
+        "id": "mqNi1oXISgjSZ62x",
+        "key": "SALES_PERF_DIAGNOSTICS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-fra1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "id": "O1fbo91qiiNmPKoQ",
+        "key": "STAGING_WEB_VITALS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "staging",
+        "updatedAt": 1791138465871
+      },
+      {
+        "id": "OnPAuJNWkmYl1Yze",
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1782477302721
+      },
+      {
+        "id": "OQN1g5W3Qmaubhkx",
+        "key": "DIGEST_FROM_EMAIL",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783009975345
+      },
+      {
+        "id": "pwR48alhwsPPEiou",
+        "key": "STAGING_WEB_VITALS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-fra1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "id": "pYjDICW4TgO6Y5xj",
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783521338994
+      },
+      {
+        "id": "r43ZZV08aLWrL8W6",
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1782477335834
+      },
+      {
+        "id": "SysPUuGeL2p9Kaaz",
+        "key": "DIGEST_APP_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783010098266
+      },
+      {
+        "id": "uboDZwJrIF0c57Ch",
+        "key": "STAGING_WEB_VITALS",
+        "type": "plain",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": "codex/staging-region-ab-iad1",
+        "updatedAt": 1791211910736
+      },
+      {
+        "id": "UgdvBaEguKJho8cL",
+        "key": "RESEND_API_KEY",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783010054181
+      },
+      {
+        "id": "unMY6WkifMxJVmzL",
+        "key": "RESEND_API_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783010098266
+      },
+      {
+        "id": "uXGOiruU1UOKDk5R",
+        "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783521314095
+      },
+      {
+        "id": "xVOjuclzCy02lyoj",
+        "key": "DIGEST_APP_URL",
+        "type": "sensitive",
+        "target": [
+          "preview"
+        ],
+        "gitBranch": null,
+        "updatedAt": 1783010054181
+      }
+    ]
+  },
+  "comparison": {
+    "repository_full_name": "carl916/Bunnywell_Portal",
+    "base": "e79f35f4e86468925c17fdb11240da2152aadb4e",
+    "head": "3262e6991ce22face13a78cd08cbbb804f468051",
+    "status": "diverged",
+    "ahead_by": 1,
+    "behind_by": 1,
+    "total_commits": 1,
+    "too_large": null,
+    "base_commit": {
+      "sha": "e79f35f4e86468925c17fdb11240da2152aadb4e",
+      "url": "https://api.github.com/repos/carl916/Bunnywell_Portal/commits/e79f35f4e86468925c17fdb11240da2152aadb4e",
+      "html_url": "https://github.com/carl916/Bunnywell_Portal/commit/e79f35f4e86468925c17fdb11240da2152aadb4e"
+    },
+    "merge_base_commit": {
+      "sha": "9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2",
+      "url": "https://api.github.com/repos/carl916/Bunnywell_Portal/commits/9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2",
+      "html_url": "https://github.com/carl916/Bunnywell_Portal/commit/9f423a0fe4d45204ac3ecf7d958b3d2b9a6d34d2"
+    },
+    "files": [
+      {
+        "filename": "vercel.json",
+        "status": "modified",
+        "additions": 3,
+        "deletions": 0,
+        "changes": 3,
+        "previous_filename": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+
+Running 19 tests using 1 worker
+
+
+
+(node:23496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/19] [chromium] › tests\sales-legal-workflow.spec.ts:5:5 › completion package selects both PDFs, queries one file, preserves replacement history and unlocks legal completion only after approval
+[2/19] [chromium] › tests\sales-legal-workflow.spec.ts:38:5 › completion combined drop zone keeps both files and independent upload leaves developer approval locked
+[3/19] [chromium] › tests\sales-legal-workflow.spec.ts:49:5 › post-exchange deposit is locked before exchange, then records a full read-only receipt and audited correction
+[4/19] [chromium] › tests\sales-legal-workflow.spec.ts:75:52 › developer views historical outstanding deposit but cannot record it
+[5/19] [chromium] › tests\sales-legal-workflow.spec.ts:75:52 › sales_agent views historical outstanding deposit but cannot record it
+[6/19] [chromium] › tests\sales-legal-workflow.spec.ts:82:54 › sales_agent sees issued outcomes and can request renewal only after expiry
+[7/19] [chromium] › tests\sales-legal-workflow.spec.ts:82:54 › conveyancer sees issued outcomes and can request renewal only after expiry
+[8/19] [chromium] › tests\sales-legal-workflow.spec.ts:99:5 › developer reviews exact recipients, confirms and preserves the sent authority
+[9/19] [chromium] › tests\sales-legal-workflow.spec.ts:124:5 › missing recipient blocks email review and offers organisation settings
+[10/19] [chromium] › tests\sales-legal-workflow.spec.ts:132:5 › agent can request authority; conveyancer confirms exchange only while authority is valid
+[11/19] [chromium] › tests\sales-legal-workflow.spec.ts:142:5 › completion statement approval does not release keys; conveyancer legal confirmation does
+[12/19] [chromium] › tests\sales-legal-workflow.spec.ts:162:5 › historical completion retains dates and actor names with no invented timestamp
+[13/19] [chromium] › tests\sales-legal-workflow.spec.ts:171:56 › sales_agent requests notice authority while notice and later controls stay locked
+[14/19] [chromium] › tests\sales-legal-workflow.spec.ts:171:56 › conveyancer requests notice authority while notice and later controls stay locked
+[15/19] [chromium] › tests\sales-legal-workflow.spec.ts:185:5 › notice authority preview stays in Step 2, toggles accessibly and preserves failed sends
+[16/19] [chromium] › tests\sales-legal-workflow.spec.ts:225:5 › developer reviews notice authority without a date and grants it directly
+[17/19] [chromium] › tests\sales-legal-workflow.spec.ts:238:5 › notice form stages PDF, preserves a manual due date, retries failures and retains replacement history
+[18/19] [chromium] › tests\sales-legal-workflow.spec.ts:263:5 › Exchange remains selected after its final action when initially opened from the sale status
+[19/19] [chromium] › tests\sales-legal-workflow.spec.ts:273:5 › Completion remains selected after legal completion when initially opened from the sale status
+  19 passed (28.6s)

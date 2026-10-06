@@ -1,0 +1,100 @@
+{
+  "verifiedAt": "2026-10-05T17:30:41.385Z",
+  "onlyStagingCustomAliasMoved": true,
+  "aliasDifferences": [
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "before": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC",
+      "after": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    }
+  ],
+  "aliases": [
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-775707-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-targe-18fd17-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DNNejYswJj6cSa1niw3WbZfGPKpW"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-1aa09c-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_BSLd1gTjuxrWB5vWLJ84oUHhACG9"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-legal-d709b7-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_hNjFuwWR23C5AiMjZyJVy9APjbpf"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-83a90b-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_Bm3LTYepUo2Ebo8VHV2m25fPzZXJ"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-stagi-fbfcc5-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_3oXXzkPL4hu9fkKPNNKxe1g7dxBR"
+    },
+    {
+      "alias": "bunnywell-portal-git-codex-dedup-a737c0-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_DrChST7ZYZtczWk3mit5jV8BKBiC"
+    },
+    {
+      "alias": "portal.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-conveyancing-poc-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_E62qnWa5FzEpTtv5PvMdYHQBgcGs"
+    },
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "deploymentId": "dpl_9r3bmicyRqd1t7WNjrgUXCZ52NvH"
+    },
+    {
+      "alias": "bunnywell-portal-git-staging-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_4U6NMD7cBFEYSS5UXiy6SxamKiQC"
+    },
+    {
+      "alias": "defects.bunnywell.co.uk",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    },
+    {
+      "alias": "bunnywell-portal-git-main-carl-gilbert-s-projects.vercel.app",
+      "deploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+    }
+  ],
+  "preExistingEnvironmentUnchanged": true,
+  "addedBranchDiagnostics": [
+    {
+      "id": "VysLDcttlDnxQUVM",
+      "key": "STAGING_WEB_VITALS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7",
+      "type": "plain",
+      "updatedAt": 1791221080201
+    },
+    {
+      "id": "QT4d14wMEj4kQzj7",
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "codex/staging-legal-fra1-87d83c7",
+      "type": "plain",
+      "updatedAt": 1791221080201
+    }
+  ],
+  "projectSettingsUnchanged": true,
+  "projectDefaultRegionWritePerformed": false,
+  "productionDeploymentUnchanged": true,
+  "productionDeploymentId": "dpl_71MV1EATioHy8bBiNornLF5hzu7m"
+}

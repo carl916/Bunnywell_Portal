@@ -1,0 +1,35 @@
+[
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "baseline": {
+      "errors": 13,
+      "warnings": 18
+    },
+    "current": {
+      "errors": 13,
+      "warnings": 18
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "baseline": {
+      "errors": 4,
+      "warnings": 2
+    },
+    "current": {
+      "errors": 4,
+      "warnings": 2
+    }
+  },
+  {
+    "file": "src/app/api/sales/reservations/route.ts",
+    "baseline": {
+      "errors": 0,
+      "warnings": 1
+    },
+    "current": {
+      "errors": 0,
+      "warnings": 1
+    }
+  }
+]

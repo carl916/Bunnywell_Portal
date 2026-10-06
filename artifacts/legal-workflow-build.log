@@ -1,0 +1,39 @@
+
+> bunnywell-portal@0.1.0 build
+> next build
+
+▲ Next.js 16.2.7 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.3s
+  Running TypeScript ...
+  Finished TypeScript in 5.8s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/13) ...
+  Generating static pages using 11 workers (3/13) 
+  Generating static pages using 11 workers (6/13) 
+  Generating static pages using 11 workers (9/13) 
+✓ Generating static pages using 11 workers (13/13) in 167ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/access-requests
+├ ƒ /api/admin/users
+├ ƒ /api/auth/activity
+├ ƒ /api/buildings/units/[unitId]
+├ ƒ /api/cron/snag-digest
+├ ƒ /api/rentals/rent-risk
+├ ƒ /api/rentals/tenancies
+├ ƒ /api/sales/legal
+├ ƒ /api/sales/reservations
+├ ƒ /api/snag-reports/send
+├ ƒ /api/units/allocation
+└ ○ /request-access
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

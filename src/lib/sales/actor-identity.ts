@@ -1,5 +1,8 @@
-type ActorProfile = {
+export type SaleActorName = { id: string; display_name: string };
+
+export type ActorProfile = {
   id: string;
+  display_name?: string | null;
   email?: string | null;
   name?: string | null;
   full_name?: string | null;
@@ -28,9 +31,28 @@ export function historicalActorLabel({
   const profile = userId ? profiles.find((candidate) => candidate.id === userId) : undefined;
 
   return displayIdentity(snapshotName)
+    ?? displayIdentity(profile?.display_name)
     ?? displayIdentity(profile?.full_name)
     ?? displayIdentity(profile?.name)
     ?? displayIdentity(snapshotEmail)
     ?? displayIdentity(profile?.email)
     ?? fallback;
+}
+
+// Workflow snapshots describe the action at the time it happened. A profile
+// lookup supplies only a name; its current role is never historical audit data.
+export function workflowActorLabel(
+  event: { created_by_user_id?: string | null; actor_name?: string | null } | undefined,
+  profiles: ActorProfile[],
+  fallbackUserId?: string | null,
+  fallback = "Unknown user",
+) {
+  const userId = event?.created_by_user_id ?? fallbackUserId;
+  return historicalActorLabel({
+    userId,
+    // An event with no identity must not borrow a name from a different actor.
+    snapshotName: event?.created_by_user_id ? event.actor_name : undefined,
+    profiles,
+    fallback,
+  });
 }

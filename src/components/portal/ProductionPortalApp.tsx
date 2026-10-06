@@ -1,7 +1,13 @@
 "use client";
 
+import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
+import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
+import { createLoadCoordinator, createSessionLifecycle } from "@/lib/portal-load-lifecycle";
+import { portalAccessKey } from "@/lib/portal-access-snapshot";
+import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
+import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
+
 import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
-import { jsPDF } from "jspdf";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -843,9 +849,12 @@ export function ProductionPortalApp() {
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
+  const [salesRefreshRevision, setSalesRefreshRevision] = useState(0);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
   const lastActivityPingAtRef = useRef(0);
   const lastActivityAtRef = useRef<string | null>(null);
+  const portalLoads = useRef(createLoadCoordinator("portal"));
+  const loadedAccessKey = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -855,7 +864,7 @@ export function ProductionPortalApp() {
   const scopedHandovers = useMemo(() => filterUnitLinkedRows(handovers, scopedUnits, (handover) => handover.unit_id), [handovers, scopedUnits]);
   const scopedMeterReadings = useMemo(() => filterUnitLinkedRows(meterReadings, scopedUnits, (reading) => reading.unit_id), [meterReadings, scopedUnits]);
   const visibleSnags = useMemo(() => filterSnagsForRole(snags, profile, accessibleUnitIds, accessibleBuildingIds, buildingOrganisations), [accessibleBuildingIds, accessibleUnitIds, buildingOrganisations, profile, snags]);
-  const { buildingContextId, setBuildingContextId } = usePortalBuildingContext({
+  const { buildingContextId, setBuildingContextId, contextReady } = usePortalBuildingContext({
     userId: profile?.id,
     buildings: scopedBuildings,
     ready: !isLoading && Boolean(profile),
@@ -885,6 +894,8 @@ export function ProductionPortalApp() {
   }
 
   function clearPortalState() {
+    portalLoads.current.invalidate();
+    loadedAccessKey.current = null;
     setUser(null);
     setProfile(null);
     setActiveTab("dashboard");
@@ -940,6 +951,26 @@ export function ProductionPortalApp() {
 
     const supabase = createSupabaseBrowserClient();
     const redirectState = readAuthRedirectState();
+    const coordinator = portalLoads.current;
+    let cancelled = false;
+    const lifecycle = createSessionLifecycle<User>({
+      validate: async () => {
+        const { data, error } = await supabase.auth.getUser();
+        if (error && !isMissingSessionError(error)) throw error;
+        return data.user;
+      },
+      load: async (verifiedUser, event) => {
+        setUser(verifiedUser);
+        setProfile(null);
+        setNotice("");
+        setSalesRefreshRevision(value => value + 1);
+        await loadAll(verifiedUser.id, verifiedUser.email, event);
+      },
+      clear: clearPortalState,
+      invalidate: () => coordinator.invalidate(),
+      recheck: recheckPortalAccess,
+      error: error => setNotice(readableError(error)),
+    });
 
     if (redirectState) {
       setAuthRedirect(redirectState);
@@ -965,26 +996,10 @@ export function ProductionPortalApp() {
     sessionReady
       .then(async ({ error: sessionError }) => {
         if (sessionError) throw sessionError;
-        return supabase.auth.getUser();
-      })
-      .then(async ({ data, error }) => {
-        if (error) {
-          if (isStaleRefreshTokenError(error)) {
-            await supabase.auth.signOut({ scope: "local" });
-          } else if (!isMissingSessionError(error)) {
-            setNotice(error.message);
-          } else {
-            setNotice("");
-          }
-          clearPortalState();
-          return;
-        }
-
-        setUser(data.user);
-        if (data.user) await loadAll(data.user.id, data.user.email);
-        else clearPortalState();
+        await lifecycle.restore();
       })
       .catch(async (error: unknown) => {
+        if (cancelled) return;
         if (isStaleRefreshTokenError(error)) {
           await supabase.auth.signOut({ scope: "local" });
           clearPortalState();
@@ -995,19 +1010,13 @@ export function ProductionPortalApp() {
           setNotice(error instanceof Error ? error.message : "Could not restore session.");
         }
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (!cancelled) setIsLoading(false); });
 
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setNotice("");
-        void loadAll(session.user.id, session.user.email);
-      } else if (event === "SIGNED_OUT") {
-        clearPortalState();
-      }
+      lifecycle.observe(event, session);
     });
 
-    return () => data.subscription.unsubscribe();
+    return () => { cancelled = true; lifecycle.dispose(); coordinator.invalidate(); data.subscription.unsubscribe(); };
   }, [supabaseEnabled]);
 
   useEffect(() => {
@@ -1103,158 +1112,220 @@ export function ProductionPortalApp() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  async function loadAll(userId = user?.id, userEmail = user?.email) {
+  async function refreshLegalPortalData(unitId: string, action: string) {
+    if (!legalRefreshScope(action).unit) return;
+    return portalLoads.current.run(`legal:${unitId}`, "legal-action", async valid => {
+      if (!valid()) return;
+      const supabase = createSupabaseBrowserClient();
+      const previous = units.find(unit => unit.id === unitId);
+      const result = await supabase.from("units").select("*").eq("id", unitId).single();
+      if (result.error) throw result.error;
+      if (!valid()) return;
+      const fresh = result.data as Unit;
+      setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
+      if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
+        // Rental exit appends an audit event. Preserve the global log's page/count.
+        const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
+        if (audit.error) throw audit.error;
+        if (!valid()) return;
+        setAuditEvents((audit.data ?? []) as AuditEvent[]);
+        setAuditTotalCount(audit.count ?? audit.data?.length ?? 0);
+      }
+    }, true);
+  }
+
+  async function loadAll(userId = user?.id, userEmail = user?.email, event = "operation-refresh") {
     if (!userId) return;
-
-    const supabase = createSupabaseBrowserClient();
-    const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
-    let profileResult = await supabase
-      .from("profiles")
-      .select(profileSelect)
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (!profileResult.data && userEmail) {
-      profileResult = await supabase
+    return portalLoads.current.run(userId, event, async valid => {
+      if (!valid()) return;
+      const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
+      const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
+      let profileResult = await supabase
         .from("profiles")
         .select(profileSelect)
-        .eq("email", userEmail)
+        .eq("id", userId)
         .maybeSingle();
-    }
 
-    const loadedProfile = profileResult.data as Profile | null;
+      if (!profileResult.data && userEmail) {
+        profileResult = await supabase
+          .from("profiles")
+          .select(profileSelect)
+          .eq("email", userEmail)
+          .maybeSingle();
+      }
 
-    if (loadedProfile?.active === false) {
-      await supabase.auth.signOut({ scope: "local" });
-      clearPortalState();
-      setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
-      return;
-    }
+      const loadedProfile = profileResult.data as Profile | null;
+      if (!valid()) return;
+      if (profileResult.error || !loadedProfile) {
+        setProfile(null); loadedAccessKey.current = null;
+        throw profileResult.error ?? new Error("Your portal profile is unavailable. Contact Bunnywell to check your access.");
+      }
 
-    const profileIdForAccess = loadedProfile?.id ?? userId;
-    const [
-      buildingsResult,
-      unitsResult,
-      areasResult,
-      floorsResult,
-      unitTypesResult,
-      unitTypeAreasResult,
-      tradesResult,
-      orgsResult,
-      buildingOrganisationsResult,
-      profilesResult,
-      allBuildingAccessResult,
-      allUnitAccessResult,
-      accessRequestsResult,
-      snagsResult,
-      photosResult,
-      eventsResult,
-      auditEventsResult,
-      handoversResult,
-      handoverKeyItemsResult,
-      handoverPhotosResult,
-      metersResult,
-      accessResult,
-      buildingAccessResult,
-    ] = await Promise.all([
-      supabase.from("buildings").select("*").order("name"),
-      supabase.from("units").select("*").order("unit_number"),
-      fetchAllAreas(supabase),
-      supabase.from("building_floors").select("*").order("sort_order"),
-      supabase.from("unit_types").select("*").order("name"),
-      supabase.from("unit_type_areas").select("*").order("sort_order"),
-      supabase.from("trades").select("*").order("sort_order"),
-      supabase.from("organisations").select("*").order("name"),
-      supabase.from("building_organisations").select("*"),
-      supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
-      supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
-      supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
-      supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
-      supabase.from("snags").select("*").order("created_at", { ascending: false }),
-      supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
-      supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-      supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
-      supabase.from("handovers").select("*").order("created_at", { ascending: false }),
-      supabase.from("handover_key_items").select("*").order("sort_order"),
-      supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
-      supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
-      supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
-      supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
+      if (loadedProfile?.active === false) {
+        await supabase.auth.signOut({ scope: "local" });
+        clearPortalState();
+        setNotice("This portal account has been deactivated. Contact Bunnywell if you need access restored.");
+        return;
+      }
+
+      const profileIdForAccess = loadedProfile?.id ?? userId;
+      const [
+        buildingsResult,
+        unitsResult,
+        areasResult,
+        floorsResult,
+        unitTypesResult,
+        unitTypeAreasResult,
+        tradesResult,
+        orgsResult,
+        buildingOrganisationsResult,
+        profilesResult,
+        allBuildingAccessResult,
+        allUnitAccessResult,
+        accessRequestsResult,
+        snagsResult,
+        photosResult,
+        eventsResult,
+        auditEventsResult,
+        handoversResult,
+        handoverKeyItemsResult,
+        handoverPhotosResult,
+        metersResult,
+        accessResult,
+        buildingAccessResult,
+      ] = await Promise.all([
+        supabase.from("buildings").select("*").order("name"),
+        supabase.from("units").select("*").order("unit_number"),
+        fetchAllAreas(supabase),
+        supabase.from("building_floors").select("*").order("sort_order"),
+        supabase.from("unit_types").select("*").order("name"),
+        supabase.from("unit_type_areas").select("*").order("sort_order"),
+        supabase.from("trades").select("*").order("sort_order"),
+        supabase.from("organisations").select("*").order("name"),
+        supabase.from("building_organisations").select("*"),
+        supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
+        supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
+        supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
+        supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("snags").select("*").order("created_at", { ascending: false }),
+        supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
+        supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
+        supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
+        supabase.from("handovers").select("*").order("created_at", { ascending: false }),
+        supabase.from("handover_key_items").select("*").order("sort_order"),
+        supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
+        supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
+        supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
+        supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
+      ]);
+
+      if (!valid()) return;
+
+      const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
+      if (accessError) { setProfile(null); loadedAccessKey.current = null; throw accessError; }
+      loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
+
+      const firstError = [
+        buildingsResult.error,
+        unitsResult.error,
+        areasResult.error,
+        buildingOrganisationsResult.error,
+        accessRequestsResult.error,
+        snagsResult.error,
+      ].find(Boolean);
+
+      if (firstError) {
+        setNotice(`Production schema is not ready yet: ${firstError.message}`);
+      } else {
+        setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
+      }
+
+      const recordedActivityAt = lastActivityAtRef.current;
+      const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
+        ? { ...loadedProfile, last_active_at: recordedActivityAt }
+        : loadedProfile;
+      const loadedProfiles = (profilesResult.data ?? []) as Profile[];
+      const profilesWithCurrentActivity = recordedActivityAt
+        ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
+        : loadedProfiles;
+
+      setProfile(profileWithCurrentActivity);
+      setBuildings((buildingsResult.data ?? []) as Building[]);
+      setUnits((unitsResult.data ?? []) as Unit[]);
+      setAreas((areasResult.data ?? []) as Area[]);
+      setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
+      setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
+      setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
+      setTrades((tradesResult.data ?? []) as Trade[]);
+      setOrganisations((orgsResult.data ?? []) as Organisation[]);
+      const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
+      setBuildingOrganisations(loadedBuildingOrganisations);
+      setProfiles(profilesWithCurrentActivity);
+      setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
+      setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
+      setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
+      setSnags((snagsResult.data ?? []) as ProductionSnag[]);
+      setPhotos((photosResult.data ?? []) as SnagPhoto[]);
+      setEvents((eventsResult.data ?? []) as SnagEvent[]);
+      setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
+      setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
+      setHandovers((handoversResult.data ?? []) as Handover[]);
+      setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
+      setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
+      setMeterReadings((metersResult.data ?? []) as MeterReading[]);
+      setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
+      const organisationBuildingIds = loadedProfile?.organisation_id
+        ? loadedBuildingOrganisations
+          .filter((link) => (
+            link.organisation_id === loadedProfile.organisation_id
+            && link.active !== false
+            && (
+              loadedProfile.role === "sales_agent"
+                ? link.role_on_project === "sales_agent"
+                : loadedProfile.role === "conveyancer"
+                  ? link.role_on_project === "conveyancer"
+                  : loadedProfile.role === "developer_representative"
+                    ? link.role_on_project === "developer_representative"
+                    : loadedProfile.role === "contractor"
+                      ? link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade"
+                      : true
+            )
+          ))
+          .map((link) => link.building_id)
+        : [];
+      setAccessibleBuildingIds(Array.from(new Set([
+        ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
+        ...organisationBuildingIds,
+      ])));
+      setLastDataRefreshAt(new Date().toISOString());
+      traceLoad("portal", event, "published");
+    }, event === "explicit-refresh" || event === "operation-refresh" || event.startsWith("auth:"));
+  }
+
+  async function recheckPortalAccess(verifiedUser: User) {
+    const previousAccessKey = loadedAccessKey.current;
+    const client = tracedClient(createSupabaseBrowserClient(), "access", "auth:SIGNED_IN");
+    const [person, unitAccess, buildingAccess, links] = await Promise.all([
+      client.from("profiles").select("id,role,active,organisation_id").eq("id", verifiedUser.id).maybeSingle(),
+      client.from("user_unit_access").select("unit_id").eq("user_id", verifiedUser.id),
+      client.from("user_building_access").select("building_id").eq("user_id", verifiedUser.id),
+      client.from("building_organisations").select("building_id,organisation_id,role_on_project,active"),
     ]);
+    if (previousAccessKey !== loadedAccessKey.current) return false;
+    const error = [person.error, unitAccess.error, buildingAccess.error, links.error].find(Boolean);
+    if (error) { portalLoads.current.invalidate(); setProfile(null); throw error; }
+    const changed = portalAccessKey(person.data, unitAccess.data ?? [], buildingAccess.data ?? [], links.data ?? []) !== loadedAccessKey.current;
+    traceLoad("access", "auth:SIGNED_IN", changed ? "changed" : "unchanged");
+    return changed;
+  }
 
-    const firstError = [
-      buildingsResult.error,
-      unitsResult.error,
-      areasResult.error,
-      buildingOrganisationsResult.error,
-      accessRequestsResult.error,
-      snagsResult.error,
-    ].find(Boolean);
-
-    if (firstError) {
-      setNotice(`Production schema is not ready yet: ${firstError.message}`);
-    } else {
-      setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
+  async function refreshPortal() {
+    try {
+      await loadAll(user?.id, user?.email, "explicit-refresh");
+      setSalesRefreshRevision(value => value + 1);
+    } catch (error) {
+      setNotice(readableError(error, "Could not reload your portal access. Use Refresh to try again."));
     }
-
-    const recordedActivityAt = lastActivityAtRef.current;
-    const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
-      ? { ...loadedProfile, last_active_at: recordedActivityAt }
-      : loadedProfile;
-    const loadedProfiles = (profilesResult.data ?? []) as Profile[];
-    const profilesWithCurrentActivity = recordedActivityAt
-      ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
-      : loadedProfiles;
-
-    setProfile(profileWithCurrentActivity);
-    setBuildings((buildingsResult.data ?? []) as Building[]);
-    setUnits((unitsResult.data ?? []) as Unit[]);
-    setAreas((areasResult.data ?? []) as Area[]);
-    setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
-    setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
-    setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
-    setTrades((tradesResult.data ?? []) as Trade[]);
-    setOrganisations((orgsResult.data ?? []) as Organisation[]);
-    const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
-    setBuildingOrganisations(loadedBuildingOrganisations);
-    setProfiles(profilesWithCurrentActivity);
-    setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
-    setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
-    setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
-    setSnags((snagsResult.data ?? []) as ProductionSnag[]);
-    setPhotos((photosResult.data ?? []) as SnagPhoto[]);
-    setEvents((eventsResult.data ?? []) as SnagEvent[]);
-    setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
-    setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
-    setHandovers((handoversResult.data ?? []) as Handover[]);
-    setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
-    setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
-    setMeterReadings((metersResult.data ?? []) as MeterReading[]);
-    setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
-    const organisationBuildingIds = loadedProfile?.organisation_id
-      ? loadedBuildingOrganisations
-        .filter((link) => (
-          link.organisation_id === loadedProfile.organisation_id
-          && link.active !== false
-          && (
-            loadedProfile.role === "sales_agent"
-              ? link.role_on_project === "sales_agent"
-              : loadedProfile.role === "conveyancer"
-                ? link.role_on_project === "conveyancer"
-                : loadedProfile.role === "developer_representative"
-                  ? link.role_on_project === "developer_representative"
-                  : loadedProfile.role === "contractor"
-                    ? link.role_on_project === "main_contractor" || link.role_on_project === "supporting_trade"
-                    : true
-          )
-        ))
-        .map((link) => link.building_id)
-      : [];
-    setAccessibleBuildingIds(Array.from(new Set([
-      ...(buildingAccessResult.data ?? []).map((row) => row.building_id),
-      ...organisationBuildingIds,
-    ])));
-    setLastDataRefreshAt(new Date().toISOString());
   }
 
   async function uploadStorageBlob(path: string, blob: Blob, contentType: string) {
@@ -1373,7 +1444,7 @@ export function ProductionPortalApp() {
           email={user?.email ?? ""}
           mode={authRedirect.type}
           onComplete={async () => {
-            if (user) await loadAll(user.id, user.email);
+            if (user) await loadAll(user.id, user.email, "invite-complete");
             clearUrlHash();
             setAuthRedirect(null);
             setNotice("Password set. Welcome to Bunnywell Portal.");
@@ -1392,6 +1463,12 @@ export function ProductionPortalApp() {
     );
   }
 
+  if (!profile) {
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={signOut} onRefresh={refreshPortal}>
+      <section className="panel" aria-live="polite"><h2 className="text-xl font-bold text-[#0F3D2E]">Checking portal access</h2><p className="mt-2 text-sm text-[#617169]">Your portal data will appear after your access has been checked.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section>
+    </Shell>;
+  }
+
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
 
   return (
@@ -1405,7 +1482,7 @@ export function ProductionPortalApp() {
       buildingContextId={buildingContextId}
       onBuildingContextChange={setBuildingContextId}
       lastUpdatedAt={lastDataRefreshAt}
-      onRefresh={() => loadAll()}
+      onRefresh={refreshPortal}
       onSignOut={signOut}
     >
       {activeTab === "dashboard" && (
@@ -1493,7 +1570,7 @@ export function ProductionPortalApp() {
           uploadSnagMedia={uploadSnagMedia}
         />
       )}
-      {activeTab === "sales" && (
+      {activeTab === "sales" && contextReady && (
         <SalesReservationWorkflow
           user={user}
           profile={profile}
@@ -1505,6 +1582,8 @@ export function ProductionPortalApp() {
           buildingContextId={buildingContextId}
           onNotice={setNotice}
           reloadPortalData={() => loadAll()}
+          refreshLegalPortalData={refreshLegalPortalData}
+          salesRefreshKey={String(salesRefreshRevision)}
         />
       )}
       {activeTab === "rentals" && (
@@ -1564,9 +1643,9 @@ function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label:
 
   if (tabs.includes("dashboard")) items.push({ key: "dashboard", label: "Dashboard", tab: "dashboard", activeTabs: ["dashboard"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("snags")) items.push({ key: "snags", label: "Snags", tab: "snags", activeTabs: ["snags"], icon: <ClipboardList size={17} aria-hidden /> });
-  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("sales")) items.push({ key: "sales", label: "Sales", tab: "sales", activeTabs: ["sales"], icon: <ClipboardCheck size={17} aria-hidden /> });
   if (tabs.includes("rentals")) items.push({ key: "rentals", label: "Rentals", tab: "rentals", activeTabs: ["rentals"], icon: <Building2 size={17} aria-hidden /> });
+  if (tabs.includes("units")) items.push({ key: "units", label: "Units", tab: "units", activeTabs: ["units"], icon: <Building2 size={17} aria-hidden /> });
   if (setupTabs.length > 0) items.push({ key: "setup", label: "Setup", tab: setupTabs[0], activeTabs: setupTabs, icon: <Building2 size={17} aria-hidden /> });
   if (tabs.includes("resident_home")) items.push({ key: "resident_home", label: "My home", tab: "resident_home", activeTabs: ["resident_home"], icon: <Home size={17} aria-hidden /> });
   if (tabs.includes("resident_snags")) items.push({ key: "resident_snags", label: "Snags", tab: "resident_snags", activeTabs: ["resident_snags"], icon: <ClipboardList size={17} aria-hidden /> });
@@ -1604,16 +1683,16 @@ function Shell({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const navItems = primaryNavItemsForTabs(tabs);
-  const mobilePrimaryItems = navItems.slice(0, 4);
-  const mobileMoreItems = navItems.slice(4);
+  const primaryItems = navItems.filter((item) => !["setup", "units"].includes(item.key)).slice(0, 4);
+  const secondaryItems = navItems.filter((item) => !primaryItems.includes(item));
   const mobileNavItems: Array<{ tab?: Tab; label: string; icon: React.ReactNode; isMore?: boolean; activeTabs?: Tab[] }> = [
-    ...mobilePrimaryItems.map((item) => ({
+    ...primaryItems.map((item) => ({
       tab: item.tab,
       label: item.label,
       icon: item.icon,
       activeTabs: item.activeTabs,
     })),
-    ...(mobileMoreItems.length > 0 ? [{ label: "More", icon: <Menu size={20} aria-hidden />, isMore: true }] : []),
+    { label: "More", icon: <Menu size={20} aria-hidden />, isMore: true },
   ];
   const hasMobileMenu = Boolean(profile && (mobileNavItems.length > 0 || onRefresh || onSignOut));
   const noticeVariant = notice ? notificationVariantForMessage(notice) : "info";
@@ -1635,10 +1714,10 @@ function Shell({
   }
 
   return (
-    <main className="app-shell pb-24 md:pb-0">
+    <main data-portal-screen={profile ? tab : undefined} className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
       <header className="app-header">
         <EnvironmentBanner />
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="portal-header-content mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <img src="/bunnywell-logo-icon.jpg" alt="Bunnywell Homes" className="h-11 w-auto shrink-0 object-contain sm:h-12" />
@@ -1703,13 +1782,13 @@ function Shell({
               )}
             </div>
             {hasMobileMenu && (
-              <button className="secondary min-h-10 px-3 md:hidden" onClick={() => setMoreOpen(true)} aria-label="Open menu">
+              <div className="md:hidden"><button className="secondary min-h-10 px-3" onClick={() => setMoreOpen(true)} aria-label="Open menu">
                 <Menu size={18} aria-hidden />
-              </button>
+              </button></div>
             )}
           </div>
           {tabs.length > 0 && (
-            <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex">
+            <nav className="hidden gap-2 overflow-x-auto pb-1 md:flex" aria-label="Primary navigation">
               {navItems.map((item) => (
                 <button
                   key={item.key}
@@ -1736,13 +1815,13 @@ function Shell({
           </span>
         </div>
       )}
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
+      <div className="portal-content mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
       {tabs.length > 0 && (
         <nav className="mobile-bottom-nav md:hidden" aria-label="Primary mobile navigation">
           {mobileNavItems.map((item) => (
             <button
               key={item.isMore ? "more" : item.tab}
-              className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && moreOpen) ? "mobile-nav-item-active" : ""}`}
+              className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && (moreOpen || secondaryItems.some((link) => link.activeTabs.includes(tab)))) ? "mobile-nav-item-active" : ""}`}
               onClick={() => item.isMore ? setMoreOpen(true) : item.tab && chooseTab(item.tab)}
               type="button"
             >
@@ -1753,7 +1832,7 @@ function Shell({
         </nav>
       )}
       {hasMobileMenu && moreOpen && (
-        <div className="mobile-menu-backdrop md:hidden" onClick={() => setMoreOpen(false)}>
+        <div className="mobile-menu-backdrop" onClick={() => setMoreOpen(false)}>
           <aside className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 border-b border-[#E2DED3] pb-3">
               <div className="min-w-0">
@@ -1802,7 +1881,7 @@ function Shell({
               </div>
             )}
             <div className="mt-4 grid gap-2">
-              {[...mobileMoreItems, ...mobilePrimaryItems].map((item) => (
+              {[...primaryItems, ...secondaryItems].map((item) => (
                 <button key={item.key} className={`menu-row ${item.activeTabs.includes(tab) ? "menu-row-active" : ""}`} onClick={() => chooseTab(item.tab)}>
                   {item.icon}
                   <span>{item.label}</span>
@@ -2162,7 +2241,7 @@ function Dashboard({
   return (
     <div className="grid gap-5">
       {pcConfirmationWarnings.length > 0 && (
-        <section className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
+        <section className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-bold">PC date requires confirmation</p>
@@ -2188,7 +2267,7 @@ function Dashboard({
           <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Developer snags</h2>
           <p className="mt-2 max-w-2xl text-sm text-[#66736B]">Current developer snag actions and today&apos;s movement across the buildings you can access.</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-3 divide-x divide-white/20 text-center">
           <HeroCount label="Total" value={model.totalDeveloperSnags} />
           <HeroCount label="Active" value={model.activeDeveloperSnags} />
           <HeroCount label="Changed today" value={model.changedToday} />
@@ -2217,7 +2296,7 @@ function Dashboard({
             ))}
           </div>
         ) : (
-          <p className="mobile-empty mt-4">No developer snag movement today yet.</p>
+          <p className="mt-4 border-t border-[#eef0eb] py-4 text-sm text-[#66736B]">No developer snag movement today yet.</p>
         )}
       </section>
 
@@ -2245,7 +2324,7 @@ function Dashboard({
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
                 <div className="h-full rounded-full bg-[#0F3D2E]" style={{ width: `${building.closedPercent}%` }} />
               </div>
-              <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs">
+              <div className="mt-4 grid grid-cols-4 divide-x divide-[#eef0eb] border-t border-[#eef0eb] pt-3 text-center text-xs">
                 <MiniStat label="Active" value={building.active} />
                 <MiniStat label="Review" value={building.readyForReview} />
                 <MiniStat label="Info" value={building.needsMoreInfo} />
@@ -2381,7 +2460,7 @@ function buildDashboardModel({
 
 function HeroCount({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-[#E2DED3] bg-white/70 p-3">
+    <div className="min-w-0 px-3 py-3">
       <p className="text-2xl font-bold text-[#0F3D2E]">{value}</p>
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
     </div>
@@ -2410,7 +2489,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
 
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg bg-[#FBFAF6] p-2">
+    <div className="min-w-0 p-2">
       <p className="font-bold text-[#0F3D2E]">{value}</p>
       <p className="text-[#66736B]">{label}</p>
     </div>
@@ -3025,7 +3104,7 @@ function CommunalAreaRow({ area, floors, onNotice, reload }: { area: Area; floor
           </button>
         </div>
       </div>
-      {deleteWarning && <p className="mt-2 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
+      {deleteWarning && <p className="mt-2 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
     </div>
   );
 }
@@ -3277,7 +3356,7 @@ function UnitStructureCard({
                       {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                     </select>
                   </div>
-                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <div className="border-t border-[#d9ded6] pt-3">
                     <p className="text-xs font-semibold uppercase text-[#617169]">Rooms</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {visibleRooms.map((area) => <AreaChip key={area.id} area={area} canRemove showFloor={false} onRemove={() => removeAreaFromEdit(area.id)} />)}
@@ -3309,7 +3388,7 @@ function UnitStructureCard({
                       <button className="secondary" onClick={stageRoom} disabled={!roomName.trim()}>Add room</button>
                     </div>
                   </div>
-                  <div className="rounded-md border border-[#d9ded6] bg-white p-3">
+                  <div className="border-t border-[#d9ded6] pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-xs font-semibold uppercase text-[#617169]">Private amenity</p>
@@ -3363,7 +3442,7 @@ function UnitStructureCard({
                   </div>
                 </div>
               )}
-              {!editing && deleteWarning && <p className="mt-3 rounded-md border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
+              {!editing && deleteWarning && <p className="mt-3 rounded-bw-inset border border-[#f1b8b2] bg-[#fff4f2] px-3 py-2 text-sm text-[#b42318]">{deleteWarning}</p>}
             </article>
   );
 }
@@ -3717,13 +3796,13 @@ function AdminSetup({
               {editingSettingsSection !== "lifecycle" && <button className="snag-action-link" type="button" onClick={() => setEditingSettingsSection("lifecycle")}>Edit</button>}
             </div>
             {hasWarning && (
-              <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+              <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
                 PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
               </div>
             )}
 
             {editingSettingsSection === "lifecycle" ? (
-              <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+              <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="grid gap-3">
                     <label className="field-label">
@@ -3739,7 +3818,7 @@ function AdminSetup({
                     )}
                     {pcConfirmedValue && !canEditConfirmedPc && <button className="secondary w-fit" type="button" onClick={() => setConfirmEditPcBuildingId(selectedBuilding.id)}>Edit confirmed PC date</button>}
                     {confirmEditPcBuildingId === selectedBuilding.id && !canEditConfirmedPc && (
-                      <div className="rounded-md border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+                      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
                         <p>Changing the confirmed PC date will recalculate the resident portal lifecycle, closing notice date and initial defects reporting end date.</p>
                         <button className="secondary mt-3 min-h-9 px-3 py-1.5 text-sm" type="button" onClick={() => { setEditConfirmedPcBuildingIds((current) => ({ ...current, [selectedBuilding.id]: true })); setConfirmEditPcBuildingId(null); }}>Allow PC date editing</button>
                       </div>
@@ -3787,6 +3866,8 @@ function AdminSetup({
             onNotice={onNotice}
             reload={reload}
           />
+
+          <BuildingSalesContacts key={`${selectedBuilding.id}-sales-contacts`} building={selectedBuilding} organisations={organisations} onNotice={onNotice} reload={reload} />
 
           <div className="border-t border-[#e5e9e4] pt-5">
             <BuildingStructureView
@@ -4182,7 +4263,7 @@ function BuildingSalesSetup({
         {isLoading && <span className="text-xs font-semibold uppercase text-[#617169]">Loading</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+        <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <h4 className="font-bold text-[#0F3D2E]">Development information</h4>
           <label className="field-label mt-3">
             Build cost
@@ -4190,7 +4271,7 @@ function BuildingSalesSetup({
           </label>
         </div>
 
-        <div className="rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+        <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h4 className="font-bold text-[#0F3D2E]">Default deal setup</h4>
@@ -4223,14 +4304,14 @@ function BuildingSalesSetup({
               </>
             )}
           </div>
-          <div className={`mt-4 rounded-md border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+          <div className={`mt-4 rounded-bw-inset border p-3 text-sm ${agentFeeStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Agent fee split</span>
               <strong className="numeric-value">{exchangeAgentFeePercent || "0"}% + {completionAgentFeePercent || "0"}%</strong>
             </div>
             <p className="mt-1 text-xs">{agentFeeStructure.error ?? "The milestone fees match the total sales agent fee."}</p>
           </div>
-          <div className={`mt-4 rounded-md border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
+          <div className={`mt-4 rounded-bw-inset border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
               <span>Completion balance</span>
               <strong className="numeric-value">{depositStructure.completionBalancePercent}%</strong>
@@ -4405,7 +4486,7 @@ function BuildingDeliveryTeam({
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name ?? "Not set"}</dd></div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? "None" : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
         </dl>
-      ) : <div className="grid gap-4 rounded-lg border border-[#d9ded6] bg-[#fbfcfa] p-4">
+      ) : <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">
         <label className="field-label">
           Main contractor
@@ -4665,7 +4746,7 @@ function DeveloperSnagging({
       <FormPanel title="Add developer snag">
         <div className="grid gap-2">
           {buildingContextId ? (
-            <div className="rounded-xl border border-[#dfe5df] bg-[#f8faf7] px-3 py-2">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-bw-inset bg-[#f8faf7] px-3 py-2">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#66736B]">Building</p>
               <p className="mt-0.5 font-semibold text-[#0F3D2E]">{selectedBuilding?.name}</p>
             </div>
@@ -4682,7 +4763,7 @@ function DeveloperSnagging({
               {!draft.buildingId && <span className="text-xs text-[#66736B]">Choose a building to load its floors, units and communal areas.</span>}
             </label>
           )}
-          <div className="developer-snag-toggle grid grid-cols-2 gap-1.5" role="group" aria-label="Location type">
+          <div className="developer-snag-toggle segmented-control" role="group" aria-label="Location type">
             <button className={draft.locationType === "unit" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "unit", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "unit"}>Unit</button>
             <button className={draft.locationType === "communal" ? "primary" : "secondary"} onClick={() => setDraft({ ...draft, locationType: "communal", unitId: "", areaId: "" })} disabled={isSaving || !draft.buildingId} type="button" aria-pressed={draft.locationType === "communal"}>Communal</button>
           </div>
@@ -4709,7 +4790,7 @@ function DeveloperSnagging({
             {trades.length === 0 && <option value="" disabled>No trades configured</option>}
             {trades.map((trade) => <option key={trade.id} value={trade.id}>{trade.name}</option>)}
           </select>
-          <div className="rounded-md bg-[#f8faf7] px-3 py-2 text-sm">
+          <div className="border-t border-[#eef0eb] py-2 text-sm">
             <div className="flex min-h-8 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="text-[#617169]">Assigned to:</span>
               <span className="min-w-0 flex-1 font-semibold text-[#0F3D2E]">{resolvedResponsibleOrganisation?.name ?? "Not assigned"}</span>
@@ -5303,7 +5384,7 @@ function AccessRequestReviewPanel({
   }
 
   return (
-    <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-[#d9ded6] bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">{isPending ? "Review access request" : "Access request"}</h3>
@@ -5337,7 +5418,7 @@ function AccessRequestReviewPanel({
           {request.requested_units.length === 0 && <p className="text-sm text-[#617169]">No flats requested.</p>}
         </div>
         {duplicateRequestedUnits.length > 0 && (
-          <p className="mt-3 rounded-md border border-[#E5C27B] bg-[#FFF8E8] px-3 py-2 text-sm text-[#7A5A1F]">
+          <p className="mt-3 rounded-bw-inset border border-[#E5C27B] bg-[#FFF8E8] px-3 py-2 text-sm text-[#7A5A1F]">
             {allRequestedUnitsAreDuplicates
               ? "This user already has access to every flat on this request."
               : "Some requested flats are already assigned to this user. Only new flats will be added."}
@@ -5649,7 +5730,7 @@ function UserEditPanel({
 
   return (
     <div className="bg-[#fff8ec] p-1">
-      <div className="rounded-md border border-[#d9ded6] bg-white p-4 shadow-sm">
+      <div className="rounded-md border border-[#d9ded6] bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Edit user</h3>
@@ -6181,6 +6262,8 @@ function OrganisationManagement({
   const [editingId, setEditingId] = useState("");
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState("contractor");
+  const [systemEmail, setSystemEmail] = useState("");
+  const [editSystemEmail, setEditSystemEmail] = useState("");
   const organisationTypeLabel = (value: string) => organisationTypes.find((item) => item.value === value)?.label ?? statusLabel(value);
   const normaliseOrganisationName = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
   const organisationNameExists = (value: string, excludeId?: string) => {
@@ -6190,13 +6273,14 @@ function OrganisationManagement({
 
   async function createOrganisation() {
     if (!name) return;
+    if (!validSharedSystemEmail(systemEmail.trim())) { onNotice("Enter a valid shared system email."); return; }
     const trimmedName = name.trim().replace(/\s+/g, " ");
     if (organisationNameExists(trimmedName)) {
       onNotice(`An organisation called "${trimmedName}" already exists.`);
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase.from("organisations").insert({ name: trimmedName, type }).select("id").single();
+    const { data, error } = await supabase.from("organisations").insert({ name: trimmedName, type, shared_system_email: systemEmail.trim() || null }).select("id").single();
     if (error) onNotice(error.message);
     else {
       await recordAudit({
@@ -6208,6 +6292,7 @@ function OrganisationManagement({
       });
       setName("");
       setType("contractor");
+      setSystemEmail("");
       onNotice("");
       await reload();
     }
@@ -6217,17 +6302,19 @@ function OrganisationManagement({
     setEditingId(organisation.id);
     setEditName(organisation.name);
     setEditType(organisation.type);
+    setEditSystemEmail(organisation.shared_system_email ?? "");
   }
 
   async function saveOrganisation() {
     if (!editingId || !editName) return;
+    if (!validSharedSystemEmail(editSystemEmail.trim())) { onNotice("Enter a valid shared system email."); return; }
     const trimmedName = editName.trim().replace(/\s+/g, " ");
     if (organisationNameExists(trimmedName, editingId)) {
       onNotice(`An organisation called "${trimmedName}" already exists.`);
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from("organisations").update({ name: trimmedName, type: editType }).eq("id", editingId);
+    const { error } = await supabase.from("organisations").update({ name: trimmedName, type: editType, shared_system_email: editSystemEmail.trim() || null }).eq("id", editingId);
     if (error) onNotice(error.message);
     else {
       await recordAudit({
@@ -6298,17 +6385,19 @@ function OrganisationManagement({
         <select className="field" value={type} onChange={(event) => setType(event.target.value)}>
           {organisationTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
+        <label className="field-label">Shared system email<input className="field" type="email" value={systemEmail} onChange={(event) => setSystemEmail(event.target.value)} placeholder="team@example.com" /><span className="text-xs font-normal text-[#617169]">Optional group inbox for automated correspondence.</span></label>
         <button className="primary" onClick={createOrganisation} disabled={!name}>Create organisation</button>
       </div>
       <div className="mt-4 divide-y divide-[#e5e9e4]">
         {organisations.map((organisation) => (
-          <div key={organisation.id} className="grid gap-2 py-3 text-sm">
+          <div key={organisation.id} id={`organisation-${organisation.id}`} className="grid scroll-mt-24 gap-2 py-3 text-sm">
             {editingId === organisation.id ? (
               <>
                 <input className="field" value={editName} onChange={(event) => setEditName(event.target.value)} />
                 <select className="field" value={editType} onChange={(event) => setEditType(event.target.value)}>
                   {organisationTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                 </select>
+                <label className="field-label">Shared system email<input className="field" type="email" value={editSystemEmail} onChange={(event) => setEditSystemEmail(event.target.value)} /><span className="text-xs font-normal text-[#617169]">Used for future system emails. Previously sent recipients remain in the history.</span></label>
                 <div className="flex flex-wrap gap-2">
                   <button className="secondary" onClick={saveOrganisation} disabled={!editName}>Save</button>
                   <button className="secondary" onClick={() => setEditingId("")}>Cancel</button>
@@ -6319,6 +6408,7 @@ function OrganisationManagement({
                 <div>
                   <p className="font-medium">{organisation.name}</p>
                   <p className="text-xs text-[#617169]">{organisationTypeLabel(organisation.type)}</p>
+                  <p className="mt-1 break-all text-sm">Shared system email: {organisation.shared_system_email || "Not configured"}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -7502,7 +7592,7 @@ function LeaseholderDefects({
         <div className="grid gap-3 md:grid-cols-[260px_minmax(0,1fr)]">
           <div className="grid gap-3">
             {hasSingleUnit ? (
-              <div className="rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
+              <div className="rounded-bw-inset border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
                 <p className="font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"}</p>
                 <p className="mt-1 text-[#34413a]">Unit {selectedUnit?.unit_number ?? "-"}</p>
               </div>
@@ -7539,7 +7629,7 @@ function LeaseholderDefects({
               Parking bay{(selectedUnit?.parking_bays?.length ?? 0) === 1 ? "" : "s"}: {formatParkingBays(selectedUnit?.parking_bays)}
             </p>
             {selectedUnit && (
-              <div className="mt-3 grid gap-3 rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-3">
+              <div className="mt-3 grid gap-3 rounded-bw-card border border-[#d9ded6] bg-[#f8faf7] p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-[#0F3D2E]">Flat status</p>
                   <span className={statusTone(existingHandover ? "handed_over" : selectedUnit.sale_status)}>{existingHandover ? "Handed Over" : statusLabel(selectedUnit.sale_status)}</span>
@@ -7574,14 +7664,14 @@ function LeaseholderDefects({
           )}
         </div>
         {selectedBuildingLifecycle === "dlp_closing" && selectedBuildingReportingEnd && (
-          <div className="mt-4 rounded-md border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
+          <div className="mt-4 rounded-bw-inset border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
             <p className="font-semibold text-[#5F4315]">The initial defects reporting period for this building is due to close on {formatDate(selectedBuildingReportingEnd)}.</p>
             <p className="mt-2">Please make sure any outstanding routine snagging items are submitted through the portal before this date.</p>
             <p className="mt-2">After this date, the portal will remain available as a record and document library, but new routine snag reports will no longer be accepted through the portal.</p>
           </div>
         )}
         {(selectedBuildingLifecycle === "post_dlp_readonly" || selectedBuildingLifecycle === "archived") && (
-          <div className="mt-4 rounded-md border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+          <div className="mt-4 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
             <p className="font-semibold text-[#0F3D2E]">The initial defects reporting period for this building has now closed.</p>
             <p className="mt-2">The Bunnywell portal remains available for handover records, useful homeowner documents and previous snag history.</p>
             <p className="mt-2">New routine snag reports can no longer be submitted through the portal.</p>
@@ -7590,7 +7680,7 @@ function LeaseholderDefects({
           </div>
         )}
         {selectedBuildingLifecycle === "pre_pc" && (
-          <div className="mt-4 rounded-md border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
+          <div className="mt-4 rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
             Residents cannot submit routine snags yet. Internal users can continue managing pre-PC snags where permitted.
           </div>
         )}
@@ -7873,7 +7963,7 @@ function SelectedUnitHandover({
 
   if (existingHandover) {
     return (
-      <div className="rounded-lg border border-[#d9ded6] bg-white p-3 text-sm">
+      <div className="rounded-bw-inset border border-[#d9ded6] bg-white p-3 text-sm">
         <p className="font-semibold text-[#0F3D2E]">Handover complete</p>
         <p className="mt-1 text-[#34413a]">Completed on {formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}.</p>
         {isResident ? (
@@ -7890,7 +7980,7 @@ function SelectedUnitHandover({
 
   if (selectedUnit.sale_status !== "completed") {
     return (
-      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
         {isResident
           ? "Handover is not ready yet."
           : ["for_sale", "reserved", "exchanged"].includes(selectedUnit.sale_status)
@@ -7902,7 +7992,7 @@ function SelectedUnitHandover({
 
   if (!handoverPcAllowed) {
     return (
-      <div className="rounded-lg border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
+      <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
         {isResident ? "Handover is not ready yet." : "Handover is available once PC has been confirmed."}
       </div>
     );
@@ -7915,7 +8005,7 @@ function SelectedUnitHandover({
   return (
     <div className="grid gap-3">
       {buildingLifecycle === "post_dlp_readonly" && (
-        <div className="rounded-lg border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
+        <div className="rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-3 text-sm text-[#34413a]">
           <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
           <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
           <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
@@ -7924,7 +8014,7 @@ function SelectedUnitHandover({
       {!showFlow ? (
         <button className="secondary min-h-10 justify-self-start px-3 py-1.5 text-sm" onClick={() => setShowFlow(true)}>{isResident ? "Complete handover" : "Start handover"}</button>
       ) : (
-        <div className="grid gap-4 rounded-xl border border-[#d9ded6] bg-white p-3">
+        <div className="grid gap-4 rounded-bw-panel border border-[#d9ded6] bg-white p-3">
           <div className="grid gap-3 md:grid-cols-2">
             <label className="field-label">Full name<input className="field" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} /></label>
             <label className="field-label">Email address<input className="field" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} type="email" /></label>
@@ -7939,7 +8029,7 @@ function SelectedUnitHandover({
           <div className="grid gap-2">
             <p className="text-sm font-semibold text-[#0F3D2E]">Keys and fobs</p>
             {keyItems.map((item, index) => (
-              <div key={index} className="grid gap-2 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
+              <div key={index} className="grid gap-2 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
                 <select className="field" value={item.key_type} onChange={(event) => updateKeyItem(index, { key_type: event.target.value })}>
                   {["Front Door Key", "Post Box Key", "Window Key", "Meter Cupboard Key", "Communal Entrance Fob", "Parking Fob", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
@@ -7952,11 +8042,11 @@ function SelectedUnitHandover({
             <SimplePhotoInput value={keyPhoto} onChange={setKeyPhoto} label="Add or take keys/fobs photo" />
           </div>
           <div className="grid items-stretch gap-4 md:grid-cols-2">
-            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
               <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} /></label>
               <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} label="Add or take electricity meter photo" />
             </div>
-            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+            <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
               <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} /></label>
               <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} label="Add or take water meter photo" />
             </div>
@@ -8247,21 +8337,21 @@ function HandoverAndMeters({
           </label>
         </div>
         {selectedUnit && !handoverAllowed && !existingHandover && (
-          <div className="mt-4 rounded-xl border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
+          <div className="mt-4 rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-sm text-[#5c4a1f]">
             {!buildingAllowsFlatHandover(selectedBuilding)
               ? "Handover is available once PC has been confirmed."
               : `Handover unavailable. This flat is currently marked as ${currentStatus}. Handover can only take place once the flat is marked Completed.`}
           </div>
         )}
         {selectedUnit && !existingHandover && handoverAllowed && selectedBuildingLifecycle === "post_dlp_readonly" && (
-          <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
+          <div className="mt-4 rounded-bw-inset border border-[#d9ded6] bg-[#F7F5EF] p-4 text-sm text-[#34413a]">
             <p className="font-semibold text-[#0F3D2E]">This handover is taking place after the initial defects reporting period for the building has closed.</p>
             <p className="mt-2">Your handover record, key information, meter readings and useful documents will be available in the portal.</p>
             <p className="mt-2">New routine snag reports cannot be submitted through the portal. Please refer to the Home User Guide, building documents, managing agent or <a className="font-semibold underline" href="mailto:info@bunnywell.co.uk">info@bunnywell.co.uk</a> for guidance.</p>
           </div>
         )}
         {existingHandover && (
-          <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#f8faf7] p-4">
+          <div className="mt-4 rounded-bw-card border border-[#d9ded6] bg-[#f8faf7] p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-bold text-[#0F3D2E]">Handover completed</p>
@@ -8311,7 +8401,7 @@ function HandoverAndMeters({
               <SectionHeader title="Keys and fobs" subtitle="Record every item handed over, then photograph the set." />
               <div className="grid gap-3">
                 {keyItems.map((item, index) => (
-                  <div key={index} className="grid gap-2 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
+                  <div key={index} className="grid gap-2 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3 md:grid-cols-[1.4fr_110px_1fr_auto]">
                     <select className="field" value={item.key_type} onChange={(event) => updateKeyItem(index, { key_type: event.target.value })} disabled={!handoverAllowed}>
                       {["Front Door Key", "Post Box Key", "Window Key", "Meter Cupboard Key", "Communal Entrance Fob", "Parking Fob", "Other"].map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
@@ -8329,11 +8419,11 @@ function HandoverAndMeters({
             <div className="grid gap-4">
               <SectionHeader title="Meter readings" subtitle="Electricity and water readings need a value and photograph." />
               <div className="grid items-stretch gap-4 md:grid-cols-2">
-                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Electricity reading<input className="field" value={electricityReading} onChange={(event) => setElectricityReading(event.target.value)} disabled={!handoverAllowed} /></label>
                   <SimplePhotoInput value={electricityPhoto} onChange={setElectricityPhoto} disabled={!handoverAllowed} label="Add or take electricity meter photo" />
                 </div>
-                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-3">
+                <div className="grid h-full grid-rows-[auto_1fr] gap-3 rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6] p-3">
                   <label className="field-label">Water reading<input className="field" value={waterReading} onChange={(event) => setWaterReading(event.target.value)} disabled={!handoverAllowed} /></label>
                   <SimplePhotoInput value={waterPhoto} onChange={setWaterPhoto} disabled={!handoverAllowed} label="Add or take water meter photo" />
                 </div>
@@ -8344,7 +8434,7 @@ function HandoverAndMeters({
           {step === 3 && (
             <div className="grid gap-4">
               <SectionHeader title="Declaration and signature" subtitle="The recipient confirms receipt and responsibility from the handover time." />
-              <div className="rounded-xl border border-[#E2DED3] bg-[#FBFAF6] p-4 text-sm text-[#34413a]">
+              <div className="rounded-bw-inset border border-[#E2DED3] bg-[#FBFAF6] p-4 text-sm text-[#34413a]">
                 The listed keys/fobs have been received. The meter readings recorded are correct to the best of the recipient's knowledge. The recipient accepts responsibility for the property from the handover date.
               </div>
               <label className="field-label">Handover date/time<input className="field" type="datetime-local" value={handoverDateTime} onChange={(event) => setHandoverDateTime(event.target.value)} disabled={!handoverAllowed} /></label>
@@ -8547,6 +8637,7 @@ function ReportsPanel({
   }
 
   async function buildReportPdf() {
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -9014,10 +9105,11 @@ function ReportsPanel({
       {snags.length === 0 && (
         <p className="rounded-md border border-dashed border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">No reportable snags are available for your account.</p>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="segmented-control" role="group" aria-label="Report location type">
         <button
           className={locationType === "unit" ? "primary" : "secondary"}
           type="button"
+          aria-pressed={locationType === "unit"}
           onClick={() => {
             setLocationType("unit");
             resetSendState();
@@ -9029,6 +9121,7 @@ function ReportsPanel({
         <button
           className={locationType === "communal" ? "primary" : "secondary"}
           type="button"
+          aria-pressed={locationType === "communal"}
           onClick={() => {
             setLocationType("communal");
             resetSendState();
@@ -9063,14 +9156,14 @@ function ReportsPanel({
           ))}
         </select>
       )}
-      <label className="option-card min-h-10 px-3 py-2 text-sm">
+      <label className="checkbox-row">
         <input checked={includePhotos} onChange={(event) => {
           setIncludePhotos(event.target.checked);
           resetSendState();
         }} type="checkbox" />
         Include photos
       </label>
-      <label className="option-card min-h-10 px-3 py-2 text-sm">
+      <label className="checkbox-row">
         <input checked={includeClosedSnags} onChange={(event) => {
           setIncludeClosedSnags(event.target.checked);
           resetSendState();
@@ -9090,7 +9183,7 @@ function ReportsPanel({
         <p className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm text-[#617169]">Loading contractor recipients...</p>
       )}
       {canSendReport && sendState === "preview" && (
-        <div className="rounded-xl border border-[#d8ded8] bg-[#fbfaf6] p-4">
+        <div className="rounded-bw-card border border-[#d8ded8] bg-[#fbfaf6] p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-base font-semibold text-[#0f3d31]">Confirm contractor recipients</h3>
@@ -9419,7 +9512,7 @@ function SnagList({
   }
 
   return (
-    <section className="panel p-0">
+    <section className="panel min-w-0 p-0">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         {title && <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>}
         {showFilters && (
@@ -9486,7 +9579,7 @@ function SnagList({
             return (
               <article
                 key={snag.id}
-                className="rounded-xl border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
+                className="rounded-bw-card border border-[#E2DED3] bg-white p-3 shadow-[0_6px_16px_rgba(31,42,36,0.05)] transition hover:border-[#D6A23A]"
               >
                 <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
@@ -9497,7 +9590,7 @@ function SnagList({
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
                     </div>
                   </div>
-                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-lg border border-[#E2DED3] bg-[#FBFAF6]">
+                  <div className="h-14 w-14 justify-self-end overflow-hidden rounded-bw-card border border-[#E2DED3] bg-[#FBFAF6]">
                     {photo?.file_url ? (
                       <SnagThumbnail photo={photo} onOpen={setPreviewPhoto} className="h-full w-full" width={240} height={240} />
                     ) : (
@@ -10078,7 +10171,7 @@ function SnagDetailPage({
           {activityTab === "timeline" && (
             <div className="mt-4 grid gap-3">
               {timelineItems.map((event) => (
-                <div key={event.id} className={`rounded-md border p-3 text-sm ${timelineCardClass(event.new_value)}`}>
+                <div key={event.id} className={`rounded-bw-inset border p-3 text-sm ${timelineCardClass(event.new_value)}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-[#0F3D2E]">{timelineHeading(event)}</p>
@@ -10231,7 +10324,7 @@ function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or t
 
   return (
     <div className="grid h-full gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
         {isPreparing ? "Preparing photo..." : value ? "Replace photo" : label}
         <input
@@ -10247,7 +10340,7 @@ function SimplePhotoInput({ value, onChange, disabled = false, label = "Add or t
           }}
         />
       </label>
-      <div className="grid min-h-44 place-items-center rounded-xl border border-dashed border-[#d9ded6] bg-white p-2">
+      <div className="grid min-h-44 place-items-center rounded-bw-card border border-dashed border-[#d9ded6] bg-white p-2">
         {value ? (
           <img src={value} alt="" className="max-h-56 w-full rounded-md object-contain" />
         ) : (
@@ -10356,7 +10449,7 @@ function PhotoInput({ value, onChange, disabled = false }: { value: string; onCh
 
   return (
     <div className="grid gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Camera size={18} aria-hidden />
         {isPreparing ? "Preparing photo..." : value ? "Replace photo" : "Add or take photo"}
         <input
@@ -10478,7 +10571,7 @@ function VideoInput({ value, onChange, disabled = false, compactLabel = false }:
 
   return (
     <div className="grid gap-2">
-      <label className={`camera-action ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+      <label className={`camera-action upload-target ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <Film size={18} aria-hidden />
         {status === "preparing" ? "Reducing video..." : status === "checking" ? "Checking video..." : value ? "Replace video" : compactLabel ? "Video" : "Add optional video"}
         <input

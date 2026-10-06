@@ -1,0 +1,724 @@
+[
+  {
+    "name": "unindexed_foreign_keys",
+    "count": 113,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+    "findings": [
+      {
+        "detail": "Table \\`public.sale_completion_package_approvals\\` has a foreign key \\`sale_completion_package_approvals_account_document_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_completion_package_approvals",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_completion_package_approvals_account_document_id_fkey",
+          "fkey_columns": [
+            5
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_completion_package_approvals\\` has a foreign key \\`sale_completion_package_approvals_account_version_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_completion_package_approvals",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_completion_package_approvals_account_version_id_fkey",
+          "fkey_columns": [
+            6
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_completion_package_approvals\\` has a foreign key \\`sale_completion_package_approvals_approved_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_completion_package_approvals",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_completion_package_approvals_approved_by_fkey",
+          "fkey_columns": [
+            7
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_completion_package_approvals\\` has a foreign key \\`sale_completion_package_approvals_statement_document_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_completion_package_approvals",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_completion_package_approvals_statement_document_id_fkey",
+          "fkey_columns": [
+            3
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_completion_package_approvals\\` has a foreign key \\`sale_completion_package_approvals_statement_version_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_completion_package_approvals",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_completion_package_approvals_statement_version_id_fkey",
+          "fkey_columns": [
+            4
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_legal_emails\\` has a foreign key \\`sale_legal_emails_approved_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_legal_emails",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_legal_emails_approved_by_fkey",
+          "fkey_columns": [
+            11
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_legal_emails\\` has a foreign key \\`sale_legal_emails_replaced_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_legal_emails",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_legal_emails_replaced_by_fkey",
+          "fkey_columns": [
+            18
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.sale_legal_emails\\` has a foreign key \\`sale_legal_emails_revoked_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "sale_legal_emails",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "sale_legal_emails_revoked_by_fkey",
+          "fkey_columns": [
+            16
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_commercial_approved_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_commercial_approved_by_user_id_fkey",
+          "fkey_columns": [
+            19
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_completion_arrangements_confirmed_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_completion_arrangements_confirmed_by_fkey",
+          "fkey_columns": [
+            58
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_completion_authority_given_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_completion_authority_given_by_fkey",
+          "fkey_columns": [
+            56
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_completion_authority_requested_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_completion_authority_requested_by_fkey",
+          "fkey_columns": [
+            54
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_conveyancer_organisation_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_conveyancer_organisation_id_fkey",
+          "fkey_columns": [
+            14
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_created_by_user_id_fkey",
+          "fkey_columns": [
+            27
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_legal_completed_by_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_legal_completed_by_fkey",
+          "fkey_columns": [
+            52
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_redacted_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_redacted_by_user_id_fkey",
+          "fkey_columns": [
+            25
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_reservation_approved_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_reservation_approved_by_user_id_fkey",
+          "fkey_columns": [
+            17
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_reservation_rejected_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_reservation_rejected_by_user_id_fkey",
+          "fkey_columns": [
+            42
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_reservation_submitted_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_reservation_submitted_by_user_id_fkey",
+          "fkey_columns": [
+            35
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_sales_agent_organisation_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_sales_agent_organisation_id_fkey",
+          "fkey_columns": [
+            13
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has a foreign key \\`unit_sale_attempts_updated_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_attempts_updated_by_user_id_fkey",
+          "fkey_columns": [
+            28
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_document_versions\\` has a foreign key \\`unit_sale_document_versions_redacted_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_document_versions",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_document_versions_redacted_by_user_id_fkey",
+          "fkey_columns": [
+            14
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_document_versions\\` has a foreign key \\`unit_sale_document_versions_uploaded_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_document_versions",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_document_versions_uploaded_by_user_id_fkey",
+          "fkey_columns": [
+            11
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has a foreign key \\`unit_sale_documents_approved_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_documents_approved_by_user_id_fkey",
+          "fkey_columns": [
+            8
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has a foreign key \\`unit_sale_documents_approved_version_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_documents_approved_version_id_fkey",
+          "fkey_columns": [
+            19
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has a foreign key \\`unit_sale_documents_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_documents_created_by_user_id_fkey",
+          "fkey_columns": [
+            14
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has a foreign key \\`unit_sale_documents_redacted_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_documents_redacted_by_user_id_fkey",
+          "fkey_columns": [
+            13
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has a foreign key \\`unit_sale_documents_updated_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_documents_updated_by_user_id_fkey",
+          "fkey_columns": [
+            15
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoice_payments\\` has a foreign key \\`unit_sale_invoice_payments_paid_by_organisation_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoice_payments",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoice_payments_paid_by_organisation_id_fkey",
+          "fkey_columns": [
+            7
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoice_payments\\` has a foreign key \\`unit_sale_invoice_payments_recorded_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoice_payments",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoice_payments_recorded_by_user_id_fkey",
+          "fkey_columns": [
+            8
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoice_payments\\` has a foreign key \\`unit_sale_invoice_payments_sale_attempt_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoice_payments",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoice_payments_sale_attempt_id_fkey",
+          "fkey_columns": [
+            3
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoice_payments\\` has a foreign key \\`unit_sale_invoice_payments_voided_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoice_payments",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoice_payments_voided_by_user_id_fkey",
+          "fkey_columns": [
+            14
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has a foreign key \\`unit_sale_invoices_approved_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoices_approved_by_user_id_fkey",
+          "fkey_columns": [
+            15
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has a foreign key \\`unit_sale_invoices_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoices_created_by_user_id_fkey",
+          "fkey_columns": [
+            18
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has a foreign key \\`unit_sale_invoices_document_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoices_document_id_fkey",
+          "fkey_columns": [
+            3
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has a foreign key \\`unit_sale_invoices_supplier_organisation_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoices_supplier_organisation_id_fkey",
+          "fkey_columns": [
+            5
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has a foreign key \\`unit_sale_invoices_updated_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_invoices_updated_by_user_id_fkey",
+          "fkey_columns": [
+            19
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_notes\\` has a foreign key \\`unit_sale_notes_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_notes",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_notes_created_by_user_id_fkey",
+          "fkey_columns": [
+            10
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_notes\\` has a foreign key \\`unit_sale_notes_redacted_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_notes",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_notes_redacted_by_user_id_fkey",
+          "fkey_columns": [
+            9
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_notes\\` has a foreign key \\`unit_sale_notes_unit_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_notes",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_notes_unit_id_fkey",
+          "fkey_columns": [
+            4
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_payment_schedule\\` has a foreign key \\`unit_sale_payment_schedule_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_payment_schedule",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_payment_schedule_created_by_user_id_fkey",
+          "fkey_columns": [
+            15
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_payment_schedule\\` has a foreign key \\`unit_sale_payment_schedule_sale_terms_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_payment_schedule",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_payment_schedule_sale_terms_id_fkey",
+          "fkey_columns": [
+            3
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_payment_schedule\\` has a foreign key \\`unit_sale_payment_schedule_updated_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_payment_schedule",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_payment_schedule_updated_by_user_id_fkey",
+          "fkey_columns": [
+            16
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_terms\\` has a foreign key \\`unit_sale_terms_approved_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_terms",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_terms_approved_by_user_id_fkey",
+          "fkey_columns": [
+            19
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_terms\\` has a foreign key \\`unit_sale_terms_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_terms",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_terms_created_by_user_id_fkey",
+          "fkey_columns": [
+            22
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_terms\\` has a foreign key \\`unit_sale_terms_updated_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_terms",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_terms_updated_by_user_id_fkey",
+          "fkey_columns": [
+            23
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_workflow_events\\` has a foreign key \\`unit_sale_workflow_events_created_by_user_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_workflow_events",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_workflow_events_created_by_user_id_fkey",
+          "fkey_columns": [
+            10
+          ]
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_workflow_events\\` has a foreign key \\`unit_sale_workflow_events_unit_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "unit_sale_workflow_events",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "unit_sale_workflow_events_unit_id_fkey",
+          "fkey_columns": [
+            4
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "auth_rls_initplan",
+    "count": 22,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+    "findings": [
+      {
+        "detail": "Table \\`public.unit_sale_workflow_events\\` has a row level security policy \\`commercial admins add workflow events\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "unit_sale_workflow_events",
+          "type": "table",
+          "schema": "public"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unused_index",
+    "count": 30,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+    "findings": [
+      {
+        "detail": "Index \\`unit_sale_documents_agent_fee_milestone_idx\\` on table \\`public.unit_sale_documents\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Index \\`unit_sale_invoice_payments_active_invoice_idx\\` on table \\`public.unit_sale_invoice_payments\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_invoice_payments",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Index \\`unit_sale_attempts_active_status_idx\\` on table \\`public.unit_sale_attempts\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Index \\`unit_sale_documents_status_idx\\` on table \\`public.unit_sale_documents\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Index \\`unit_sale_workflow_events_building_created_idx\\` on table \\`public.unit_sale_workflow_events\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_workflow_events",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Index \\`unit_sale_notes_building_created_idx\\` on table \\`public.unit_sale_notes\\` has not been used",
+        "metadata": {
+          "name": "unit_sale_notes",
+          "type": "table",
+          "schema": "public"
+        }
+      }
+    ]
+  },
+  {
+    "name": "multiple_permissive_policies",
+    "count": 22,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies",
+    "findings": [
+      {
+        "detail": "Table \\`public.unit_sale_attempts\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale attempts\",\"sales users read sale attempts\"}\\`",
+        "metadata": {
+          "name": "unit_sale_attempts",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_document_versions\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale document versions\",\"sales users read sale document versions\"}\\`",
+        "metadata": {
+          "name": "unit_sale_document_versions",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_documents\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale documents\",\"sales users read sale documents\"}\\`",
+        "metadata": {
+          "name": "unit_sale_documents",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_invoices\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale invoices\",\"sales users read sale invoices\"}\\`",
+        "metadata": {
+          "name": "unit_sale_invoices",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_notes\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale notes\",\"sales users read sale notes\"}\\`",
+        "metadata": {
+          "name": "unit_sale_notes",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_payment_schedule\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage payment schedule\",\"sales users read payment schedule\"}\\`",
+        "metadata": {
+          "name": "unit_sale_payment_schedule",
+          "type": "table",
+          "schema": "public"
+        }
+      },
+      {
+        "detail": "Table \\`public.unit_sale_terms\\` has multiple permissive policies for role \\`authenticated\\` for action \\`SELECT\\`. Policies include \\`{\"commercial admins manage sale terms\",\"sales users read sale terms\"}\\`",
+        "metadata": {
+          "name": "unit_sale_terms",
+          "type": "table",
+          "schema": "public"
+        }
+      }
+    ]
+  },
+  {
+    "name": "auth_db_connections_absolute",
+    "count": 1,
+    "remediation": "https://supabase.com/docs/guides/deployment/going-into-prod",
+    "findings": []
+  }
+]
