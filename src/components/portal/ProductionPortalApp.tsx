@@ -1323,6 +1323,7 @@ export function ProductionPortalApp() {
   }
 
   async function refreshPortal() {
+    setNotice("");
     try {
       await loadAll(user?.id, user?.email, "explicit-refresh");
       setSalesRefreshRevision(value => value + 1);
@@ -1438,7 +1439,7 @@ export function ProductionPortalApp() {
   }
 
   if (isLoading) {
-    return <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice="Loading Bunnywell Portal..." />;
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice=""><PortalLoading /></Shell>;
   }
 
   if (authRedirect && !authRedirect.error) {
@@ -1468,8 +1469,8 @@ export function ProductionPortalApp() {
   }
 
   if (!profile) {
-    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={signOut} onRefresh={refreshPortal}>
-      <section className="panel" aria-live="polite"><h2 className="text-xl font-bold text-[#0F3D2E]">Checking portal access</h2><p className="mt-2 text-sm text-[#617169]">Your portal data will appear after your access has been checked.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section>
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={notice ? signOut : undefined}>
+      {notice ? <section className="panel"><h2 className="text-xl font-bold text-[#0F3D2E]">Unable to load your portal</h2><p className="mt-2 text-sm text-[#617169]">We couldn’t finish checking your access. Please try again.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section> : <PortalLoading />}
     </Shell>;
   }
 
@@ -1642,6 +1643,13 @@ export function ProductionPortalApp() {
   );
 }
 
+function PortalLoading() {
+  return <div role="status" aria-label="Loading portal" className="flex items-center gap-2 px-1 py-6 text-sm text-[#77847d]">
+    <span aria-hidden="true" className="h-4 w-4 rounded-full border-2 border-[#d9ded6] border-t-[#617169] motion-safe:animate-spin" />
+    <span>Loading your portal…</span>
+  </div>;
+}
+
 function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label: string; tab: Tab; activeTabs: Tab[]; icon: React.ReactNode }> {
   const items: Array<{ key: PrimaryNavKey; label: string; tab: Tab; activeTabs: Tab[]; icon: React.ReactNode }> = [];
   const setupTabs = tabs.filter((item) => portalScreens[item].section === "setup");
@@ -1758,10 +1766,10 @@ function Shell({
                   </label>
                 )
               )}
-              <span className="account-pill max-w-72">
+              {profile && <span className="account-pill max-w-72">
                 <Shield size={16} aria-hidden />
-                <span className="truncate">{profile?.email ?? "Not signed in"}</span>
-              </span>
+                <span className="truncate">{profile.email}</span>
+              </span>}
               {onRefresh && (
                 <div className="flex items-center gap-1.5 rounded-full border border-[#e3ded2] bg-[#fbfaf6] px-3 py-2 text-xs text-[#66736B]">
                   <span>Updated {formatRefreshTime(lastUpdatedAt)}</span>
