@@ -217,8 +217,8 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(3,minmax(9rem,1fr))_auto]">
           <label className="relative min-w-0">
             <span className="sr-only">Search audit log</span>
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-[#77847d]" />
-            <input className={`field w-full pl-9 ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" />
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#77847d]" />
+            <input className={`field audit-search w-full ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" />
           </label>
           <label className="field-label">Event type<input className="field" list="audit-event-types" value={eventType} onChange={e => setEventType(e.target.value)} placeholder="All events" /><datalist id="audit-event-types">{eventTypes.map(type => <option key={type} value={type} />)}</datalist></label>
           <FilterSelect label="User" value={userId} onChange={setUserId} active={Boolean(userId)}>

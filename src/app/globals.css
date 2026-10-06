@@ -101,6 +101,10 @@ canvas {
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
+.field.audit-search {
+  padding-left: 2.5rem;
+}
+
 textarea.field {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
