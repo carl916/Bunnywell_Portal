@@ -39,7 +39,7 @@ async function getAllocationAdmin(request: Request) {
       ),
     };
   }
-  return { adminClient, actorUserId: userData.user.id };
+  return { adminClient: createSupabaseServiceRoleClient(undefined, userData.user.id), actorUserId: userData.user.id };
 }
 
 export async function GET(request: Request) {

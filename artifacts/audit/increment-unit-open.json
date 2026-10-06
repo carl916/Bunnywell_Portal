@@ -1,0 +1,132 @@
+{
+  "mode": "increment",
+  "sampleSize": 20,
+  "p50Ms": 8.254399999999805,
+  "p95Ms": 13.781500000000051,
+  "requests": [
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "viewRequests": 2,
+  "backgroundViewRequests": 0,
+  "samples": [
+    {
+      "ms": 13.781500000000051,
+      "requests": 1,
+      "viewRequests": 1
+    },
+    {
+      "ms": 16.08550000000014,
+      "requests": 1,
+      "viewRequests": 1
+    },
+    {
+      "ms": 10.556899999999587,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 9.507100000000719,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 9.980999999999767,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 9.539300000000367,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 8.69209999999839,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 8.296599999999671,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 8.168700000000172,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 9.025899999998728,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.818200000001525,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.563700000000608,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 8.303599999999278,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.352900000001682,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.651299999999537,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.835999999999331,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.424800000000687,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.287800000000061,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 8.254399999999805,
+      "requests": 0,
+      "viewRequests": 0
+    },
+    {
+      "ms": 7.467499999998836,
+      "requests": 0,
+      "viewRequests": 0
+    }
+  ]
+}

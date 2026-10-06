@@ -33,6 +33,8 @@ import { parsePercentInput } from "@/lib/sales/percentages";
 import { canReturnUnitToForSale } from "@/lib/sales/reservation-redaction";
 import { loadBuildingSalesData, loadLegalSaleChanges, replaceSaleRows, replaceRowsById, settleRefreshes } from "@/lib/sales/action-refresh";
 import styles from "./SalesReservationWorkflow.module.css";
+import { UnitOpenObserver } from "@/components/portal/audit/UnitOpenObserver";
+import { markUnitOpenIntent } from "@/lib/audit/unit-open";
 import {
   SALES_ROUTE_STATUSES,
   isSalesRouteUnit,
@@ -1473,6 +1475,7 @@ export function SalesReservationWorkflow({
   }
 
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
+    markUnitOpenIntent(nextUnitId);
     beginSalesMeasurement("sale.open");
     setConversationTarget(null);
     manuallySelectedWorkflowStageRef.current = null;
@@ -2570,6 +2573,7 @@ export function SalesReservationWorkflow({
 
       {selectedUnit && (
         <section className="panel min-w-0">
+          <UnitOpenObserver unitId={selectedUnit.id} />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected sale file</p>

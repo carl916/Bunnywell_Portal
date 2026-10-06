@@ -1403,32 +1403,7 @@ async function recordAgentFeePayment(adminClient: SupabaseClient, requester: Req
   if (error) throw error;
 
   const result = Array.isArray(data) ? data[0] : data;
-  if (result?.created) {
-    await insertEvent(adminClient, attempt, requester, {
-      type: "agent_fee_payment_recorded",
-      toStatus: attempt.workflow_status,
-      summary: `${invoice.fee_milestone === "completion" ? "Completion" : "Exchange"} agent fee payment recorded.`,
-      metadata: {
-        invoiceId: invoice.id,
-        paymentId: result.payment_id,
-        recordedByUserId: requester.id,
-        recordedByName: requester.name,
-        recordedByOrganisationId: requester.organisation_id,
-        amount,
-        paymentDate,
-        outstandingBalance: result.outstanding_balance,
-        paymentStatus: result.payment_status,
-      },
-    });
-    if (result.payment_status === "paid") {
-      await insertEvent(adminClient, attempt, requester, {
-        type: "agent_fee_invoice_paid",
-        toStatus: attempt.workflow_status,
-        summary: `${invoice.fee_milestone === "completion" ? "Completion" : "Exchange"} agent fee invoice fully paid.`,
-        metadata: { invoiceId: invoice.id, feeMilestone: invoice.fee_milestone },
-      });
-    }
-  }
+  // Creation history commits inside the payment transaction.
 
   return {
     saleAttemptId: attempt.id,
@@ -1549,9 +1524,10 @@ export async function POST(request: Request) {
   let action = "save_reservation";
   try {
     requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
-    const adminClient = createSupabaseServiceRoleClient();
+    let adminClient = createSupabaseServiceRoleClient();
     const { requester, response } = await getRequester(request, adminClient);
     if (response || !requester) return response;
+    adminClient = createSupabaseServiceRoleClient(undefined, requester.id);
 
     const contentType = request.headers.get("content-type") ?? "";
     if (contentType.includes("multipart/form-data")) {

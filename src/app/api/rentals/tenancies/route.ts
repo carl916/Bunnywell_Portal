@@ -33,7 +33,7 @@ async function getTenancyManager(request: Request, adminOnly = false) {
   const role = profile?.role?.trim().toLowerCase();
   const allowed = profile?.active !== false && (adminOnly ? role === "admin" : role === "admin" || role === "developer");
   if (!allowed) return { response: NextResponse.json({ error: adminOnly ? "Only administrators can delete tenancies." : "Only administrators or developers can manage tenancies." }, { status: 403 }) };
-  return { adminClient, actorUserId: userData.user.id };
+  return { adminClient: createSupabaseServiceRoleClient(undefined, userData.user.id), actorUserId: userData.user.id };
 }
 
 function optionalText(value: unknown) {

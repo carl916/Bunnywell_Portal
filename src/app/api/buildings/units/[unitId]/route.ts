@@ -39,7 +39,7 @@ async function getStructuralUnitAdmin(request: Request) {
     };
   }
 
-  return { adminClient };
+  return { adminClient: createSupabaseServiceRoleClient(undefined, userData.user.id) };
 }
 
 function structuralUnitRepository(adminClient: SupabaseClient): StructuralUnitRepository {

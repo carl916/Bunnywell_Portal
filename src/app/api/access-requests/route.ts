@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/admin";
 import type { ResidentType } from "@/lib/data/production";
 
 type RequestedUnitInput = {
@@ -164,7 +165,7 @@ async function getAdminClientForRequest(request: Request) {
     return { response: NextResponse.json({ error: "Portal profile not found." }, { status: 403 }) };
   }
 
-  return { adminClient, user: userData.user, requesterProfileId: requesterById.id as string };
+  return { adminClient: createSupabaseServiceRoleClient(undefined, userData.user.id), user: userData.user, requesterProfileId: requesterById.id as string };
 }
 
 export async function GET() {

@@ -26,7 +26,7 @@ async function session(request: Request, timing: SalesServerTiming) {
   if (error || !data.user) throw new Error("Your session has expired. Sign in again.");
   const profile = await client.from("profiles").select("id,role,active").eq("id", data.user.id).single();
   if (profile.error || profile.data.active !== true) throw new Error("An active sales profile is required.");
-  return { client, actor: data.user.id, role: String(profile.data.role) };
+  return { client: createSupabaseServiceRoleClient(timing.fetch, data.user.id), actor: data.user.id, role: String(profile.data.role) };
 }
 
 export async function GET(request: Request) {
