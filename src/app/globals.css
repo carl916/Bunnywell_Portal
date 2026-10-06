@@ -105,6 +105,12 @@ canvas {
   padding-left: 2.5rem;
 }
 
+.secondary.audit-filter-reset {
+  height: 2.875rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 textarea.field {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;

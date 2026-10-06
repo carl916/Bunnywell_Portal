@@ -214,11 +214,13 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
           ))}
         </div>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(3,minmax(9rem,1fr))_auto]">
-          <label className="relative min-w-0">
-            <span className="sr-only">Search audit log</span>
-            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#77847d]" />
-            <input className={`field audit-search w-full ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" />
+        <div className="mt-3 grid items-end gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.5fr)_repeat(3,minmax(9rem,1fr))_auto]">
+          <label className="field-label min-w-0">
+            Search audit log
+            <span className="relative block">
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#77847d]" />
+              <input className={`field audit-search w-full ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" />
+            </span>
           </label>
           <label className="field-label">Event type<input className="field" list="audit-event-types" value={eventType} onChange={e => setEventType(e.target.value)} placeholder="All events" /><datalist id="audit-event-types">{eventTypes.map(type => <option key={type} value={type} />)}</datalist></label>
           <FilterSelect label="User" value={userId} onChange={setUserId} active={Boolean(userId)}>
@@ -232,9 +234,9 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
           </FilterSelect>
-          <button type="button" className="secondary min-h-10 whitespace-nowrap px-3 disabled:opacity-40" onClick={resetFilters} disabled={!hasFilters}>Reset</button>
+          <button type="button" className="secondary audit-filter-reset whitespace-nowrap px-3 disabled:opacity-40" onClick={resetFilters} disabled={!hasFilters}>Reset</button>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={`mt-3 grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-3 ${buildingContextId ? "xl:grid-cols-5" : "xl:grid-cols-6"}`}>
           {!buildingContextId && <FilterSelect label="Building" value={buildingId} onChange={setBuildingId} active={Boolean(buildingId)}><option value="">All buildings</option>{buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</FilterSelect>}
           <FilterSelect label="Unit" value={unitId} onChange={setUnitId} active={Boolean(unitId)}><option value="">All units</option>{units.filter(u => !(buildingContextId || buildingId) || u.building_id === (buildingContextId || buildingId)).map(u => <option key={u.id} value={u.id}>{u.unit_number}</option>)}</FilterSelect>
           <label className="field-label">Sale ID<input className="field" value={saleId} onChange={e => setSaleId(e.target.value)} placeholder="Sale UUID" /></label>
@@ -311,7 +313,7 @@ function Summary({ label, value }: { label: string; value: string }) {
 }
 
 function FilterSelect({ label, value, active, onChange, children }: { label: string; value: string; active: boolean; onChange: (value: string) => void; children: React.ReactNode }) {
-  return <label><span className="sr-only">{label}</span><select className={`field w-full ${active ? "filter-active" : ""}`} value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
+  return <label className="field-label min-w-0">{label}<select className={`field w-full ${active ? "filter-active" : ""}`} value={value} onChange={(event) => onChange(event.target.value)}>{children}</select></label>;
 }
 
 function EmptyState({ hasFilters, onReset }: { hasFilters: boolean; onReset: () => void }) {
