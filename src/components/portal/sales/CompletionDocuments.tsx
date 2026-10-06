@@ -15,7 +15,7 @@ export type CompletionPackage = { approved: boolean; approval: { approved_by_nam
 export const draftDocumentTypes = ["completion_statement", "draft_statement_of_account"] as const;
 type DraftType = typeof draftDocumentTypes[number];
 const labels: Record<DraftType, string> = { completion_statement: "Draft completion statement", draft_statement_of_account: "Draft statement of account" };
-type Selection = { id: string; file: File; type: DraftType | ""; expectedVersionId: string | null };
+type Selection = { file: File; type: DraftType; expectedVersionId: string | null };
 export const currentCompletionVersion = (document?: CompletionDocument) => document?.unit_sale_document_versions.find(version => version.is_current && !version.redacted_at);
 
 export function CompletionDocuments({ saleId, documents, packageState, uploadAllowed, reviewAllowed, arrangementsConfirmed, completed, busy, actors, historicalApproval, run, open }: {
@@ -37,19 +37,18 @@ export function CompletionDocuments({ saleId, documents, packageState, uploadAll
   const current = (type: DraftType) => currentCompletionVersion(doc(type));
   const bothUploaded = draftDocumentTypes.every(type => current(type));
   const approved = Boolean(packageState?.approved);
-  const duplicate = selected.some((item, index) => item.type && selected.some((other, otherIndex) => index !== otherIndex && item.type === other.type));
-  const valid = selected.length > 0 && selected.every(item => item.type && !noticeFileError(item.file)) && !duplicate;
-  function choose(files: File[], replacing?: Selection) {
-    if (files.length === 0) return;
+  const valid = selected.length > 0 && selected.every(item => !noticeFileError(item.file));
+  function choose(type: DraftType, files: File[]) {
+    if (files.length === 0 || busy) return;
     const timing = beginSalesMeasurement("completion.documents_select"); timing.finish();
+    if (files.length !== 1) { setError("Choose one PDF for each document slot."); return; }
     const problem = files.map(noticeFileError).find(Boolean);
-    if (problem || (!replacing && selected.length + files.length > 2)) { setError(problem || "Select at most two PDFs. Remove a selected file before adding another."); return; }
+    if (problem) { setError(problem); return; }
     setError(""); resetRequest();
-    if (replacing) { setSelected(items => items.map(item => item.id === replacing.id ? { ...item, file: files[0] } : item)); return; }
-    setSelected(items => [...items, ...files.map(file => {
-      const type: DraftType | "" = /account|\bsoa\b/i.test(file.name) ? "draft_statement_of_account" : /completion|statement/i.test(file.name) ? "completion_statement" : "";
-      return { id: crypto.randomUUID(), file, type, expectedVersionId: type ? current(type)?.id ?? null : null };
-    })]);
+    const expectedVersionId = current(type)?.id ?? null;
+    setSelected(items => items.some(item => item.type === type)
+      ? items.map(item => item.type === type ? { ...item, file: files[0] } : item)
+      : [...items, { file: files[0], type, expectedVersionId }]);
   }
   async function upload() {
     if (!valid || busy || controller.current) return;
@@ -67,44 +66,46 @@ export function CompletionDocuments({ saleId, documents, packageState, uploadAll
   }
   function card(type: DraftType, history: boolean) {
     const document = doc(type), version = current(type);
+    const selection = history ? selected.find(item => item.type === type) : undefined;
     const older = document?.unit_sale_document_versions.filter(item => !item.is_current && !item.redacted_at).sort((a,b)=>b.version_number-a.version_number) ?? [];
     const status = !version ? "Not uploaded" : document?.status === "query_raised" ? "Query raised" : approved || completed && document?.status === "approved" ? "Approved" : "Awaiting approval";
     return <article key={type} className="min-w-0 rounded-xl border border-[#d9ded6] bg-white p-4" aria-label={`${history ? "Uploaded" : "Review"} ${labels[type].toLowerCase()}`}>
-      <div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-bold text-[#0F3D2E]">{labels[type]}</h5><span className="text-sm font-semibold">{status}</span></div>
+      <div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-bold text-[#0F3D2E]">{labels[type]}</h5><span className="text-sm font-semibold">{selection ? "Ready to upload" : status}</span></div>
+      {history && uploadAllowed && (!version || selection) && <div className="mt-3" role={selection ? "group" : undefined} aria-label={selection ? `Selected ${selection.file.name}` : undefined}>
+        <PdfUploadBox id={`${saleId}-${type}`} label={`${version || selection ? "Replace" : "Choose"} ${labels[type].toLowerCase()}`} file={selection?.file ?? null} disabled={busy}
+          onFile={file => { if (file) choose(type, [file]); }} onFiles={files => choose(type, files)} multiple={false}
+          onClear={() => { setSelected(items => items.filter(item => item.type !== type)); resetRequest(); setError(""); }}
+          emptyPrompt={version ? "Choose or drop a replacement PDF" : "Choose or drop a PDF"}
+          helperText="One PDF, maximum 10 MiB per document." />
+        {selection && version && <p className="mt-2 text-sm text-amber-800">Replaces {version.file_name}. Fresh approval of both documents will be required.</p>}
+      </div>}
       {version && <><p className="mt-3 font-medium [overflow-wrap:anywhere]">{version.file_name}</p><p className="mt-1 text-sm text-[#617169]">Uploaded {legalDateTime(version.uploaded_at)} by {historicalActorLabel({userId:version.uploaded_by_user_id,profiles:actors,fallback:"Unknown user"})}</p>
-        <button type="button" className="secondary mt-3" onClick={()=>void open(version.id)}>View/download</button>
-        {history && uploadAllowed && <label className="secondary upload-target ml-2 mt-3 inline-flex cursor-pointer">Replace<input className="sr-only" aria-label={`Replace ${labels[type].toLowerCase()}`} type="file" accept="application/pdf,.pdf" disabled={busy || selected.length>=2 || selected.some(item=>item.type===type)} onChange={event=>{
-          const file=event.target.files?.[0];event.target.value="";if(!file)return;const problem=noticeFileError(file);if(problem){setError(problem);return;}setError("");resetRequest();setSelected(items=>[...items,{id:crypto.randomUUID(),file,type,expectedVersionId:version.id}]);
-        }}/></label>}
+        <button type="button" className="secondary upload-action mt-3" onClick={()=>void open(version.id)}>View/download</button>
+        {history && uploadAllowed && !selection && <label className={`secondary upload-action upload-target ml-2 mt-3 ${busy ? "opacity-60" : "cursor-pointer"}`}>
+          Replace<input className="sr-only" aria-label={`Replace ${labels[type].toLowerCase()}`} type="file" accept="application/pdf,.pdf" disabled={busy}
+            onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) choose(type, [file]); }} />
+        </label>}
       </>}
       {history && type === "completion_statement" && historicalApproval && <p className="mt-3 text-sm">Historical completion statement approved · Approved by {historicalApproval.name}{historicalApproval.date ? ` on ${legalDateTime(historicalApproval.date)}` : ""}</p>}
       {document?.query_note && <p className="mt-3 whitespace-pre-wrap rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Query raised: {document.query_note}</p>}
-      {history && older.length>0 && <details className="mt-3 text-sm"><summary className="cursor-pointer">Previous versions ({older.length})</summary>{older.map(item=><div key={item.id} className="mt-2 border-t pt-2"><p className="[overflow-wrap:anywhere]">Superseded · Version {item.version_number} · {item.file_name}</p><button type="button" className="secondary mt-2" onClick={()=>void open(item.id)}>View/download</button></div>)}</details>}
+      {history && older.length>0 && <details className="mt-3 text-sm"><summary className="cursor-pointer">Previous versions ({older.length})</summary>{older.map(item=><div key={item.id} className="mt-2 border-t pt-2"><p className="[overflow-wrap:anywhere]">Superseded · Version {item.version_number} · {item.file_name}</p><button type="button" className="secondary upload-action mt-2" onClick={()=>void open(item.id)}>View/download</button></div>)}</details>}
     </article>;
   }
   return <>
     <li className="min-w-0 py-5" id="completion-documents-step"><h4 className="font-bold">4. Completion documents</h4>
       <p className="mt-1 text-sm">{bothUploaded ? "Both current documents uploaded." : "Upload both draft documents before developer review."}</p>
       {!arrangementsConfirmed && !completed && <p className="mt-2 text-sm text-amber-800">Confirm completion arrangements before continuing.</p>}
+      {uploadAllowed && <p className="mt-2 text-sm text-[#617169]">Choose a PDF for each document, then upload them together. You can also upload or replace one at a time.</p>}
+      <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">{draftDocumentTypes.map(type=>card(type,true))}</div>
       {uploadAllowed && <div className="mt-4 grid gap-4">
-        <PdfUploadBox id={`${saleId}-completion-documents`} label="Choose completion documents" file={null} disabled={busy} onFile={file=>{if(file)choose([file]);}} onFiles={files=>choose(files)} onClear={()=>{}} emptyPrompt="Choose or drop the completion documents" helperText="Upload the draft completion statement and draft statement of account. PDF only, maximum 10 MiB (10,485,760 bytes) per file."/>
-        {selected.map(item=><div key={item.id} className="min-w-0" role="group" aria-label={`Selected ${item.file.name}`}>
-          <PdfUploadBox id={item.id} label={`Replace selected ${item.file.name}`} file={item.file} disabled={busy} onFile={file=>{if(file)choose([file],item);}} onClear={()=>{setSelected(items=>items.filter(other=>other.id!==item.id));resetRequest();setError("");}}/>
-          <label className="field-label mt-2">Assigned document type<select className="field" aria-label={`Document type for ${item.file.name}`} value={item.type} disabled={busy} onChange={event=>{const type=event.target.value as DraftType|"";setSelected(items=>items.map(other=>other.id===item.id?{...other,type,expectedVersionId:type?current(type)?.id??null:null}:other));resetRequest();}}>
-            <option value="">Choose document type</option>{draftDocumentTypes.map(type=><option key={type} value={type}>{labels[type]}</option>)}
-          </select></label>
-          {item.type && current(item.type) && <p className="mt-2 text-sm text-amber-800">Replaces {current(item.type)?.file_name}. Fresh approval of both documents will be required.</p>}
-        </div>)}
-        {duplicate && <p role="alert" className="text-sm text-red-800">Assign each file a different document type.</p>}
         {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
         {progress && <div className="min-w-0 rounded-xl border border-[#d9ded6] bg-white p-4">
           <p role="status" className="text-sm">{progress.phase === "preparing" ? "Preparing secure upload…" : progress.phase === "verifying" ? "Verifying PDFs and saving document versions…" : `Uploading PDFs: ${Math.round(100 * progress.loaded / progress.total)}%`}</p>
           <progress aria-label="Completion document upload" max={progress.total} value={progress.loaded} className="mt-2 w-full" />
           {progress.phase !== "verifying" && <button type="button" className="secondary mt-2" onClick={() => controller.current?.abort()}>Pause upload</button>}
         </div>}
-        {selected.length>0 && <button type="button" className="primary w-fit" disabled={busy||!valid} onClick={()=>void upload()}>{selected.length===1 && selected[0].expectedVersionId ? "Upload replacement document" : "Upload completion documents"}</button>}
+        <button type="button" className="primary w-fit" disabled={busy||!valid} onClick={()=>void upload()}>{selected.length===1 && selected[0].expectedVersionId ? "Upload replacement document" : "Upload completion documents"}</button>
       </div>}
-      <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">{draftDocumentTypes.map(type=>card(type,true))}</div>
     </li>
     <li className="min-w-0 py-5" id="completion-approval-step"><h4 className="font-bold">5. Developer approval</h4>
       {!bothUploaded ? <p className="mt-2 text-sm text-[#617169]">{completed ? "Historical completion – approval of both draft documents was not recorded." : "Available once the conveyancer has uploaded both completion documents."}</p> : <>

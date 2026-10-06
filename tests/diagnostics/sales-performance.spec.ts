@@ -87,7 +87,10 @@ for(const profile of ["desktop","mobile-throttled"]) for(let run=1;run<=runs;run
     const inputDirectory=path.resolve('.next/performance/synthetic-inputs');await mkdir(inputDirectory,{recursive:true});
     const files=Array.from({length:count},(_,i)=>path.join(inputDirectory,i?'synthetic-account.pdf':'synthetic-completion.pdf'));
     for(const file of files)await writeFile(file,buffer);
-    await measure(page,`completion.documents_select.${label}`,profile,run,()=>docs.getByLabel("Choose completion documents",{exact:true}).setInputFiles(files),()=>expect(docs.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(count));
+    await measure(page,`completion.documents_select.${label}`,profile,run,async()=>{
+      await docs.getByLabel(/^(Choose|Replace) draft completion statement$/).setInputFiles(files[0]);
+      if(files[1])await docs.getByLabel(/^(Choose|Replace) draft statement of account$/).setInputFiles(files[1]);
+    },()=>expect(docs.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(count));
     await measure(page,`completion.documents_upload.${label}`,profile,run,()=>docs.getByRole("button",{name:/^Upload (completion documents|replacement document)$/}).click(),()=>expect(docs.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(0));
   }
   f.profile.role="developer";await f.reloadStage("Completion");

@@ -17,6 +17,7 @@ export function PdfUploadBox({
   emptyPrompt,
   helperText = "PDF only, maximum 10 MB",
   onFiles,
+  multiple = Boolean(onFiles),
 }: {
   id: string;
   label: string;
@@ -30,6 +31,7 @@ export function PdfUploadBox({
   emptyPrompt?: string;
   helperText?: string;
   onFiles?: (files: File[]) => void;
+  multiple?: boolean;
 }) {
   if (file) {
     return <div className="min-w-0 rounded-bw-card border border-[#9bb5a6] bg-[#EEF6F1] p-5" aria-live="polite">
@@ -38,10 +40,10 @@ export function PdfUploadBox({
         <div className="min-w-0"><p className="font-bold text-[#0F3D2E] [overflow-wrap:anywhere]">{file.name}</p><p className="mt-1 text-sm text-[#617169]">{fileSizeLabel(file.size)}</p><p className="mt-2 text-sm font-semibold text-[#0F3D2E]">Selected – ready to submit</p></div>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <label className={`secondary upload-target inline-flex items-center ${disabled ? "opacity-60" : "cursor-pointer"}`}>
+        <label className={`secondary upload-action upload-target inline-flex items-center ${disabled ? "opacity-60" : "cursor-pointer"}`}>
           Replace<input id={id} aria-label={label} className="sr-only" type="file" accept="application/pdf,.pdf" disabled={disabled} onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
         </label>
-        <button type="button" className="secondary" disabled={disabled} onClick={onClear}>Remove</button>
+        <button type="button" className="secondary upload-action" disabled={disabled} onClick={onClear}>Remove</button>
       </div>
     </div>;
   }
@@ -59,17 +61,17 @@ export function PdfUploadBox({
               </p>
             </div>
           </div>
-          <button className="secondary min-h-9 px-3 py-1.5 text-sm" type="button" onClick={onOpen} disabled={!onOpen}>
+          <button className="secondary upload-action" type="button" onClick={onOpen} disabled={!onOpen}>
             View/download
           </button>
         </div>
         {!disabled && (
           onRemoveCurrent ? (
-            <button className="secondary mt-3 min-h-9 w-fit px-3 py-1.5 text-sm" type="button" onClick={onRemoveCurrent}>
+            <button className="secondary upload-action mt-3 w-fit" type="button" onClick={onRemoveCurrent}>
               <X size={14} aria-hidden /> Remove PDF
             </button>
           ) : (
-            <label className="secondary upload-target mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
+            <label className="secondary upload-action upload-target mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
               Replace PDF
               <input className="sr-only" aria-label={`Replace ${label}`} type="file" accept="application/pdf" onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
             </label>
@@ -105,7 +107,7 @@ export function PdfUploadBox({
         className="sr-only"
         type="file"
         accept="application/pdf"
-        multiple={Boolean(onFiles)}
+        multiple={multiple}
         disabled={disabled}
         onChange={(event) => { if (onFiles) onFiles(Array.from(event.target.files ?? [])); else onFile(event.target.files?.[0] ?? null); event.target.value = ""; }}
       />
