@@ -16,6 +16,7 @@ import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import { UnitAllocationWorkspace } from "@/components/portal/UnitAllocationWorkspace";
+import { sortUnitsByBuildingFloorOrder } from "@/lib/units/commercial-allocation";
 import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
 import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
@@ -2215,7 +2216,7 @@ function SetupSection({
           totalEvents={auditTotalCount}
           profiles={profiles}
           buildings={buildings}
-          units={units}
+          units={sortUnitsByBuildingFloorOrder(units, buildingFloors, buildings)}
           organisations={organisations}
           buildingContextId={buildingContextId}
         />
@@ -2535,6 +2536,7 @@ function BuildingStructureView({
   const [editingFloorOrder, setEditingFloorOrder] = useState(false);
   const [setupSaleAttempts, setSetupSaleAttempts] = useState<SetupUnitSaleAttempt[]>([]);
   const [setupSaleTerms, setSetupSaleTerms] = useState<SetupUnitSaleTerm[]>([]);
+  const [pricesLoadedForBuilding, setPricesLoadedForBuilding] = useState("");
   const building = buildings.find((item) => item.id === selectedBuildingId) ?? buildings[0];
   const buildingId = building?.id ?? "";
   const floors = buildingFloors
@@ -2571,6 +2573,7 @@ function BuildingStructureView({
   }
 
   async function loadSetupSalePrices() {
+    setPricesLoadedForBuilding("");
     if (!buildingId || buildingUnits.length === 0) {
       setSetupSaleAttempts([]);
       setSetupSaleTerms([]);
@@ -2595,6 +2598,7 @@ function BuildingStructureView({
     const attemptIds = attempts.map((attempt) => attempt.id);
     if (attemptIds.length === 0) {
       setSetupSaleTerms([]);
+      setPricesLoadedForBuilding(buildingId);
       return;
     }
 
@@ -2608,6 +2612,7 @@ function BuildingStructureView({
       return;
     }
     setSetupSaleTerms((termRows ?? []) as SetupUnitSaleTerm[]);
+    setPricesLoadedForBuilding(buildingId);
   }
 
   async function saveSetupUnitPrice(unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) {
@@ -2717,6 +2722,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
             />
@@ -2734,6 +2740,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
               warning
@@ -2752,6 +2759,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
               warning
@@ -2804,6 +2812,7 @@ function FloorBlock({
   onNotice,
   reload,
   unitPriceFor,
+  pricesLoaded,
   activeSaleAttemptIdFor,
   saveUnitPrice,
   warning = false,
@@ -2820,6 +2829,7 @@ function FloorBlock({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   unitPriceFor: (unitId: string) => number | null;
+  pricesLoaded: boolean;
   activeSaleAttemptIdFor: (unitId: string) => string | null;
   saveUnitPrice: (unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) => Promise<void>;
   warning?: boolean;
@@ -2831,6 +2841,7 @@ function FloorBlock({
   const [unitTypeId, setUnitTypeId] = useState("");
   const [communalName, setCommunalName] = useState("");
   const [collapsed, setCollapsed] = useState(!warning);
+  const unitsWithoutPrice = pricesLoaded ? units.filter((unit) => unitPriceFor(unit.id) === null) : [];
   const canDeleteFloor = Boolean(floor && units.length === 0 && communalAreas.length === 0);
   const deleteFloorHelp = "Move or delete units and communal areas before deleting this floor.";
 
@@ -2932,6 +2943,15 @@ function FloorBlock({
             <span className="truncate" title={floorName}>{floorName}</span>
           </div>
           <span className="mt-1 block whitespace-nowrap text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"} &middot; {communalAreas.length} communal</span>
+          {unitsWithoutPrice.length > 0 && (
+            <span className="mt-2 flex items-start gap-1.5 text-sm text-[#a15b3d]">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
+              <span>
+                <strong className="font-semibold">{unitsWithoutPrice.length} {unitsWithoutPrice.length === 1 ? "unit needs" : "units need"} attention</strong>
+                {" — "}{unitsWithoutPrice.length === 1 ? "price" : "prices"} not set ({unitsWithoutPrice.slice(0, 3).map((unit) => unit.unit_number).join(", ")}{unitsWithoutPrice.length > 3 ? ` +${unitsWithoutPrice.length - 3} more` : ""}).
+              </span>
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {floor && (
@@ -2955,6 +2975,7 @@ function FloorBlock({
               setCollapsed((current) => !current);
             }}
             aria-label={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
+            aria-expanded={!collapsed}
             title={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
           >
             {collapsed ? <ChevronDown size={17} strokeWidth={2.5} aria-hidden /> : <ChevronUp size={17} strokeWidth={2.5} aria-hidden />}
@@ -5097,7 +5118,7 @@ function UserDirectory({
         </button>
       </div>
 
-      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
+      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 xl:hidden">
         {rows.map((row) => {
           const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
           const isMuted = row.status === "deactivated" || row.status === "rejected";
@@ -5154,8 +5175,18 @@ function UserDirectory({
         {rows.length === 0 && <p className="mobile-empty">No access records.</p>}
       </div>
 
-      <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[1120px] w-full border-separate border-spacing-0 text-sm">
+      <div className="hidden min-w-0 xl:block">
+        <table className="w-full table-fixed border-separate border-spacing-0 text-sm [overflow-wrap:anywhere]">
+          <colgroup>
+            <col className="w-[19%]" />
+            <col className="w-[9%]" />
+            <col className="w-[12%]" />
+            <col className="w-[11%]" />
+            <col className="w-[22%]" />
+            <col className="w-[10%]" />
+            <col className="w-[11%]" />
+            <col className="w-[6%]" />
+          </colgroup>
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
@@ -5165,7 +5196,7 @@ function UserDirectory({
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Last active</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2 text-right"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -5186,10 +5217,10 @@ function UserDirectory({
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.roleLabel}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.phone || <span className="text-xs text-[#9aa59f]">None</span>}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      <p className="max-w-md truncate">{row.allocation}</p>
+                      <p>{row.allocation}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastActiveLabel(row)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{lastActiveLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
