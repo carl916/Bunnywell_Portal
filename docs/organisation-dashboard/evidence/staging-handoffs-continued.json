@@ -1,0 +1,57 @@
+{
+  "project": "vxkpvdtrldwwqiddoyof",
+  "origin": "http://localhost:3011",
+  "run": "bd2b7d32-3388-4cfc-9ba0-840f3c76c397",
+  "building": "9e533cd5-9c9b-47ba-bc20-d5ae783e333d",
+  "unit": "50775485-1e21-43e2-8195-4736c3aa3f6e",
+  "sale": "4de11b22-918e-475d-b569-a074782efd56",
+  "fixture": "Existing dedicated UPLOAD-3 legacy-arrangements synthetic sale; no email dispatch",
+  "accounts": [
+    {
+      "id": "0453a7e0-e228-4054-9169-14aac7a6d7ad",
+      "label": "developer1",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "f3d2d6a6-6016-4b0e-89c0-31dc112e730f",
+      "label": "developer2",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "c07ca94d-b7f5-43de-b959-16ac9b8b6bf9",
+      "label": "conveyancer1",
+      "role": "conveyancer",
+      "disabled": true
+    },
+    {
+      "id": "f3e2df81-e294-4e3d-a337-492b69ba09dc",
+      "label": "conveyancer2",
+      "role": "conveyancer",
+      "disabled": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "Two distinct conveyancers and two developers have identical respective team queues through real JWT/RLS reads",
+      "passed": true
+    },
+    {
+      "name": "Existing inconsistent synthetic unit stage is disclosed and real completion remains blocked",
+      "passed": true
+    },
+    {
+      "name": "Live duplicate completion not exercised: legacy fixture unit is for_sale; full valid completion tested in local PostgreSQL",
+      "incomplete": true
+    },
+    {
+      "name": "A successive session of the same account derives the same complete business work",
+      "passed": true
+    },
+    {
+      "name": "A disabled account cannot reuse its JWT for the dashboard",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "project": "vxkpvdtrldwwqiddoyof",
+  "origin": "http://localhost:3011",
+  "run": "f5ba1e74-2fd1-4a3b-91a3-6a2dcb8bd8af",
+  "building": "9e533cd5-9c9b-47ba-bc20-d5ae783e333d",
+  "unit": "efcd8dc8-046b-4bba-998a-f247123ebb6d",
+  "fixture": "Synthetic dashboard completion handoff; notice/exchange seeded, no email dispatch",
+  "accounts": [
+    {
+      "id": "152661f8-ab11-4172-a8d1-e82ba7544975",
+      "label": "developer1",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "78e51d29-ab5c-4d2a-8f4e-b11ea52b29f8",
+      "label": "developer2",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "9a0f156a-06c6-4f48-aa86-a0b6e3689f52",
+      "label": "conveyancer1",
+      "role": "conveyancer",
+      "disabled": true
+    },
+    {
+      "id": "80407e5b-d839-4357-ae1a-48bbce369f2b",
+      "label": "conveyancer2",
+      "role": "conveyancer",
+      "disabled": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "Run failure",
+      "passed": false,
+      "error": "Use the legal workflow for confirmations."
+    }
+  ]
+}

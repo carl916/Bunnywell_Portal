@@ -1,0 +1,199 @@
+{
+  "origin": "http://localhost:3011",
+  "project": "vxkpvdtrldwwqiddoyof",
+  "fixture": "E2E Completion Upload 2026-09-22",
+  "samples": [
+    {
+      "status": 200,
+      "durationMs": 1049,
+      "bytes": 17108,
+      "sources": [
+        {
+          "key": "handovers",
+          "label": "Handover eligibility",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "rentals",
+          "label": "Rental position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "sales",
+          "label": "Sales progression",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "snags",
+          "label": "Snags and resident defects",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "access",
+          "label": "Pending resident access",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "fees",
+          "label": "Agent invoice position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "rent_risk",
+          "label": "Reported rental arrears",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "history",
+          "label": "Recent sales business activity",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        },
+        {
+          "key": "legal",
+          "label": "Authorities and completion documents",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:41.304Z"
+        }
+      ],
+      "records": 3,
+      "tasks": 9,
+      "cacheControl": "private, no-store, max-age=0"
+    },
+    {
+      "status": 200,
+      "durationMs": 773,
+      "bytes": 17108,
+      "sources": [
+        {
+          "key": "handovers",
+          "label": "Handover eligibility",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "rentals",
+          "label": "Rental position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "access",
+          "label": "Pending resident access",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "sales",
+          "label": "Sales progression",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "snags",
+          "label": "Snags and resident defects",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "rent_risk",
+          "label": "Reported rental arrears",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "fees",
+          "label": "Agent invoice position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "legal",
+          "label": "Authorities and completion documents",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        },
+        {
+          "key": "history",
+          "label": "Recent sales business activity",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.214Z"
+        }
+      ],
+      "records": 3,
+      "tasks": 9,
+      "cacheControl": "private, no-store, max-age=0"
+    },
+    {
+      "status": 200,
+      "durationMs": 685,
+      "bytes": 17108,
+      "sources": [
+        {
+          "key": "handovers",
+          "label": "Handover eligibility",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "sales",
+          "label": "Sales progression",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "rentals",
+          "label": "Rental position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "snags",
+          "label": "Snags and resident defects",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "access",
+          "label": "Pending resident access",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "rent_risk",
+          "label": "Reported rental arrears",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "fees",
+          "label": "Agent invoice position",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "legal",
+          "label": "Authorities and completion documents",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        },
+        {
+          "key": "history",
+          "label": "Recent sales business activity",
+          "state": "ready",
+          "asOf": "2026-10-07T19:12:42.966Z"
+        }
+      ],
+      "records": 3,
+      "tasks": 9,
+      "cacheControl": "private, no-store, max-age=0"
+    }
+  ]
+}

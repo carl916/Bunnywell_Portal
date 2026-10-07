@@ -247,4 +247,3 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     buildings: buildings.map(b => ({ id: b.id, name: b.name, sales: available("sales") ? units.filter(u => u.building_id === b.id && ["for_sale", "reserved", "exchanged", "completed", "handed_over"].includes(u.sale_status)).length : null, rentals: available("rentals") ? units.filter(u => u.building_id === b.id && u.rental_portfolio_status === "active").length : null, snags: available("snags") ? input.snags.filter(s => s.building_id === b.id && s.source_type === "developer_snag" && isActiveSnag(s)).length : null, defects: available("snags") ? input.snags.filter(s => s.building_id === b.id && s.source_type === "leaseholder_defect" && isActiveSnag(s)).length : null })),
   };
 }
-

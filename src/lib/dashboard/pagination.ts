@@ -19,4 +19,3 @@ export async function readComplete<T>(page: (from: number, to: number) => Promis
     if (result.length >= expected) return result;
   }
 }
-
