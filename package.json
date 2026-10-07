@@ -26,7 +26,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
-    "test:sales-refresh": "node --test tests/sales-action-refresh.test.mjs tests/sales-legal-refresh-ui.test.mjs"
+    "test:sales-refresh": "node --test tests/sales-action-refresh.test.mjs tests/sales-legal-refresh-ui.test.mjs",
+    "test:dashboard": "node --test tests/organisation-dashboard.test.mjs tests/organisation-dashboard-api.test.mjs tests/organisation-dashboard-handoffs.test.mjs",
+    "test:dashboard:browser": "playwright test --config playwright.dashboard.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

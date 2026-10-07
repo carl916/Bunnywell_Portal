@@ -161,7 +161,10 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
   const pendingScroll = useRef<string | null>(null);
   const closeRef = useRef(onClose);
   useEffect(() => { closeRef.current = onClose; }, [onClose]);
-  const [tab, setTab] = useState<"comments" | "activity">("comments");
+  const [tab, setTab] = useState<"comments" | "activity">(() => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    return params?.get("workActivity") === "1" && params.get("conversation") === saleId ? "activity" : "comments";
+  });
   const [comments, setComments] = useState<SaleComment[]>([]);
   const [people, setPeople] = useState<SalePerson[]>([]);
   const [draft, setDraft] = useState<Draft>(() => {

@@ -1,0 +1,52 @@
+.root { color: #34413a; min-width: 0; padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.header { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+.header h2 { font-size: 1.55rem; font-weight: 750; color: #0f3d2e; }
+.header p { font-size: .85rem; margin-top: .3rem; }
+.header .eyebrow { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: #65736b; }
+.refresh { display: grid; gap: .4rem; justify-items: end; }
+.refresh span { font-size: .72rem; color: #617169; }
+.warning,.urgent { display: flex; gap: .65rem; padding: .85rem 1rem; border: 1px solid #d6a23a; background: #fff9e9; border-radius: .65rem; margin-bottom: 1rem; font-size: .85rem; }
+.urgent { justify-content: space-between; flex-wrap: wrap; }
+.urgent a { text-decoration: underline; }
+.main { display: grid; grid-template-columns: minmax(0,1fr); gap: 1rem; }
+.work,.aside,.summaries,.activity { border: 1px solid #d9ded6; border-radius: .7rem; background: white; min-width: 0; overflow-wrap: anywhere; }
+.tabs { display: flex; border-bottom: 1px solid #d9ded6; padding: .3rem .5rem 0; gap: .3rem; }
+.tabs button { padding: .85rem .7rem; font-size: .9rem; font-weight: 700; border-bottom: 3px solid transparent; min-height: 44px; }
+.tabs button[aria-pressed=true] { color: #0f3d2e; border-color: #0f3d2e; }
+.tabs span { background: #edf2ee; padding: .15rem .4rem; border-radius: .3rem; }
+.filters { display: flex; flex-wrap: wrap; gap: .4rem; padding: .8rem 1rem .2rem; }
+.filters button { min-height: 40px; padding: .35rem .7rem; border: 1px solid #d9ded6; border-radius: .5rem; font-size: .78rem; }
+.filters button[aria-pressed=true] { background: #0f3d2e; color: white; border-color: #0f3d2e; }
+.count { padding: .6rem 1rem; font-size: .73rem; color: #617169; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.row { padding: 1rem; border-top: 1px solid #e6eae4; scroll-margin-top: 9rem; }
+.reference { font-size: .83rem; font-weight: 650; }
+.position { font-size: .75rem; color: #617169; margin-top: .2rem; }
+.workLink { display: inline-flex; align-items: center; gap: .4rem; color: #0f3d2e; font-weight: 700; font-size: .9rem; padding: .65rem 0 .35rem; min-height: 40px; }
+a.workLink:hover { text-decoration: underline; }
+.workLink svg { flex: 0 0 auto; }
+.context { display: grid; gap: .25rem; font-size: .75rem; color: #617169; }
+.deadline { color: #755514; font-weight: 650; }
+.row details { margin-top: .6rem; font-size: .78rem; }
+.root summary { cursor: pointer; font-weight: 650; min-height: 40px; padding: .5rem 0; }
+.row blockquote { border-left: 2px solid #a5b6a9; padding: .5rem .8rem; margin-top: .4rem; background: #f6f8f4; white-space: pre-wrap; }
+.row footer { margin-top: .4rem; color: #617169; font-size: .7rem; }
+.secondary { border-top: 1px solid #e6eae4; padding-top: .4rem; margin-top: .5rem; }
+.empty { padding: 1.4rem 1rem; font-size: .85rem; color: #617169; }
+.pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: .8rem; gap: .5rem; border-top: 1px solid #d9ded6; font-size: .72rem; }
+.aside { padding: 1rem; align-self: start; scroll-margin-top: 9rem; }
+.aside h3 { font-weight: 700; color: #0f3d2e; }
+.aside p,.activity p { font-size: .75rem; color: #617169; margin: .4rem 0; }
+.aside ul,.activity ul { list-style: none; padding: 0; }
+.aside li,.activity li { display: grid; gap: .2rem; border-top: 1px solid #e6eae4; padding: .8rem 0; font-size: .8rem; }
+.aside li span,.activity li span { font-size: .72rem; color: #617169; }
+.textButton { font-size: .75rem; text-decoration: underline; min-height: 40px; color: #0f3d2e; }
+.summaries,.activity { margin-top: 1rem; padding: .6rem 1rem; }
+.summaries dl { display: grid; grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); gap: .85rem; padding: .7rem 0; }
+.summaries dt { font-size: .74rem; color: #617169; }
+.summaries dd { font-size: 1.15rem; font-weight: 700; color: #0f3d2e; margin-top: .25rem; }
+.summaries small { font-size: .7rem; font-weight: 400; }
+.summaries p { font-size: .7rem; color: #617169; margin-top: .2rem; }
+.root :is(a,button,summary):focus-visible { outline: 3px solid #bc901f; outline-offset: 3px; border-radius: 3px; }
+@media(min-width:1100px) { .main { grid-template-columns: minmax(0, 2.5fr) minmax(230px,1fr); } }
+@media(max-width:480px) { .refresh { justify-items: start; } .header h2 { font-size: 1.3rem; } .tabs button { font-size: .8rem; padding: .8rem .4rem; } .row { padding: .9rem; } }

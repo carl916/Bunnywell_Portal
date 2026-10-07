@@ -85,7 +85,7 @@ export function renderLegalEmail(snapshot: LegalSnapshot, kind: LegalEmailKind, 
   return { ...recipients, subject, ...renderLegalEmailContent(snapshot, kind, date, portalUrl) };
 }
 
-export function authorityStatus(email?: LegalEmail | null, now = Date.now()) {
+export function authorityStatus(email?: Pick<LegalEmail, "exchanged_at" | "revoked_at" | "replaced_by" | "expires_at" | "delivery_status"> | null, now = Date.now()) {
   if (!email) return "Authority not requested";
   if (email.exchanged_at) return "Exchanged";
   if (email.revoked_at) return "Authority revoked";

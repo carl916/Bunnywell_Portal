@@ -45,7 +45,10 @@ export async function salesFixture(page: Page, initialPath?: string) {
       result = result.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) }));
     }
     const single = route.request().headers().accept?.includes("vnd.pgrst.object");
-    await route.fulfill({ json: single ? result[0] ?? null : result });
+    const count = result.length;
+    const from = Number(url.searchParams.get("offset") ?? 0), limit = Number(url.searchParams.get("limit") ?? count);
+    const paged = result.slice(from, from + limit);
+    await route.fulfill({ headers: { "access-control-expose-headers": "content-range", "content-range": `${from}-${Math.max(from, from + paged.length - 1)}/${count}` }, json: single ? result[0] ?? null : paged });
   });
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
   const completionPackage = {approved:false,approval:null as null | {statement_version_id:string;account_version_id:string;approved_by_name:string;approved_at:string}};
