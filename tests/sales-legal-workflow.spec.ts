@@ -278,7 +278,7 @@ test("Exchange remains selected after its final action when initially opened fro
 
 test("Completion remains selected after legal completion when initially opened from the sale status",async({page})=>{
   const f=await legalFixture(page);f.profile.role="conveyancer";f.unit.sale_status="exchanged";f.attempt.workflow_status="exchanged";f.attempt.exchanged_at="2026-08-01";f.attempt.contractual_completion_date="2026-08-05";f.attempt.completion_legacy_stage="arrangements";
-  f.documents(true);f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:"version-0",account_version_id:"version-1",approved_by_name:"Developer Approver",approved_at:new Date().toISOString()};
+  f.documents(true);f.rows.unit_sale_documents.forEach((document,index)=>Object.assign(document,{status:"approved",approved_version_id:`version-${index}`}));f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:"version-0",account_version_id:"version-1",approved_by_name:"Developer Approver",approved_at:new Date().toISOString()};
   await page.reload();await expect(page.getByRole("button",{name:/^Completion\b/})).toHaveAttribute("aria-current","step");
   await page.getByLabel("Actual legal completion date and time (your local time)").fill("2026-08-05T15:00");await page.getByRole("checkbox",{name:/I confirm legal completion/}).check();await page.getByRole("button",{name:"Confirm legal completion",exact:true}).click();
   await expect(page.getByText(/Handover and key release are available/)).toBeVisible();await expect(page.getByRole("button",{name:/^Completion\b/})).toHaveAttribute("aria-current","step");await expect(page.getByRole("button",{name:/^Handover\b/})).toBeEnabled();

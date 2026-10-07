@@ -123,7 +123,7 @@ export function CompletionDocuments({ saleId, documents, events, uploadAllowed, 
   }
   return <>
     <li className="min-w-0 py-5" id="completion-documents-step"><h4 className="font-bold">4. Completion documents</h4>
-      <p className="mt-1 text-sm">{bothUploaded ? "Both current documents uploaded." : "Upload both draft documents before developer review."}</p>
+      <p className="mt-1 text-sm">{bothUploaded ? "Both current documents uploaded." : "Upload completion PDFs for developer review."}</p>
       {!arrangementsConfirmed && !completed && <p className="mt-2 text-sm text-amber-800">Confirm completion arrangements before continuing.</p>}
       {canUpload && <p className="mt-2 text-sm text-[#617169]">Choose a PDF for each document, then upload them together. You can also upload or replace an unapproved document at any time.</p>}
       <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">{draftDocumentTypes.map(card)}</div>

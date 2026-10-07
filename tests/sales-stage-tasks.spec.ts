@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { salesFixture as fixture, userId, at } from "./helpers/sales-fixture";
 
 async function expectSteps(page: Page, stage: string, labels: string[]) {
-  const cards = page.getByRole("list", { name: `${stage} tasks`, exact: true }).getByRole("listitem");
+  const cards = page.getByRole("list", { name: `${stage} tasks`, exact: true }).locator(":scope > li");
   await expect(cards).toHaveCount(labels.length);
   for (const [index, label] of labels.entries()) await expect(cards.nth(index).getByText(label, { exact: true })).toBeVisible();
 }
@@ -138,7 +138,7 @@ test("task cards use available width without overflow at desktop, tablet and mob
     const list = page.getByRole("list", { name: "Completion tasks", exact: true });
     await list.scrollIntoViewIfNeeded();
     const box = await list.boundingBox();
-    const cards = await list.getByRole("listitem").all();
+    const cards = await list.locator(":scope > li").all();
     const bounds = await Promise.all(cards.map((card) => card.boundingBox()));
     expect(box!.width).toBeGreaterThan(200);
     expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
