@@ -17,6 +17,7 @@
     "import:trinity-rent-risk": "node scripts/import-trinity-point-rent-risk.mjs",
     "test:sales-permissions": "node --test tests/sales-permissions.test.mjs",
     "test:audit": "node --test tests/audit-increment.test.mjs tests/audit-log.test.mjs",
+    "test:backups": "node --test tests/workbook-backups.test.mjs tests/backup-health.test.mjs tests/report-backup-storage.test.mjs",
     "test:sales-performance": "node --test tests/sales-performance.test.mjs",
     "perf:sales:frontend": "playwright test --config playwright.performance.config.ts",
     "test:sales-discussion": "node --test tests/sales-discussion.test.mjs tests/sales-actor-access.test.mjs",

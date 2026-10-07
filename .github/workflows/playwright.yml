@@ -38,6 +38,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Test workbook backups
+        run: npm run test:backups
+
       - name: Build app
         run: npm run build
 

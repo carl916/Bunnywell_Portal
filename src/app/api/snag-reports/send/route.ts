@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 type LocationType = "unit" | "communal";
 
 type SendSnagReportBody = {
-  action?: "preview" | "prepare_upload" | "send";
+  action?: "preview" | "prepare_upload" | "send" | "store";
   buildingId?: string;
   locationType?: LocationType;
   unitId?: string | null;
@@ -296,15 +296,15 @@ export async function POST(request: Request) {
     const filename = `${safeFilename(body.filename)}.pdf`;
 
     if (!buildingId) return NextResponse.json({ error: "Choose a building." }, { status: 400 });
-    if (action !== "preview" && action !== "prepare_upload" && action !== "send") return NextResponse.json({ error: "Unsupported report action." }, { status: 400 });
+    if (!["preview", "prepare_upload", "send", "store"].includes(action)) return NextResponse.json({ error: "Unsupported report action." }, { status: 400 });
 
     const canSend = await requesterCanSendForBuilding(adminClient, requester, buildingId);
     if (!canSend) {
       return NextResponse.json({ error: "You do not have access to send reports for this building." }, { status: 403 });
     }
 
-    const recipients = await contractorRecipientsForBuilding(adminClient, buildingId);
-    if (recipients.length === 0) {
+    const recipients = action === "preview" || action === "send" ? await contractorRecipientsForBuilding(adminClient, buildingId) : [];
+    if ((action === "preview" || action === "send") && recipients.length === 0) {
       return NextResponse.json({ error: "No contractor users are linked to this building." }, { status: 400 });
     }
 
@@ -339,6 +339,10 @@ export async function POST(request: Request) {
     if (snagIds.length === 0) return NextResponse.json({ error: "There are no snags to send." }, { status: 400 });
     const filePath = body.filePath?.trim();
     if (!filePath || !filePath.startsWith(`reports/${buildingId}/`)) return NextResponse.json({ error: "Stored report PDF is missing." }, { status: 400 });
+    if (action === "store") {
+      const { data: file, error: fileError } = await adminClient.storage.from("snag-reports").info(filePath);
+      if (fileError || !file || (file.size ?? 0) <= 0 || file.contentType !== "application/pdf") return NextResponse.json({ error: "The report PDF has not finished uploading." }, { status: 400 });
+    }
 
     const [{ data: building, error: buildingError }, { data: communalAreas, error: communalAreasError }] = await Promise.all([
       adminClient.from("buildings").select("id,name").eq("id", buildingId).maybeSingle(),
@@ -398,7 +402,7 @@ export async function POST(request: Request) {
         file_path: filePath,
         file_url: signedUrlData.signedUrl,
         sent_by_user_id: requester.id,
-        sent_at: new Date().toISOString(),
+        sent_at: action === "send" ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
@@ -418,6 +422,10 @@ export async function POST(request: Request) {
     if (itemsError) {
       return NextResponse.json({ error: itemsError.message }, { status: 400 });
     }
+
+    // Store the exact generated PDF for later workbook backups without sending
+    // mail or changing snag status. Existing reporting permissions still apply.
+    if (action === "store") return NextResponse.json({ reportId, stored: true });
 
     const recipientRows = recipients.map((recipient) => ({
       report_id: reportId,

@@ -1,6 +1,14 @@
 name: Supabase production backup to Dropbox
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/supabase-backups.yml'
+      - 'scripts/backups/**'
+      - 'src/lib/sales/completion-review.ts'
+      - 'src/lib/sales/completion-notice.ts'
+      - 'src/lib/units/commercial-allocation.ts'
   # Allows the backup to be started manually from GitHub Actions.
   workflow_dispatch:
 
@@ -47,6 +55,18 @@ jobs:
       RCLONE_CONFIG_SUPABASESTORAGE_FORCE_PATH_STYLE: "true"
 
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install and test workbook exporter
+        run: |
+          npm ci
+          npm run test:backups
+
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v2
         with:
@@ -59,7 +79,7 @@ jobs:
           set -Eeuo pipefail
 
           sudo apt-get update
-          sudo apt-get install --yes rclone
+          sudo apt-get install --yes rclone zip unzip
 
       - name: Check required secrets
         shell: bash
@@ -144,6 +164,7 @@ jobs:
             --file "$DB_DIR/schema.sql"
 
           echo "Backing up database data..."
+          DATA_SNAPSHOT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
           supabase db dump \
             --db-url "$SUPABASE_DB_URL" \
@@ -196,6 +217,8 @@ jobs:
             --one-way
 
           echo "BACKUP_STAMP=$STAMP" >> "$GITHUB_ENV"
+          echo "DATA_SNAPSHOT=$DATA_SNAPSHOT" >> "$GITHUB_ENV"
+          echo "BACKUP_DATA_FILE=$DB_DIR/data.sql" >> "$GITHUB_ENV"
 
       - name: Mirror Supabase Storage to Dropbox
         shell: bash
@@ -299,6 +322,10 @@ jobs:
             echo "No Storage objects currently backed up."
           fi
 
+      - name: Generate and publish operational workbook package
+        shell: bash
+        run: bash scripts/backups/publish-workbook.sh
+
       - name: Apply retention
         shell: bash
         run: |
@@ -339,6 +366,10 @@ jobs:
 
           # Retain daily database backups for 90 days.
           purge_timestamp_folders "${BASE}/database" 90
+
+          # Each dated workbook folder owns its retained document copies.
+          # Latest.zip is a separate, self-contained successful package.
+          purge_timestamp_folders "${BASE}/workbooks" 90
 
           # Retain replaced and deleted Storage files for 365 days.
           purge_timestamp_folders "${BASE}/storage/history" 365
