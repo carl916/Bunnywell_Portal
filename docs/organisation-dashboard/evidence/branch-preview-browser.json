@@ -1,0 +1,20 @@
+{
+  "origin": "https://bunnywell-portal-pv9ed7zux-carl-gilbert-s-projects.vercel.app",
+  "commit": "eb9445b24af55536fa635beacb73a4ececf5cf07",
+  "checks": [
+    {
+      "role": "admin",
+      "selectedFixture": true,
+      "worklistVisible": true,
+      "manualRefresh": true,
+      "noPartialCoverage": true
+    },
+    {
+      "role": "conveyancer",
+      "selectedFixture": true,
+      "worklistVisible": true,
+      "manualRefresh": true,
+      "noPartialCoverage": true
+    }
+  ]
+}
