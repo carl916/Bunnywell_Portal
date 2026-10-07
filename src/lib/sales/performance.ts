@@ -56,7 +56,9 @@ export function legalPerformanceAction(action: unknown): SalesAction {
     case "request_authority": case "request_notice_authority": return "authority.request";
     case "confirm_exchange": return "exchange.record";
     case "upload_completion_documents": return "completion.documents_upload";
+    case "approve_completion_document":
     case "approve_completion_package": return "completion.documents_approve";
+    case "query_completion_document":
     case "query_completion_package": return "completion.documents_query";
     case "confirm_completion": return "completion.record";
     default: return "legal.other";

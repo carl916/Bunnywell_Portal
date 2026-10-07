@@ -15,8 +15,8 @@ function client(fail) {
 }
 for(const [action,documents,unit] of [
   ['request_authority',false,false],['send',false,false],['confirm_exchange',false,true],
-  ['finalize_completion_upload',true,false],['approve_completion_package',true,false],['confirm_completion',false,true],
-  ['query_completion_package',true,false],['confirm_notice',true,false],['retry_email',false,false],
+  ['finalize_completion_upload',true,false],['approve_completion_document',true,false],['confirm_completion',false,true],
+  ['query_completion_document',true,false],['confirm_notice',true,false],['retry_email',false,false],
 ]) test(`${action} refreshes the affected sale and only changed data`,async()=>{
   assert.deepEqual(legalRefreshScope(action),{documents,unit,deposit:false});
   const c=client(),fresh=await loadLegalSaleChanges(c,'sale-A',action);

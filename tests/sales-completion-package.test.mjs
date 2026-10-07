@@ -11,34 +11,56 @@ async function ready(t,options) {
 }
 async function context(f) {await f.service();return f.rpc('sales_completion_package_context',{p_sale:f.ids.sale,p_actor:f.ids.developer});}
 
-test('one or two files, atomic approval of exact versions, immutable replacement and legal completion gate',async t=>{
-  const f=await ready(t);
-  const statement=await f.upload();
-  await assert.rejects(f.action('developer','approve_completion_package',await f.packageVersions()),/both completion documents/);
-  await assert.rejects(f.action('developer','approve_statement',{versionId:statement}),/both current/);
+const review=(f,type,versionId,reason)=>f.action('developer',reason?'query_completion_document':'approve_completion_document',{documentType:type,versionId,reason});
+async function docs(f){await f.service();return (await f.db.query("select * from unit_sale_documents where document_type in ('completion_statement','draft_statement_of_account') order by document_type")).rows;}
+
+test('A/E: each exact version is approved independently, locks immediately and gates legal completion',async t=>{
+  const f=await ready(t),statement=await f.upload(),account=await f.upload('draft_statement_of_account');
+  for(const role of ['solicitor','agent','outsider'])await assert.rejects(f.action(role,'approve_completion_document',{documentType:'completion_statement',versionId:statement}),/role|denied/);
+  for(const action of ['approve_statement','query_statement','approve_completion_package','query_completion_package'])await assert.rejects(f.action('developer',action,await f.packageVersions()),/separately/);
+  assert.equal((await review(f,'draft_statement_of_account',account)).approved,false);
+  const approved=(await docs(f))[1];assert.equal(approved.status,'approved');assert.equal(approved.approved_version_id,account);assert.equal(approved.approved_by_user_id,f.ids.developer);assert.ok(approved.approved_at);
+  assert.equal((await docs(f))[0].status,'uploaded');
   await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current/);
-  const account=await f.upload('draft_statement_of_account');const pair=await f.packageVersions();
-  await f.as('developer');await f.write('Both completion documents approved.');assert.equal((await context(f)).approved,false);
-  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current/);
-  for(const role of ['solicitor','agent'])await assert.rejects(f.action(role,'approve_completion_package',pair),/role|access denied/);
-  const approval=await f.action('developer','approve_completion_package',pair);assert.equal(approval.approved,true);
-  assert.equal(approval.approval.statement_version_id,statement);assert.equal(approval.approval.account_version_id,account);assert.equal(approval.approval.approved_by,f.ids.developer);assert.ok(approval.approval.approved_at);
-  assert.equal((await f.action('developer','approve_completion_package',pair)).approval.id,approval.approval.id);
-  await f.service();assert.equal((await f.db.query('select sale_status from units where id=$1',[f.ids.unit])).rows[0].sale_status,'exchanged');
-  const original=(await f.db.query('select * from unit_sale_document_versions where id=$1',[account])).rows[0];
-  const replacement=await f.upload('draft_statement_of_account');assert.notEqual(replacement,account);assert.equal((await context(f)).approved,false);
-  await assert.rejects(f.action('developer','approve_completion_package',pair),/documents changed/);
-  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current/);
-  await f.service();const retained=(await f.db.query('select * from unit_sale_document_versions where id=$1',[account])).rows[0];assert.deepEqual(retained,{...original,is_current:false});
-  await assert.rejects(f.db.query('update unit_sale_document_versions set file_name=$1 where id=$2',['changed.pdf',account]),/immutable/);
-  await assert.rejects(f.db.query('delete from unit_sale_document_versions where id=$1',[account]),/immutable/);
-  await assert.rejects(f.db.query("update unit_sale_workflow_events set summary='changed' where event_type='completion_draft_statement_of_account_uploaded'"),/immutable/);
-  await assert.rejects(f.db.query('update sale_completion_package_approvals set approved_at=now()'),/immutable|permission denied/);
-  const renewed=await f.action('developer','approve_completion_package',await f.packageVersions());assert.notEqual(renewed.approval.id,approval.approval.id);
+  await assert.rejects(f.upload('draft_statement_of_account'),/locked/);
+  await assert.rejects(review(f,'draft_statement_of_account',account,'Change balance'),/locked/);
+  assert.equal((await review(f,'completion_statement',statement)).approved,true);
+  await review(f,'completion_statement',statement);assert.equal((await context(f)).approved,true);
+  await assert.rejects(f.upload(),/locked/);
+  await f.service();const events=(await f.db.query("select * from unit_sale_workflow_events where event_type='completion_documents_approved'")).rows;
+  assert.equal(events.length,2);for(const event of events){assert.ok(event.metadata.versionId);assert.ok(event.actor_name);assert.equal(event.created_by_user_id,f.ids.developer);assert.ok(event.created_at);}
+  await assert.rejects(f.db.query("update unit_sale_workflow_events set summary='changed' where event_type='completion_documents_approved'"),/immutable/);
   await f.action('solicitor','confirm_completion',{dateTime:new Date(Date.now()-1000).toISOString()});
   await f.service();assert.equal((await f.db.query('select sale_status from units where id=$1',[f.ids.unit])).rows[0].sale_status,'completed');
-  assert.equal((await f.db.query("select count(*)::int n from unit_sale_workflow_events where event_type='completion_documents_approved'")).rows[0].n,2);
   await f.upload('statement_of_account');await assert.rejects(f.uploadFiles(),/awaiting completion/);
+});
+
+test('B/C/D/F: queries stay on their version, replacements need no query, other approval is unchanged',async t=>{
+  const f=await ready(t);await f.uploadFiles();const pair=await f.packageVersions();
+  await review(f,'completion_statement',pair.statementVersionId,'Missing service charge');
+  await review(f,'completion_statement',pair.statementVersionId,'Missing service charge');
+  assert.deepEqual((await docs(f)).map(d=>d.status),['query_raised','uploaded']);
+  await review(f,'draft_statement_of_account',pair.accountVersionId);const approved=(await docs(f))[1];
+  const replacement=await f.upload();let documents=await docs(f);
+  assert.equal(documents[0].query_note,null);assert.equal(documents[0].status,'uploaded');assert.deepEqual(documents[1],approved);
+  await assert.rejects(review(f,'completion_statement',pair.statementVersionId),/document changed/);
+  await assert.rejects(review(f,'completion_statement',pair.statementVersionId,'Stale query'),/document changed/);
+  const pendingReplacement=await f.upload();assert.notEqual(pendingReplacement,replacement);assert.deepEqual((await docs(f))[1],approved);
+  await review(f,'completion_statement',pendingReplacement,'Another question');assert.deepEqual((await docs(f))[1],approved);
+  const latest=await f.upload();await f.service();const queries=(await f.db.query("select * from unit_sale_workflow_events where event_type='completion_documents_query_raised' order by created_at")).rows;
+  assert.equal(queries.length,2);assert.equal(queries[0].metadata.versionId,pair.statementVersionId);assert.equal(queries[0].metadata.queryNote,'Missing service charge');assert.equal(queries[0].created_by_user_id,f.ids.developer);assert.ok(queries[0].actor_name);assert.ok(queries[0].created_at);
+  const versions=(await f.db.query('select * from unit_sale_document_versions where document_id=$1 order by version_number',[documents[0].id])).rows;
+  assert.equal(versions.length,4);assert.equal(versions.filter(v=>v.is_current).length,1);assert.equal(versions.at(-1).id,latest);
+  await assert.rejects(f.db.query('update unit_sale_document_versions set file_name=$1 where id=$2',['changed.pdf',pair.statementVersionId]),/immutable/);
+  assert.equal((await context(f)).approved,false);await review(f,'completion_statement',latest);assert.equal((await context(f)).approved,true);
+});
+
+test('a current document can be reviewed before the other slot is uploaded; invalid and foreign references fail',async t=>{
+  const f=await ready(t),statement=await f.upload();
+  for(const body of [{documentType:'statement_of_account',versionId:statement},{documentType:'completion_statement',versionId:crypto.randomUUID()}])await assert.rejects(f.action('developer','approve_completion_document',body),/document changed/);
+  await assert.rejects(f.action('developer','query_completion_document',{documentType:'completion_statement',versionId:statement,reason:' '}),/reason/);
+  assert.equal((await review(f,'completion_statement',statement)).approved,false);
+  await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current/);
 });
 
 test('batch upload rolls back both documents on failure, is idempotent, and rejects stale replacement and role bypass',async t=>{
@@ -57,19 +79,6 @@ test('batch upload rolls back both documents on failure, is idempotent, and reje
   await assert.rejects(submit({p_request:crypto.randomUUID()}),/current document changed/);
   await f.as('solicitor');await assert.rejects(f.rpc('sales_completion_upload',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_request:request,p_files:files}),/permission denied/);
   await f.service();await assert.rejects(f.rpc('sales_legal_register_document_before_package',{p_sale:f.ids.sale,p_actor:f.ids.solicitor,p_type:'completion_statement',p_file:{}}),/permission denied/);
-});
-
-test('queries identify each affected file and actor, invalidate package approval and survive replacements in activity',async t=>{
-  const f=await ready(t);await f.uploadFiles();const pair=await f.packageVersions();
-  await f.action('developer','approve_completion_package',pair);
-  for(const bad of [{documentTypes:[],reason:'Why'},{documentTypes:['completion_statement'],reason:' '},{documentTypes:['statement_of_account'],reason:'Why'}])await assert.rejects(f.action('developer','query_completion_package',{...pair,...bad}),/affected|draft/);
-  await f.action('developer','query_completion_package',{...pair,documentTypes:['completion_statement','draft_statement_of_account'],reason:'Correct balances'});assert.equal((await context(f)).approved,false);
-  await f.service();const queries=(await f.db.query("select * from unit_sale_workflow_events where event_type='completion_documents_query_raised'")).rows;assert.equal(queries.length,2);
-  for(const query of queries){assert.equal(query.created_by_user_id,f.ids.developer);assert.ok(query.actor_name);assert.ok(query.created_at);assert.equal(query.metadata.queryNote,'Correct balances');assert.ok(query.metadata.fileName);assert.ok(query.metadata.versionId);}
-  await f.upload('completion_statement');assert.equal((await context(f)).approved,false);
-  await f.service();assert.equal((await f.db.query("select status from unit_sale_documents where document_type='draft_statement_of_account'")).rows[0].status,'query_raised');
-  await f.as('agent');const activity=await f.rpc('sale_activity_page',{p_sale:f.ids.sale});assert.equal(activity.filter(event=>event.event_type==='completion_documents_query_raised').length,2);
-  await f.action('developer','approve_completion_package',await f.packageVersions());assert.equal((await context(f)).approved,true);
 });
 
 test('migration retains old single-file approval without inventing a draft account or package approval',async t=>{

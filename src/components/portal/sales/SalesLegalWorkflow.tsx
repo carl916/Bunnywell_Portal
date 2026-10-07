@@ -6,12 +6,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { authorityStatus, authorityTerms, legalDateTime, resolveSalesRecipients, SalesRecipientError, type LegalEmail, type LegalSnapshot } from "@/lib/sales/legal-workflow";
 import { canPerformSalesAction } from "@/lib/sales/permissions";
 import { PdfUploadBox, type UploadVersion } from "./PdfUploadBox";
-import { CompletionDocuments, currentCompletionVersion, type CompletionPackage } from "./CompletionDocuments";
+import { CompletionDocuments, type CompletionPackage } from "./CompletionDocuments";
 import { ExchangeDepositReceipt, type ExchangeDepositContext } from "./ExchangeDepositReceipt";
 import { authorityBadge, exchangeAuthorityState } from "@/lib/sales/authority-state";
 import { workflowActorLabel, type ActorProfile } from "@/lib/sales/actor-identity";
 import { addWorkingDays, completionNoticeState, noticeFileError, validNoticeDates, type CompletionNoticeState } from "@/lib/sales/completion-notice";
 import { beginSalesMeasurement, legalPerformanceAction, salesNavigationReady, type SalesMeasurement } from "@/lib/sales/performance";
+
+import { completionDocumentsApproved, type CompletionReviewEvent } from "@/lib/sales/completion-review";
 
 type Version = UploadVersion & { id: string; version_number: number; is_current: boolean; redacted_at: string | null };
 type Document = { id: string; document_type: string; status: string; query_note: string | null; approved_version_id: string | null; approved_by_user_id?: string | null; approved_at: string | null; unit_sale_document_versions: Version[] };
@@ -19,7 +21,7 @@ type Context = {
   snapshot: LegalSnapshot; emails: LegalEmail[]; documents: Document[];
   deposit?: ExchangeDepositContext;
   completionPackage?: CompletionPackage;
-  events?: { event_type: string; actor_name?: string | null; created_by_user_id: string | null; created_at: string }[];
+  events?: CompletionReviewEvent[];
   actors?: ActorProfile[];
   attempt: CompletionNoticeState & { workflow_status: string; exchanged_at: string | null; completed_at: string | null; authority_requested_at: string | null; contractual_completion_date: string | null; completion_notice_issued_at: string | null; legal_completed_at: string | null;
     completion_authority_requested_at?: string | null; completion_authority_requested_by?: string | null; completion_authority_given_by?: string | null; completion_arrangements_confirmed_by?: string | null };
@@ -147,9 +149,7 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
   const conveyancer = canPerformSalesAction(role, "record_exchange");
   const reservationApproved = ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
   const completed = Boolean(attempt.completed_at) || attempt.workflow_status === "completed";
-  const statementVersion = currentCompletionVersion(documents.find(document => document.document_type === "completion_statement"));
-  const accountVersion = currentCompletionVersion(documents.find(document => document.document_type === "draft_statement_of_account"));
-  const packageApproved = Boolean(context.completionPackage?.approved && context.completionPackage.approval?.statement_version_id === statementVersion?.id && context.completionPackage.approval?.account_version_id === accountVersion?.id);
+  const packageApproved = completionDocumentsApproved(documents);
   const actorLabel = (type: string, fallback?: string | null) => workflowActorLabel(context.events?.find((event) => event.event_type === type), context.actors ?? [], fallback);
   const noticeState = completionNoticeState(attempt);
   let routingProblem: SalesRecipientError | null = null;
@@ -217,7 +217,7 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
       <li className="py-5"><h4 className="font-bold">3. Notice issued and completion due date</h4>
         <NoticeArrangements saleId={saleId} attempt={attempt} document={documents.find((item) => item.document_type === "completion_correspondence")} editable={conveyancer && exchanged && !completed} busy={busy} run={run} actor={actorLabel("completion_arrangements_confirmed", attempt.completion_arrangements_confirmed_by)} confirmedAt={context.events?.find((event) => event.event_type === "completion_arrangements_confirmed")?.created_at} />
       </li>
-      <CompletionDocuments key={saleId} saleId={saleId} documents={documents} packageState={context.completionPackage} uploadAllowed={conveyancer && exchanged && noticeState.confirmed && !completed} reviewAllowed={canIssue && noticeState.confirmed && !completed} arrangementsConfirmed={noticeState.confirmed} completed={completed} busy={busy} actors={context.actors ?? []} historicalApproval={completed && !packageApproved && documents.find(document => document.document_type === "completion_statement")?.status === "approved" ? { name: actorLabel("completion_documents_approved", documents.find(document => document.document_type === "completion_statement")?.approved_by_user_id), date: documents.find(document => document.document_type === "completion_statement")?.approved_at ?? null } : undefined} run={run} open={async (versionId) => {
+      <CompletionDocuments key={saleId} saleId={saleId} documents={documents} events={context.events ?? []} uploadAllowed={conveyancer && exchanged && noticeState.confirmed && !completed} reviewAllowed={canIssue && noticeState.confirmed && !completed} arrangementsConfirmed={noticeState.confirmed} completed={completed} busy={busy} actors={context.actors ?? []} run={run} open={async (versionId) => {
         try { const response = await fetch(`/api/sales/reservations?versionId=${versionId}`, { headers: await headers() }); const result = await response.json(); if (!response.ok) throw new Error(result.error); window.open(result.signedUrl,"_blank","noopener,noreferrer"); }
         catch (error) { setFailure(error instanceof Error ? error : {message:"Document could not be opened."}); }
       }} />
