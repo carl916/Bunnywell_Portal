@@ -2,40 +2,36 @@ import { test, expect } from "@playwright/test";
 import { legalFixture } from "./helpers/legal-ui-fixture";
 import { mkdir } from "node:fs/promises";
 
-test("completion package selects both PDFs, queries one file, preserves replacement history and unlocks legal completion only after approval",async({page})=>{
+test("per-document approval, query, replacement history and locking keep sections 4–6 independent",async({page},testInfo)=>{
   const f=await legalFixture(page);f.profile.role="conveyancer";f.unit.sale_status="exchanged";Object.assign(f.attempt,{workflow_status:"exchanged",exchanged_at:"2026-09-01",completion_legacy_stage:"arrangements"});
-  await f.reloadStage("Completion");const documents=page.locator("#completion-documents-step"),review=page.locator("#completion-approval-step"),legal=page.getByRole("list",{name:"Completion tasks",exact:true}).locator(":scope > li").nth(5);
-  await mkdir("artifacts/completion-package",{recursive:true});
-  await expect(review).toContainText("Available once the conveyancer has uploaded both completion documents.");await expect(review.getByRole("button")).toHaveCount(0);
-  await expect(legal).toContainText("Available once the current completion documents have been approved by the developer.");await expect(legal.locator("input,button,textarea,select")).toHaveCount(0);
-  await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/01-empty-upload.png"});await legal.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/07-legal-locked.png"});
+  await f.reloadStage("Completion");
+  const documents=page.locator("#completion-documents-step"),review=page.locator("#completion-approval-step"),legal=page.getByRole("list",{name:"Completion tasks",exact:true}).locator(":scope > li").nth(5);
+  const statement=documents.getByRole("article",{name:"Completion statement",exact:true}),account=documents.getByRole("article",{name:"Statement of account",exact:true});
   const pdf=(name:string)=>({name,mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.7\nfixture")});
   const upload=documents.getByRole("button",{name:"Upload completion documents",exact:true});
-  await expect(upload).toBeDisabled();await expect(documents.locator('input[type="file"]')).toHaveCount(2);await expect(documents.getByRole("combobox")).toHaveCount(0);
-  await documents.getByLabel("Choose draft completion statement",{exact:true}).setInputFiles(pdf("first.pdf"));
-  await documents.getByLabel("Choose draft statement of account",{exact:true}).setInputFiles(pdf("second.pdf"));
-  await expect(upload).toBeEnabled();await expect(upload).toHaveClass(/primary/);expect(f.actions).toHaveLength(0);
-  await documents.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("draft-completion.pdf"));await documents.getByLabel("Replace draft statement of account",{exact:true}).setInputFiles(pdf("draft-account.pdf"));
-  await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/02-two-selected.png"});
-  await page.setViewportSize({width:390,height:2600});await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/02-two-selected-mobile.png"});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.setViewportSize({width:1280,height:900});
-  f.failNotice(true);await upload.click();await expect(page.getByRole("alert").filter({hasText:"Upload failed"})).toBeVisible();await expect(documents.getByRole("group",{name:"Selected draft-account.pdf",exact:true})).toBeVisible();f.failNotice(false);await upload.click();
-  await expect(documents.getByRole("group")).toHaveCount(0);await expect(documents.getByText("Awaiting approval",{exact:true})).toHaveCount(2);await expect(legal.locator("input,button")).toHaveCount(0);
-  expect(f.actions.filter(action=>action.action==="prepare_completion_upload")).toHaveLength(2);expect(f.rows.unit_sale_document_versions).toHaveLength(2);await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/03-uploaded-awaiting.png"});
-  const attempts=f.actions.filter(action=>action.action==="prepare_completion_upload");expect(attempts[0].requestId).toBe(attempts[1].requestId);
-  expect(attempts[1].files).toMatchObject([{type:"completion_statement",name:"draft-completion.pdf",expectedVersionId:null},{type:"draft_statement_of_account",name:"draft-account.pdf",expectedVersionId:null}]);
-  expect(f.actions.filter(action=>action.action==="finalize_completion_upload")).toHaveLength(1);
-  f.profile.role="developer";await f.reloadStage("Completion");await expect(review.getByRole("article")).toHaveCount(2);await expect(review).not.toContainText("Version 1");await expect(review.getByRole("button",{name:"Approve completion documents",exact:true})).toHaveClass(/primary/);await review.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/04-developer-review.png"});
-  const query=review.getByRole("button",{name:"Raise a query",exact:true});await expect(query).toBeDisabled();await review.getByRole("checkbox",{name:"Draft statement of account",exact:true}).check();await expect(query).toBeDisabled();await review.getByLabel("Query or rejection reason").fill("Please correct the retained balance.");await query.click();
-  expect(f.actions.find(action=>action.action==="query_completion_package")).toMatchObject({documentTypes:["draft_statement_of_account"],reason:"Please correct the retained balance."});
-  f.profile.role="conveyancer";await f.reloadStage("Completion");await expect(documents.getByRole("article",{name:"Uploaded draft statement of account",exact:true})).toContainText("Query raised: Please correct the retained balance.");await documents.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/05-queried-document.png"});
-  const original=f.rows.unit_sale_document_versions.find(version=>version.file_name==="draft-account.pdf")!;
-  await documents.getByLabel("Replace draft statement of account",{exact:true}).setInputFiles(pdf("corrected-account.pdf"));await expect(documents).toContainText("Replaces draft-account.pdf");await documents.getByRole("button",{name:"Upload replacement document",exact:true}).click();
-  await expect(documents.getByText("Previous versions (1)",{exact:true})).toBeVisible();expect(original.is_current).toBe(false);expect(f.rows.unit_sale_document_versions).toHaveLength(3);
-  await expect(legal.locator("input,button")).toHaveCount(0);f.profile.role="developer";await f.reloadStage("Completion");await review.getByRole("button",{name:"Approve completion documents",exact:true}).click();
-  await expect(review.getByText("Completion documents approved",{exact:true})).toBeVisible();await expect(review).not.toContainText("Version 1");await review.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/06-approved.png"});await expect(page.getByRole("button",{name:/^Handover\b/})).toBeDisabled();
-  f.profile.role="conveyancer";await f.reloadStage("Completion");await expect(legal.getByLabel("Actual legal completion date and time (your local time)")).toBeVisible();await legal.screenshot({style:"nextjs-portal { display: none !important; }",path:"artifacts/completion-package/08-legal-unlocked.png"});
-  // Replacing either approved file relocks the form without deleting its approval.
-  await documents.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("revised-completion.pdf"));await documents.getByRole("button",{name:"Upload replacement document",exact:true}).click();await expect(legal.locator("input,button")).toHaveCount(0);expect(f.completionPackage.approval).not.toBeNull();
+  await expect(review).toContainText("0 of 2");await expect(review.getByRole("article")).toHaveCount(0);await expect(review.getByRole("button")).toHaveCount(0);
+  await expect(upload).toBeDisabled();await expect(documents.locator('input[type="file"]')).toHaveCount(2);
+  await statement.getByLabel("Choose draft completion statement",{exact:true}).setInputFiles(pdf("draft-completion.pdf"));await account.getByLabel("Choose draft statement of account",{exact:true}).setInputFiles(pdf("draft-account.pdf"));
+  f.failNotice(true);await upload.click();await expect(page.getByRole("alert").filter({hasText:"Upload failed"})).toBeVisible();await expect(documents.getByRole("group")).toHaveCount(2);f.failNotice(false);await upload.click();
+  await expect(documents.getByRole("group")).toHaveCount(0);await expect(documents.getByText("Awaiting approval",{exact:true})).toHaveCount(2);
+  // D: replacement is available without a query.
+  await statement.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("revised-completion.pdf"));await expect(statement).toContainText("Only this document will need approval.");await documents.getByRole("button",{name:"Upload replacement document"}).click();await expect(statement.getByText("revised-completion.pdf",{exact:true})).toBeVisible();
+  f.profile.role="developer";await f.reloadStage("Completion");
+  await expect(documents.getByRole("button",{name:"Approve",exact:true})).toHaveCount(2);await expect(review.locator("button,textarea,input,article")).toHaveCount(0);
+  // B: query is local, required and disappears on success; cancel clears a draft.
+  await statement.getByRole("button",{name:"Raise query",exact:true}).click();await expect(statement.getByRole("button",{name:"Submit query"})).toBeDisabled();await statement.getByLabel("Query / rejection reason").fill("Discarded draft");await statement.getByRole("button",{name:"Cancel",exact:true}).click();
+  await statement.getByRole("button",{name:"Raise query",exact:true}).click();await expect(statement.getByLabel("Query / rejection reason")).toHaveValue("");await statement.getByLabel("Query / rejection reason").fill("Missing service charge");await statement.getByRole("button",{name:"Submit query"}).click();
+  await expect(statement).toContainText("Query raised: Missing service charge");await expect(statement).toContainText("Raised by Historical Legal Actor");await expect(documents.locator("textarea")).toHaveCount(0);await expect(statement.getByRole("button",{name:"Submit query"})).toHaveCount(0);await expect(account).toContainText("Awaiting approval");
+  // E: approving account alone locks it and leaves legal completion locked.
+  await account.getByRole("button",{name:"Approve",exact:true}).click();await expect(account.getByRole("heading")).toHaveText("Statement of account");await expect(account.getByRole("button",{name:"Raise query"})).toHaveCount(0);await expect(review).toContainText("1 of 2");await expect(legal.locator("input,button")).toHaveCount(0);
+  await page.setViewportSize({width:1280,height:1000});await documents.screenshot({path:testInfo.outputPath("query-and-approved-desktop.png")});
+  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await documents.screenshot({path:testInfo.outputPath("query-and-approved-mobile.png")});await page.setViewportSize({width:1280,height:900});
+  f.profile.role="conveyancer";await f.reloadStage("Completion");await expect(account.locator('input[type="file"]')).toHaveCount(0);
+  // C/F: new version awaits approval, old query stays in history, account stays approved.
+  await statement.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("corrected-completion.pdf"));await documents.getByRole("button",{name:"Upload replacement document"}).click();await expect(statement.getByText("Awaiting approval",{exact:true})).toBeVisible();await expect(statement.getByText("Query raised: Missing service charge")).not.toBeVisible();
+  await statement.getByText("Previous versions (2)",{exact:true}).click();await expect(statement.getByText("Query raised: Missing service charge")).toBeVisible();await expect(account.getByText("Approved",{exact:true})).toBeVisible();
+  f.profile.role="developer";await f.reloadStage("Completion");await statement.getByRole("button",{name:"Approve",exact:true}).click();await expect(review).toContainText("✓ Completion documents approved");await expect(review).toContainText("Completion statement approved by Historical Legal Actor");await expect(documents.getByRole("button",{name:"Approve",exact:true})).toHaveCount(0);await expect(statement.getByRole("heading")).toHaveText("Completion statement");
+  f.profile.role="conveyancer";await f.reloadStage("Completion");await expect(documents.locator('input[type="file"]')).toHaveCount(0);await expect(legal.getByLabel("Actual legal completion date and time (your local time)")).toBeVisible();await review.screenshot({path:testInfo.outputPath("approved-summary.png")});
 });
 
 test("completion slots assign dropped PDFs by destination and independent upload leaves developer approval locked",async({page})=>{
@@ -49,7 +45,7 @@ test("completion slots assign dropped PDFs by destination and independent upload
   // Filenames must not decide which document the user is uploading.
   await drop("Choose draft completion statement",["account.pdf"]);await drop("Choose draft statement of account",["completion.pdf"]);await expect(documents.getByRole("group")).toHaveCount(2);expect(f.actions).toHaveLength(0);
   await documents.getByRole("group",{name:"Selected completion.pdf",exact:true}).getByRole("button",{name:"Remove",exact:true}).click();await expect(documents.getByLabel("Choose draft statement of account",{exact:true})).toHaveCount(1);
-  await documents.getByRole("button",{name:"Upload completion documents",exact:true}).click();await expect(review).toContainText("Available once the conveyancer has uploaded both completion documents.");
+  await documents.getByRole("button",{name:"Upload completion documents",exact:true}).click();await expect(review).toContainText("0 of 2 completion documents approved.");
   expect(f.actions.find(action=>action.action==="prepare_completion_upload")?.files).toMatchObject([{type:"completion_statement",name:"account.pdf"}]);
   await expect(documents.locator('[role="group"][aria-label^="Selected "]')).toHaveCount(0);expect(f.rows.unit_sale_document_versions).toHaveLength(1);await documents.getByLabel("Choose draft statement of account",{exact:true}).setInputFiles({name:"invalid.txt",mimeType:"text/plain",buffer:Buffer.from("text")});await expect(documents.getByRole("alert")).toContainText("PDF");
   for(const role of ["sales_agent","developer"]) {f.profile.role=role;await f.reloadStage("Completion");await expect(documents.locator('input[type="file"]')).toHaveCount(0);await expect(review.getByRole("button")).toHaveCount(0);}
@@ -153,8 +149,9 @@ test("completion statement approval does not release keys; conveyancer legal con
   f.attempt.completion_legacy_stage="arrangements";
   f.documents(true);
   await f.reloadStage("Completion");
-  await page.getByRole("button",{name:"Approve completion documents",exact:true}).click();
-  await expect(page.getByText("Completion documents approved",{exact:true})).toBeVisible();
+  await page.getByRole("article",{name:"Completion statement",exact:true}).getByRole("button",{name:"Approve",exact:true}).click();
+  await page.getByRole("article",{name:"Statement of account",exact:true}).getByRole("button",{name:"Approve",exact:true}).click();
+  await expect(page.getByText("✓ Completion documents approved",{exact:true})).toBeVisible();
   await expect(page.getByRole("button",{name:/^Handover\b/})).toBeDisabled();
   f.profile.role="conveyancer"; await f.reloadStage("Completion");
   await page.getByLabel("Actual legal completion date and time (your local time)").fill("2026-08-05T15:00");
@@ -281,7 +278,7 @@ test("Exchange remains selected after its final action when initially opened fro
 
 test("Completion remains selected after legal completion when initially opened from the sale status",async({page})=>{
   const f=await legalFixture(page);f.profile.role="conveyancer";f.unit.sale_status="exchanged";f.attempt.workflow_status="exchanged";f.attempt.exchanged_at="2026-08-01";f.attempt.contractual_completion_date="2026-08-05";f.attempt.completion_legacy_stage="arrangements";
-  f.documents(true);f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:"version-0",account_version_id:"version-1",approved_by_name:"Developer Approver",approved_at:new Date().toISOString()};
+  f.documents(true);f.rows.unit_sale_documents.forEach((document,index)=>Object.assign(document,{status:"approved",approved_version_id:`version-${index}`}));f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:"version-0",account_version_id:"version-1",approved_by_name:"Developer Approver",approved_at:new Date().toISOString()};
   await page.reload();await expect(page.getByRole("button",{name:/^Completion\b/})).toHaveAttribute("aria-current","step");
   await page.getByLabel("Actual legal completion date and time (your local time)").fill("2026-08-05T15:00");await page.getByRole("checkbox",{name:/I confirm legal completion/}).check();await page.getByRole("button",{name:"Confirm legal completion",exact:true}).click();
   await expect(page.getByText(/Handover and key release are available/)).toBeVisible();await expect(page.getByRole("button",{name:/^Completion\b/})).toHaveAttribute("aria-current","step");await expect(page.getByRole("button",{name:/^Handover\b/})).toBeEnabled();

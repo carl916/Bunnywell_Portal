@@ -83,14 +83,14 @@ test('completion instructions, current version approval, replacement and legal h
   await assert.rejects(f.upload('statement_of_account'),/Final accounts/);
   const one=await f.upload();await f.upload('draft_statement_of_account');const pair=await f.packageVersions();
   await assert.rejects(f.action('solicitor','approve_completion_package',pair),/role|access denied/);
-  await f.action('developer','query_completion_package',{...pair,documentTypes:['completion_statement'],reason:'Correct balance'});
-  await f.action('developer','approve_completion_package',pair);
+  await f.action('developer','query_completion_document',{documentType:'completion_statement',versionId:one,reason:'Correct balance'});
+  await f.action('developer','approve_completion_document',{documentType:'draft_statement_of_account',versionId:pair.accountVersionId});
   const two=await f.upload(); assert.notEqual(one,two);
-  await assert.rejects(f.action('developer','approve_completion_package',pair),/documents changed/);
+  await assert.rejects(f.action('developer','approve_completion_document',{documentType:'completion_statement',versionId:one}),/document changed/);
   await assert.rejects(f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString()}),/both current completion documents/);
   await f.owner(); await assert.rejects(f.db.query("update units set sale_status='completed' where id=$1",[f.ids.unit]),/legal completion/);
   await assert.rejects(f.db.query("update unit_sale_attempts set completed_at=current_date where id=$1",[f.ids.sale]),/legal workflow/);
-  await f.action('developer','approve_completion_package',await f.packageVersions());
+  await f.approveDocuments();
   await assert.rejects(f.action('developer','confirm_completion',{dateTime:new Date().toISOString()}),/role|access denied/);
   await f.action('solicitor','confirm_completion',{dateTime:new Date(Date.now()-1000).toISOString()});
   await f.service(); const sale=(await f.db.query('select * from unit_sale_attempts where id=$1',[f.ids.sale])).rows[0];
@@ -99,7 +99,7 @@ test('completion instructions, current version approval, replacement and legal h
   await f.upload('statement_of_account');
   await assert.rejects(f.upload(),/awaiting completion/);
   const approvals=(await f.db.query("select metadata from unit_sale_workflow_events where event_type='completion_documents_approved' order by created_at")).rows;
-  assert.deepEqual(approvals.map(row=>row.metadata.documents[0].versionId),[one,two]);
+  assert.deepEqual(approvals.map(row=>row.metadata.versionId),[pair.accountVersionId,two]);
 });
 
 test('expiry blocks exchange in PostgreSQL and records one immutable activity at the expiry time',async t=>{

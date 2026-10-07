@@ -44,6 +44,9 @@ export async function legalDatabase({ beforeNotice, beforeDeposit, beforePackage
   await f.db.exec(readFileSync('supabase/migrations/20260922e_authority_renewal_requests.sql','utf8'));
   if (beforePackage) await beforePackage(f);
   await f.db.exec(readFileSync('supabase/migrations/20260922f_completion_document_package.sql','utf8'));
+  await f.db.exec(`create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table storage.objects(bucket_id text,name text,metadata jsonb);`);
+  await f.db.exec(readFileSync('supabase/migrations/20260922194750_completion_direct_upload.sql','utf8'));
+  await f.db.exec(readFileSync('supabase/migrations/20261007133421_completion_document_review.sql','utf8'));
   const solicitorOrg=crypto.randomUUID(),agentOrg=crypto.randomUUID();
   await f.db.query("insert into organisations(id,name,type,shared_system_email) values($1,'Legal Team','conveyancer','legal@example.test'),($2,'Agent Team','sales_agent','sales@example.test')",[solicitorOrg,agentOrg]);
   await f.db.query("update buildings set conveyancer_organisation_id=$1,sales_agent_organisation_id=$2,seller_name='Seller SPV Ltd' where id=$3",[solicitorOrg,agentOrg,f.ids.building]);
@@ -75,9 +78,14 @@ export async function legalDatabase({ beforeNotice, beforeDeposit, beforePackage
     await service();const rows=(await f.db.query('select d.document_type,v.id from unit_sale_documents d join unit_sale_document_versions v on v.document_id=d.id and v.is_current where d.sale_attempt_id=$1',[f.ids.sale])).rows;
     return {statementVersionId:rows.find(row=>row.document_type==='completion_statement')?.id,accountVersionId:rows.find(row=>row.document_type==='draft_statement_of_account')?.id};
   }
+  async function approveDocuments() {
+    const pair=await packageVersions();
+    await action('developer','approve_completion_document',{documentType:'completion_statement',versionId:pair.statementVersionId});
+    return action('developer','approve_completion_document',{documentType:'draft_statement_of_account',versionId:pair.accountVersionId});
+  }
   async function notice({user='solicitor',request=crypto.randomUUID(),noticeDate='2026-09-01',dueDate='2026-09-15',replace=false,expected=null,file={}}={}) {
     await service(user);
     return f.rpc('sales_legal_submit_notice',{p_sale:f.ids.sale,p_actor:f.ids[user],p_request:request,p_file:{path:f.ids.building+'/'+f.ids.sale+'/'+crypto.randomUUID()+'.pdf',name:'notice.pdf',size:100,mime:'application/pdf',...file},p_notice:noticeDate,p_due:dueDate,p_replace:replace,p_expected:expected});
   }
-  return {...f,as,service,snapshot,prepare,sent,action,upload,uploadFiles,packageVersions,notice,solicitorOrg,agentOrg};
+  return {...f,as,service,snapshot,prepare,sent,action,upload,uploadFiles,packageVersions,approveDocuments,notice,solicitorOrg,agentOrg};
 }

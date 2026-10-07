@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { salesFixture as fixture, userId, at } from "./helpers/sales-fixture";
 
 async function expectSteps(page: Page, stage: string, labels: string[]) {
-  const cards = page.getByRole("list", { name: `${stage} tasks`, exact: true }).getByRole("listitem");
+  const cards = page.getByRole("list", { name: `${stage} tasks`, exact: true }).locator(":scope > li");
   await expect(cards).toHaveCount(labels.length);
   for (const [index, label] of labels.entries()) await expect(cards.nth(index).getByText(label, { exact: true })).toBeVisible();
 }
@@ -77,11 +77,12 @@ test("completion survives reload through upload, query, replacement, approval an
   f.rows.unit_sale_document_versions.push(second);
   await f.reloadStage("Completion");
   await expectSteps(page, "Completion", ["1. Request authority to serve notice", "2. Authority to serve notice", "3. Notice issued and completion due date", "4. Completion documents", "5. Developer approval", "6. Legal completion"]);
-  await expect(page.getByRole("button", { name: "Approve completion documents", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Raise a query", exact: true })).toBeDisabled();
-  await page.getByRole("checkbox",{name:"Draft completion statement",exact:true}).check();
-  await page.getByLabel("Query or rejection reason").fill("Correct the completion balance.");
-  await expect(page.getByRole("button", { name: "Raise a query", exact: true })).toBeEnabled();
+  const statement=page.getByRole("article",{name:"Completion statement",exact:true});
+  await expect(statement.getByRole("button",{name:"Approve",exact:true})).toBeVisible();
+  await statement.getByRole("button",{name:"Raise query",exact:true}).click();
+  await expect(statement.getByRole("button",{name:"Submit query"})).toBeDisabled();
+  await statement.getByLabel("Query / rejection reason").fill("Correct the completion balance.");
+  await expect(statement.getByRole("button",{name:"Submit query"})).toBeEnabled();
   await expect(page.getByRole("button", { name: "Confirm legal completion" })).toHaveCount(0);
   f.rows.unit_sale_documents.forEach((doc) => Object.assign(doc, { status: "query_raised", query_note: "Correct the completion balance.", updated_at: at(3) }));
   f.rows.unit_sale_workflow_events.push(f.event("completion_documents_query_raised", 3, { queryNote: "Correct the completion balance." }));
@@ -100,6 +101,7 @@ test("completion survives reload through upload, query, replacement, approval an
   f.rows.unit_sale_documents.forEach((doc) => Object.assign(doc, { status: "approved", approved_at: at(5), approved_by_user_id: userId, query_note: null }));
   f.rows.unit_sale_workflow_events.push(f.event("completion_documents_approved", 5));
   f.rows.unit_sale_documents[0].approved_version_id = "replacement";
+  f.rows.unit_sale_documents[1].approved_version_id = "version-1";
   f.attempt.contractual_completion_date = "2026-08-06";
   f.attempt.workflow_status = "completion_pending";
   f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:"replacement",account_version_id:"version-1",approved_by_name:"Abbie Smith",approved_at:at(5)};
@@ -136,7 +138,7 @@ test("task cards use available width without overflow at desktop, tablet and mob
     const list = page.getByRole("list", { name: "Completion tasks", exact: true });
     await list.scrollIntoViewIfNeeded();
     const box = await list.boundingBox();
-    const cards = await list.getByRole("listitem").all();
+    const cards = await list.locator(":scope > li").all();
     const bounds = await Promise.all(cards.map((card) => card.boundingBox()));
     expect(box!.width).toBeGreaterThan(200);
     expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
