@@ -5,6 +5,22 @@ import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 const legal = loadTypescriptModule('src/lib/sales/legal-workflow.ts');
 const today = () => new Date().toISOString().slice(0,10);
 
+test('internal event projections deny direct browser access while the guarded activity RPC works', async t => {
+  const f=await legalDatabase(); t.after(()=>f.db.close());
+  for (const role of ['anon','authenticated']) {
+    await f.owner();
+    await f.db.exec(`set role ${role}`);
+    for (const name of ['sale_event_projection','sale_event_projection_before_deposit','sale_event_projection_before_notice','sale_event_projection_before_package']) {
+      await assert.rejects(f.db.query(`select public.${name}(null::public.unit_sale_workflow_events)`), /permission denied/);
+    }
+  }
+  await f.as('agent');
+  assert.ok(Array.isArray(await f.rpc('sale_activity_page',{p_sale:f.ids.sale})));
+  await f.service();
+  const result=await f.db.query("select has_function_privilege('service_role','public.sale_event_projection(public.unit_sale_workflow_events)','EXECUTE') as allowed");
+  assert.equal(result.rows[0].allowed,true);
+});
+
 test('shared email validation and existing organisation type filtering', () => {
   for(const email of [null,'','team@example.com','legal+sales@example.co.uk']) assert.equal(legal.validSharedSystemEmail(email),true,email);
   for(const email of ['person','a@b','a@@b.com',' a@b.com','a@b.com\nBcc: b@c.com','a@-b.com','.a@b.com','a.@b.com','a..b@c.com']) assert.equal(legal.validSharedSystemEmail(email),false,email);

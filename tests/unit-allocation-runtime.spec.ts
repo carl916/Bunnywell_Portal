@@ -181,8 +181,12 @@ test("new-unit setup baseline remains allocatable until meaningful sales work st
     expect(invoicesResult.data).toEqual([]);
     expect(paymentsResult.data).toEqual([]);
     expect(notesResult.data).toEqual([]);
-    expect(eventsResult.data).toEqual([]);
-    expect(auditsResult.data).toEqual([]);
+    // Database audit observations are retained without becoming sales activity.
+    expect(eventsResult.data?.length).toBeGreaterThan(0);
+    for (const event of eventsResult.data ?? []) {
+      expect(event).toMatchObject({ event_type: "sale_record_changed", metadata: { source: "database" } });
+    }
+    expect(auditsResult.data).toContainEqual(expect.objectContaining({ event_type: "units_created", source: "database" }));
     expect(workflowResult.data?.find((row: { unit_id: string }) => row.unit_id === unitId)).toMatchObject({
       workflow_status: "draft",
       is_active: true,

@@ -47,6 +47,7 @@ export async function legalDatabase({ beforeNotice, beforeDeposit, beforePackage
   await f.db.exec(`create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table storage.objects(bucket_id text,name text,metadata jsonb);`);
   await f.db.exec(readFileSync('supabase/migrations/20260922194750_completion_direct_upload.sql','utf8'));
   await f.db.exec(readFileSync('supabase/migrations/20261007133421_completion_document_review.sql','utf8'));
+  await f.db.exec(readFileSync('supabase/migrations/20261007154000_sales_internal_function_permissions.sql','utf8'));
   const solicitorOrg=crypto.randomUUID(),agentOrg=crypto.randomUUID();
   await f.db.query("insert into organisations(id,name,type,shared_system_email) values($1,'Legal Team','conveyancer','legal@example.test'),($2,'Agent Team','sales_agent','sales@example.test')",[solicitorOrg,agentOrg]);
   await f.db.query("update buildings set conveyancer_organisation_id=$1,sales_agent_organisation_id=$2,seller_name='Seller SPV Ltd' where id=$3",[solicitorOrg,agentOrg,f.ids.building]);
