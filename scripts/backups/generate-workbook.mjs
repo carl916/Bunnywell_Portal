@@ -6,19 +6,19 @@ import { buildModel } from './model.mjs';
 import { collectAssets, saveCorrespondence, sha256 } from './assets.mjs';
 import { writeWorkbook, writeWorkingLog } from './workbook.mjs';
 
-export async function generate({dump,media,output,snapshot,projectRef='zxgezoiazsubopqhqhim',runUrl=''}) {
+export async function generate({dump,media,output,snapshot,projectRef='zxgezoiazsubopqhqhim',portalUrl='https://portal.bunnywell.co.uk',runUrl=''}) {
   if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(snapshot)||!Number.isFinite(Date.parse(snapshot)))throw new Error('Supply the database snapshot timestamp in UTC.');
   await mkdir(output,{recursive:true});
   if((await readdir(output)).length)throw new Error('Use a new empty package directory. Existing packages are immutable.');
   const data=await readDump(dump);
-  const model=buildModel(data,{snapshot,projectRef});
+  const model=buildModel(data,{snapshot,projectRef,portalUrl});
   if(model.references.some(r=>r.unresolved))throw new Error('Unresolved file references; package was not published.');
   await collectAssets(model.references,media,output);
   await saveCorrespondence(model.references,output);
   await writeWorkbook(model,path.join(output,'Bunnywell.xlsx'));
   await writeWorkingLog(path.join(output,'Working log.xlsx'),snapshot);
   await writeFile(path.join(output,'README.txt'),[
-    'Bunnywell production workbook backup',`Database snapshot: ${snapshot}`,`Backup run: ${runUrl}`,'',
+    `Bunnywell ${model.environment} workbook backup`,`Database snapshot: ${snapshot}`,`Backup run: ${runUrl}`,'',
     'Extract the complete ZIP, then open Bunnywell.xlsx. Keep the files folder beside it.',
     'Use the Documents sheet to open retained images, reports, PDFs and saved correspondence.',
     'To continue work, copy Working log.xlsx OUTSIDE the backup folder. Nightly exports do not update your working log or write back to the portal.',

@@ -42,7 +42,7 @@ function table(book,name,columns,rows,context) {
 
 export async function writeWorkbook(model,file) {
   const book=new ExcelJS.Workbook();book.creator='Bunnywell Portal';book.created=new Date(model.snapshot);book.modified=new Date(model.snapshot);
-  const context=`Production snapshot: ${model.snapshot} · Times are UTC · Internal use`;
+  const context=`${model.environment==='production'?'Production':'Validation'} snapshot: ${model.snapshot} · Times are UTC · Internal use`;
   const docRows=new Map();model.references.forEach((r,i)=>{for(const key of [r.id,r.parentId,r.saleId,...(r.relatedSnags||'').split(', ')])if(key&&!docRows.has(key))docRows.set(key,i+5);});
   const evidence=key=>docRows.has(key)?link(`#'Documents'!A${docRows.get(key)}`,'Documents / evidence'):'';
   table(book,'Start here',[c('item','Item',33),c('value','Details',105)],[

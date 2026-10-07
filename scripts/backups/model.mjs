@@ -2,7 +2,7 @@ import { sortUnitsByBuildingFloorOrder } from '../../src/lib/units/commercial-al
 import { completionDocumentApproved, completionDocumentTypes } from '../../src/lib/sales/completion-review.ts';
 import { completionNoticeState } from '../../src/lib/sales/completion-notice.ts';
 import { absoluteSaleFileUrl } from '../../src/lib/portal-url.ts';
-import { truth, number } from './read-dump.mjs';
+import { truth, json, number } from './read-dump.mjs';
 import { storageReference } from './assets.mjs';
 
 export const label = value => String(value ?? '').replaceAll('_', ' ').replace(/^./, c => c.toUpperCase());
@@ -135,8 +135,12 @@ export function buildModel(data, { snapshot, projectRef, portalUrl = 'https://po
     otherConcessions: money(t.other_concessions), agentFeePercent: number(t.agent_fee_percent) == null ? null : number(t.agent_fee_percent)/100,
     solicitorFee: money(t.solicitor_fee), summary: t.commercial_summary, schedule: t.deposit_summary, specialTerms: t.additional_special_conditions,
     approvedBy: person(t.approved_by_user_id), approvedAt: t.approved_at });
-  for (const p of data.unit_sale_payment_schedule) payments.push({ ...saleLocation(p.sale_attempt_id), id: p.id, kind: 'Payment schedule', reference: p.label, status: label(p.status),
-    expected: money(p.expected_amount), received: null, date: p.due_date, notes: [p.due_event, p.due_offset_days ? `Offset ${p.due_offset_days} days` : '', p.notes].filter(Boolean).join('; ') });
+  for (const p of data.unit_sale_payment_schedule) {
+    const terms = data.unit_sale_terms.find(t=>t.id===p.sale_terms_id);
+    payments.push({ ...saleLocation(p.sale_attempt_id), id: p.id, kind: 'Payment schedule', reference: p.label, status: label(p.status),
+      expected: money(p.expected_amount), received: null, date: p.due_date, notes: [terms ? `Terms version ${terms.version_number} (${truth(terms.is_current)?'current':'historical'})` : 'Terms version unavailable',
+        p.due_event, p.due_offset_days ? `Offset ${p.due_offset_days} days` : '', truth(p.includes_reservation_fee)?'Includes reservation fee':'', p.notes].filter(Boolean).join('; ') });
+  }
   for (const invoice of data.unit_sale_invoices) {
     const paid = data.unit_sale_invoice_payments.filter(p => p.invoice_id === invoice.id && !p.voided_at).reduce((sum, p) => sum + number(p.amount), 0);
     const expected = money(invoice.expected_payable_amount);
@@ -155,7 +159,11 @@ export function buildModel(data, { snapshot, projectRef, portalUrl = 'https://po
     status: replacedReceipts.has(r.id) ? 'Superseded confirmation (not another payment)' : 'Current confirmation', expected: money(r.expected_amount), received: money(r.received_amount),
     date: r.received_date, actor: r.recorded_by_name || person(r.recorded_by), notes: r.correction_reason });
   for (const [table, kind, body, actor] of [['sale_comments','Sales comment','body','author_id'], ['unit_sale_notes','Sales note','body','created_by_user_id'], ['unit_sale_workflow_events','Sales activity','summary','created_by_user_id']]) {
-    for (const e of data[table].filter(e => !e.redacted_at)) history.push({ ...saleLocation(e.sale_attempt_id), id: e.id, kind, date: e.created_at, actor: e.author_name || e.actor_name || person(e[actor]), description: e[body] || e.note || e.content || '', liveUrl: saleUrl(e.sale_attempt_id) });
+    for (const e of data[table].filter(e => !e.redacted_at)) {
+      const metadata=json(e.metadata), versions=[metadata.versionId,...(metadata.documents||[]).map(d=>d.versionId)].filter(Boolean);
+      history.push({ ...saleLocation(e.sale_attempt_id), id: e.id, kind, date: e.created_at, actor: e.author_name || e.actor_name || person(e[actor]),
+        description:[...new Set([e[body] || e.note || e.content,metadata.reason,metadata.rejectionReason,metadata.queryNote,versions.length?`Document version IDs: ${versions.join(', ')}`:''].filter(Boolean))].join('\n'), liveUrl: saleUrl(e.sale_attempt_id) });
+    }
   }
   const snags = [...data.snags].sort((a,b) => (unitOrder.get(a.unit_id) ?? 1e9)-(unitOrder.get(b.unit_id) ?? 1e9) || String(a.created_at).localeCompare(String(b.created_at))).map(s => {
     const events = [...data.snag_events.filter(e => e.snag_id === s.id), ...data.snag_comments.filter(e => e.snag_id === s.id).map(e=>({...e,comment:e.body}))].sort(byDate);
@@ -182,6 +190,6 @@ export function buildModel(data, { snapshot, projectRef, portalUrl = 'https://po
   const reports = data.snag_reports.map(r=>({ ...location(r.unit_id,r.building_id,r.communal_area_id), id:r.id,date:r.created_at,sent:r.sent_at,location:r.location_label,count:number(r.snag_count),
     recipients:data.snag_report_recipients.filter(p=>p.report_id===r.id).map(p=>`${p.name || p.email}: ${p.email} (${p.delivery_status})`).join('\n'),
     snagIds:data.snag_report_items.filter(i=>i.report_id===r.id).map(i=>i.snag_id).join('\n') }));
-  return { snapshot, projectRef, portalUrl, sales, terms, payments, snags, history:history.sort((a,b)=>String(b.date).localeCompare(String(a.date))), contacts, handovers, reports, references, exceptions,
+  return { snapshot, projectRef, portalUrl, environment:projectRef==='zxgezoiazsubopqhqhim'?'production':'validation', sales, terms, payments, snags, history:history.sort((a,b)=>String(b.date ?? '').localeCompare(String(a.date ?? ''))), contacts, handovers, reports, references, exceptions,
     counts:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,v.length])) };
 }

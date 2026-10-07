@@ -50,6 +50,9 @@ test('model uses configured floor order, exact approved versions, actual receipt
   assert.equal(m.sales[0].account,'Current version approved');assert.equal(m.sales[0].deposit,30000);assert.equal(m.sales[0].depositDate,'2026-10-02');
   assert.equal(m.payments.find(p=>p.id==='inv').balance,5000);assert.equal(m.payments.find(p=>p.id==='r1').status,'Superseded confirmation (not another payment)');
   assert.ok(m.exceptions.some(e=>e.issue==='Snag deadline has passed'));
+  const staging=buildModel(fixture(),{snapshot,projectRef:'vxkpvdtrldwwqiddoyof',portalUrl:'https://staging.bunnywell.co.uk'});
+  assert.equal(staging.environment,'validation');
+  assert.ok(staging.sales[0].liveUrl.startsWith('https://staging.bunnywell.co.uk/'));
 });
 test('percentage concessions become currency and locked deposit expectations are not receipts',()=>{
   const d=fixture();Object.assign(d.unit_sale_terms[0],{developer_contribution_value:'2',developer_contribution_value_type:'percent'});
@@ -74,10 +77,12 @@ test('snag comments and earlier sales comments remain available in operational h
   const d=fixture();
   d.snag_comments=[{id:'comment',snag_id:'snag',body:'Repair booked for Friday',created_at:'2026-10-06T10:00:00Z'}];
   d.sale_comment_revisions=[{sale_attempt_id:'s',comment_id:'sale-comment',version:'1',body:'Original instruction',recorded_at:'2026-10-01T12:00:00Z'}];
+  d.unit_sale_workflow_events=[{id:'query',sale_attempt_id:'s',summary:'Query raised',metadata:JSON.stringify({queryNote:'Correct the completion date',versionId:'v2'})}];
   const m=buildModel(d,{snapshot,projectRef:'zxgezoiazsubopqhqhim'});
   assert.equal(m.snags[0].latest,'Repair booked for Friday');
   assert.ok(m.history.some(h=>h.kind==='Snag comment'&&h.description==='Repair booked for Friday'));
   assert.ok(m.history.some(h=>h.kind==='Previous sales comment (version 1)'&&h.saleId==='s'));
+  assert.match(m.history.find(h=>h.id==='query').description,/Correct the completion date\nDocument version IDs: v2/);
 });
 test('redacted document versions are not reintroduced and external URLs are not fetched',()=>{
   const d=fixture();d.unit_sale_document_versions[0].redacted_at=snapshot;d.buildings[0].documents_url='https://example.test/building-documents';

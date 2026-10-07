@@ -38,7 +38,7 @@ Required existing secrets: production database and Storage credentials plus the 
 
 ## Development and recovery checks
 
-Use Node 24 and run `npm ci`, `npm run test:backups`, and `npx tsc --noEmit`.
+Use Node 24 and run `npm ci`, `npm run test:backups`, and `npx tsc --noEmit`. Run `bash scripts/backups/test-publication.sh` to exercise publication success, a failed remote file check and a corrupt archive download using local transport stubs. Both failures must preserve the previous Latest package. These checks also run in CI.
 
 For an authorised local dry run against an extracted database backup and Storage mirror:
 
@@ -47,5 +47,7 @@ node scripts/backups/generate-workbook.mjs --dump=/secure/data.sql --media=/secu
 ```
 
 The output directory must be new and empty. Keep production test data and generated packages outside Git. Do not upload them as public GitHub artifacts. Tests use synthetic records to exercise current-version approvals, deposit corrections, voided payments, missing files, safe relative links, redaction, formula-like text, DST and failure alerts.
+
+For a staging validation export, supply its `--projectRef` and `--portalUrl=https://staging.bunnywell.co.uk` explicitly and use a separate local output folder. It is labelled as a validation snapshot and its live links point to staging. Do not publish that package to the production Dropbox destination or add a nightly staging backup.
 
 After a failed run, inspect the failing step, resolve the missing data/credentials or service failure, and run the workflow again on `main`. Use a fresh run rather than rerunning an old commit after an exporter fix. Before using a package for continuity, extract it, open a document through the workbook, check its snapshot date and keep an untouched copy.

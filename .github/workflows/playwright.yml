@@ -39,7 +39,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Test workbook backups
-        run: npm run test:backups
+        run: |
+          npm run test:backups
+          bash scripts/backups/test-publication.sh
 
       - name: Build app
         run: npm run build
