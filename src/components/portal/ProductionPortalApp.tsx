@@ -8618,6 +8618,7 @@ function ReportsPanel({
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeClosedSnags, setIncludeClosedSnags] = useState(false);
   const [sendState, setSendState] = useState<"idle" | "loading_recipients" | "preview" | "sending" | "sent" | "failed">("idle");
+  const [downloadPending, setDownloadPending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sentMessage, setSentMessage] = useState("");
   const [previewRecipients, setPreviewRecipients] = useState<{ id: string; email: string; name: string | null }[]>([]);
@@ -8961,25 +8962,46 @@ function ReportsPanel({
   }
 
   async function download() {
-    const pdf = await buildReportPdf();
-    const filename = `${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`;
-    pdf.save(filename);
-    await recordAudit({
-      event_type: "report_generated",
-      entity_type: locationType === "unit" ? "unit" : communalArea ? "area" : "building",
-      entity_id: locationType === "unit" ? unit?.id ?? null : communalArea?.id ?? building?.id ?? null,
-      summary: `Snagging report generated: ${building?.name ?? "Building"} / ${locationLabel}`,
-      metadata: {
-        buildingId,
-        buildingName: building?.name,
-        locationType,
-        unitId: locationType === "unit" ? unitId : null,
-        unitNumber: locationType === "unit" ? unit?.unit_number : null,
-        communalAreaId: locationType === "communal" ? communalAreaId || null : null,
-        communalAreaName: locationType === "communal" ? communalArea?.name ?? null : null,
-        snagCount: reportSnags.length,
-      },
-    });
+    if (downloadPending) return;
+    setDownloadPending(true);
+    try {
+      const pdf = await buildReportPdf();
+      const filename = `${filenameSafe(`${building?.name ?? "building"}-${locationLabel}`)}-snagging-report.pdf`;
+      pdf.save(filename);
+      if (canSendReport) {
+        try {
+          const { storeGeneratedReport } = await import("@/lib/reports/store-generated-report");
+          await storeGeneratedReport(createSupabaseBrowserClient(), new Blob([pdf.output("arraybuffer")], { type: "application/pdf" }), {
+            buildingId, locationType, unitId: locationType === "unit" ? unitId : null,
+            communalAreaId: locationType === "communal" ? communalAreaId || null : null,
+            locationLabel, includePhotos, includeClosedSnags, snagIds: reportSnags.map(snag => snag.id), filename,
+          });
+          onNotice("PDF downloaded and saved in the portal for backup.");
+        } catch (error) {
+          onNotice(`PDF downloaded, but the portal copy could not be saved. ${readableError(error, "Try downloading again to save a backup copy.")}`);
+        }
+      }
+      await recordAudit({
+        event_type: "report_generated",
+        entity_type: locationType === "unit" ? "unit" : communalArea ? "area" : "building",
+        entity_id: locationType === "unit" ? unit?.id ?? null : communalArea?.id ?? building?.id ?? null,
+        summary: `Snagging report generated: ${building?.name ?? "Building"} / ${locationLabel}`,
+        metadata: {
+          buildingId,
+          buildingName: building?.name,
+          locationType,
+          unitId: locationType === "unit" ? unitId : null,
+          unitNumber: locationType === "unit" ? unit?.unit_number : null,
+          communalAreaId: locationType === "communal" ? communalAreaId || null : null,
+          communalAreaName: locationType === "communal" ? communalArea?.name ?? null : null,
+          snagCount: reportSnags.length,
+        },
+      });
+    } catch (error) {
+      onNotice(readableError(error, "Could not generate the report. Please try again."));
+    } finally {
+      setDownloadPending(false);
+    }
   }
 
   async function previewContractorRecipients() {
@@ -9197,7 +9219,7 @@ function ReportsPanel({
       </label>
       <p className="text-sm text-[#617169]">{reportSnags.length} snag{reportSnags.length === 1 ? "" : "s"} will be included for {locationSummaryLabel}.</p>
       <div className="flex flex-wrap gap-2">
-        <button className="primary" onClick={download} disabled={reportSnags.length === 0 || sendState === "sending"}><Download size={16} /> Download PDF</button>
+        <button className="primary" onClick={download} disabled={reportSnags.length === 0 || sendState === "sending" || downloadPending}><Download size={16} /> {downloadPending ? "Preparing PDF…" : "Download PDF"}</button>
         {canSendReport && (
           <button className="secondary" type="button" onClick={previewContractorRecipients} disabled={reportSnags.length === 0 || sendState === "loading_recipients" || sendState === "sending"}>
             <Mail size={16} /> Send to contractor
