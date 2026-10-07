@@ -98,6 +98,7 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [events, setEvents] = useState<AuditEvent[]>([]);
+  const [knownEventTypes, setKnownEventTypes] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [trackingEnabled, setTrackingEnabled] = useState<boolean | null>(null);
@@ -133,12 +134,13 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
       setLoading(false);
       if (error) { setEvents([]); setHasNext(false); setError(error.message); return; }
       const rows = (data ?? []) as AuditEvent[];
+      setKnownEventTypes((types) => Array.from(new Set([...types, ...rows.map((event) => event.event_type)])));
       setEvents(rows.slice(0,50)); setHasNext(rows.length > 50);
     }, 200);
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [filtersKey, cursor]);
 
-  const eventTypes = useMemo(() => Array.from(new Set(events.map((event) => event.event_type))).sort((a, b) => formatAuditEventType(a).localeCompare(formatAuditEventType(b))), [events]);
+  const eventTypes = useMemo(() => Array.from(new Set([...knownEventTypes, ...(eventType ? [eventType] : [])])).sort((a, b) => formatAuditEventType(a).localeCompare(formatAuditEventType(b))), [eventType, knownEventTypes]);
   const actors = useMemo(() => [...profiles].sort((a, b) => profileName(a).localeCompare(profileName(b))), [profiles]);
   const rows = useMemo(() => events.map((event) => {
     const subject = getAuditSubject(event, context);
@@ -188,7 +190,7 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
       <div className="border-b border-[#d9ded6] px-4 py-4 sm:px-5">
         <h2 className="text-lg font-semibold text-[#1F2A24]">Audit log</h2>
         <p className="mt-0.5 text-sm text-[#617169]">A searchable history of important changes across the portal.</p>
-        <label className="field-label mt-3">Audit stream<select className="field" value={stream} onChange={e => { setStream(e.target.value); resetFilters(); }}>
+        <label className="field-label mt-3">Audit stream<select className="field" value={stream} onChange={e => { setStream(e.target.value); setKnownEventTypes([]); resetFilters(); }}>
           <option value="business">Business changes</option><option value="authentication">Supabase sign-in / sign-out</option><option value="views">Optional unit opens (30 days)</option>
         </select></label>
         {stream === "authentication" && <p className="mt-2 text-sm text-[#617169]">Provider login and logout records only. Login denotes a provider sign-in record, not proof of success. Refreshes and presence heartbeats are excluded. Staging database logging currently has no records; imported provider history is a snapshot, not a continuous feed, and expires after 90 days. An empty feed does not mean nobody signed in. Local sign-out may have no provider event.</p>}
@@ -222,7 +224,10 @@ export function AuditLog({ buildingContextId, profiles, buildings, units, organi
               <input className={`field audit-search w-full ${search ? "filter-active" : ""}`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this page" />
             </span>
           </label>
-          <label className="field-label">Event type<input className="field" list="audit-event-types" value={eventType} onChange={e => setEventType(e.target.value)} placeholder="All events" /><datalist id="audit-event-types">{eventTypes.map(type => <option key={type} value={type} />)}</datalist></label>
+          <FilterSelect label="Event type" value={eventType} onChange={setEventType} active={Boolean(eventType)}>
+            <option value="">All events</option>
+            {eventTypes.map((type) => <option key={type} value={type}>{formatAuditEventType(type)}</option>)}
+          </FilterSelect>
           <FilterSelect label="User" value={userId} onChange={setUserId} active={Boolean(userId)}>
             <option value="">All users</option>
             {actors.map((actor) => <option key={actor.id} value={actor.id}>{profileName(actor)}</option>)}
