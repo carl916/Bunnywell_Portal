@@ -23,7 +23,7 @@ test('exchange immediately unlocks receipt without confirming a deposit, and fre
   await f.db.query("insert into unit_sale_payment_schedule(sale_attempt_id,payment_stage,expected_amount) values($1,'exchange',99999)",[f.ids.sale]);
   assert.deepEqual(await context(f),before);
   await f.sent(await f.prepare({kind:'notice_authority',date:''}));
-  await f.notice({noticeDate:today(),dueDate:today()});await f.uploadFiles();await f.action('developer','approve_completion_package',await f.packageVersions());
+  await f.notice({noticeDate:today(),dueDate:today()});await f.uploadFiles();await f.approveDocuments();
   await f.action('solicitor','confirm_completion',{dateTime:new Date().toISOString(),confirmed:true});
   assert.equal((await context(f)).receipt,null,'Legal completion does not require a receipt or an agent invoice');
   const receipt=await f.action('solicitor','confirm_exchange_deposit',await confirmation(f));assert.equal(receipt.received_amount,25000,'Outstanding receipt can still be recorded after completion');

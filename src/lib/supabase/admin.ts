@@ -6,7 +6,7 @@ export function requiredEnv(name: string) {
   return value;
 }
 
-export function createSupabaseServiceRoleClient(diagnosticFetch?: typeof fetch) {
+export function createSupabaseServiceRoleClient(diagnosticFetch?: typeof fetch, verifiedActorId?: string) {
   const url = requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const anonKey = requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
   const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
@@ -17,7 +17,11 @@ export function createSupabaseServiceRoleClient(diagnosticFetch?: typeof fetch) 
 
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    ...(diagnosticFetch ? { global: { fetch: diagnosticFetch } } : {}),
+    global: {
+      ...(diagnosticFetch ? { fetch: diagnosticFetch } : {}),
+      // Callers must obtain this ID from auth.getUser(), never request payloads.
+      ...(verifiedActorId ? { headers: { "x-bunnywell-audit-actor": verifiedActorId } } : {}),
+    },
   });
 }
 

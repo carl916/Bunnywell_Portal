@@ -73,11 +73,12 @@ export async function legalFixture(page: Page) {
       f.rows.sale_exchange_deposit_receipts.push(deposit.receipt);
       f.rows.unit_sale_workflow_events.unshift({ ...f.event(revision === 1 ? "exchange_deposit_received" : "exchange_deposit_date_corrected",22), summary: `Exchange deposit of £26,250.00 recorded as received on ${body.date} by Abbie Smith.` });
     }
-    if(body.action==="approve_completion_package") {
-      f.completionPackage.approved=true;f.completionPackage.approval={statement_version_id:body.statementVersionId,account_version_id:body.accountVersionId,approved_by_name:"Developer Approver",approved_at:new Date().toISOString()};
-      f.rows.unit_sale_documents.forEach(doc=>{if(["completion_statement","draft_statement_of_account"].includes(String(doc.document_type)))Object.assign(doc,{status:"approved",query_note:null});});
+    if (["approve_completion_document", "query_completion_document"].includes(body.action)) {
+      const document = f.rows.unit_sale_documents.find(doc => doc.document_type === body.documentType)!;
+      const approved = body.action === "approve_completion_document", now = new Date().toISOString();
+      Object.assign(document, { status: approved ? "approved" : "query_raised", query_note: approved ? null : body.reason, approved_version_id: approved ? body.versionId : null, approved_by_user_id: approved ? userId : null, approved_at: approved ? now : null });
+      f.rows.unit_sale_workflow_events.unshift({ ...f.event(approved ? "completion_documents_approved" : "completion_documents_query_raised", 22), id: crypto.randomUUID(), actor_name: "Historical Legal Actor", created_by_user_id: userId, created_at: now, metadata: { versionId: body.versionId, queryNote: body.reason } });
     }
-    if(body.action==="query_completion_package") {f.completionPackage.approved=false;f.rows.unit_sale_documents.forEach(doc=>{if(body.documentTypes.includes(doc.document_type))Object.assign(doc,{status:"query_raised",query_note:body.reason});});}
     if (body.action === "confirm_arrangements") f.attempt.contractual_completion_date=body.date;
     if (body.action === "confirm_completion") { f.attempt.completed_at=body.dateTime.slice(0,10); f.attempt.legal_completed_at=body.dateTime; f.attempt.workflow_status="completed"; f.unit.sale_status="completed"; }
     await route.fulfill({json:{saleAttemptId:f.attempt.id}});

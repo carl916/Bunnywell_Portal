@@ -9,11 +9,14 @@ import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
 
 import { AlertCircle, AlertTriangle, Building2, Camera, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, CircleHelp, ClipboardCheck, ClipboardList, Download, Film, Home, Info, LogIn, Mail, Menu, Pencil, Plus, RefreshCw, Send, Shield, Trash2, X } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { markUnitOpenIntent, resetUnitOpenIntents } from "@/lib/audit/unit-open";
+import { UnitOpenObserver } from "@/components/portal/audit/UnitOpenObserver";
 import type { PointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { snagResultsSummary } from "@/lib/snag-pagination";
 import { EnvironmentBanner } from "@/components/portal/EnvironmentBanner";
 import { UnitAllocationWorkspace } from "@/components/portal/UnitAllocationWorkspace";
+import { sortUnitsByBuildingFloorOrder } from "@/lib/units/commercial-allocation";
 import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
 import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
@@ -819,6 +822,7 @@ function readAuthRedirectTokens() {
 export function ProductionPortalApp() {
   const supabaseEnabled = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
+  useEffect(() => { resetUnitOpenIntents(); }, [user?.id]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tab, setActiveTab] = useState<Tab>(() => screenFromUrl() ?? "dashboard");
   const [snagListFilters, setSnagListFilters] = useState<SnagListFilters>({});
@@ -1125,7 +1129,7 @@ export function ProductionPortalApp() {
       setUnits(rows => JSON.stringify(rows.find(unit => unit.id === unitId)) === JSON.stringify(fresh) ? rows : replaceRowsById(rows, [fresh]));
       if (action === "confirm_completion" && previous?.rental_portfolio_status === "active" && fresh.rental_portfolio_status === "exited") {
         // Rental exit appends an audit event. Preserve the global log's page/count.
-        const audit = await supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500);
+        const audit = await Promise.resolve({ data: [], count: 0, error: null });
         if (audit.error) throw audit.error;
         if (!valid()) return;
         setAuditEvents((audit.data ?? []) as AuditEvent[]);
@@ -1210,7 +1214,7 @@ export function ProductionPortalApp() {
         supabase.from("snags").select("*").order("created_at", { ascending: false }),
         supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
         supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
-        supabase.from("audit_events").select("*", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
+        Promise.resolve({ data: [], count: 0, error: null }),
         supabase.from("handovers").select("*").order("created_at", { ascending: false }),
         supabase.from("handover_key_items").select("*").order("sort_order"),
         supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
@@ -1320,6 +1324,7 @@ export function ProductionPortalApp() {
   }
 
   async function refreshPortal() {
+    setNotice("");
     try {
       await loadAll(user?.id, user?.email, "explicit-refresh");
       setSalesRefreshRevision(value => value + 1);
@@ -1420,6 +1425,7 @@ export function ProductionPortalApp() {
 
   async function recordAudit(event: NewAuditEvent) {
     if (!user?.id) return;
+    if (/^(user_(created|updated|deleted|reactivated|deactivated)|access_request_(notes_updated|approved|rejected))$/.test(event.event_type)) return;
     const supabase = createSupabaseBrowserClient();
     const structuredInsert = buildAuditInsert(event, { ...profile, id: user.id, email: profile?.email ?? user.email ?? "" });
     let result = await supabase.from("audit_events").insert(structuredInsert).select("*").single();
@@ -1434,7 +1440,7 @@ export function ProductionPortalApp() {
   }
 
   if (isLoading) {
-    return <Shell profile={profile} tab={tab} tabs={tabs} setTab={setTab} notice="Loading Bunnywell Portal..." />;
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice=""><PortalLoading /></Shell>;
   }
 
   if (authRedirect && !authRedirect.error) {
@@ -1464,8 +1470,8 @@ export function ProductionPortalApp() {
   }
 
   if (!profile) {
-    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={signOut} onRefresh={refreshPortal}>
-      <section className="panel" aria-live="polite"><h2 className="text-xl font-bold text-[#0F3D2E]">Checking portal access</h2><p className="mt-2 text-sm text-[#617169]">Your portal data will appear after your access has been checked.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section>
+    return <Shell profile={null} tab={tab} tabs={[]} setTab={setTab} notice={notice} onSignOut={notice ? signOut : undefined}>
+      {notice ? <section className="panel"><h2 className="text-xl font-bold text-[#0F3D2E]">Unable to load your portal</h2><p className="mt-2 text-sm text-[#617169]">We couldn’t finish checking your access. Please try again.</p><button className="secondary mt-4" onClick={() => void refreshPortal()}>Retry access check</button></section> : <PortalLoading />}
     </Shell>;
   }
 
@@ -1596,6 +1602,7 @@ export function ProductionPortalApp() {
           organisations={organisations}
           onNotice={setNotice}
           onOpenSaleFile={(unit) => {
+            markUnitOpenIntent(unit.id);
             const params = new URLSearchParams(window.location.search);
             params.set("screen", "sales");
             params.set("salesUnitId", unit.id);
@@ -1635,6 +1642,13 @@ export function ProductionPortalApp() {
       )}
     </Shell>
   );
+}
+
+function PortalLoading() {
+  return <div role="status" aria-label="Loading portal" className="flex items-center gap-2 px-1 py-6 text-sm text-[#77847d]">
+    <span aria-hidden="true" className="h-4 w-4 rounded-full border-2 border-[#d9ded6] border-t-[#617169] motion-safe:animate-spin" />
+    <span>Loading your portal…</span>
+  </div>;
 }
 
 function primaryNavItemsForTabs(tabs: Tab[]): Array<{ key: PrimaryNavKey; label: string; tab: Tab; activeTabs: Tab[]; icon: React.ReactNode }> {
@@ -1753,10 +1767,10 @@ function Shell({
                   </label>
                 )
               )}
-              <span className="account-pill max-w-72">
+              {profile && <span className="account-pill max-w-72">
                 <Shield size={16} aria-hidden />
-                <span className="truncate">{profile?.email ?? "Not signed in"}</span>
-              </span>
+                <span className="truncate">{profile.email}</span>
+              </span>}
               {onRefresh && (
                 <div className="flex items-center gap-1.5 rounded-full border border-[#e3ded2] bg-[#fbfaf6] px-3 py-2 text-xs text-[#66736B]">
                   <span>Updated {formatRefreshTime(lastUpdatedAt)}</span>
@@ -2157,6 +2171,7 @@ function SetupSection({
           units={units}
           buildingContextId={buildingContextId}
           onOpenSaleFile={(unit) => {
+            markUnitOpenIntent(unit.id);
             if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             params.set("screen", "sales");
@@ -2201,7 +2216,7 @@ function SetupSection({
           totalEvents={auditTotalCount}
           profiles={profiles}
           buildings={buildings}
-          units={units}
+          units={sortUnitsByBuildingFloorOrder(units, buildingFloors, buildings)}
           organisations={organisations}
           buildingContextId={buildingContextId}
         />
@@ -2521,6 +2536,7 @@ function BuildingStructureView({
   const [editingFloorOrder, setEditingFloorOrder] = useState(false);
   const [setupSaleAttempts, setSetupSaleAttempts] = useState<SetupUnitSaleAttempt[]>([]);
   const [setupSaleTerms, setSetupSaleTerms] = useState<SetupUnitSaleTerm[]>([]);
+  const [pricesLoadedForBuilding, setPricesLoadedForBuilding] = useState("");
   const building = buildings.find((item) => item.id === selectedBuildingId) ?? buildings[0];
   const buildingId = building?.id ?? "";
   const floors = buildingFloors
@@ -2557,6 +2573,7 @@ function BuildingStructureView({
   }
 
   async function loadSetupSalePrices() {
+    setPricesLoadedForBuilding("");
     if (!buildingId || buildingUnits.length === 0) {
       setSetupSaleAttempts([]);
       setSetupSaleTerms([]);
@@ -2581,6 +2598,7 @@ function BuildingStructureView({
     const attemptIds = attempts.map((attempt) => attempt.id);
     if (attemptIds.length === 0) {
       setSetupSaleTerms([]);
+      setPricesLoadedForBuilding(buildingId);
       return;
     }
 
@@ -2594,6 +2612,7 @@ function BuildingStructureView({
       return;
     }
     setSetupSaleTerms((termRows ?? []) as SetupUnitSaleTerm[]);
+    setPricesLoadedForBuilding(buildingId);
   }
 
   async function saveSetupUnitPrice(unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) {
@@ -2703,6 +2722,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
             />
@@ -2720,6 +2740,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
               warning
@@ -2738,6 +2759,7 @@ function BuildingStructureView({
               onNotice={onNotice}
               reload={reload}
               unitPriceFor={unitPriceFor}
+              pricesLoaded={pricesLoadedForBuilding === buildingId}
               activeSaleAttemptIdFor={activeSaleAttemptIdFor}
               saveUnitPrice={saveSetupUnitPrice}
               warning
@@ -2790,6 +2812,7 @@ function FloorBlock({
   onNotice,
   reload,
   unitPriceFor,
+  pricesLoaded,
   activeSaleAttemptIdFor,
   saveUnitPrice,
   warning = false,
@@ -2806,6 +2829,7 @@ function FloorBlock({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
   unitPriceFor: (unitId: string) => number | null;
+  pricesLoaded: boolean;
   activeSaleAttemptIdFor: (unitId: string) => string | null;
   saveUnitPrice: (unit: Pick<Unit, "id" | "building_id">, price: number, saleAttemptId?: string | null) => Promise<void>;
   warning?: boolean;
@@ -2817,6 +2841,7 @@ function FloorBlock({
   const [unitTypeId, setUnitTypeId] = useState("");
   const [communalName, setCommunalName] = useState("");
   const [collapsed, setCollapsed] = useState(!warning);
+  const unitsWithoutPrice = pricesLoaded ? units.filter((unit) => unitPriceFor(unit.id) === null) : [];
   const canDeleteFloor = Boolean(floor && units.length === 0 && communalAreas.length === 0);
   const deleteFloorHelp = "Move or delete units and communal areas before deleting this floor.";
 
@@ -2918,6 +2943,15 @@ function FloorBlock({
             <span className="truncate" title={floorName}>{floorName}</span>
           </div>
           <span className="mt-1 block whitespace-nowrap text-sm text-[#617169]">{units.length} unit{units.length === 1 ? "" : "s"} &middot; {communalAreas.length} communal</span>
+          {unitsWithoutPrice.length > 0 && (
+            <span className="mt-2 flex items-start gap-1.5 text-sm text-[#a15b3d]">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
+              <span>
+                <strong className="font-semibold">{unitsWithoutPrice.length} {unitsWithoutPrice.length === 1 ? "unit needs" : "units need"} attention</strong>
+                {" — "}{unitsWithoutPrice.length === 1 ? "price" : "prices"} not set ({unitsWithoutPrice.slice(0, 3).map((unit) => unit.unit_number).join(", ")}{unitsWithoutPrice.length > 3 ? ` +${unitsWithoutPrice.length - 3} more` : ""}).
+              </span>
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {floor && (
@@ -2941,6 +2975,7 @@ function FloorBlock({
               setCollapsed((current) => !current);
             }}
             aria-label={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
+            aria-expanded={!collapsed}
             title={collapsed ? `Expand ${floorName}` : `Collapse ${floorName}`}
           >
             {collapsed ? <ChevronDown size={17} strokeWidth={2.5} aria-hidden /> : <ChevronUp size={17} strokeWidth={2.5} aria-hidden />}
@@ -3338,6 +3373,7 @@ function UnitStructureCard({
     <article className="border-b border-[#eef0eb] bg-white px-3 py-2 last:border-b-0" data-unit-id={unit.id}>
               {editing ? (
                 <div className="grid gap-2 rounded-md border border-dashed border-[#cbd4ce] bg-[#f8faf7] p-3">
+                  <UnitOpenObserver unitId={unit.id} />
                   <div className="grid gap-2 sm:grid-cols-2">
                     <input className="field" value={editNumber} onChange={(event) => setEditNumber(event.target.value)} placeholder="Unit number" />
                     <select className="field" value={editFloor} onChange={(event) => setEditFloor(event.target.value)}>
@@ -3428,7 +3464,7 @@ function UnitStructureCard({
                   <p className="text-sm text-[#617169]">{formatParkingBays(unit.parking_bays)}</p>
                   <div className="flex flex-wrap gap-1"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>{unit.rental_portfolio_status === "active" && <span className="rounded-md bg-[#eef8fa] px-2 py-1 text-xs font-semibold text-[#315f6a]">Rental</span>}</div>
                   <div className="flex gap-2 lg:justify-end">
-                      <button className="secondary icon-button" onClick={() => setEditing(true)} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
+                      <button className="secondary icon-button" onClick={() => { markUnitOpenIntent(unit.id); setEditing(true); }} title={`Edit unit ${unit.unit_number}`} aria-label={`Edit unit ${unit.unit_number}`}>
                         <Pencil size={16} strokeWidth={2.25} aria-hidden />
                       </button>
                       <button
@@ -5082,7 +5118,7 @@ function UserDirectory({
         </button>
       </div>
 
-      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 md:hidden">
+      <div className="grid min-w-0 gap-3 bg-[#F7F5EF] p-3 xl:hidden">
         {rows.map((row) => {
           const isOpen = row.kind === "profile" ? editingUserId === row.id : selectedRequestId === row.id;
           const isMuted = row.status === "deactivated" || row.status === "rejected";
@@ -5139,8 +5175,18 @@ function UserDirectory({
         {rows.length === 0 && <p className="mobile-empty">No access records.</p>}
       </div>
 
-      <div className="hidden overflow-x-auto md:block">
-        <table className="min-w-[1120px] w-full border-separate border-spacing-0 text-sm">
+      <div className="hidden min-w-0 xl:block">
+        <table className="w-full table-fixed border-separate border-spacing-0 text-sm [overflow-wrap:anywhere]">
+          <colgroup>
+            <col className="w-[19%]" />
+            <col className="w-[9%]" />
+            <col className="w-[12%]" />
+            <col className="w-[11%]" />
+            <col className="w-[22%]" />
+            <col className="w-[10%]" />
+            <col className="w-[11%]" />
+            <col className="w-[6%]" />
+          </colgroup>
           <thead>
             <tr className="text-left text-xs font-semibold uppercase text-[#617169]">
               <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
@@ -5150,7 +5196,7 @@ function UserDirectory({
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Last active</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2 text-right">Actions</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2 text-right"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -5171,10 +5217,10 @@ function UserDirectory({
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.roleLabel}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.phone || <span className="text-xs text-[#9aa59f]">None</span>}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      <p className="max-w-md truncate">{row.allocation}</p>
+                      <p>{row.allocation}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle whitespace-nowrap">{lastActiveLabel(row)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{lastActiveLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
@@ -6753,23 +6799,11 @@ async function saveSnagStatusChange({
   const updatePayload: { status: string; closed_at?: string | null } = { status: nextStatus };
   if (closedAt !== undefined) updatePayload.closed_at = closedAt;
 
-  const { error: statusError } = await supabase
-    .from("snags")
-    .update(updatePayload)
-    .eq("id", snag.id);
-
+  const { error: statusError } = await supabase.rpc("change_snag", {
+    p_snag: snag.id, p_patch: updatePayload, p_comment: comment?.trim() || null,
+  });
   if (statusError) throw new Error(statusError.message);
 
-  const { error: eventError } = await supabase.from("snag_events").insert({
-    snag_id: snag.id,
-    event_type: "status_change",
-    old_value: snag.status,
-    new_value: nextStatus,
-    comment: comment?.trim() || null,
-    created_by_user_id: user.id,
-  });
-
-  if (eventError) throw new Error(`Status updated, but activity could not be recorded: ${eventError.message}`);
 }
 
 async function reloadAfterSavedSnagStatus(reload: () => Promise<void>) {
@@ -8075,22 +8109,13 @@ function TriageActions({ user, snag, buildings, organisations, onNotice, reload 
     }
 
     const supabase = createSupabaseBrowserClient();
-    await supabase.from("snags").update({
-      status,
-      priority_code: status === "accepted" ? priority : snag.priority_code,
-      sla_due_date: status === "accepted" ? slaForPriority(priority, building?.defects_liability_end_date) : snag.sla_due_date,
-    }).eq("id", snag.id);
-    await supabase.from("snag_events").insert({ snag_id: snag.id, event_type: "triage", old_value: snag.status, new_value: status, comment, created_by_user_id: user.id });
-    if (status === "accepted" && snag.priority_code !== priority) {
-      await supabase.from("snag_events").insert({
-        snag_id: snag.id,
-        event_type: "priority_changed",
-        old_value: snag.priority_code,
-        new_value: priority,
-        comment: `Priority changed from ${snag.priority_code ?? "None"} to ${priority}`,
-        created_by_user_id: user.id,
-      });
-    }
+    const { error } = await supabase.rpc("change_snag", {
+      p_snag: snag.id,
+      p_patch: { status, priority_code: status === "accepted" ? priority : snag.priority_code,
+        sla_due_date: status === "accepted" ? slaForPriority(priority, building?.defects_liability_end_date) : snag.sla_due_date },
+      p_comment: comment || null,
+    });
+    if (error) { onNotice(error.message); return; }
     setComment("");
     await reload();
   }
@@ -10009,7 +10034,8 @@ function SnagDetailPage({
       return;
     }
     const supabase = createSupabaseBrowserClient();
-    const { error: statusError } = await supabase.from("snags").update({ status: "rejected_back_to_contractor" }).eq("id", snag.id);
+    const { error: statusError } = await supabase.rpc("change_snag", { p_snag: snag.id, p_patch: { status: "rejected_back_to_contractor" }, p_comment: rejectNote });
+    if (statusError) { onNotice(statusError.message); return; }
     let photoErrorMessage = "";
     if (rejectPhoto) {
       const mediaUploads = await uploadSnagMedia({ imageDataUrl: rejectPhoto }, "rejections");
@@ -10017,15 +10043,7 @@ function SnagDetailPage({
       const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
       photoErrorMessage = photoError?.message ?? "";
     }
-    const { error: eventError } = await supabase.from("snag_events").insert({
-      snag_id: snag.id,
-      event_type: "status_change",
-      old_value: snag.status,
-      new_value: "rejected_back_to_contractor",
-      comment: rejectNote,
-      created_by_user_id: user.id,
-    });
-    if (statusError || eventError || photoErrorMessage) onNotice(statusError?.message ?? eventError?.message ?? photoErrorMessage);
+    if (photoErrorMessage) onNotice(photoErrorMessage);
     else {
       setRejectNote("");
       setRejectPhoto("");

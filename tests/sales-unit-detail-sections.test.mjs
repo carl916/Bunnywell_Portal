@@ -149,7 +149,7 @@ test("sale activity and legal milestone summaries identify their actors", () => 
   assert.match(readFileSync("src/components/portal/sales/SaleConversation.tsx", "utf8"), /event\.actor_name/);
   assert.match(legalSource, /Approved by \{email.snapshot.approver.name\}/);
   assert.match(legalSource, /Recorded by \{actorLabel\("exchange_recorded"\)\}/);
-  assert.match(packageSource, /Approved by \{packageState.approval.approved_by_name\}/);
+  assert.match(packageSource, /approved by \{actor\(approval, document\?\.approved_by_user_id\)\}/);
   assert.match(legalSource, /Completed by \{actorLabel\("completion_recorded"\)\}/);
 });
 
@@ -183,7 +183,7 @@ test("legacy reservation actor IDs resolve to profile names and never render as 
 test("completion uses styled PDF pickers and replaces completed controls with summaries", () => {
   const completionPanel = legalSource;
   assert.match(completionPanel, /<PdfUploadBox/);
-  assert.match(packageSource, /Historical completion statement approved/);
+  assert.match(packageSource, /Historical completion – approval of both draft documents was not recorded/);
   assert.match(completionPanel, /Handover and key release are available/);
   assert.doesNotMatch(completionPanel, /className="field" type="file"/);
 });

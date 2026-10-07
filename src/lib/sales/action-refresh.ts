@@ -5,7 +5,7 @@ import { isMissingSaleActorNames } from "./load-errors";
 // Preparation and Storage transfer never publish a document version.
 export function legalRefreshScope(action: string) {
   return {
-    documents: ["finalize_completion_upload", "upload_completion_documents", "approve_completion_package", "query_completion_package", "approve_statement", "query_statement", "confirm_notice", "replace_notice"].includes(action),
+    documents: ["approve_completion_document", "query_completion_document", "finalize_completion_upload", "upload_completion_documents", "approve_completion_package", "query_completion_package", "approve_statement", "query_statement", "confirm_notice", "replace_notice"].includes(action),
     unit: ["confirm_exchange", "confirm_completion"].includes(action),
     deposit: ["confirm_exchange_deposit", "correct_exchange_deposit_date"].includes(action),
   };

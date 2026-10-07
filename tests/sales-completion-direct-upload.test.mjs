@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { legalDatabase } from './helpers/legal-database.mjs';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 const {completionUploadFiles}=loadTypescriptModule('src/lib/sales/completion-upload.ts');
@@ -11,8 +10,6 @@ test('server metadata validation accepts boundary and rejects invalid count, typ
 });
 async function ready(t) {
   const f=await legalDatabase();t.after(()=>f.db.close());await f.owner();
-  await f.db.exec(`create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]); create table storage.objects(bucket_id text,name text,metadata jsonb);`);
-  await f.db.exec(readFileSync('supabase/migrations/20260922194750_completion_direct_upload.sql','utf8'));
   const dates=(await f.db.query("select current_date::text as exchange, (current_date+14)::text as due")).rows[0];
   await f.sent(await f.prepare());await f.action('solicitor','confirm_exchange',{date:dates.exchange});
   await f.sent(await f.prepare({kind:'notice_authority',date:''}));await f.notice({noticeDate:dates.exchange,dueDate:dates.due});
@@ -35,16 +32,21 @@ test('one/two PDFs, interrupted upload, retry and duplicate finalisation preserv
   await assert.rejects(f.call('finalize',id),/missing/);await f.objects({...u,files:[u.files[0]]});
   await assert.rejects(f.call('finalize',id),/missing/);await f.objects({...u,files:[u.files[1]]});
   const saved=await f.call('finalize',id);assert.equal(saved.result.length,2);assert.deepEqual(await f.call('finalize',id),saved);
-  assert.equal((await f.action('developer','approve_completion_package',await f.packageVersions())).approved,true);
+  assert.equal((await f.approveDocuments()).approved,true);
   await f.call('finalize',id);
   await f.service();assert.equal((await f.rpc('sales_completion_package_context',{p_sale:f.ids.sale,p_actor:f.ids.developer})).approved,true);
   await f.service();assert.equal((await f.db.query('select count(*)::int n from unit_sale_document_versions where completion_upload_id=$1',[id])).rows[0].n,2);
-  const next=crypto.randomUUID(),replacement=await f.call('begin',next,[{...file(),expectedVersionId:saved.result.find(x=>x.type==='completion_statement').versionId}]);
-  await f.objects(replacement);await f.call('finalize',next);
-  await f.service();assert.equal((await f.rpc('sales_completion_package_context',{p_sale:f.ids.sale,p_actor:f.ids.developer})).approved,false);
+  await assert.rejects(f.call('begin',crypto.randomUUID(),[{...file(),expectedVersionId:saved.result.find(x=>x.type==='completion_statement').versionId}]),/locked/);
   assert.deepEqual((await f.call('finalize',id)).result,saved.result);
   await f.service();assert.equal((await f.db.query("select count(*)::int n from unit_sale_workflow_events where event_type='completion_statement_uploaded'")).rows[0].n,1);
 });
+test('approval during an in-flight replacement prevents finalization without losing either approved version',async t=>{
+  const f=await ready(t);await f.uploadFiles();const pair=await f.packageVersions();
+  const id=crypto.randomUUID(),u=await f.call('begin',id,[{...file(),expectedVersionId:pair.statementVersionId}]);await f.objects(u);
+  await f.approveDocuments();await assert.rejects(f.call('finalize',id),/locked/);
+  assert.deepEqual(await f.packageVersions(),pair);
+});
+
 test('expired sessions cannot finalize; cleanup retains committed versions and rejects late finalisation',async t=>{
   const f=await ready(t),id=crypto.randomUUID(),u=await f.call('begin',id,[file()]);await f.objects(u);
   await f.owner();await f.db.query("update sale_completion_uploads set expires_at=now()-interval '27 hours' where id=$1",[id]);

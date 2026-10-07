@@ -19,6 +19,9 @@ export type AuditEvent = {
   new_value?: unknown;
   action_id?: string | null;
   source?: string | null;
+  outcome?: string | null;
+  actor_name?: string | null;
+  actor_role?: string | null;
 };
 
 export type NewAuditEvent = Omit<AuditEvent, "id" | "created_at" | "created_by_user_id">;

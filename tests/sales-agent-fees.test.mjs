@@ -235,7 +235,7 @@ test("Completion payment uses the persisted generic invoice payment RPC", () => 
   const paymentBody = functionBody(routeSource, "recordAgentFeePayment");
   assert.match(paymentBody, /record_unit_sale_invoice_payment/);
   assert.match(paymentBody, /p_invoice_id: invoice\.id/);
-  assert.match(paymentBody, /invoice\.fee_milestone === "completion"/);
+  assert.doesNotMatch(paymentBody, /await insertEvent/);
   assert.doesNotMatch(migrationSource, /completion_payment_amount/);
 });
 
@@ -256,7 +256,7 @@ test("Completion invoice becomes Paid when its persisted outstanding balance rea
   const paid = deriveInvoicePaymentPosition({ cashAmountPayable: 1_941, payments: [{ payer_type: "solicitor", amount: 1_941 }] });
   assert.equal(partPaid.paymentStatus, "Part paid");
   assert.equal(paid.paymentStatus, "Paid");
-  assert.match(routeSource, /type: "agent_fee_invoice_paid"/);
+  assert.match(readFileSync("supabase/migrations/20261006134823_reliable_audit_increment.sql", "utf8"), /'agent_fee_invoice_paid'/);
 });
 
 test("Agent Fees summary totals both independently rounded milestone fees", () => {
@@ -373,8 +373,9 @@ test("Completion invoice activity covers submit, replacement, reject, approve, p
   assert.match(readFileSync("supabase/migrations/20260907b_sale_activity_projection.sql", "utf8"), /version_number>1 then 'replaced' else 'uploaded'/);
   assert.match(routeSource, /completion_agent_invoice_rejected/);
   assert.match(routeSource, /completion_agent_invoice_approved/);
-  assert.match(routeSource, /agent_fee_payment_recorded/);
-  assert.match(routeSource, /agent_fee_invoice_paid/);
+  const auditMigration = readFileSync("supabase/migrations/20261006134823_reliable_audit_increment.sql", "utf8");
+  assert.match(auditMigration, /agent_fee_payment_recorded/);
+  assert.match(auditMigration, /agent_fee_invoice_paid/);
 });
 
 test("agent invoice form is shared and clearly identifies its milestone and expected tax values", () => {

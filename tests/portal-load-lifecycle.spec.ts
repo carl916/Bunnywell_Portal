@@ -81,6 +81,34 @@ test('an access-read failure hides stale Sales and an explicit retry restores a 
   await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toBeVisible();
 });
 
+test('post-login access loading is quiet and offers no retry before a failure', async ({ page }) => {
+  const fixture = await salesFixture(page);
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+  let release!: () => void;
+  let requested!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const arrived = new Promise<void>(resolve => { requested = resolve; });
+  await page.route('**/rest/v1/profiles?**', async route => {
+    requested();
+    await held;
+    await route.fallback();
+  });
+  await page.getByLabel('Email', { exact: true }).fill(fixture.profile.email);
+  await page.getByLabel('Password', { exact: true }).fill('fixture-password');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await arrived;
+  try {
+    await expect(page.getByRole('status', { name: 'Loading portal' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry access check' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toHaveCount(0);
+    await expect(page.getByText('Not signed in', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toHaveCount(0);
+  } finally { release(); }
+  await expect(page.getByRole('button', { name: 'Sign out', exact: true })).toBeVisible();
+  await expect(page.getByRole('status', { name: 'Loading portal' })).toHaveCount(0);
+});
+
 test('token refresh loads one fresh snapshot; focus with changed role removes Sales', async ({ page }) => {
   const f = await salesFixture(page);
   async function emit(event: string, token: string) {

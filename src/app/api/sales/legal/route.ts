@@ -26,7 +26,7 @@ async function session(request: Request, timing: SalesServerTiming) {
   if (error || !data.user) throw new Error("Your session has expired. Sign in again.");
   const profile = await client.from("profiles").select("id,role,active").eq("id", data.user.id).single();
   if (profile.error || profile.data.active !== true) throw new Error("An active sales profile is required.");
-  return { client, actor: data.user.id, role: String(profile.data.role) };
+  return { client: createSupabaseServiceRoleClient(timing.fetch, data.user.id), actor: data.user.id, role: String(profile.data.role) };
 }
 
 export async function GET(request: Request) {
@@ -46,7 +46,7 @@ async function getLegal(request: Request, timing: SalesServerTiming) {
       client.from("unit_sale_attempts").select("id,workflow_status,exchanged_at,completed_at,authority_requested_at,contractual_completion_date,completion_notice_issued_at,legal_completed_at,completion_authority_requested_at,completion_authority_requested_by,completion_authority_given_at,completion_authority_given_by,completion_arrangements_confirmed_at,completion_arrangements_confirmed_by,completion_legacy_stage").eq("id", sale).single(),
       client.from("sale_legal_emails").select("*").eq("sale_attempt_id", sale).order("issued_at", { ascending: false }),
       client.from("unit_sale_documents").select("*,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(*)").eq("sale_attempt_id", sale).in("document_type", ["completion_statement", "draft_statement_of_account", "statement_of_account", "completion_correspondence"]).is("redacted_at", null).is("superseded_at", null),
-      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,actor_role,created_by_user_id,created_at").eq("sale_attempt_id", sale).in("event_type", ["authority_requested", "exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_arrangements_confirmed", "authority_notice_requested", "authority_notice_given", "completion_arrangements_dates_corrected"]).order("created_at", { ascending: false }),
+      client.from("unit_sale_workflow_events").select("id,event_type,actor_name,actor_role,created_by_user_id,created_at,metadata").eq("sale_attempt_id", sale).in("event_type", ["authority_requested", "exchange_recorded", "completion_recorded", "completion_documents_approved", "completion_documents_query_raised", "completion_statement_superseded", "completion_draft_statement_of_account_superseded", "completion_arrangements_confirmed", "authority_notice_requested", "authority_notice_given", "completion_arrangements_dates_corrected"]).order("created_at", { ascending: false }),
       client.rpc("sales_exchange_deposit_context", { p_sale: sale, p_actor: actor }),
       client.rpc("sales_completion_package_context", { p_sale: sale, p_actor: actor }),
     ]);
@@ -187,7 +187,7 @@ async function postLegal(request: Request, timing: SalesServerTiming) {
     const permission = action === "request_authority" || action === "request_notice_authority" ? "request_exchange_approval" : action === "confirm_exchange" ? "record_exchange"
       : action === "confirm_exchange_deposit" || action === "correct_exchange_deposit_date" ? "confirm_exchange_deposit"
       : action === "correct_completion_dates" ? "confirm_completion_arrangements" : action === "confirm_completion" ? "record_completion"
-      : action === "revoke_authority" || action === "cancel_instruction" || action === "cancel_notice_authority" ? "approve_exchange" : ["approve_statement", "query_statement", "approve_completion_package", "query_completion_package"].includes(action) ? "approve_completion_documents" : null;
+      : action === "revoke_authority" || action === "cancel_instruction" || action === "cancel_notice_authority" ? "approve_exchange" : ["approve_statement", "query_statement", "approve_completion_package", "query_completion_package", "approve_completion_document", "query_completion_document"].includes(action) ? "approve_completion_documents" : null;
     if (!permission || !canPerformSalesAction(role, permission)) throw new Error("Your role cannot perform this legal action.");
     const result = await client.rpc("sales_legal_action", { p_sale: sale, p_actor: actor, p_action: action, p_payload: payload });
     if (result.error) throw result.error;
