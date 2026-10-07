@@ -137,8 +137,11 @@ export function buildModel(data, { snapshot, projectRef, portalUrl = 'https://po
     approvedBy: person(t.approved_by_user_id), approvedAt: t.approved_at });
   for (const p of data.unit_sale_payment_schedule) {
     const terms = data.unit_sale_terms.find(t=>t.id===p.sale_terms_id);
+    const price=money(terms?.contract_price), percent=number(p.percent_of_contract_price);
+    const expected=money(p.expected_amount) ?? money(p.fixed_amount) ?? (price!=null && percent!=null ? Math.round(price*percent)/100 : null);
     payments.push({ ...saleLocation(p.sale_attempt_id), id: p.id, kind: 'Payment schedule', reference: p.label, status: label(p.status),
-      expected: money(p.expected_amount), received: null, date: p.due_date, notes: [terms ? `Terms version ${terms.version_number} (${truth(terms.is_current)?'current':'historical'})` : 'Terms version unavailable',
+      expected, received: null, date: p.due_date, notes: [terms ? `Terms version ${terms.version_number} (${truth(terms.is_current)?'current':'historical'})` : 'Terms version unavailable',
+        p.expected_amount==null && expected!=null ? 'Expected amount calculated from the recorded fixed amount or terms percentage' : '',
         p.due_event, p.due_offset_days ? `Offset ${p.due_offset_days} days` : '', truth(p.includes_reservation_fee)?'Includes reservation fee':'', p.notes].filter(Boolean).join('; ') });
   }
   for (const invoice of data.unit_sale_invoices) {
@@ -167,7 +170,7 @@ export function buildModel(data, { snapshot, projectRef, portalUrl = 'https://po
   }
   const snags = [...data.snags].sort((a,b) => (unitOrder.get(a.unit_id) ?? 1e9)-(unitOrder.get(b.unit_id) ?? 1e9) || String(a.created_at).localeCompare(String(b.created_at))).map(s => {
     const events = [...data.snag_events.filter(e => e.snag_id === s.id), ...data.snag_comments.filter(e => e.snag_id === s.id).map(e=>({...e,comment:e.body}))].sort(byDate);
-    const overdue = s.status !== 'closed' && s.sla_due_date && s.sla_due_date.slice(0,10) < snapshot.slice(0,10);
+    const overdue = s.status !== 'closed' && s.sla_due_date && Date.parse(s.sla_due_date) < Date.parse(snapshot);
     if (overdue) exceptions.push({ ...location(s.unit_id,s.building_id,s.area_id), id:s.id, issue:'Snag deadline has passed' });
     return { ...location(s.unit_id,s.building_id,s.area_id), id:s.id, title:s.title, description:s.description, trade:T.get(s.trade_id)?.name || '', priority:s.priority_code,
       status:label(s.status), action: ({ closed:'No further action', resolved_by_contractor:'Developer to review resolution', needs_more_info:'Provide requested information', rejected_back_to_contractor:'Contractor to address rejection', in_progress:'Complete work and provide evidence' })[s.status] || (s.assigned_to_organisation_id || s.assigned_to_user_id ? 'Arrange work and provide evidence' : 'Assign responsibility and arrange work'),

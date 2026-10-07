@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 import { tables, readDump, copyValue } from '../scripts/backups/read-dump.mjs';
 import { buildModel, progression } from '../scripts/backups/model.mjs';
 import { storageReference, safeStoragePath, collectAssets } from '../scripts/backups/assets.mjs';
@@ -66,6 +67,20 @@ test('percentage concessions become currency and locked deposit expectations are
   assert.equal(m.sales[0].deposit,null);
   assert.ok(!m.history.some(h=>h.id==='hidden'));
 });
+test('expected schedule amounts use the matching terms version without inventing receipts',()=>{
+  const d=fixture();d.unit_sale_terms.push({id:'old-terms',sale_attempt_id:'s',version_number:'0',is_current:'f',contract_price:'250000'});
+  d.unit_sale_payment_schedule=[{id:'percent',sale_attempt_id:'s',sale_terms_id:'old-terms',percent_of_contract_price:'5'},
+    {id:'fixed',sale_attempt_id:'s',sale_terms_id:'terms',fixed_amount:'4000',percent_of_contract_price:'5'},
+    {id:'zero',sale_attempt_id:'s',sale_terms_id:'terms',expected_amount:'0',fixed_amount:'4000'},
+    {id:'unknown',sale_attempt_id:'s',sale_terms_id:'missing',percent_of_contract_price:'5'}];
+  const m=buildModel(d,{snapshot,projectRef:'zxgezoiazsubopqhqhim'});
+  assert.equal(m.payments.find(p=>p.id==='percent').expected,12500);
+  assert.match(m.payments.find(p=>p.id==='percent').notes,/version 0 \(historical\)/);
+  assert.equal(m.payments.find(p=>p.id==='fixed').expected,4000);
+  assert.equal(m.payments.find(p=>p.id==='zero').expected,0);
+  assert.equal(m.payments.find(p=>p.id==='unknown').expected,null);
+  assert.ok(m.payments.filter(p=>p.kind==='Payment schedule').every(p=>p.received===null));
+});
 test('completion next action respects authority, notice and current document gates',()=>{
   const d=fixture(),a=d.unit_sale_attempts[0];
   assert.equal(progression({...a,completion_arrangements_confirmed_at:null,completion_authority_given_at:null},[],[],snapshot)[0],'Give authority to serve notice');
@@ -75,6 +90,7 @@ test('completion next action respects authority, notice and current document gat
 });
 test('snag comments and earlier sales comments remain available in operational history',()=>{
   const d=fixture();
+  d.snags[0].sla_due_date='2026-10-07T01:00:00Z';
   d.snag_comments=[{id:'comment',snag_id:'snag',body:'Repair booked for Friday',created_at:'2026-10-06T10:00:00Z'}];
   d.sale_comment_revisions=[{sale_attempt_id:'s',comment_id:'sale-comment',version:'1',body:'Original instruction',recorded_at:'2026-10-01T12:00:00Z'}];
   d.unit_sale_workflow_events=[{id:'query',sale_attempt_id:'s',summary:'Query raised',metadata:JSON.stringify({queryNote:'Correct the completion date',versionId:'v2'})}];
@@ -83,6 +99,7 @@ test('snag comments and earlier sales comments remain available in operational h
   assert.ok(m.history.some(h=>h.kind==='Snag comment'&&h.description==='Repair booked for Friday'));
   assert.ok(m.history.some(h=>h.kind==='Previous sales comment (version 1)'&&h.saleId==='s'));
   assert.match(m.history.find(h=>h.id==='query').description,/Correct the completion date\nDocument version IDs: v2/);
+  assert.equal(m.snags[0].overdue,'Overdue');
 });
 test('redacted document versions are not reintroduced and external URLs are not fetched',()=>{
   const d=fixture();d.unit_sale_document_versions[0].redacted_at=snapshot;d.buildings[0].documents_url='https://example.test/building-documents';
@@ -98,6 +115,8 @@ test('Storage mapping rejects traversal and wrong byte counts; missing files sto
 });
 test('complete offline package has portable file links, typed currency, safe text and a separate working log',async t=>{
   const dir=await temporary(t),data=fixture(),input=path.join(dir,'data.sql'),media=path.join(dir,'media'),output=path.join(dir,'package');
+  data.unit_sale_invoices.push({id:'settled',sale_attempt_id:'s',expected_payable_amount:'1000'});
+  data.unit_sale_invoice_payments.push({id:'settled-payment',sale_attempt_id:'s',invoice_id:'settled',amount:'1000'});
   await writeFile(input,dump(data));
   for(const [bucket,key,bytes] of [['sale-documents','s/old.pdf','%PDF-old'],['sale-documents','s/new.pdf','%PDF-new'],['sale-documents','s/account.pdf','%PDF-account'],['snag-images','snag/original.jpg','photo']]){
     await mkdir(path.dirname(path.join(media,bucket,key)),{recursive:true});await writeFile(path.join(media,bucket,key),bytes);
@@ -110,6 +129,10 @@ test('complete offline package has portable file links, typed currency, safe tex
   assert.equal(book.getWorksheet('Snags').getCell('E5').value,data.snags[0].title);assert.equal(book.getWorksheet('Snags').getCell('E5').type,ExcelJS.ValueType.String);
   const documents=book.getWorksheet('Documents');for(let r=5;r<=documents.rowCount;r++){const value=documents.getCell(r,6).value;if(value?.hyperlink)assert.ok((await readFile(path.join(output,value.hyperlink))).length>0);}
   assert.equal(book.getWorksheet('Payments and fees').getCell('I5').value.result,5000);
+  // ExcelJS drops a cached numeric zero when reading it back; inspect the XLSX
+  // XML to verify Excel/other viewers receive the correct zero balance.
+  const zip=await JSZip.loadAsync(await readFile(path.join(output,'Bunnywell.xlsx')));
+  assert.match(await zip.file('xl/worksheets/sheet6.xml').async('string'),/<c r="I6"[^>]*><f>G6-H6<\/f><v>0<\/v><\/c>/);
   assert.ok((await readFile(path.join(output,'Working log.xlsx'))).length>0);
   await assert.rejects(generate({dump:input,media,output,snapshot}),/immutable/);
 });
