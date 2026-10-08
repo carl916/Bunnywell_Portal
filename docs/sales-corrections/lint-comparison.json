@@ -1,0 +1,156 @@
+[
+  {
+    "file": "src/app/api/sales/reservations/route.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/components/portal/dashboard/WorkReturnLink.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "before": {
+      "errors": 2,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 2,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/lib/dashboard/model.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/lib/dashboard/read.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/lib/sales/action-refresh.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/lib/sales/register.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/lib/sales/stage-tasks.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/conveyancer-sales-api.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/conveyancer-sales.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/conveyancer-sales.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/helpers/dashboard-fixture.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/organisation-dashboard-handoffs.test.mjs",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/organisation-dashboard.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+]

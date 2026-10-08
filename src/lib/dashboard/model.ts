@@ -2,6 +2,7 @@ import { buildingAllowsFlatHandover, closingNoticeStartDate, hasPassedExpectedPc
 import { sortUnitsByBuildingFloorOrder, saleStatusLabel } from "../units/commercial-allocation";
 import { canPerformSalesAction, isSalesInternalRole, type SalesStageAction } from "../sales/permissions";
 import { exchangeAuthorityState } from "../sales/authority-state";
+import { sellerConveyancer } from "../sales/responsibility";
 import { completionDocumentApproved, completionDocumentsApproved, completionDocumentLabels, completionDocumentTypes, currentCompletionVersion } from "../sales/completion-review";
 import { completionNoticeState } from "../sales/completion-notice";
 import { deriveAgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
@@ -59,9 +60,9 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     const documentPosition = saleDocs.filter(d => completionDocumentTypes.some(type => type === d.document_type)).map(d => `${d.document_type === "completion_statement" ? "Statement" : "Account"}: ${completionDocumentApproved(d) ? "approved" : d.status === "query_raised" ? "queried" : "awaiting approval"}`).join("; ");
     const base = { recordKey: `sale:${sale.id}`, module: "sales" as const, source: "Sale", buildingId: sale.building_id, unitId: unit.id, reference: `Unit ${unit.unit_number}`, position: `${saleStatusLabel(unit.sale_status)}${documentPosition ? ` · ${documentPosition}` : ""}`, destination: { screen: "sales" as const, buildingId: sale.building_id, unitId: unit.id, saleId: sale.id } };
     const developer = party("developer");
-    // Correspondence routing contacts are deliberately not assignment fallbacks.
-    const agent = party("sales_agent", sale.sales_agent_organisation_id ?? relationshipOrg(sale.building_id, "sales_agent"));
-    const conveyancer = party("conveyancer", sale.conveyancer_organisation_id ?? relationshipOrg(sale.building_id, "conveyancer"));
+    // Seller-side responsibility comes from Sales contacts, never buyer solicitor details.
+    const agent = party("sales_agent", sale.sales_agent_organisation_id ?? buildingMap.get(sale.building_id)?.sales_agent_organisation_id ?? relationshipOrg(sale.building_id, "sales_agent"));
+    const conveyancer = sellerConveyancer(buildingMap.get(sale.building_id), input.organisations);
     const task = (kind: string, label: string, responsible: WorkParty, since: string | null, basis: string, permission: SalesStageAction, anchor: string, options: Partial<WorkItem> = {}) =>
       add({ ...base, destination: { ...base.destination, anchor, section: anchor.includes("fee") ? "financials" : "progression", ...options.destination } }, kind, label, responsible, since, basis,
         { context: contextFor(), canAct: canPerformSalesAction(viewer.role, permission), ...options });
@@ -69,6 +70,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     const exchanged = Boolean(sale.exchanged_at || completed);
     const approved = Boolean(sale.reservation_approved_at || ["approved", "reservation_approved", "ready_for_exchange", "awaiting_commercial_approval", "exchanged", "completion_pending", "completed"].includes(sale.workflow_status));
     if (available("sales") && !completed) {
+      if (sale.workflow_status === "draft") task("reservation_prepare", "Complete draft reservation", agent, sale.created_at, "Reservation draft created", "submit_reservation", "sales-stage-reservation");
       if (["reservation_submitted", "awaiting_approval"].includes(sale.workflow_status)) task("reservation_review", "Review submitted reservation", developer, sale.reservation_submitted_at, "Reservation submitted", "approve_reservation", "sales-stage-reservation");
       if (["reservation_rejected", "reservation_query_raised", "rejected"].includes(sale.workflow_status)) task("reservation_correct", "Correct and resubmit reservation", agent, sale.reservation_rejected_at, "Reservation returned", "submit_reservation", "sales-stage-reservation", {
         context: sale.reservation_rejection_reason ? { id: `${sale.id}:return`, text: sale.reservation_rejection_reason, at: sale.reservation_rejected_at ?? "", account: contextFor(events.find(e => /reservation_(rejected|query_raised)/.test(e.event_type)))?.account ?? null } : contextFor(),

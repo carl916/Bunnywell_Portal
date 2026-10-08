@@ -20,7 +20,7 @@ export type SalesRegisterSnapshot = {
 export type RegisterFilters = { search: string; stage: string; responsibility: ResponsibilityFilter; page: number };
 
 // Workflow dependencies take precedence over event age and incidental record-keeping work.
-const order = ["sale_unit_reconciliation", "reservation_review", "reservation_correct", "commercial_review", "authority_request", "authority_follow_up", "exchange_progress", "notice_authority", "notice_request", "notice_arrangements", "notice_dates", "replace_completion_statement", "replace_draft_statement_of_account", "missing_completion_statement", "missing_draft_statement_of_account", "review_completion_statement", "review_draft_statement_of_account", "legal_completion"];
+const order = ["sale_unit_reconciliation", "reservation_prepare", "reservation_review", "reservation_correct", "commercial_review", "authority_request", "authority_follow_up", "exchange_progress", "notice_authority", "notice_request", "notice_arrangements", "notice_dates", "replace_completion_statement", "replace_draft_statement_of_account", "missing_completion_statement", "missing_draft_statement_of_account", "review_completion_statement", "review_draft_statement_of_account", "legal_completion"];
 
 function label(item: WorkItem) {
   if (item.kind === "reservation_review") return `Reservation awaiting ${item.responsibility.label} approval`;

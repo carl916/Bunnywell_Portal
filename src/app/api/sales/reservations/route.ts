@@ -24,6 +24,7 @@ type Requester = {
 type ReservationPayload = {
   action?:
     | "save_reservation"
+    | "save_reservation_draft"
     | "approve_reservation"
     | "reject_reservation"
     | "query_reservation"
@@ -549,16 +550,17 @@ async function ensureSaleDocumentsBucket(adminClient: SupabaseClient) {
 async function saveReservation(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "submit_reservation")) throw new Error("You cannot submit reservations.");
   if (!payload.unitId) throw new Error("Choose a unit.");
+  const draftOnly = payload.action === "save_reservation_draft";
   const buyerPersonName = normaliseText(payload.buyerPersonName) ?? normaliseText(payload.buyerName);
   const buyerCompanyName = normaliseText(payload.buyerCompanyName);
   if (!buyerPersonName && !buyerCompanyName) throw new Error("Enter a personal buyer name, company name, or both.");
-  if (!normaliseText(payload.buyerEmail)) throw new Error("Enter the buyer email before submitting the reservation.");
-  if (!normaliseText(payload.buyerPhone)) throw new Error("Enter the buyer phone before submitting the reservation.");
-  if (!normaliseText(payload.buyerSolicitorName)) throw new Error("Enter the buyer solicitor before submitting the reservation.");
+  if (!draftOnly && !normaliseText(payload.buyerEmail)) throw new Error("Enter the buyer email before submitting the reservation.");
+  if (!draftOnly && !normaliseText(payload.buyerPhone)) throw new Error("Enter the buyer phone before submitting the reservation.");
+  if (!draftOnly && !normaliseText(payload.buyerSolicitorName)) throw new Error("Enter the buyer solicitor before submitting the reservation.");
   const reservationDate = normaliseDate(payload.reservationDate);
-  if (!reservationDate) throw new Error("Enter the reservation date shown on the signed reservation form.");
-  if (isFutureDate(reservationDate)) throw new Error("Reservation date cannot be in the future.");
-  if (payload.reservationTermsChecked !== true) {
+  if ((!draftOnly || payload.reservationDate) && !reservationDate) throw new Error("Enter the reservation date shown on the signed reservation form.");
+  if (reservationDate && isFutureDate(reservationDate)) throw new Error("Reservation date cannot be in the future.");
+  if (!draftOnly && payload.reservationTermsChecked !== true) {
     throw new Error("Confirm that the reservation form reflects the developer-approved commercial terms.");
   }
 
@@ -571,6 +573,8 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   const now = new Date().toISOString();
   let attempt = await activeAttemptForUnit(adminClient, unit.id);
 
+  if (payload.saleAttemptId && payload.saleAttemptId !== attempt?.id) throw new Error("The active reservation changed. Refresh before continuing.");
+
   if (!attempt) {
     attempt = await createDraftSaleAttempt(adminClient, requester, unit);
   }
@@ -580,13 +584,35 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
   }
 
   const wasRejected = ["rejected", "reservation_query_raised"].includes(attempt.workflow_status);
-  const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
+  const buyerFields = {
     buyer_name: buyerPersonName ?? buyerCompanyName,
     buyer_person_name: buyerPersonName,
     buyer_company_name: buyerCompanyName,
     buyer_email: normaliseText(payload.buyerEmail),
     buyer_phone: normaliseText(payload.buyerPhone),
     buyer_solicitor_name: normaliseText(payload.buyerSolicitorName),
+    reservation_date: reservationDate,
+    reservation_terms_checked: payload.reservationTermsChecked === true,
+    updated_by_user_id: requester.id,
+    updated_at: now,
+  };
+  // Retain a returned draft's query and history until explicit resubmission.
+  if (draftOnly) {
+    const { error } = await adminClient.from("unit_sale_attempts").update(buyerFields)
+      .eq("id", attempt.id).eq("is_active", true).eq("workflow_status", attempt.workflow_status).select("id").single();
+    if (error) throw error;
+    await insertEvent(adminClient, attempt, requester, { type: "reservation_draft_saved", toStatus: attempt.workflow_status, summary: `Reservation draft saved for unit ${unit.unit_number}.` });
+    return { saleAttemptId: attempt.id };
+  }
+  const { data: reservationVersion, error: versionError } = await adminClient.from("unit_sale_document_versions")
+    .select("id,unit_sale_documents!unit_sale_document_versions_document_id_fkey!inner(sale_attempt_id,document_type)")
+    .eq("unit_sale_documents.sale_attempt_id", attempt.id).eq("unit_sale_documents.document_type", "reservation_form")
+    .is("unit_sale_documents.redacted_at", null).is("unit_sale_documents.superseded_at", null)
+    .eq("is_current", true).is("redacted_at", null).maybeSingle();
+  if (versionError) throw versionError;
+  if (!reservationVersion) throw new Error("Upload the reservation form PDF before submitting the reservation.");
+  const { data: updatedAttempt, error: attemptError } = await adminClient.from("unit_sale_attempts").update({
+    ...buyerFields,
     workflow_status: "awaiting_approval",
     reservation_date: reservationDate,
     reservation_submitted_at: now,
@@ -606,7 +632,7 @@ async function saveReservation(adminClient: SupabaseClient, requester: Requester
     stage_entered_at: now,
     updated_by_user_id: requester.id,
     updated_at: now,
-  }).eq("id", attempt.id).select("*").single();
+  }).eq("id", attempt.id).eq("is_active", true).eq("workflow_status", attempt.workflow_status).select("*").single();
 
   if (attemptError) throw attemptError;
 
@@ -1545,7 +1571,7 @@ export async function POST(request: Request) {
     if (["approve_commercial_package", "record_exchange", "approve_completion_documents", "query_completion_documents", "record_completion"].includes(action)) {
       throw new Error("Use the current Exchange or Completion legal workflow for this action.");
     }
-    if (action === "save_reservation") return NextResponse.json(await saveReservation(adminClient, requester, payload));
+    if (action === "save_reservation" || action === "save_reservation_draft") return NextResponse.json(await saveReservation(adminClient, requester, payload));
     if (action === "approve_reservation") return NextResponse.json(await approveReservation(adminClient, requester, payload));
     if (action === "reject_reservation") return NextResponse.json(await rejectReservation(adminClient, requester, payload));
     if (action === "query_reservation") return NextResponse.json(await queryReservation(adminClient, requester, payload));

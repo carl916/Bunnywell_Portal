@@ -32,6 +32,7 @@ test('register reads complete scoped compact sources and returns private nonfina
   const f=setup();f.tables.unit_sale_attempts[0]={...sale,forecastRevenue:998877,net_proceeds:998877};
   const response=await f.get();assert.equal(response.status,200);assert.equal(response.headers.get('vary'),'Authorization');assert.match(response.headers.get('cache-control'),/private, no-store/);
   const result=await response.json();assert.equal(result.rows.length,1);assert.doesNotMatch(JSON.stringify(result),/998877|net_proceeds|forecastRevenue|summaries|activity/);
+  assert.match(f.calls.find(c=>c.table==='buildings').columns,/conveyancer_organisation_id/);
   for(const c of f.calls){assert.notEqual(c.columns,'*');assert.doesNotMatch(c.table,/invoices|payments|terms|defaults|snags|tenancies|history|workflow_events|deposit|access_requests/);}
 });
 test('authorised inventory remains complete beyond server row limits',async()=>{

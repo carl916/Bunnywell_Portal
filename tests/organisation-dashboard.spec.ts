@@ -76,8 +76,8 @@ test("sales-agent worklist remains on the Sales landing and direct task links se
   await work.getByRole("link", { name: "Review saved contractual completion date", exact: true }).first().click();
   await expect(work).toHaveCount(0);
   await expect(page.getByRole("list", { name: "Completion tasks", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Back to organisation work" })).toBeVisible();
-  await page.getByRole("link", { name: "Back to organisation work" }).click();
+  await expect(page.getByRole("link", { name: "Back to organisation work" })).toHaveCount(0);
+  await page.getByRole("button", { name: /Back to sales overview/ }).click();
   await expect(page.getByRole("region", { name: "Sales organisation worklist" })).toHaveCount(1);
 });
 

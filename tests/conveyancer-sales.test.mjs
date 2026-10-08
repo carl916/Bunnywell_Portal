@@ -44,9 +44,9 @@ test('organisation work ignores login identity, unread notifications and last ac
   assert.equal(filtered(other.rows,'ours').length,0);
 });
 test('unallocated responsibility is not assigned to Other teams; neutral inventory stays in All teams',()=>{
-  const rows=snapshot({sales:[{...sale,conveyancer_organisation_id:null}],documents:[document('completion_statement','approved'),document('draft_statement_of_account','query_raised')]}).rows;
+  const rows=snapshot({buildings:[{...building,conveyancer_organisation_id:null}],sales:[{...sale,conveyancer_organisation_id:null}],documents:[document('completion_statement','approved'),document('draft_statement_of_account','query_raised')]}).rows;
   assert.equal(filtered(rows,'others').length,0);assert.equal(filtered(rows,'ours').length,0);assert.equal(filtered(rows,'all').length,1);
-  assert.match(rows[0].actions[0].party.label,/unallocated/);
+  assert.match(rows[0].actions[0].party.label,/not configured/);
   const available=snapshot({sales:[],units:[{...unit,sale_status:'for_sale'}]}).rows;
   assert.equal(available[0].neutral,'No active sale');assert.equal(filtered(available,'others').length,0);
 });

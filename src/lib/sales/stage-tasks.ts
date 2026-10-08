@@ -61,21 +61,23 @@ export function getCompletionDocumentState(
   };
 }
 
-export function getReservationTasks({ state, submittedBy, approvedBy }: {
+export function getReservationTasks({ state, submittedBy, approvedBy, canRecord = true, canApprove = true }: {
   state: "not_started" | "awaiting_approval" | "approved" | "rejected" | "failed";
   submittedBy?: string | null;
   approvedBy?: string | null;
+  canRecord?: boolean;
+  canApprove?: boolean;
 }): SalesStageTask[] {
   return [
     {
-      title: "Record reservation",
+      title: !canRecord && ["not_started", "rejected"].includes(state) ? "Awaiting sales agent reservation" : "Record reservation",
       status: state === "approved" || state === "awaiting_approval" ? "complete"
         : state === "rejected" ? "changes_required" : state === "failed" ? "locked" : "current",
       responsibility: "Sales agent",
       completedBy: submittedBy,
     },
     {
-      title: "Approve reservation",
+      title: !canApprove && state === "awaiting_approval" ? "Awaiting developer approval" : "Approve reservation",
       status: state === "approved" ? "complete" : state === "awaiting_approval" ? "current" : "locked",
       responsibility: "Developer",
       completedBy: approvedBy,
