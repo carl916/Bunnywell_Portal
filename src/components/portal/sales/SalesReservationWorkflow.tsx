@@ -1799,6 +1799,9 @@ export function SalesReservationWorkflow({
   }, [activeAttempt, activeInvoice, activeTerms, completionAgentInvoice, reservationDocument, selectedBuildingDefault]);
 
   async function refreshLegalSale(sale: string, action: string) {
+    // runAndRefresh also calls this for uncertain mutation outcomes. Notify before
+    // any read or navigation guard: reconciliation can fail or outlive this file.
+    window.dispatchEvent(new CustomEvent("sale-activity-changed", { detail: sale }));
     const building = buildingId;
     // A scoped result is only safe to merge into an already complete snapshot.
     await fullSalesLoad.current;
@@ -1820,7 +1823,6 @@ export function SalesReservationWorkflow({
       });
     }
     if (fresh.deposit) setDepositReceiptSales(rows => [...rows.filter(id => id !== sale), ...fresh.deposit!.map(row => row.sale_attempt_id as string)]);
-    window.dispatchEvent(new CustomEvent("sale-activity-changed", { detail: sale }));
   }
 
   function loadSalesData(event = "operation-refresh") {
@@ -1951,7 +1953,7 @@ export function SalesReservationWorkflow({
   }
 
   async function postReservationJson(body: Record<string, unknown>) {
-    const response = await fetch("/api/sales/reservations", {
+    const response = await reservationMutation({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1970,12 +1972,22 @@ export function SalesReservationWorkflow({
     return payload;
   }
 
+  async function reservationMutation(options: RequestInit) {
+    try {
+      return await fetch("/api/sales/reservations", options);
+    } finally {
+      // A lost response can still mean a committed write. Revalidate before any
+      // payload parsing/reconciliation, even if this component has unmounted.
+      window.dispatchEvent(new Event("portal-work-changed"));
+    }
+  }
+
   async function uploadReservationForm(saleAttemptId: string) {
     if (!reservationFormFile) return;
     const formData = new FormData();
     formData.set("saleAttemptId", saleAttemptId);
     formData.set("file", reservationFormFile);
-    const response = await fetch("/api/sales/reservations", {
+    const response = await reservationMutation({
       method: "POST",
       headers: await authHeaders(),
       body: formData,
@@ -2122,7 +2134,7 @@ export function SalesReservationWorkflow({
       formData.set("invoiceReference", reference.trim());
       formData.set("invoiceDate", date);
       formData.set("invoiceGrossAmount", grossAmount);
-      const response = await fetch("/api/sales/reservations", {
+      const response = await reservationMutation({
         method: "POST",
         headers: await authHeaders(),
         body: formData,
