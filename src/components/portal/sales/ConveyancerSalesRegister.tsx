@@ -1,81 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
+import type { MouseEvent } from "react";
 import type { Building, BuildingFloor, Unit } from "@/lib/data/production";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { RegisterState } from "@/lib/sales/register-session";
 import { isSalesRouteUnit, saleStatusLabel, SALES_ROUTE_STATUSES, sortUnitsByBuildingFloorOrder } from "@/lib/units/commercial-allocation";
 import type { WorkDestination } from "@/lib/dashboard/types";
 import { destinationUrl } from "@/lib/dashboard/presentation";
 import { markUnitOpenIntent } from "@/lib/audit/unit-open";
-import type { RegisterFilters, SalesRegisterSnapshot, SalesRegisterRow } from "@/lib/sales/register";
+import type { RegisterFilters, SalesRegisterRow } from "@/lib/sales/register";
 import { filterSalesRegister, prominentActions, INITIAL_REGISTER_FILTERS } from "@/lib/sales/register-presentation";
 import { SaleMentionsInbox } from "./SaleConversation";
 import { SALES_PAGE_SIZE, SalesPagination } from "./SalesPagination";
 import styles from "./ConveyancerSalesRegister.module.css";
 
-export function ConveyancerSalesRegister({ identity, buildingId, units, buildings, floors, filters, onFilters, refreshKey, requestedUnavailable }: {
-  identity: string; buildingId: string; units: Unit[]; buildings: Building[]; floors: BuildingFloor[];
-  filters: RegisterFilters; onFilters: (filters: RegisterFilters) => void; refreshKey?: string | null; requestedUnavailable: boolean;
+export function ConveyancerSalesRegister({ buildingId, units, buildings, floors, filters, onFilters, register, requestedUnavailable }: {
+  buildingId: string; units: Unit[]; buildings: Building[]; floors: BuildingFloor[];
+  filters: RegisterFilters; onFilters: (filters: RegisterFilters) => void; register: RegisterState; requestedUnavailable: boolean;
 }) {
-  const [snapshot, setSnapshot] = useState<SalesRegisterSnapshot | null>(null);
-  const [error, setError] = useState("");
-  const [revoked, setRevoked] = useState(false);
-  const [refreshing, setRefreshing] = useState(true);
-  const active = useRef<AbortController | null>(null);
-  const pending = useRef(false);
-  const lastLoaded = useRef(0);
-  const refresh = useCallback(async () => {
-    if (document.visibilityState === "hidden") { pending.current = true; return; }
-    if (active.current) { pending.current = true; return; }
-    const controller = new AbortController(); active.current = controller; pending.current = false;
-    setRefreshing(true);
-    const timeout = window.setTimeout(() => controller.abort(), 30_000);
-    try {
-      const { data } = await createSupabaseBrowserClient().auth.getSession();
-      if (!data.session || data.session.user.id !== identity.split(":")[0]) { setSnapshot(null); setRevoked(true); throw new Error("Sign in again to see Sales."); }
-      const response = await fetch(`/api/sales/register?building=${encodeURIComponent(buildingId || "all")}`, { headers: { Authorization: `Bearer ${data.session.access_token}` }, cache: "no-store", signal: controller.signal });
-      const result = await response.json();
-      if (controller.signal.aborted) return;
-      if (!response.ok) {
-        if ([401, 403].includes(response.status)) { setSnapshot(null); setRevoked(true); }
-        throw new Error(result.error ?? "Sales information unavailable.");
-      }
-      if (result.scope?.identity !== identity || result.scope?.buildingId !== buildingId || !Array.isArray(result.rows)) { setSnapshot(null); setRevoked(true); throw new Error("Sales scope changed. Reload the portal."); }
-      setSnapshot(result); setError(""); setRevoked(false); lastLoaded.current = Date.now();
-    } catch (cause) {
-      if (active.current === controller) setError(cause instanceof Error && cause.name !== "AbortError" ? cause.message : "Sales refresh timed out. Use Refresh to retry.");
-    } finally {
-      clearTimeout(timeout);
-      if (active.current === controller) {
-        active.current = null; setRefreshing(false);
-        if (pending.current) window.dispatchEvent(new Event("portal-work-changed"));
-      }
-    }
-  }, [buildingId, identity]);
-
-  useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const focus = () => { if (pending.current || Date.now() - lastLoaded.current > 15_000) void refresh(); };
-    const changed = () => { lastLoaded.current = 0; void refresh(); };
-    const auth = createSupabaseBrowserClient().auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || session && session.user.id !== identity.split(":")[0]) { active.current?.abort(); setSnapshot(null); setRevoked(true); setError("Sign in to see Sales."); }
-    });
-    window.addEventListener("focus", focus); window.addEventListener("online", focus); document.addEventListener("visibilitychange", focus);
-    window.addEventListener("sale-activity-changed", changed); window.addEventListener("portal-work-changed", changed);
-    return () => {
-      clearTimeout(initial); active.current?.abort(); active.current = null; auth.data.subscription.unsubscribe();
-      window.removeEventListener("focus", focus); window.removeEventListener("online", focus); document.removeEventListener("visibilitychange", focus);
-      window.removeEventListener("sale-activity-changed", changed); window.removeEventListener("portal-work-changed", changed);
-    };
-  }, [identity, refresh]);
-  const previousRefreshKey = useRef(refreshKey);
-  useEffect(() => {
-    if (previousRefreshKey.current === refreshKey) return;
-    previousRefreshKey.current = refreshKey;
-    const timer = window.setTimeout(() => void refresh(), 0);
-    return () => clearTimeout(timer);
-  }, [refreshKey, refresh]);
-
+  const { snapshot, error, revoked, refreshing } = register;
   const ready = Boolean(snapshot?.actionsAvailable && !error && !revoked);
   const fallback: SalesRegisterRow[] = sortUnitsByBuildingFloorOrder(units.filter(unit => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit)), floors, buildings).map(unit => ({ unitId: unit.id, unitNumber: unit.unit_number, buildingId: unit.building_id, buildingName: buildings.find(b => b.id === unit.building_id)?.name ?? "Building", stage: unit.sale_status, destination: { screen: "sales", buildingId: unit.building_id, unitId: unit.id }, actions: [], keyDate: null, warning: null, neutral: "Next steps unavailable" }));
   const rows = revoked ? [] : snapshot?.rows ?? fallback;

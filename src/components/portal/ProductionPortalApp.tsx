@@ -1614,6 +1614,10 @@ export function ProductionPortalApp() {
           reloadPortalData={() => loadAll()}
           refreshLegalPortalData={refreshLegalPortalData}
           salesRefreshKey={String(salesRefreshRevision)}
+          accessScopeKey={portalAccessKey(profile,
+            accessibleUnitIds.map(unit_id => ({ unit_id })),
+            accessibleBuildingIds.map(building_id => ({ building_id })),
+            buildingOrganisations.map(link => ({ ...link, role_on_project: link.role_on_project ?? "" })))}
         />
       )}
       {activeTab === "rentals" && (
