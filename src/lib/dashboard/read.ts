@@ -41,7 +41,7 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
     });
   };
   // All table reads use the caller's JWT and existing RLS. No service-role portfolio scan.
-  const buildings = await rows<DashboardInput["buildings"][number]>("buildings", "id,name,status,pc_date,pc_confirmed,practical_completion_date");
+  const buildings = await rows<DashboardInput["buildings"][number]>("buildings", "id,name,status,pc_date,pc_confirmed,practical_completion_date,conveyancer_organisation_id,sales_agent_organisation_id");
   if (buildingId && !buildings.some(b => b.id === buildingId)) throw new DashboardAccessError("This building is unavailable or outside your access.");
   const scopedBuildings = buildings.filter(b => !buildingId || b.id === buildingId);
   const ids = scopedBuildings.map(b => b.id);

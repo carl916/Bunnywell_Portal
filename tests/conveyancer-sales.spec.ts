@@ -7,6 +7,7 @@ const { fixture } = createRequire(__filename)("./helpers/dashboard-fixture.mjs")
 
 async function registerFixture(page: Page) {
   const f = await legalFixture(page);
+  f.rows.buildings[0].conveyancer_organisation_id = "legal-org";
   f.profile.role = "conveyancer"; f.profile.organisation_id = "legal-org" as never;
   Object.assign(f.attempt, { workflow_status: "exchanged", exchanged_at: "2026-10-01", conveyancer_organisation_id: "legal-org", completion_arrangements_confirmed_at: "2026-10-02T12:00:00Z", contractual_completion_date: "2026-10-12" });
   f.unit.sale_status = "exchanged"; f.documents(true);
@@ -56,7 +57,8 @@ test("our team journey reaches the current document and both back paths preserve
   await expect(page).toHaveURL(/workVersion=version-1.*#completion-document-draft_statement_of_account/);
   await expect(page.getByRole("article", { name: "Statement of account", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve", exact: true })).toHaveCount(0);
-  await page.getByRole("link", { name: "Back to Sales", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Back to Sales", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: /Back to sales overview/ }).click();
   await expect(page.getByLabel("Action with", { exact: true })).toHaveValue("ours");
   await expect(page.getByLabel("Search", { exact: true })).toHaveValue("101");
   await expect(page.getByLabel("Stage", { exact: true })).toHaveValue("exchanged");

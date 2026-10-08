@@ -55,6 +55,7 @@ type Profile = {
 
 type SaleAttempt = {
   id: string;
+  sales_agent_organisation_id?: string | null;
   building_id: string;
   unit_id: string;
   attempt_number: number;
@@ -844,6 +845,7 @@ export function SalesReservationWorkflow({
   user,
   profile,
   profiles: portalProfiles,
+  organisations,
   buildings,
   buildingFloors,
   units,
@@ -1366,11 +1368,15 @@ export function SalesReservationWorkflow({
   };
   const reservationTasks = getReservationTasks({
     state: reservationState,
+    canRecord: canSubmitReservation,
+    canApprove: canApproveReservation,
     submittedBy: submittedByName === "-" ? null : submittedByName,
     approvedBy: approvedByName === "-" ? null : approvedByName,
   });
   const reservationCanBeEdited = canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
   const reservationCanBeReviewed = canApproveReservation && reservationState === "awaiting_approval";
+  const awaitingReservationEntry = !canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
+  const reservationAgentName = organisations.find(item => item.id === (activeAttempt?.sales_agent_organisation_id ?? selectedBuilding?.sales_agent_organisation_id))?.name ?? "the sales agent or an authorised developer";
   const approvalBlocked = !activeAttempt || !reservationVersion || reservationDateMissing || reservationDateIsFuture || !hasRequiredBuyerInfo(activeAttempt);
   const commercialModelLocked = Boolean(activeAttempt && !["draft", "rejected", "reservation_query_raised"].includes(activeAttempt.workflow_status));
   const commercialModelEditable = canManageCommercialTerms && !commercialModelLocked;
@@ -1993,17 +1999,17 @@ export function SalesReservationWorkflow({
     }
   }
 
-  async function saveReservation() {
-    if (!selectedUnit) return;
+  async function saveReservation(draftOnly = false) {
+    if (!selectedUnit || !reservationCanBeEdited) return;
     if (!buyerPersonName.trim() && !buyerCompanyName.trim()) {
       onNotice("Enter a personal buyer name, company name, or both before saving the reservation.");
       return;
     }
-    if (!buyerEmail.trim() || !buyerPhone.trim() || !buyerSolicitorName.trim()) {
+    if (!draftOnly && (!buyerEmail.trim() || !buyerPhone.trim() || !buyerSolicitorName.trim())) {
       onNotice("Enter the buyer email, phone and solicitor before submitting the reservation.");
       return;
     }
-    if (!reservationDate) {
+    if (!draftOnly && !reservationDate) {
       onNotice("Enter the reservation date shown on the signed reservation form.");
       return;
     }
@@ -2011,22 +2017,18 @@ export function SalesReservationWorkflow({
       onNotice("Reservation date cannot be in the future.");
       return;
     }
-    if (!reservationTermsChecked) {
+    if (!draftOnly && !reservationTermsChecked) {
       onNotice("Confirm that the reservation form reflects the developer-approved commercial terms.");
       return;
     }
-    if (!reservationFormFile && !visibleReservationVersion) {
+    if (!draftOnly && !reservationFormFile && !visibleReservationVersion) {
       onNotice("Upload the reservation form PDF before submitting the reservation.");
       return;
     }
 
     setIsSaving(true);
     try {
-      if (activeAttempt?.id && reservationFormFile) {
-        await uploadReservationForm(activeAttempt.id);
-      }
-      const payload = await postReservationJson({
-        action: "save_reservation",
+      const fields = {
         unitId: selectedUnit.id,
         buyerPersonName,
         buyerCompanyName,
@@ -2035,12 +2037,18 @@ export function SalesReservationWorkflow({
         buyerSolicitorName,
         reservationDate,
         reservationTermsChecked,
-      });
-      if (!activeAttempt?.id && payload.saleAttemptId) await uploadReservationForm(payload.saleAttemptId);
-      onNotice(reservationState === "rejected" ? `Reservation resubmitted for Unit ${selectedUnit.unit_number}.` : `Reservation submitted for Unit ${selectedUnit.unit_number}.`);
+      };
+      // Persist the draft first, so a failed upload never creates a submitted pack.
+      const payload = await postReservationJson({ ...fields, saleAttemptId: activeAttempt?.id, action: "save_reservation_draft" });
+      if (!payload.saleAttemptId) throw new Error("The saved reservation could not be identified. Refresh before continuing.");
+      await uploadReservationForm(payload.saleAttemptId);
+      if (!draftOnly) await postReservationJson({ ...fields, saleAttemptId: payload.saleAttemptId, action: "save_reservation" });
+      onNotice(draftOnly ? `Reservation draft saved for Unit ${selectedUnit.unit_number}.` : reservationState === "rejected" ? `Reservation resubmitted for Unit ${selectedUnit.unit_number}.` : `Reservation submitted for Unit ${selectedUnit.unit_number}.`);
+      setReservationFormFile(null);
       setReservationDocumentRemoved(false);
       setReservationDocumentHistoryUnlocked(false);
-      await Promise.all([loadSalesData(), reloadPortalData()]);
+      if (draftOnly) await refreshLegalSale(payload.saleAttemptId, "save_reservation_draft");
+      else await Promise.all([loadSalesData(), reloadPortalData()]);
     } catch (error) {
       onNotice(error instanceof Error ? error.message : "Reservation could not be saved.");
     } finally {
@@ -2947,9 +2955,21 @@ export function SalesReservationWorkflow({
               status={reservationStateLabel[reservationState]}
               statusTone={reservationState === "approved" ? "done" : reservationState === "rejected" || reservationState === "failed" ? "attention" : "current"}
               taskLabel={reservationState === "approved" ? "Stage outcome" : "Current task"}
-              currentTask={reservationState === "approved" ? "Approval record" : currentSalesTask(reservationTasks, "Reservation ended")}
+              currentTask={awaitingReservationEntry ? `Awaiting ${reservationAgentName}` : reservationState === "approved" ? "Approval record" : currentSalesTask(reservationTasks, "Reservation ended")}
               taskNavigation={<SalesStageTasks stage="Reservation" steps={reservationTasks} />}
             >
+
+              {awaitingReservationEntry && <div className="mt-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
+                <p className="font-semibold text-[#0F3D2E]">Awaiting {reservationAgentName} to {reservationState === "rejected" ? "correct and resubmit" : "record"} the reservation.</p>
+                <p className="mt-1 text-sm text-[#617169]">You can view this sale, but your role cannot record or approve reservations.</p>
+                {activeRejectionReason && <p className="mt-2 text-sm">Reservation returned: {activeRejectionReason}</p>}
+                <div className="mt-3"><KeyValueList items={[
+                  { label: "Buyer", value: buyerDisplay(activeAttempt) },
+                  { label: "Buyer solicitor", value: activeAttempt?.buyer_solicitor_name || "Not recorded" },
+                  { label: "Reservation date", value: activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Not recorded" },
+                ]} /></div>
+                {visibleReservationVersion && <button className="secondary mt-3" onClick={() => void openDocumentVersion(visibleReservationVersion)}>View reservation form</button>}
+              </div>}
 
               {reservationCanBeEdited && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
@@ -3002,7 +3022,8 @@ export function SalesReservationWorkflow({
                       <input className="mt-1" type="checkbox" checked={reservationTermsChecked} onChange={(event) => setReservationTermsChecked(event.target.checked)} disabled={!reservationCanBeEdited} />
                       <span>I have checked that the reservation form reflects the developer-approved commercial terms.</span>
                     </label>
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                      <button className="secondary" onClick={() => void saveReservation(true)} disabled={isSaving || (!buyerPersonName.trim() && !buyerCompanyName.trim())}>Save draft</button>
                       <button className="primary" onClick={() => void saveReservation()} disabled={isSaving || !buyerDetailsComplete || !reservationDate || !reservationTermsChecked}>
                         {reservationState === "rejected" ? "Resubmit reservation" : "Submit reservation"}
                       </button>
