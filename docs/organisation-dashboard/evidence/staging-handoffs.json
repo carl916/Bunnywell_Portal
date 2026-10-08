@@ -1,0 +1,62 @@
+{
+  "project": "vxkpvdtrldwwqiddoyof",
+  "origin": "http://localhost:3011",
+  "run": "5efda593-002f-40f2-92b0-485ed89a9555",
+  "building": "9e533cd5-9c9b-47ba-bc20-d5ae783e333d",
+  "unit": "50775485-1e21-43e2-8195-4736c3aa3f6e",
+  "sale": "4de11b22-918e-475d-b569-a074782efd56",
+  "fixture": "Existing dedicated UPLOAD-3 legacy-arrangements synthetic sale; no email dispatch",
+  "accounts": [
+    {
+      "id": "05091c0f-0d36-4584-bc74-ee7711b9bba5",
+      "label": "developer1",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "a937762d-427c-48d1-9677-608680b53010",
+      "label": "developer2",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "5bfc3701-935e-4f04-9742-ff46458e4ef7",
+      "label": "conveyancer1",
+      "role": "conveyancer",
+      "disabled": true
+    },
+    {
+      "id": "dcd7efac-efeb-462d-8686-1f2206babda1",
+      "label": "conveyancer2",
+      "role": "conveyancer",
+      "disabled": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "Two distinct conveyancers and two developers have identical respective team queues through real JWT/RLS reads",
+      "passed": true
+    },
+    {
+      "name": "Real browser resumable upload creates two current developer reviews",
+      "passed": true
+    },
+    {
+      "name": "Another conveyancer sees the current query; independently approved account remains satisfied",
+      "passed": true
+    },
+    {
+      "name": "Real authoritative endpoint rejects stale approval after colleague replacement",
+      "passed": true
+    },
+    {
+      "name": "Both conveyancers see portal checks complete after independent current-version approval",
+      "passed": true
+    },
+    {
+      "name": "Run failure",
+      "passed": false,
+      "error": "Synthetic confirm_completion returned 400: {\"error\":\"Confirm the contractual completion date first.\"}"
+    }
+  ]
+}

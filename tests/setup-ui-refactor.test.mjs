@@ -15,7 +15,7 @@ function functionBody(source, name, nextName) {
 }
 
 test("Setup uses a compact accessible horizontal sub-navigation", () => {
-  const setup = functionBody(portal, "SetupSection", "Dashboard");
+  const setup = functionBody(portal, "SetupSection", "quickFilterLabel");
   assert.match(setup, /overflow-x-auto border-b/);
   assert.match(setup, /role="tab"/);
   assert.match(setup, /aria-selected=\{activeTab === item\}/);

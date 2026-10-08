@@ -1,0 +1,84 @@
+[
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "mode": "baseline",
+    "errors": 13,
+    "warnings": 20,
+    "errorRules": {
+      "react-hooks/set-state-in-effect": 11,
+      "react/no-unescaped-entities": 1,
+      "react-hooks/immutability": 1
+    }
+  },
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "mode": "after",
+    "errors": 13,
+    "warnings": 20,
+    "errorRules": {
+      "react-hooks/set-state-in-effect": 11,
+      "react/no-unescaped-entities": 1,
+      "react-hooks/immutability": 1
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SaleConversation.tsx",
+    "mode": "baseline",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  },
+  {
+    "file": "src/components/portal/sales/SaleConversation.tsx",
+    "mode": "after",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  },
+  {
+    "file": "src/components/portal/sales/SalesLegalWorkflow.tsx",
+    "mode": "baseline",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  },
+  {
+    "file": "src/components/portal/sales/SalesLegalWorkflow.tsx",
+    "mode": "after",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "mode": "baseline",
+    "errors": 2,
+    "warnings": 1,
+    "errorRules": {
+      "react-hooks/set-state-in-effect": 2
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "mode": "after",
+    "errors": 2,
+    "warnings": 0,
+    "errorRules": {
+      "react-hooks/set-state-in-effect": 2
+    }
+  },
+  {
+    "file": "src/hooks/usePortalBuildingContext.ts",
+    "mode": "baseline",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  },
+  {
+    "file": "src/hooks/usePortalBuildingContext.ts",
+    "mode": "after",
+    "errors": 0,
+    "warnings": 0,
+    "errorRules": {}
+  }
+]

@@ -56,7 +56,7 @@ export function usePortalBuildingContext({
   const accessibleBuildingIds = useMemo(() => buildings.map((building) => building.id), [buildings]);
   const persistContext = useCallback((nextBuildingId: string) => {
     if (!userId || typeof window === "undefined") return;
-    window.localStorage.setItem(storageKey(userId), nextBuildingId || "all");
+    window.sessionStorage.setItem(storageKey(userId), nextBuildingId || "all");
     replaceBuildingContextInUrl(nextBuildingId);
   }, [userId]);
 
@@ -73,7 +73,7 @@ export function usePortalBuildingContext({
     if (!ready || !userId || typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
-    const savedValue = window.localStorage.getItem(storageKey(userId));
+    const savedValue = window.sessionStorage.getItem(storageKey(userId));
     const nextBuildingId = resolveBuildingContext({
       accessibleBuildingIds,
       canonicalValue: params.get(BUILDING_CONTEXT_PARAM),
@@ -112,10 +112,10 @@ export function usePortalBuildingContext({
         accessibleBuildingIds,
         canonicalValue: params.get(BUILDING_CONTEXT_PARAM),
         legacyValues: LEGACY_BUILDING_PARAMS.map((param) => params.get(param)),
-        savedValue: window.localStorage.getItem(storageKey(userId!)),
+        savedValue: window.sessionStorage.getItem(storageKey(userId!)),
       });
       setBuildingContextState(nextBuildingId);
-      window.localStorage.setItem(storageKey(userId!), nextBuildingId || "all");
+      window.sessionStorage.setItem(storageKey(userId!), nextBuildingId || "all");
     }
 
     window.addEventListener("popstate", handlePopState);

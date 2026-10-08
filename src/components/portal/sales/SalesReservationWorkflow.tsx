@@ -1,5 +1,8 @@
 "use client";
 
+import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
+import { isSalesExternalRole } from "@/lib/sales/permissions";
+
 import { PdfUploadBox } from "./PdfUploadBox";
 import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
@@ -9,7 +12,7 @@ import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { createLoadCoordinator, salesMembershipKey } from "@/lib/portal-load-lifecycle";
 import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CheckCircle2, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
@@ -1313,13 +1316,13 @@ export function SalesReservationWorkflow({
   const forSaleCurrentNet = forSaleUnits.reduce((total, unit) => total + developerNetForTerms(currentTermForUnit(unit)), 0);
   const forSaleProposedGdv = forSaleCurrentGdv + (modelGdvDelta * forSaleUnits.length);
   const forSaleProposedNet = forSaleCurrentNet + ((modelDeveloperNet - selectedDeveloperNet) * forSaleUnits.length);
-  function workflowStageForUnit(unit: Unit): SaleWorkflowStage {
+  const workflowStageForUnit = useCallback((unit: Unit): SaleWorkflowStage => {
     const attempt = activeAttemptByUnit.get(unit.id);
     if (unit.sale_status === "completed" || attempt?.workflow_status === "completed") return "handover";
     if (unit.sale_status === "exchanged" || attempt?.workflow_status === "exchanged" || attempt?.workflow_status === "completion_pending") return "completion";
     if (unit.sale_status === "reserved" || attempt?.reservation_approved_at || ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange"].includes(attempt?.workflow_status ?? "")) return "exchange";
     return "reservation";
-  }
+  }, [activeAttemptByUnit]);
   const selectedWorkflowStage: SaleWorkflowStage = selectedUnit ? workflowStageForUnit(selectedUnit) : "reservation";
   const workflowOrder: SaleWorkflowStage[] = ["reservation", "exchange", "completion", "handover"];
   const currentWorkflowIndex = workflowOrder.indexOf(selectedWorkflowStage);
@@ -1545,7 +1548,10 @@ export function SalesReservationWorkflow({
       setUnitId(urlUnitId);
       setSelectedSaleUnitId(urlUnitId);
       if (urlUnit) {
-        setActiveWorkflowStage(workflowStageForUnit(urlUnit));
+        const hash = window.location.hash;
+        const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(urlUnit);
+        setActiveWorkflowStage(stage);
+        if (params.has("workReturn")) manuallySelectedWorkflowStageRef.current = stage;
       }
       if (urlSection === "financials" || urlSection === "commercial") {
         setActiveUnitSection(urlSection);
@@ -1565,7 +1571,25 @@ export function SalesReservationWorkflow({
     }
 
     setHasReadSalesUrl(true);
-  }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, setConversationIntent, units]);
+  }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, setConversationIntent, units, workflowStageForUnit]);
+
+  useEffect(() => {
+    if (!selectedSaleUnitId || isLoading || !window.location.search.includes("workReturn=")) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id || !/^(sales-stage-|exchange-deposit-task|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
+    const reveal = () => {
+      const element = document.getElementById(id);
+      if (!element) return false;
+      element.style.scrollMarginTop = "9rem";
+      element.scrollIntoView({ block: "start" });
+      return true;
+    };
+    if (reveal()) return;
+    const observer = new MutationObserver(() => { if (reveal()) observer.disconnect(); });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const timer = window.setTimeout(() => observer.disconnect(), 10_000);
+    return () => { observer.disconnect(); clearTimeout(timer); };
+  }, [selectedSaleUnitId, isLoading, activeWorkflowStage]);
 
   useEffect(() => {
     if (!pendingAgentFeesScrollRef.current || !activeAttempt || activeUnitSection !== "financials") return;
@@ -1584,12 +1608,22 @@ export function SalesReservationWorkflow({
 
   useEffect(() => {
     const handlePopState = () => {
-      const section = new URLSearchParams(window.location.search).get("section");
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get("section");
       setActiveUnitSection(section === "financials" || section === "commercial" ? section : "progression");
+      const requested = params.get("salesUnitId");
+      const unit = units.find(item => item.id === requested);
+      if (unit) {
+        setUnitId(unit.id); setSelectedSaleUnitId(unit.id);
+        const hash = window.location.hash;
+        const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(unit);
+        manuallySelectedWorkflowStageRef.current = stage;
+        setActiveWorkflowStage(stage);
+      } else if (!requested) setSelectedSaleUnitId("");
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [units, workflowStageForUnit]);
 
   // Opening a unit initialises its selected stage. Refetching lifecycle data
   // must preserve the stage the user is currently reviewing.
@@ -2350,8 +2384,11 @@ export function SalesReservationWorkflow({
   }
 
   if (!selectedSaleUnitId) {
+    const requestedUnit = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("salesUnitId") : null;
     return (
       <div className="grid gap-5">
+        {requestedUnit && !units.some(unit => unit.id === requestedUnit) && <p role="alert" className="panel">The requested sale file is no longer available in your current access or scope.</p>}
+        {isSalesExternalRole(profile?.role) && <OrganisationWorklist key={`${user.id}:${profile?.role}:${profile?.organisation_id}:${buildingContextId}`} identity={`${user.id}:${profile?.role}:${profile?.organisation_id ?? ""}`} buildingId={buildingContextId} external />}
         <section className="panel">
           <div>
             <div>
@@ -2574,6 +2611,8 @@ export function SalesReservationWorkflow({
       {selectedUnit && (
         <section className="panel min-w-0">
           <UnitOpenObserver unitId={selectedUnit.id} />
+          {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workSale") && new URLSearchParams(window.location.search).get("workSale") !== activeAttempt?.id && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The sale attempt has changed since this worklist link was created. This is the current accessible sale file; review its latest position before acting.</p>}
+          {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workVersion") && !versions.some(version => version.id === new URLSearchParams(window.location.search).get("workVersion") && version.is_current && !version.redacted_at) && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The linked document version is no longer current. Review the current document below.</p>}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected sale file</p>

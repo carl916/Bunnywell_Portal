@@ -1,5 +1,9 @@
 "use client";
 
+import { OrganisationWorklist } from "./dashboard/OrganisationWorklist";
+import { WorkReturnLink } from "./dashboard/WorkReturnLink";
+import { currentInformationSupplied, needsTrade } from "@/lib/dashboard/snags";
+import { readComplete } from "@/lib/dashboard/pagination";
 import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
 import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { createLoadCoordinator, createSessionLifecycle } from "@/lib/portal-load-lifecycle";
@@ -34,7 +38,6 @@ import {
   closingNoticeStartDate,
   dateOnly,
   derivedBuildingLifecycleStatus,
-  expectedPcDate,
   hasPassedExpectedPcWarning,
   initialDefectsReportingEndDate,
   lifecycleEffectSummary,
@@ -852,6 +855,7 @@ export function ProductionPortalApp() {
   const [accessibleBuildingIds, setAccessibleBuildingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [operationalReady, setOperationalReady] = useState(false);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
   const [salesRefreshRevision, setSalesRefreshRevision] = useState(0);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
@@ -859,6 +863,7 @@ export function ProductionPortalApp() {
   const lastActivityAtRef = useRef<string | null>(null);
   const portalLoads = useRef(createLoadCoordinator("portal"));
   const loadedAccessKey = useRef<string | null>(null);
+  const loadedScreen = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -898,10 +903,13 @@ export function ProductionPortalApp() {
   }
 
   function clearPortalState() {
+    if (user?.id) window.sessionStorage.removeItem(`bunnywell.portal.buildingContext.${user.id}`);
     portalLoads.current.invalidate();
     loadedAccessKey.current = null;
+    loadedScreen.current = null;
     setUser(null);
     setProfile(null);
+    setOperationalReady(false);
     setActiveTab("dashboard");
     clearScreenFromUrl();
     setSnagListFilters({});
@@ -1173,6 +1181,16 @@ export function ProductionPortalApp() {
       }
 
       const profileIdForAccess = loadedProfile?.id ?? userId;
+      const requestedTab = screenFromUrl() ?? defaultTabForRole(loadedProfile.role);
+      const detailTab = canAccessScreen(loadedProfile.role, requestedTab) ? requestedTab : defaultTabForRole(loadedProfile.role);
+      const needsOperationalDetails = ["snags", "units", "resident_home", "resident_snags"].includes(detailTab);
+      const empty = () => Promise.resolve({ data: [], error: null });
+      const complete = async (table: string, order = "id") => {
+        try {
+          const data = await readComplete(async (from, to) => await supabase.from(table).select("*", { count: "exact" }).order(order).order("id").range(from, to));
+          return { data, error: null };
+        } catch (error) { return { data: [], error: { message: readableError(error, "Could not load the complete list. Refresh to retry.") } }; }
+      };
       const [
         buildingsResult,
         unitsResult,
@@ -1198,9 +1216,9 @@ export function ProductionPortalApp() {
         accessResult,
         buildingAccessResult,
       ] = await Promise.all([
-        supabase.from("buildings").select("*").order("name"),
-        supabase.from("units").select("*").order("unit_number"),
-        fetchAllAreas(supabase),
+        complete("buildings", "name"),
+        complete("units", "unit_number"),
+        needsOperationalDetails || portalScreens[detailTab].section === "setup" ? fetchAllAreas(supabase) : empty(),
         supabase.from("building_floors").select("*").order("sort_order"),
         supabase.from("unit_types").select("*").order("name"),
         supabase.from("unit_type_areas").select("*").order("sort_order"),
@@ -1210,21 +1228,22 @@ export function ProductionPortalApp() {
         supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
         supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
         supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
-        supabase.from("resident_access_requests").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("snags").select("*").order("created_at", { ascending: false }),
-        supabase.from("snag_photos").select("*").order("created_at", { ascending: false }),
-        supabase.from("snag_events").select("*").order("created_at", { ascending: false }),
+        detailTab === "setup_people" && loadedProfile.role === "admin" ? complete("resident_access_requests", "created_at") : empty(),
+        needsOperationalDetails ? complete("snags", "created_at") : empty(),
+        needsOperationalDetails ? complete("snag_photos", "created_at") : empty(),
+        needsOperationalDetails ? complete("snag_events", "created_at") : empty(),
         Promise.resolve({ data: [], count: 0, error: null }),
-        supabase.from("handovers").select("*").order("created_at", { ascending: false }),
-        supabase.from("handover_key_items").select("*").order("sort_order"),
-        supabase.from("handover_photos").select("*").order("created_at", { ascending: false }),
-        supabase.from("meter_readings").select("*").order("created_at", { ascending: false }),
+        needsOperationalDetails ? complete("handovers", "created_at") : empty(),
+        needsOperationalDetails ? complete("handover_key_items", "sort_order") : empty(),
+        needsOperationalDetails ? complete("handover_photos", "created_at") : empty(),
+        needsOperationalDetails ? complete("meter_readings", "created_at") : empty(),
         supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
         supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
       ]);
 
       if (!valid()) return;
 
+      setOperationalReady(needsOperationalDetails && ![snagsResult, photosResult, eventsResult, handoversResult, handoverKeyItemsResult, handoverPhotosResult, metersResult].some(result => result.error));
       const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
       if (accessError) { setProfile(null); loadedAccessKey.current = null; throw accessError; }
       loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
@@ -1302,9 +1321,20 @@ export function ProductionPortalApp() {
         ...organisationBuildingIds,
       ])));
       setLastDataRefreshAt(new Date().toISOString());
+      loadedScreen.current = detailTab;
       traceLoad("portal", event, "published");
-    }, event === "explicit-refresh" || event === "operation-refresh" || event.startsWith("auth:"));
+    }, event === "explicit-refresh" || event === "operation-refresh" || event === "screen-open" || event.startsWith("auth:"));
   }
+
+  useEffect(() => {
+    if (!user || !profile || isLoading) return;
+    if (loadedScreen.current === tab) return;
+    if (!["snags", "units", "resident_home", "resident_snags"].includes(tab) && portalScreens[tab].section !== "setup") return;
+    const timer = window.setTimeout(() => void loadAll(user.id, user.email, "screen-open").catch(error => setNotice(readableError(error, "Could not load this screen. Refresh to retry."))), 0);
+    return () => window.clearTimeout(timer);
+    // Open details once per navigation; mutations retain the existing explicit refresh path.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, user?.id, profile?.id, isLoading]);
 
   async function recheckPortalAccess(verifiedUser: User) {
     const previousAccessKey = loadedAccessKey.current;
@@ -1491,16 +1521,9 @@ export function ProductionPortalApp() {
       onRefresh={refreshPortal}
       onSignOut={signOut}
     >
-      {activeTab === "dashboard" && (
-        <Dashboard
-          buildings={contextBuildings}
-          events={events}
-          profile={profile}
-          snags={contextSnags}
-          setTab={setTab}
-          setSnagFilters={setSnagListFilters}
-          onSelectBuilding={setBuildingContextId}
-        />
+      <WorkReturnLink screen={activeTab} />
+      {activeTab === "dashboard" && contextReady && (
+        <OrganisationWorklist key={`${profile.id}:${profile.role}:${profile.organisation_id}:${buildingContextId}`} identity={`${profile.id}:${profile.role}:${profile.organisation_id ?? ""}`} buildingId={buildingContextId} />
       )}
       {portalScreens[activeTab].section === "setup" && (
         <SetupSection
@@ -1528,7 +1551,8 @@ export function ProductionPortalApp() {
           reload={loadAll}
         />
       )}
-      {activeTab === "snags" && (
+      {["snags", "units", "resident_home", "resident_snags"].includes(activeTab) && !operationalReady && <section className="panel"><p role="status">Loading operational records. If this does not complete, refresh to retry.</p></section>}
+      {activeTab === "snags" && operationalReady && (
         <SnagWorkflow
           user={user}
           profile={profile}
@@ -1552,7 +1576,7 @@ export function ProductionPortalApp() {
           requestedFilters={snagListFilters}
         />
       )}
-      {activeTab === "units" && (
+      {activeTab === "units" && operationalReady && (
         <UnitsSection
           user={user}
           profile={profile}
@@ -1612,7 +1636,7 @@ export function ProductionPortalApp() {
           }}
         />
       )}
-      {(activeTab === "resident_home" || activeTab === "resident_snags") && (
+      {(activeTab === "resident_home" || activeTab === "resident_snags") && operationalReady && (
         <LeaseholderDefects
           user={user}
           profile={profile}
@@ -2225,153 +2249,6 @@ function SetupSection({
   );
 }
 
-function Dashboard({
-  buildings,
-  events,
-  profile,
-  snags,
-  setTab,
-  setSnagFilters,
-  onSelectBuilding,
-}: {
-  buildings: Building[];
-  events: SnagEvent[];
-  profile: Profile | null;
-  snags: ProductionSnag[];
-  setTab: (tab: Tab) => void;
-  setSnagFilters: (filters: SnagListFilters) => void;
-  onSelectBuilding: (buildingId: string) => void;
-}) {
-  const model = buildDashboardModel({ buildings, events, snags });
-  const actionItems = model.currentActions.filter((item) => item.value > 0);
-  const movementItems = model.todayMovement.filter((item) => item.value > 0);
-  const pcConfirmationWarnings = ["admin", "developer"].includes(profile?.role ?? "")
-    ? buildings.filter((building) => hasPassedExpectedPcWarning(building))
-    : [];
-  function openSnags(filters: SnagListFilters = {}) {
-    setSnagFilters(filters);
-    setTab("snags");
-  }
-
-  return (
-    <div className="grid gap-5">
-      {pcConfirmationWarnings.length > 0 && (
-        <section className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-4 text-[#5c4a1f]">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="font-bold">PC date requires confirmation</p>
-              <div className="mt-2 grid gap-1 text-sm">
-                {pcConfirmationWarnings.map((building) => (
-                  <p key={building.id}>
-                    {building.name} has an expected PC date of {formatDate(expectedPcDate(building))}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
-                  </p>
-                ))}
-              </div>
-            </div>
-            {profile?.role === "admin" && (
-              <button className="secondary min-h-10 px-3 py-1.5 text-sm" type="button" onClick={() => setTab("setup_buildings")}>
-                Review building settings
-              </button>
-            )}
-          </div>
-        </section>
-      )}
-      <section className="dashboard-hero">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D6A23A]">Action centre</p>
-          <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Developer snags</h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#66736B]">Current developer snag actions and today&apos;s movement across the buildings you can access.</p>
-        </div>
-        <div className="grid grid-cols-3 divide-x divide-white/20 text-center">
-          <HeroCount label="Total" value={model.totalDeveloperSnags} />
-          <HeroCount label="Active" value={model.activeDeveloperSnags} />
-          <HeroCount label="Changed today" value={model.changedToday} />
-        </div>
-      </section>
-
-      <section className="panel">
-        <SectionHeader title="Needs attention" subtitle="Current developer snag actions with a non-zero count." />
-        {actionItems.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {actionItems.map((item) => (
-              <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
-            ))}
-          </div>
-        ) : (
-          <p className="mobile-empty mt-4">No developer snag actions need attention.</p>
-        )}
-      </section>
-
-      <section className="panel">
-        <SectionHeader title="Today&apos;s movement" subtitle="Developer snag changes recorded today." />
-        {movementItems.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {movementItems.map((item) => (
-              <ActionCard key={item.id} item={item} onClick={() => openSnags(filtersForAttention(item.id))} />
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 border-t border-[#eef0eb] py-4 text-sm text-[#66736B]">No developer snag movement today yet.</p>
-        )}
-      </section>
-
-      <section className="panel">
-        <SectionHeader title="Building workload" subtitle="Open developer snag workload by building." />
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {model.buildingWorkload.map((building) => (
-            <button
-              key={building.id}
-              className="dashboard-project-card"
-              onClick={() => {
-                onSelectBuilding(building.id);
-                openSnags();
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-bold text-[#1F2A24]">{building.name}</p>
-                  <p className="mt-1 text-sm text-[#66736B]">{building.active} active developer snag{building.active === 1 ? "" : "s"}</p>
-                </div>
-                <span className={statusTone(building.readyForReview > 0 ? "resolved_by_contractor" : building.rejectedBack > 0 ? "rejected_back_to_contractor" : "open")}>
-                  {building.closedPercent}% closed
-                </span>
-              </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#ede8dc]">
-                <div className="h-full rounded-full bg-[#0F3D2E]" style={{ width: `${building.closedPercent}%` }} />
-              </div>
-              <div className="mt-4 grid grid-cols-4 divide-x divide-[#eef0eb] border-t border-[#eef0eb] pt-3 text-center text-xs">
-                <MiniStat label="Active" value={building.active} />
-                <MiniStat label="Review" value={building.readyForReview} />
-                <MiniStat label="Info" value={building.needsMoreInfo} />
-                <MiniStat label="Rejected" value={building.rejectedBack} />
-              </div>
-            </button>
-          ))}
-          {model.buildingWorkload.length === 0 && <p className="mobile-empty md:col-span-2">No developer snag workload to show.</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function filtersForAttention(id: string): SnagListFilters {
-  if (id === "needs_trade") return { tradeFilter: "__none__" };
-  if (id === "overdue") return { quickFilter: "overdue" };
-  if (id === "due_soon") return { quickFilter: "due_soon" };
-  if (id === "review") return { statusFilter: "resolved_by_contractor" };
-  if (id === "contractor_reject") return { statusFilter: "needs_more_info" };
-  if (id === "developer_reject") return { statusFilter: "rejected_back_to_contractor" };
-  if (id === "info_supplied") return { quickFilter: "info_supplied" };
-  if (id === "created_today") return { quickFilter: "created_today" };
-  if (id === "resolved_today") return { quickFilter: "resolved_today" };
-  if (id === "closed_today") return { quickFilter: "closed_today" };
-  if (id === "rejected_today") return { quickFilter: "rejected_today" };
-  if (id === "more_info_today") return { quickFilter: "more_info_today" };
-  if (id === "info_supplied_today") return { quickFilter: "info_supplied_today" };
-  if (id === "recent") return { quickFilter: "recent" };
-  return {};
-}
-
 function quickFilterLabel(filter: SnagQuickFilter) {
   const labels: Record<SnagQuickFilter, string> = {
     overdue: "overdue SLA",
@@ -2389,124 +2266,11 @@ function quickFilterLabel(filter: SnagQuickFilter) {
   return labels[filter];
 }
 
-function buildDashboardModel({
-  buildings,
-  events,
-  snags,
-}: {
-  buildings: Building[];
-  events: SnagEvent[];
-  snags: ProductionSnag[];
-}) {
-  const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const isToday = (value?: string | null) => Boolean(value && new Date(value) >= todayStart);
-  const isFinal = (snag: ProductionSnag) => ["closed", "resolved"].includes(snag.status);
-  const isStatusEvent = (event: SnagEvent) => ["status_change", "triage"].includes(event.event_type);
-  const isInfoSuppliedEvent = (event: SnagEvent) => isStatusEvent(event) && event.old_value === "needs_more_info" && event.new_value === "open";
-
-  const developerSnags = snags.filter((snag) => snag.source_type === "developer_snag");
-  const developerSnagIds = new Set(developerSnags.map((snag) => snag.id));
-  const developerEvents = events.filter((event) => developerSnagIds.has(event.snag_id));
-  const statusEventIds = (status: string, onlyToday = false) => new Set(developerEvents
-    .filter((event) => isStatusEvent(event))
-    .filter((event) => event.new_value === status)
-    .filter((event) => !onlyToday || isToday(event.created_at))
-    .map((event) => event.snag_id));
-  const activeDeveloperSnags = developerSnags.filter((snag) => !isFinal(snag));
-  const closedDeveloperSnags = developerSnags.filter(isFinal);
-  const needsTrade = activeDeveloperSnags.filter((snag) => !snag.trade_id);
-  const readyForReview = developerSnags.filter((snag) => snag.status === "resolved_by_contractor");
-  const needsMoreInfo = developerSnags.filter((snag) => snag.status === "needs_more_info");
-  const rejectedBackToContractor = developerSnags.filter((snag) => snag.status === "rejected_back_to_contractor");
-  const infoSuppliedSnagIds = new Set(developerEvents.filter(isInfoSuppliedEvent).map((event) => event.snag_id));
-  const infoSuppliedAwaitingReview = developerSnags.filter((snag) => snag.status === "open" && infoSuppliedSnagIds.has(snag.id));
-  const todayEvents = developerEvents.filter((event) => isToday(event.created_at));
-  const changedToday = new Set([
-    ...developerSnags.filter((snag) => isToday(snag.created_at) || isToday(snag.updated_at)).map((snag) => snag.id),
-    ...todayEvents.map((event) => event.snag_id),
-  ]).size;
-  const resolvedTodayIds = statusEventIds("resolved_by_contractor", true);
-  const closedTodayIds = statusEventIds("closed", true);
-  const rejectedTodayIds = statusEventIds("rejected_back_to_contractor", true);
-  const moreInfoTodayIds = statusEventIds("needs_more_info", true);
-  const infoSuppliedTodayIds = new Set(developerEvents.filter(isInfoSuppliedEvent).filter((event) => isToday(event.created_at)).map((event) => event.snag_id));
-
-  const buildingWorkload = buildings.map((building) => {
-    const buildingSnags = developerSnags.filter((snag) => snag.building_id === building.id);
-    const closed = buildingSnags.filter(isFinal).length;
-    const total = buildingSnags.length;
-    return {
-      id: building.id,
-      name: building.name,
-      total,
-      active: buildingSnags.filter((snag) => !isFinal(snag)).length,
-      readyForReview: buildingSnags.filter((snag) => snag.status === "resolved_by_contractor").length,
-      needsMoreInfo: buildingSnags.filter((snag) => snag.status === "needs_more_info").length,
-      rejectedBack: buildingSnags.filter((snag) => snag.status === "rejected_back_to_contractor").length,
-      closedPercent: total === 0 ? 0 : Math.round((closed / total) * 100),
-    };
-  }).filter((building) => building.total > 0);
-
-  return {
-    totalDeveloperSnags: developerSnags.length,
-    activeDeveloperSnags: activeDeveloperSnags.length,
-    closedDeveloperSnags: closedDeveloperSnags.length,
-    changedToday,
-    currentActions: [
-      { id: "review", label: "Ready for review", value: readyForReview.length, tone: "good", helper: "Resolved by contractor and waiting for developer review." },
-      { id: "contractor_reject", label: "Needs more info", value: needsMoreInfo.length, tone: "warning", helper: "Returned to developer for more information." },
-      { id: "info_supplied", label: "Information supplied", value: infoSuppliedAwaitingReview.length, tone: "warning", helper: "Reopened after more information was added." },
-      { id: "developer_reject", label: "Rejected back to contractor", value: rejectedBackToContractor.length, tone: "danger", helper: "Returned to contractor for further work." },
-      { id: "needs_trade", label: "Needs trade allocation", value: needsTrade.length, tone: "warning", helper: "Active developer snags without a trade." },
-    ],
-    todayMovement: [
-      { id: "created_today", label: "Created today", value: developerSnags.filter((snag) => isToday(snag.created_at)).length, tone: "neutral", helper: "New developer snags logged today." },
-      { id: "resolved_today", label: "Resolved today", value: resolvedTodayIds.size, tone: "good", helper: "Moved to resolved by contractor today." },
-      { id: "closed_today", label: "Closed today", value: closedTodayIds.size + developerSnags.filter((snag) => snag.status === "closed" && isToday(snag.closed_at)).filter((snag) => !closedTodayIds.has(snag.id)).length, tone: "good", helper: "Closed by the developer today." },
-      { id: "rejected_today", label: "Rejected back today", value: rejectedTodayIds.size, tone: "danger", helper: "Returned to contractor today." },
-      { id: "more_info_today", label: "Info requested today", value: moreInfoTodayIds.size, tone: "warning", helper: "More information requested from the developer today." },
-      { id: "info_supplied_today", label: "Info supplied today", value: infoSuppliedTodayIds.size, tone: "warning", helper: "More information was added today." },
-    ],
-    buildingWorkload,
-  };
-}
-
-function HeroCount({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="min-w-0 px-3 py-3">
-      <p className="text-2xl font-bold text-[#0F3D2E]">{value}</p>
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
-    </div>
-  );
-}
-
-function ActionCard({ item, onClick }: { item: { label: string; value: number; tone: string; helper: string }; onClick: () => void }) {
-  const toneClass = item.tone === "danger" ? "dashboard-action-danger" : item.tone === "good" ? "dashboard-action-good" : item.tone === "warning" ? "dashboard-action-warning" : "";
-  return (
-    <button className={`dashboard-action-card ${toneClass}`} onClick={onClick}>
-      <p className="text-sm font-bold text-[#1F2A24]">{item.label}</p>
-      <p className="mt-3 text-3xl font-bold text-[#0F3D2E]">{item.value}</p>
-      <p className="mt-2 text-xs text-[#66736B]">{item.helper}</p>
-    </button>
-  );
-}
-
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
       <h3 className="text-lg font-bold text-[#0F3D2E]">{title}</h3>
       <p className="mt-1 text-sm text-[#66736B]">{subtitle}</p>
-    </div>
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="min-w-0 p-2">
-      <p className="font-bold text-[#0F3D2E]">{value}</p>
-      <p className="text-[#66736B]">{label}</p>
     </div>
   );
 }
@@ -4984,7 +4748,15 @@ function UserDirectory({
   onNotice: (notice: string) => void;
   reload: () => Promise<void>;
 }) {
-  const [selectedRequestId, setSelectedRequestId] = useState("");
+  const [selectedRequestId, setSelectedRequestId] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("accessRequestId") ?? "" : "");
+  useEffect(() => {
+    if (!selectedRequestId) return;
+    const timer = window.setTimeout(() => {
+      const panels = document.querySelectorAll<HTMLElement>(`[data-access-request="${CSS.escape(selectedRequestId)}"]`);
+      Array.from(panels).find(panel => panel.getClientRects().length)?.scrollIntoView({ block: "start" });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [selectedRequestId, accessRequests]);
 
   function userStatus(profile: Profile) {
     return profile.active === false ? "deactivated" : "active";
@@ -5124,7 +4896,7 @@ function UserDirectory({
           const isMuted = row.status === "deactivated" || row.status === "rejected";
 
           return (
-            <article key={row.key} className={`mobile-card ${isOpen ? "mobile-card-active" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
+            <article key={row.key} data-access-request={row.kind === "request" ? row.id : undefined} style={{ scrollMarginTop: "9rem" }} className={`mobile-card ${isOpen ? "mobile-card-active" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
@@ -5206,7 +4978,7 @@ function UserDirectory({
 
               return (
                 <Fragment key={row.key}>
-                  <tr className={`${isOpen ? "bg-[#fff8ec]" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
+                  <tr data-access-request={row.kind === "request" ? row.id : undefined} style={{ scrollMarginTop: "9rem" }} className={`${isOpen ? "bg-[#fff8ec]" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <p className="font-medium">{row.name}</p>
                       <p className="text-xs text-[#617169]">{row.email}</p>
@@ -7211,11 +6983,18 @@ function LeaseholderDefects({
   const residentBuildingIds = Array.from(new Set(userUnits.map((unit) => unit.building_id)));
   const hasMultipleBuildings = residentBuildingIds.length > 1;
   const hasSingleUnit = userUnits.length === 1;
-  const [buildingFilter, setBuildingFilter] = useState("");
+  const requestedUnitId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("unitId") : null;
+  const requestedUnit = userUnits.find(unit => unit.id === requestedUnitId);
+  const [buildingFilter, setBuildingFilter] = useState(requestedUnit?.building_id ?? "");
   const filteredUserUnits = hasMultipleBuildings && buildingFilter
     ? userUnits.filter((unit) => unit.building_id === buildingFilter)
     : userUnits;
-  const [unitId, setUnitId] = useState(userUnits[0]?.id ?? "");
+  const [unitId, setUnitId] = useState(requestedUnit?.id ?? userUnits[0]?.id ?? "");
+  useEffect(() => {
+    if (!requestedUnitId || window.location.hash !== "#handover") return;
+    const frame = requestAnimationFrame(() => document.getElementById("handover")?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [requestedUnitId]);
   const [areaId, setAreaId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -7668,6 +7447,8 @@ function LeaseholderDefects({
                   <p className="text-sm font-semibold text-[#0F3D2E]">Flat status</p>
                   <span className={statusTone(existingHandover ? "handed_over" : selectedUnit.sale_status)}>{existingHandover ? "Handed Over" : statusLabel(selectedUnit.sale_status)}</span>
                 </div>
+                <div id="handover" style={{ scrollMarginTop: "9rem" }}>
+                {requestedUnitId && !requestedUnit && <p role="alert">The requested unit is no longer available in your access. Select an accessible unit.</p>}
                 <SelectedUnitHandover
                   building={selectedBuilding}
                   existingHandover={existingHandover}
@@ -7680,6 +7461,7 @@ function LeaseholderDefects({
                   uploadFile={uploadFile}
                   user={user}
                 />
+                </div>
               </div>
             )}
           </div>
@@ -9303,7 +9085,11 @@ function SnagList({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [previewPhoto, setPreviewPhoto] = useState<SnagPhoto | null>(null);
-  const [selectedSnagId, setSelectedSnagId] = useState("");
+  const [selectedSnagId, setSelectedSnagId] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("snagId") ?? "" : "");
+  const [sourceFilter, setSourceFilter] = useState(() => {
+    const source = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("snagSource") : "";
+    return source === "developer_snag" || source === "leaseholder_defect" ? source : "";
+  });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const contextIsAll = !buildingContextId && buildings.length > 1;
   const buildingUnits = sortUnitsByFloorOrder(
@@ -9334,21 +9120,16 @@ function SnagList({
     .filter((event) => event.new_value === status)
     .filter((event) => isToday(event.created_at))
     .map((event) => event.snag_id));
-  const infoSuppliedSnagIds = new Set(events
-    .filter((event) => ["status_change", "triage"].includes(event.event_type))
-    .filter((event) => event.old_value === "needs_more_info" && event.new_value === "open")
-    .map((event) => event.snag_id));
-  const infoSuppliedTodaySnagIds = new Set(events
-    .filter((event) => ["status_change", "triage"].includes(event.event_type))
-    .filter((event) => event.old_value === "needs_more_info" && event.new_value === "open")
-    .filter((event) => isToday(event.created_at))
-    .map((event) => event.snag_id));
+  const currentInformation = snags.map(snag => currentInformationSupplied(snag, events)).filter((event): event is SnagEvent => Boolean(event));
+  const infoSuppliedSnagIds = new Set(currentInformation.map(event => event.snag_id));
+  const infoSuppliedTodaySnagIds = new Set(currentInformation.filter(event => isToday(event.created_at)).map(event => event.snag_id));
   const resolvedTodaySnagIds = statusEventSnagIds("resolved_by_contractor");
   const closedTodaySnagIds = statusEventSnagIds("closed");
   const rejectedTodaySnagIds = statusEventSnagIds("rejected_back_to_contractor");
   const moreInfoTodaySnagIds = statusEventSnagIds("needs_more_info");
   const buildingUnitOrder = new Map(buildingUnits.map((unit, index) => [unit.id, index]));
   const filtered = snags
+    .filter(snag => !sourceFilter || snag.source_type === sourceFilter)
     .filter((snag) => {
       if (!unitFilter) return true;
       if (unitFilter === "__communal__") return !snag.unit_id;
@@ -9361,7 +9142,7 @@ function SnagList({
     })
     .filter((snag) => {
       if (!tradeFilter) return true;
-      if (tradeFilter === "__none__") return !snag.trade_id;
+      if (tradeFilter === "__none__") return needsTrade(snag);
       return snag.trade_id === tradeFilter;
     })
     .filter((snag) => {
@@ -9540,6 +9321,8 @@ function SnagList({
     <section className="panel min-w-0 p-0">
       <div className="border-b border-[#d9ded6] px-4 py-3">
         {title && <h2 className="text-lg font-bold text-[#0F3D2E]">{title}</h2>}
+        {selectedSnagId && !selectedSnag && <p role="alert">This item is no longer available in your current access or building scope.</p>}
+        {sourceFilter && <button className="secondary" onClick={() => setSourceFilter("")}>Showing {sourceFilter === "developer_snag" ? "developer snags" : "resident defects"} · Clear source filter</button>}
         {showFilters && (
           <div className="mt-3 md:hidden">
             <button
@@ -11156,4 +10939,3 @@ function filterSnagsForRole(snags: ProductionSnag[], profile: Profile | null, ac
   if (profile.role === "contractor") return snags.filter((snag) => contractorCanAccessResponsibleSnag(snag, profile, buildingOrganisations));
   return snags;
 }
-

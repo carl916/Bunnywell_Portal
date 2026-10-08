@@ -1,0 +1,50 @@
+{
+  "project": "vxkpvdtrldwwqiddoyof",
+  "origin": "http://localhost:3011",
+  "run": "2c2f3877-a4cf-440b-b492-066f13ec31d6",
+  "building": "9e533cd5-9c9b-47ba-bc20-d5ae783e333d",
+  "unit": "50775485-1e21-43e2-8195-4736c3aa3f6e",
+  "sale": "4de11b22-918e-475d-b569-a074782efd56",
+  "fixture": "Existing dedicated UPLOAD-3 legacy-arrangements synthetic sale; no email dispatch",
+  "accounts": [
+    {
+      "id": "3a54049e-5e02-486e-94ef-43698a60e536",
+      "label": "developer1",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "4949d89f-791d-48d2-aeb2-f656e4b839a0",
+      "label": "developer2",
+      "role": "developer",
+      "disabled": true
+    },
+    {
+      "id": "d3e56028-0157-4aef-a6da-352d7738df8b",
+      "label": "conveyancer1",
+      "role": "conveyancer",
+      "disabled": true
+    },
+    {
+      "id": "d58666d2-0d4b-45aa-bebe-d0394dbc0246",
+      "label": "conveyancer2",
+      "role": "conveyancer",
+      "disabled": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "Two distinct conveyancers and two developers have identical respective team queues through real JWT/RLS reads",
+      "passed": true
+    },
+    {
+      "name": "Legacy missing-date task clears only after canonical saved-date correction",
+      "passed": true
+    },
+    {
+      "name": "Run failure",
+      "passed": false,
+      "error": "Synthetic confirm_completion returned 400: {\"error\":\"Only an Exchanged unit can progress to Completed.\"}"
+    }
+  ]
+}

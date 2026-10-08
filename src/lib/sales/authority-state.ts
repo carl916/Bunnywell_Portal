@@ -1,13 +1,14 @@
 import { authorityStatus, type LegalEmail } from "./legal-workflow";
 
 export type AuthorityRequestEvent = { event_type: string; created_at: string; created_by_user_id: string | null; actor_name?: string | null };
+type AuthorityRecord = Pick<LegalEmail, "id" | "kind" | "version" | "exchanged_at" | "revoked_at" | "expires_at" | "issued_at" | "sent_at" | "resend_message_id" | "delivery_status" | "replaced_by">;
 
-export function authorityBadge(email: LegalEmail, now: number) {
+export function authorityBadge(email: AuthorityRecord, now: number) {
   const status = authorityStatus(email, now);
   return status === "Authority issued" ? "Active" : status === "Authority expired" ? "Expired" : status === "Authority revoked" ? "Revoked" : status === "Authority replaced" ? "Superseded" : status;
 }
 
-export function exchangeAuthorityState(emails: LegalEmail[], events: AuthorityRequestEvent[], requestedAt: string | null, exchanged: boolean, now: number) {
+export function exchangeAuthorityState<T extends AuthorityRecord>(emails: T[], events: AuthorityRequestEvent[], requestedAt: string | null, exchanged: boolean, now: number) {
   const versions = emails.filter(email => email.kind === "authority").sort((a, b) => b.version - a.version);
   const current = versions.find(email => email.exchanged_at) ?? versions[0];
   const previous = versions.find(email => email.version < (current?.version ?? 0));

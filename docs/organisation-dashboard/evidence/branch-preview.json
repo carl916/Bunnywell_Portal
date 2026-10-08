@@ -1,0 +1,11 @@
+{
+  "origin": "https://bunnywell-portal-pv9ed7zux-carl-gilbert-s-projects.vercel.app",
+  "project": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+  "deployment": "dpl_6CEi1W2JK3c4cXNKMqhxV2wwxaPo",
+  "commit": "eb9445b24af55536fa635beacb73a4ececf5cf07",
+  "publicBackendHosts": [
+    "vxkpvdtrldwwqiddoyof.supabase.co"
+  ],
+  "anonymousDashboardStatus": 401,
+  "verifiedAt": "2026-10-07T19:20:03.428Z"
+}

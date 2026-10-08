@@ -60,9 +60,9 @@ export function buildingAllowsResidentRoutineSnags(building?: BuildingLifecycleI
   return ["dlp_active", "dlp_closing"].includes(derivedBuildingLifecycleStatus(building));
 }
 
-export function buildingAllowsFlatHandover(building?: BuildingLifecycleInput | null) {
+export function buildingAllowsFlatHandover(building?: BuildingLifecycleInput | null, today = dateOnly()) {
   const pcDate = confirmedPcDate(building);
-  return Boolean(building && building.status !== "archived" && pcDate && pcDate <= dateOnly());
+  return Boolean(building && building.status !== "archived" && pcDate && pcDate <= today);
 }
 
 export function pcConfirmationError(pcDate?: string | null) {
