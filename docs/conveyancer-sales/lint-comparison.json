@@ -1,0 +1,46 @@
+[
+  {
+    "file": "src/components/portal/ProductionPortalApp.tsx",
+    "before": {
+      "errors": 13,
+      "warnings": 20
+    },
+    "after": {
+      "errors": 13,
+      "warnings": 20
+    }
+  },
+  {
+    "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+    "before": {
+      "errors": 2,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 2,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "src/components/portal/sales/CompletionDocuments.tsx",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "file": "tests/organisation-dashboard.spec.ts",
+    "before": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "after": {
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+]

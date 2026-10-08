@@ -90,7 +90,7 @@ export function CompletionDocuments({ saleId, documents, events, uploadAllowed, 
     const canReview = reviewAllowed && version && !locked && document?.status !== "query_raised";
     const query = queries[type]?.versionId === version?.id ? queries[type] : undefined;
     const queryEvent = version ? completionVersionEvents(events, version.id).find(event => event.event_type === "completion_documents_query_raised") : undefined;
-    return <article key={type} className="min-w-0 rounded-xl border border-[#d9ded6] bg-white p-4" aria-label={completionDocumentLabels[type]}>
+    return <article key={type} id={`completion-document-${type}`} className="min-w-0 rounded-xl border border-[#d9ded6] bg-white p-4" aria-label={completionDocumentLabels[type]}>
       <div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-bold text-[#0F3D2E]">{title}</h5><span className="text-sm font-semibold">{selection ? "Ready to upload" : status(type)}</span></div>
       {uploadAllowed && !locked && (!version || selection) && <div className="mt-3" role={selection ? "group" : undefined} aria-label={selection ? `Selected ${selection.file.name}` : undefined}>
         <PdfUploadBox id={`${saleId}-${type}`} label={`${version || selection ? "Replace" : "Choose"} ${labels[type].toLowerCase()}`} file={selection?.file ?? null} disabled={busy}

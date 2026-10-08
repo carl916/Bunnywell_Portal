@@ -1,7 +1,7 @@
 "use client";
 
 import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
-import { isSalesExternalRole } from "@/lib/sales/permissions";
+import { isSalesExternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
 
 import { PdfUploadBox } from "./PdfUploadBox";
 import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
@@ -1310,7 +1310,7 @@ export function SalesReservationWorkflow({
       || (activeTerms?.completion_balance_percent ?? null) !== buildingDefaultDepositStructure.completionBalancePercent
     ),
   );
-  const forSaleUnits = buildingUnits.filter((unit) => unit.sale_status === "for_sale");
+  const forSaleUnits = canViewSalesForecasting(role) ? buildingUnits.filter((unit) => unit.sale_status === "for_sale") : [];
   const modelGdvDelta = (previewContractPrice + modelParkingValue) - selectedContractValue;
   const forSaleCurrentGdv = forSaleUnits.reduce((total, unit) => total + unitSaleValue(unit), 0);
   const forSaleCurrentNet = forSaleUnits.reduce((total, unit) => total + developerNetForTerms(currentTermForUnit(unit)), 0);
@@ -1420,20 +1420,21 @@ export function SalesReservationWorkflow({
         status: "pending",
       },
     ];
-  const baselineGdv = buildingUnits.reduce((total, unit) => {
+  const financialUnits = canViewSalesForecasting(role) ? buildingUnits : [];
+  const baselineGdv = financialUnits.reduce((total, unit) => {
     const term = currentTermForUnit(unit);
     return total + (term?.list_price_at_offer ?? term?.contract_price ?? 0);
   }, 0);
-  const forecastRevenue = buildingUnits.reduce((total, unit) => total + unitSaleValue(unit), 0);
-  const netSalesProceeds = buildingUnits.reduce((total, unit) => total + developerNetForTerms(currentTermForUnit(unit)), 0);
-  const saleValuesCount = buildingUnits.filter((unit) => unitSaleValue(unit) > 0).length;
+  const forecastRevenue = financialUnits.reduce((total, unit) => total + unitSaleValue(unit), 0);
+  const netSalesProceeds = financialUnits.reduce((total, unit) => total + developerNetForTerms(currentTermForUnit(unit)), 0);
+  const saleValuesCount = financialUnits.filter((unit) => unitSaleValue(unit) > 0).length;
   const pipelineSummary = SALES_ROUTE_STATUSES.map((status) => {
     const stageUnits = buildingUnits.filter((unit) => unit.sale_status === status);
     return {
       status,
       label: saleStatusLabel(status),
       count: stageUnits.length,
-      value: stageUnits.reduce((total, unit) => total + unitSaleValue(unit), 0),
+      value: canViewSalesForecasting(role) ? stageUnits.reduce((total, unit) => total + unitSaleValue(unit), 0) : null,
     };
   });
   const filteredSalesUnits = buildingUnits.filter((unit) => {
@@ -1475,6 +1476,7 @@ export function SalesReservationWorkflow({
     if (next.section === "financials" || next.section === "commercial") params.set("section", next.section);
     const hash = next.hash ? `#${next.hash}` : "";
     window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}${hash}`);
+    window.dispatchEvent(new Event("conveyancer-sale-navigation"));
   }
 
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
@@ -2403,7 +2405,7 @@ export function SalesReservationWorkflow({
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
 
-        <section className={`panel ${styles.financialOverview}`}>
+        {canViewSalesForecasting(role) && <section className={`panel ${styles.financialOverview}`}>
           <div>
             <h3 className="text-xl font-bold text-[#0F3D2E]">Financial overview</h3>
             <p className="mt-1 text-sm text-[#617169]">Forecast sales position for units currently in the sales route.</p>
@@ -2438,7 +2440,7 @@ export function SalesReservationWorkflow({
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         <section className="panel">
           <div>
@@ -2460,7 +2462,7 @@ export function SalesReservationWorkflow({
                   <span className="text-[#617169]">&gt;</span>
                 </div>
                 <p className="numeric-value mt-2 text-3xl font-bold text-[#0F3D2E]">{stage.count}</p>
-                <p className="numeric-value mt-1 text-sm text-[#617169]">{money(stage.value)}</p>
+                {stage.value !== null && <p className="numeric-value mt-1 text-sm text-[#617169]">{money(stage.value)}</p>}
               </button>
             ))}
           </div>
@@ -2543,7 +2545,7 @@ export function SalesReservationWorkflow({
           <SalesPagination total={filteredSalesUnits.length} currentPage={currentSalesPage} onPageChange={setSalesPage} />
         </section>
 
-        <section className="panel">
+        {canViewSalesForecasting(role) && <section className="panel">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-xl font-bold text-[#0F3D2E]">Forecasting</h3>
@@ -2567,7 +2569,7 @@ export function SalesReservationWorkflow({
               />
             </div>
           )}
-        </section>
+        </section>}
       </div>
     );
   }

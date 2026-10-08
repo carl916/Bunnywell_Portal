@@ -64,13 +64,14 @@ test("a failed refresh retains an explicitly stale snapshot and does not announc
   await expect(page.getByText(/All clear —/)).toHaveCount(0);
 });
 
-test("external worklist appears once on the Sales landing and direct task links select completion", async ({ page }) => {
-  const f = await workFixture(page, "conveyancer");
+test("sales-agent worklist remains on the Sales landing and direct task links select completion", async ({ page }) => {
+  const f = await workFixture(page, "sales_agent");
   Object.assign(f.unit, { sale_status: "exchanged" });
   Object.assign(f.attempt, { workflow_status: "exchanged", exchanged_at: "2026-09-02", completion_legacy_stage: "arrangements" });
   await page.goto("/?screen=sales&building=all");
   const work = page.getByRole("region", { name: "Sales organisation worklist" });
   await expect(work).toHaveCount(1);
+  await work.getByRole("button", { name: /^Waiting on others/ }).click();
   await expect(page.getByRole("button", { name: "Dashboard", exact: true })).toHaveCount(0);
   await work.getByRole("link", { name: "Review saved contractual completion date", exact: true }).first().click();
   await expect(work).toHaveCount(0);

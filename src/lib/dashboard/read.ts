@@ -30,7 +30,8 @@ type ReadQuery = PromiseLike<Page<unknown>> & {
   limit(count: number, options?: { referencedTable?: string }): ReadQuery;
 };
 
-export async function loadDashboardInput(client: SupabaseClient, viewer: WorkViewer, buildingId: string, now = Date.now()): Promise<DashboardInput> {
+export async function loadDashboardInput(client: SupabaseClient, viewer: WorkViewer, buildingId: string, now = Date.now(), mode: "dashboard" | "sales-register" = "dashboard"): Promise<DashboardInput> {
+  const register = mode === "sales-register";
   const rows = async <T,>(table: string, columns: string, filter?: (query: ReadQuery) => ReadQuery): Promise<T[]> => {
     return readComplete<T>(async (from, to) => {
       // The builder is reconstructed per page so filters/order/range cannot bleed between modules.
@@ -45,8 +46,8 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
   const scopedBuildings = buildings.filter(b => !buildingId || b.id === buildingId);
   const ids = scopedBuildings.map(b => b.id);
   const input: DashboardInput = { viewer, now, buildingId, buildings: scopedBuildings, units: [], floors: [], organisations: [], buildingOrganisations: [], sales: [], documents: [], authorities: [], saleEvents: [], deposits: [], depositSources: [], invoices: [], terms: [], payments: [], snags: [], handovers: [], tenancies: [], arrears: [], rentalImports: [], accessRequests: [], sources: [] };
-  const internal = isSalesInternalRole(viewer.role);
-  const operational = internal || ["developer_representative", "contractor"].includes(viewer.role);
+  const internal = !register && isSalesInternalRole(viewer.role);
+  const operational = !register && (internal || ["developer_representative", "contractor"].includes(viewer.role));
   async function source(key: string, label: string, permitted: boolean, read: () => Promise<void>) {
     if (!permitted) { input.sources.push({ key, label, state: "not_permitted", asOf: null }); return; }
     try { if (ids.length) await read(); input.sources.push({ key, label, state: "ready", asOf: new Date(now).toISOString() }); }
@@ -69,14 +70,14 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
     source("snags", "Snags and resident defects", operational, async () => {
       input.snags = await rows("snags", "id,building_id,unit_id,source_type,title,status,trade_id,assigned_to_organisation_id,assigned_to_user_id,priority_code,sla_due_date,created_at,closed_at,snag_events(id,snag_id,event_type,old_value,new_value,comment,created_by_user_id,created_at)", q => q.in("building_id", ids).in("source_type", ["developer_snag", "leaseholder_defect"]).not("status", "in", "(closed,resolved)").in("snag_events.event_type", ["status_change", "triage"]).order("created_at", { referencedTable: "snag_events", ascending: false }).order("id", { referencedTable: "snag_events", ascending: false }).limit(1, { referencedTable: "snag_events" }));
     }),
-    source("handovers", "Handover eligibility", internal || viewer.role === "developer_representative", async () => {
+    source("handovers", "Handover eligibility", !register && (internal || viewer.role === "developer_representative"), async () => {
       const unitIds = input.units.filter(u => u.sale_status === "completed").map(u => u.id);
       input.handovers = await byIds("handovers", "id,unit_id", "unit_id", unitIds);
     }),
     source("rentals", "Rental position", internal, async () => {
       input.tenancies = await rows("unit_tenancies", "id,building_id,unit_id,tenancy_start_date,fixed_term_end_date,tenancy_end_date,created_at", q => q.in("building_id", ids));
     }),
-    source("access", "Pending resident access", viewer.role === "admin", async () => {
+    source("access", "Pending resident access", !register && viewer.role === "admin", async () => {
       input.accessRequests = await rows("resident_access_requests", "id,created_at,requested_units", q => q.eq("status", "pending"));
     }),
   ]);
@@ -95,12 +96,12 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
       const [documents, authorities, deposits, depositSources] = await Promise.all([
         byIds<DashboardInput["documents"][number]>("unit_sale_documents", "id,sale_attempt_id,document_type,status,query_note,approved_version_id,approved_at,updated_at,updated_by_user_id,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,is_current,redacted_at,uploaded_at)", "sale_attempt_id", salesIds, q => q.is("redacted_at", null).is("superseded_at", null).in("document_type", ["completion_statement", "draft_statement_of_account", "completion_correspondence"]).eq("unit_sale_document_versions.is_current", true).is("unit_sale_document_versions.redacted_at", null)),
         byIds<DashboardInput["authorities"][number]>("sale_legal_emails", "id,sale_attempt_id,kind,version,issued_at,expires_at,revoked_at,replaced_by,exchanged_at,delivery_status,sent_at,resend_message_id", "sale_attempt_id", salesIds),
-        byIds<DashboardInput["deposits"][number]>("sale_exchange_deposit_receipts", "id,sale_attempt_id,source_id,expected_amount,received_amount", "sale_attempt_id", salesIds),
-        byIds<DashboardInput["depositSources"][number]>("sale_exchange_deposit_sources", "id,sale_attempt_id,source_kind,expected_amount", "sale_attempt_id", salesIds),
+        register ? [] : byIds<DashboardInput["deposits"][number]>("sale_exchange_deposit_receipts", "id,sale_attempt_id,source_id,expected_amount,received_amount", "sale_attempt_id", salesIds),
+        register ? [] : byIds<DashboardInput["depositSources"][number]>("sale_exchange_deposit_sources", "id,sale_attempt_id,source_kind,expected_amount", "sale_attempt_id", salesIds),
       ]);
       Object.assign(input, { documents, authorities, deposits, depositSources });
     }),
-    source("history", "Recent sales business activity", canOpenSalesPipeline(viewer.role), async () => {
+    source("history", "Recent sales business activity", !register && canOpenSalesPipeline(viewer.role), async () => {
       if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");
       const events: DashboardInput["saleEvents"] = [];
       const actors: NonNullable<DashboardInput["saleActors"]> = [];
