@@ -24,7 +24,7 @@ import { sortUnitsByBuildingFloorOrder } from "@/lib/units/commercial-allocation
 import { RentalsWorkspace } from "@/components/portal/rentals/RentalsWorkspace";
 import { AuditLog } from "@/components/portal/audit/AuditLog";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
-import { SalesReservationWorkflow } from "@/components/portal/sales/SalesReservationWorkflow";
+import { SalesWorkspace } from "@/components/portal/sales/SalesWorkspace";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
 import { usePortalBuildingContext } from "@/hooks/usePortalBuildingContext";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
@@ -1601,7 +1601,7 @@ export function ProductionPortalApp() {
         />
       )}
       {activeTab === "sales" && contextReady && (
-        <SalesReservationWorkflow
+        <SalesWorkspace
           user={user}
           profile={profile}
           profiles={profiles}

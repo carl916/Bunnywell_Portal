@@ -1,0 +1,15 @@
+{
+  "origin": "https://bunnywell-portal-g22yk6i8z-carl-gilbert-s-projects.vercel.app",
+  "project": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+  "deployment": "dpl_J29tBzpHZoCrSq9AjXvseHs5yJv6",
+  "commit": "014f0f474df1436c6cd90b844f3be8330ec9af04",
+  "publicBackendHosts": [
+    "vxkpvdtrldwwqiddoyof.supabase.co"
+  ],
+  "anonymousRegisterStatus": 401,
+  "cacheControl": "private, no-store, max-age=0",
+  "vary": "Authorization",
+  "verifiedAt": "2026-10-08T11:05:48.890Z",
+  "authenticatedLiveRoleTested": false,
+  "syntheticBrowserTests": { "passed": 9, "failed": 0, "businessRequests": "All authenticated API and Supabase traffic intercepted with synthetic fixtures" }
+}

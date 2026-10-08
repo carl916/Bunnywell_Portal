@@ -1,0 +1,75 @@
+{
+  "mode": "after",
+  "note": "Same synthetic conveyancer, one accessible building and one sale; intercepted data on local Next dev. Warm assets. Not live database latency.",
+  "samples": [
+    {
+      "run": 1,
+      "visibleMs": 230,
+      "dataRequests": 19,
+      "responseBytes": 2551,
+      "categories": {
+        "/auth/v1/user": 1,
+        "/api/auth/activity": 1,
+        "/rest/v1/profiles": 2,
+        "/rest/v1/buildings": 1,
+        "/rest/v1/units": 1,
+        "/rest/v1/building_floors": 1,
+        "/rest/v1/unit_types": 1,
+        "/rest/v1/unit_type_areas": 1,
+        "/rest/v1/trades": 1,
+        "/rest/v1/organisations": 1,
+        "/rest/v1/building_organisations": 1,
+        "/rest/v1/user_building_access": 2,
+        "/rest/v1/user_unit_access": 2,
+        "/rest/v1/rpc/sale_mentions_inbox": 2,
+        "/api/sales/register": 1
+      }
+    },
+    {
+      "run": 2,
+      "visibleMs": 234,
+      "dataRequests": 19,
+      "responseBytes": 2551,
+      "categories": {
+        "/auth/v1/user": 1,
+        "/rest/v1/profiles": 2,
+        "/api/auth/activity": 1,
+        "/rest/v1/buildings": 1,
+        "/rest/v1/units": 1,
+        "/rest/v1/building_floors": 1,
+        "/rest/v1/unit_types": 1,
+        "/rest/v1/unit_type_areas": 1,
+        "/rest/v1/trades": 1,
+        "/rest/v1/organisations": 1,
+        "/rest/v1/building_organisations": 1,
+        "/rest/v1/user_building_access": 2,
+        "/rest/v1/user_unit_access": 2,
+        "/rest/v1/rpc/sale_mentions_inbox": 2,
+        "/api/sales/register": 1
+      }
+    },
+    {
+      "run": 3,
+      "visibleMs": 264,
+      "dataRequests": 19,
+      "responseBytes": 2551,
+      "categories": {
+        "/auth/v1/user": 1,
+        "/rest/v1/profiles": 2,
+        "/api/auth/activity": 1,
+        "/rest/v1/buildings": 1,
+        "/rest/v1/units": 1,
+        "/rest/v1/building_floors": 1,
+        "/rest/v1/unit_types": 1,
+        "/rest/v1/unit_type_areas": 1,
+        "/rest/v1/trades": 1,
+        "/rest/v1/organisations": 1,
+        "/rest/v1/building_organisations": 1,
+        "/rest/v1/user_building_access": 2,
+        "/rest/v1/user_unit_access": 2,
+        "/rest/v1/rpc/sale_mentions_inbox": 2,
+        "/api/sales/register": 1
+      }
+    }
+  ]
+}
