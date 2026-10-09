@@ -1,0 +1,102 @@
+[
+  {
+    "snapshot": {
+      "captured_at": "2026-10-09T16:05:26.674032+00:00",
+      "connections": [
+        {
+          "count": 1,
+          "state": "active",
+          "wait_event": null,
+          "wait_event_type": null
+        },
+        {
+          "count": 3,
+          "state": "idle",
+          "wait_event": "ClientRead",
+          "wait_event_type": "Client"
+        },
+        {
+          "count": 1,
+          "state": "idle",
+          "wait_event": "Extension",
+          "wait_event_type": "Extension"
+        },
+        {
+          "count": 1,
+          "state": null,
+          "wait_event": "Extension",
+          "wait_event_type": "Extension"
+        }
+      ],
+      "stats_reset": "2026-05-22T15:13:20.515541+00:00",
+      "slowest_reads": [
+        {
+          "calls": 443,
+          "max_ms": 1052.29,
+          "mean_ms": 558.44,
+          "queryid": "-7363655602153466962",
+          "operation": "sale_workflow_context",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 329,
+          "max_ms": 32.38,
+          "mean_ms": 4.61,
+          "queryid": "-2176058747873044533",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 148,
+          "max_ms": 9.85,
+          "mean_ms": 2.04,
+          "queryid": "1367175647451661056",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 1,
+          "max_ms": 2.21,
+          "mean_ms": 2.21,
+          "queryid": "4348078220969071823",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 1,
+          "max_ms": 1.6,
+          "mean_ms": 1.6,
+          "queryid": "-7363655602153466962",
+          "operation": "sale_workflow_context",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 1,
+          "max_ms": 1,
+          "mean_ms": 1,
+          "queryid": "-5571477280244242252",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 1,
+          "max_ms": 0.11,
+          "mean_ms": 0.11,
+          "queryid": "-3728958766376391694",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        },
+        {
+          "calls": 3,
+          "max_ms": 0.06,
+          "mean_ms": 0.04,
+          "queryid": "178276023400689170",
+          "operation": "rental_import_runs",
+          "max_plan_ms": 0
+        }
+      ],
+      "max_connections": "60",
+      "statements_reset": "2026-06-20T08:08:47.865935+00:00"
+    }
+  }
+]

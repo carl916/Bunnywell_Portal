@@ -1,0 +1,36 @@
+{
+  "window": [
+    "2026-10-09T11:00:00Z",
+    "2026-10-09T14:00:00Z"
+  ],
+  "note": "Exploratory upstream traffic; not matched samples. Cloudflare ingress colo is not Vercel function region.",
+  "result": [
+    {
+      "colo": "LHR",
+      "max_origin_ms": 659,
+      "max_upstream_ms": 622,
+      "over_10s": 0,
+      "over_20s": 0,
+      "over_5s": 0,
+      "requests": 12685
+    },
+    {
+      "colo": "FRA",
+      "max_origin_ms": 41874,
+      "max_upstream_ms": 893,
+      "over_10s": 2,
+      "over_20s": 2,
+      "over_5s": 5,
+      "requests": 6080
+    },
+    {
+      "colo": "IAD",
+      "max_origin_ms": 1460,
+      "max_upstream_ms": 1056,
+      "over_10s": 0,
+      "over_20s": 0,
+      "over_5s": 0,
+      "requests": 6042
+    }
+  ]
+}

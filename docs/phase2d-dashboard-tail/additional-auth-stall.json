@@ -1,0 +1,19 @@
+{
+  "window": [
+    "2026-10-09T16:11:00Z",
+    "2026-10-09T16:15:30Z"
+  ],
+  "context": "After batch 2 measured requests, during its security checks. The 403 response intentionally does not carry a detailed trace; attribution to its forbidden-building check is temporal, not a trace-ID join.",
+  "result": [
+    {
+      "attempts": "1",
+      "colo": "FRA",
+      "origin_ms": "32593",
+      "path": "/auth/v1/user",
+      "request_id": "01a12171-b6d9-717b-b160-2dc858a3dfd4",
+      "status": "200",
+      "timestamp": "2026-10-09T16:14:22.937000",
+      "upstream_ms": "4"
+    }
+  ]
+}

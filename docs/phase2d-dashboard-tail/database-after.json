@@ -1,0 +1,58 @@
+[
+  {
+    "snapshot": {
+      "reads": [
+        {
+          "calls": 525,
+          "max_ms": 1052.29,
+          "mean_ms": 577.33,
+          "queryid": "-7363655602153466962",
+          "operation": "sale_workflow_context"
+        },
+        {
+          "calls": 411,
+          "max_ms": 32.38,
+          "mean_ms": 4.48,
+          "queryid": "-2176058747873044533",
+          "operation": "rental_import_runs"
+        },
+        {
+          "calls": 148,
+          "max_ms": 9.85,
+          "mean_ms": 2.04,
+          "queryid": "1367175647451661056",
+          "operation": "rental_import_runs"
+        }
+      ],
+      "captured_at": "2026-10-09T16:20:12.045402+00:00",
+      "connections": [
+        {
+          "count": 1,
+          "state": "active",
+          "wait_event": null,
+          "wait_event_type": null
+        },
+        {
+          "count": 14,
+          "state": "idle",
+          "wait_event": "ClientRead",
+          "wait_event_type": "Client"
+        },
+        {
+          "count": 1,
+          "state": "idle",
+          "wait_event": "Extension",
+          "wait_event_type": "Extension"
+        },
+        {
+          "count": 1,
+          "state": null,
+          "wait_event": "Extension",
+          "wait_event_type": "Extension"
+        }
+      ],
+      "max_connections": "60",
+      "blocked_sessions": 0
+    }
+  }
+]

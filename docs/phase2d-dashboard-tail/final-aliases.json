@@ -1,0 +1,17 @@
+[
+  {
+    "alias": "staging.bunnywell.co.uk",
+    "deployment": "dpl_GofFrmu6EsMaLuXfaRs52a3QGRRE",
+    "url": "bunnywell-portal-ay2lvalwe-carl-gilbert-s-projects.vercel.app"
+  },
+  {
+    "alias": "portal.bunnywell.co.uk",
+    "deployment": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+    "url": "bunnywell-portal-dmms8oftq-carl-gilbert-s-projects.vercel.app"
+  },
+  {
+    "alias": "defects.bunnywell.co.uk",
+    "deployment": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+    "url": "bunnywell-portal-dmms8oftq-carl-gilbert-s-projects.vercel.app"
+  }
+]

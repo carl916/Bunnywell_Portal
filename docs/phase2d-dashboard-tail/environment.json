@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "commit": "805a08e6ff1543f5c5753afbe20527350c7b4db6",
+    "deployment": "dpl_GofFrmu6EsMaLuXfaRs52a3QGRRE",
+    "url": "bunnywell-portal-ay2lvalwe-carl-gilbert-s-projects.vercel.app",
+    "regions": [
+      "iad1"
+    ]
+  },
+  "previews": {
+    "a": {
+      "deployment": "dpl_EAC646BpZyqkLSFJP8ExTcCc4SoK",
+      "url": "bunnywell-portal-6anexmdtv-carl-gilbert-s-projects.vercel.app",
+      "commit": "0e2061d4275cf5589361948c0c072f5266da424a",
+      "regions": [
+        "iad1"
+      ]
+    },
+    "b": {
+      "deployment": "dpl_4mjb76sgFzSnCqdSoV4VVG2VGvxk",
+      "url": "bunnywell-portal-itw7tq7zq-carl-gilbert-s-projects.vercel.app",
+      "commit": "2e381451a185ce87b83ac80929a814168e4dc6ac",
+      "regions": [
+        "fra1"
+      ]
+    }
+  },
+  "diagnosticCommit": "c3ba5a77a152f2ced905e851fd36e7445ad4c7fd",
+  "inheritedPreviewKeys": [
+    "CRON_SECRET",
+    "DIGEST_APP_URL",
+    "DIGEST_EMAILS_ENABLED",
+    "DIGEST_FROM_EMAIL",
+    "NEXT_PUBLIC_PORTAL_ENV",
+    "NEXT_PUBLIC_SHOW_ENV_BANNER",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "RESEND_API_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY"
+  ],
+  "branchOnlyFlags": [
+    "SALES_PERF_DIAGNOSTICS",
+    "DASHBOARD_READ_DIAGNOSTICS",
+    "STAGING_WEB_VITALS"
+  ],
+  "notes": [
+    "No shared alias or project-wide setting changes.",
+    "Configuration-only experimental branches must not be merged.",
+    "Automatically created pre-flag builds were excluded.",
+    "Initial pilot had two US East samples before Frankfurt was READY; excluded from measured batches."
+  ]
+}
