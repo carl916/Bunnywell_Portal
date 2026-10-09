@@ -1,0 +1,145 @@
+{
+  "at": "2026-10-09T12:58:22.929Z",
+  "expectedSharedRegion": "iad1",
+  "checks": [
+    {
+      "target": "shared-staging",
+      "role": "admin",
+      "endpoint": "/api/dashboard",
+      "status": 200,
+      "region": "lhr1::iad1::rtb88-1791550684237-e9d140f53ba2",
+      "projectionHash": "66e6d3e6df2f8fee3197dcbace4bb57514227fbb2991fca63925252695c9168b"
+    },
+    {
+      "target": "shared-staging",
+      "role": "admin",
+      "endpoint": "/api/rentals/tenancies",
+      "status": 200,
+      "region": "lhr1::iad1::mbcsj-1791550688672-189f9bb83f73",
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "target": "shared-staging",
+      "role": "admin",
+      "endpoint": "/api/units/allocation",
+      "status": 200,
+      "region": "lhr1::iad1::944js-1791550689402-1551190b5a16",
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "target": "rollback",
+      "role": "admin",
+      "endpoint": "/api/dashboard",
+      "status": 200,
+      "region": "lhr1::iad1::dwnlp-1791550690184-de3558791f83",
+      "projectionHash": "6c55870daf6e0fcbbe0f002b17d62d710a2d7966ec1cce1d4d8061bc1665fa88"
+    },
+    {
+      "target": "rollback",
+      "role": "admin",
+      "endpoint": "/api/rentals/tenancies",
+      "status": 200,
+      "region": "lhr1::iad1::r8786-1791550693450-e2d97933fa83",
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "target": "rollback",
+      "role": "admin",
+      "endpoint": "/api/units/allocation",
+      "status": 200,
+      "region": "lhr1::iad1::gzsql-1791550694145-dca7bc874e73",
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "target": "shared-staging",
+      "role": "conveyancer",
+      "endpoint": "/api/sales/register",
+      "status": 200,
+      "region": "lhr1::iad1::d5d6k-1791550695300-b3a32f8e6182",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "target": "shared-staging",
+      "role": "conveyancer",
+      "endpoint": "/api/sales/legal",
+      "status": 200,
+      "region": "lhr1::iad1::d5d6k-1791550697024-4d85f7832a09",
+      "projectionHash": "cf02d3724404c8dd0ce8481c042a8281959273df2a4e7dd6db06ef2ad2c46f6a"
+    },
+    {
+      "target": "rollback",
+      "role": "conveyancer",
+      "endpoint": "/api/sales/register",
+      "status": 200,
+      "region": "lhr1::iad1::6dxbg-1791550697920-18e7f969039e",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "target": "rollback",
+      "role": "conveyancer",
+      "endpoint": "/api/sales/legal",
+      "status": 200,
+      "region": "lhr1::iad1::f9b6h-1791550699935-d2e4e2d68e4f",
+      "projectionHash": "cf02d3724404c8dd0ce8481c042a8281959273df2a4e7dd6db06ef2ad2c46f6a"
+    },
+    {
+      "target": "portal.bunnywell.co.uk",
+      "endpoint": "/api/rentals/tenancies",
+      "status": 401,
+      "region": "lhr1::iad1::dsnbn-1791550701058-9799573fc9bf",
+      "anonymous": true
+    },
+    {
+      "target": "defects.bunnywell.co.uk",
+      "endpoint": "/api/rentals/tenancies",
+      "status": 401,
+      "region": "lhr1::iad1::944js-1791550701975-4fe89acd0214",
+      "anonymous": true
+    }
+  ],
+  "before": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "after": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "unchanged": true
+}

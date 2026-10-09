@@ -1,0 +1,62 @@
+{
+  "admin/desktop/dashboard.cold": {
+    "a": {
+      "document": 38.624199999991106,
+      "jsCss": 217.99189999999362,
+      "firstData": 332.158649999983,
+      "lastData": 615.830449999994,
+      "visual": 1017.0687499999913,
+      "actionable": 3952.2035999999935,
+      "route": 2681.035
+    },
+    "b": {
+      "document": 33.04775000002701,
+      "jsCss": 212.16354999999749,
+      "firstData": 346.3011500000066,
+      "lastData": 608.4478500000187,
+      "visual": 1049.2914000000019,
+      "actionable": 2405.5153999999966,
+      "route": 1492.6599999999999
+    }
+  },
+  "conveyancer/desktop/sales.cold": {
+    "a": {
+      "document": 33.4732499999227,
+      "jsCss": 196.14929999993183,
+      "firstData": 350.9239499998512,
+      "lastData": 774.8256500000134,
+      "visual": 1031.187799999956,
+      "actionable": 2767.0880999999354,
+      "route": 1762.105
+    },
+    "b": {
+      "document": 36.80890000006184,
+      "jsCss": 196.97809999994934,
+      "firstData": 308.1897999999346,
+      "lastData": 649.232549999957,
+      "visual": 1021.2051999999676,
+      "actionable": 1548.0192999999272,
+      "route": 803.045
+    }
+  },
+  "admin/desktop/navigation.sales": {
+    "a": {
+      "document": null,
+      "jsCss": null,
+      "firstData": 30.80504999999539,
+      "lastData": 636.2740999999951,
+      "visual": 836.5086500000034,
+      "actionable": 854.7647000000143,
+      "route": null
+    },
+    "b": {
+      "document": null,
+      "jsCss": null,
+      "firstData": 31.18134999999529,
+      "lastData": 599.661300000007,
+      "visual": 840.4009499999811,
+      "actionable": 853.909100000019,
+      "route": null
+    }
+  }
+}

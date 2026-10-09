@@ -1,0 +1,196 @@
+{
+  "rows": [
+    {
+      "role": "admin",
+      "variant": "a",
+      "fixture": "102",
+      "status": 200,
+      "projectionHash": "9baa12d0ead6805b1a932818a1c7b93ff772a9663193928a0bb9d1c24f57a3d9",
+      "region": "lhr1::iad1::5nq2h-1791550685823-042259639ece",
+      "serverTiming": "route;dur=1663.44, auth;dur=327.42;desc=\"1 calls\", auth_end;dur=327.65;desc=\"offset from route entry\", db_read;dur=1779.59;desc=\"9 calls\", db_read_end;dur=1662.51;desc=\"offset from route entry\", db_mutation;dur=369.88;desc=\"1 calls\", db_mutation_end;dur=1184.30;desc=\"offset from route entry\""
+    },
+    {
+      "role": "admin",
+      "variant": "b",
+      "fixture": "102",
+      "status": 200,
+      "projectionHash": "9baa12d0ead6805b1a932818a1c7b93ff772a9663193928a0bb9d1c24f57a3d9",
+      "region": "lhr1::fra1::fzsvc-1791550687613-f04d557a58fa",
+      "serverTiming": "route;dur=414.31, auth;dur=36.76;desc=\"1 calls\", auth_end;dur=37.02;desc=\"offset from route entry\", db_read;dur=660.85;desc=\"9 calls\", db_read_end;dur=413.40;desc=\"offset from route entry\", db_mutation;dur=41.90;desc=\"1 calls\", db_mutation_end;dur=248.91;desc=\"offset from route entry\""
+    },
+    {
+      "role": "admin",
+      "variant": "a",
+      "fixture": "103",
+      "status": 200,
+      "projectionHash": "9f9abcfead7a114dc5c0d04eb6d4ebe8b7eaeb6cee90d352b116f40526f39cec",
+      "region": "lhr1::iad1::5nq2h-1791550688087-d487cd12bfaa",
+      "serverTiming": "route;dur=1332.59, auth;dur=128.95;desc=\"1 calls\", auth_end;dur=129.19;desc=\"offset from route entry\", db_read;dur=1528.70;desc=\"9 calls\", db_read_end;dur=1331.68;desc=\"offset from route entry\", db_mutation;dur=311.82;desc=\"1 calls\", db_mutation_end;dur=884.95;desc=\"offset from route entry\""
+    },
+    {
+      "role": "admin",
+      "variant": "b",
+      "fixture": "103",
+      "status": 200,
+      "projectionHash": "9f9abcfead7a114dc5c0d04eb6d4ebe8b7eaeb6cee90d352b116f40526f39cec",
+      "region": "lhr1::fra1::tgrmw-1791550689544-3c19db0b5d77",
+      "serverTiming": "route;dur=307.81, auth;dur=57.94;desc=\"1 calls\", auth_end;dur=58.17;desc=\"offset from route entry\", db_read;dur=471.03;desc=\"9 calls\", db_read_end;dur=306.79;desc=\"offset from route entry\", db_mutation;dur=49.03;desc=\"1 calls\", db_mutation_end;dur=182.03;desc=\"offset from route entry\""
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "fixture": "102",
+      "status": 200,
+      "projectionHash": "f31e96d593bdef9823af3bde01986bbb8491b683a0a7ae22a2b6bacc7b150c98",
+      "region": "lhr1::iad1::dsnbn-1791550697786-2bcc14532269",
+      "serverTiming": "route;dur=1222.13, auth;dur=315.71;desc=\"1 calls\", auth_end;dur=316.00;desc=\"offset from route entry\", db_read;dur=1456.87;desc=\"9 calls\", db_read_end;dur=1221.24;desc=\"offset from route entry\", db_mutation;dur=135.78;desc=\"1 calls\", db_mutation_end;dur=716.01;desc=\"offset from route entry\""
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "fixture": "102",
+      "status": 200,
+      "projectionHash": "f31e96d593bdef9823af3bde01986bbb8491b683a0a7ae22a2b6bacc7b150c98",
+      "region": "lhr1::fra1::qsgxv-1791550699169-986079d67e34",
+      "serverTiming": "route;dur=327.84, auth;dur=42.69;desc=\"1 calls\", auth_end;dur=43.00;desc=\"offset from route entry\", db_read;dur=575.35;desc=\"9 calls\", db_read_end;dur=326.92;desc=\"offset from route entry\", db_mutation;dur=37.95;desc=\"1 calls\", db_mutation_end;dur=170.42;desc=\"offset from route entry\""
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "fixture": "103",
+      "status": 200,
+      "projectionHash": "4df223c1894c784a5712c115127b25d213522efc88cdd87bcd87a48d5d831062",
+      "region": "lhr1::iad1::2m5x4-1791550699561-56cd6ddbb79e",
+      "serverTiming": "route;dur=929.70, auth;dur=115.57;desc=\"1 calls\", auth_end;dur=115.81;desc=\"offset from route entry\", db_read;dur=1369.89;desc=\"9 calls\", db_read_end;dur=928.72;desc=\"offset from route entry\", db_mutation;dur=125.75;desc=\"1 calls\", db_mutation_end;dur=476.91;desc=\"offset from route entry\""
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "fixture": "103",
+      "status": 200,
+      "projectionHash": "4df223c1894c784a5712c115127b25d213522efc88cdd87bcd87a48d5d831062",
+      "region": "lhr1::fra1::4lf4n-1791550700609-08dbdfbd129b",
+      "serverTiming": "route;dur=286.74, auth;dur=30.30;desc=\"1 calls\", auth_end;dur=30.52;desc=\"offset from route entry\", db_read;dur=431.93;desc=\"9 calls\", db_read_end;dur=285.85;desc=\"offset from route entry\", db_mutation;dur=54.36;desc=\"1 calls\", db_mutation_end;dur=190.39;desc=\"offset from route entry\""
+    }
+  ],
+  "access": [
+    {
+      "role": "admin",
+      "variant": "a",
+      "check": "role-denial",
+      "endpoint": "/api/sales/register",
+      "status": 403
+    },
+    {
+      "role": "admin",
+      "variant": "b",
+      "check": "role-denial",
+      "endpoint": "/api/sales/register",
+      "status": 403
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "check": "role-denial",
+      "endpoint": "/api/units/allocation",
+      "status": 403
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "check": "register-matches-caller-rls",
+      "scope": "all",
+      "rows": 134,
+      "status": 200
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "check": "register-matches-caller-rls",
+      "scope": "single",
+      "rows": 63,
+      "status": 200
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "check": "existing-inaccessible-building",
+      "result": "No inaccessible building fixture for this account; nonexistent-building denial covered separately"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "check": "role-denial",
+      "endpoint": "/api/units/allocation",
+      "status": 403
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "check": "register-matches-caller-rls",
+      "scope": "all",
+      "rows": 134,
+      "status": 200
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "check": "register-matches-caller-rls",
+      "scope": "single",
+      "rows": 63,
+      "status": 200
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "check": "existing-inaccessible-building",
+      "result": "No inaccessible building fixture for this account; nonexistent-building denial covered separately"
+    }
+  ],
+  "identicalLegalProjections": true,
+  "unchanged": true,
+  "before": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "after": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  }
+}

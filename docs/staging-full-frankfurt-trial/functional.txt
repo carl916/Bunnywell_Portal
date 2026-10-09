@@ -1,0 +1,139 @@
+[Archived output: machine-specific workspace paths replaced with <workspace>.]
+
+
+Running 79 tests using 1 worker
+
+(node:8700) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\conveyancer-sales-corrections.spec.ts:12:5 › authorised agent creates a draft, resumes, uploads, submits, corrects a return and receives developer approval (16.3s)
+  ok  2 tests\conveyancer-sales-corrections.spec.ts:74:5 › building seller conveyancer, single return control and read-only reservation guidance (1.7s)
+  ok  3 tests\conveyancer-sales-corrections.spec.ts:107:63 › admin has one working overview button on direct entry without unrelated reloads (2.1s)
+  ok  4 tests\conveyancer-sales-corrections.spec.ts:107:63 › developer has one working overview button on direct entry without unrelated reloads (1.8s)
+  ok  5 tests\conveyancer-sales-corrections.spec.ts:107:63 › sales_agent has one working overview button on direct entry without unrelated reloads (1.8s)
+  ok  6 tests\conveyancer-sales-loading.spec.ts:15:5 › first reads select the requested authorised unit, every attempt and all dependent rows (1.4s)
+  ok  7 tests\conveyancer-sales-loading.spec.ts:37:5 › unit selector and browser Back load the new unit and retain the register owner (1.4s)
+  ok  8 tests\conveyancer-sales-loading.spec.ts:53:46 › superseded file response cannot publish under the next selection (2.1s)
+  ok  9 tests\conveyancer-sales-loading.spec.ts:53:46 › superseded file failure cannot publish under the next selection (2.1s)
+  ok 10 tests\conveyancer-sales-loading.spec.ts:75:38 › required selected-unit read 401 blocks controls and Refresh recovers (1.3s)
+  ok 11 tests\conveyancer-sales-loading.spec.ts:75:38 › required selected-unit read 403 blocks controls and Refresh recovers (1.3s)
+  ok 12 tests\conveyancer-sales-loading.spec.ts:87:5 › direct URLs reject unknown and out-of-building units before detailed reads (1.4s)
+  ok 13 tests\conveyancer-sales-loading.spec.ts:100:5 › direct file and cross-building selection use each building's defaults and canonical unit order (1.1s)
+  ok 14 tests\conveyancer-sales-loading.spec.ts:120:5 › known unit-access revocation unmounts the file and excludes its controls (1.3s)
+  ok 15 tests\conveyancer-sales-loading.spec.ts:130:5 › legal mutation reconciles the selected attempt and invalidates the retained register once (1.9s)
+  ok 16 tests\conveyancer-sales-loading.spec.ts:145:48 › developer keeps building details and reuses them when opening another file (1.1s)
+  ok 17 tests\conveyancer-sales-loading.spec.ts:145:48 › admin keeps building details and reuses them when opening another file (1.1s)
+  ok 18 tests\conveyancer-sales.spec.ts:45:5 › one direct Sales register; no dashboard, finance, duplicate stage or broad data requests (1.8s)
+Register navigation requests: initial=1, after three returns=1
+  ok 19 tests\conveyancer-sales.spec.ts:59:5 › our team journey reaches the current document and both back paths preserve filters (1.9s)
+  ok 20 tests\conveyancer-sales.spec.ts:85:5 › other team journey shows developer review and the saved due date (1.1s)
+  ok 21 tests\conveyancer-sales.spec.ts:99:5 › a second colleague's fixture replacement appears on manual refresh; mentions do not clear work (1.2s)
+  ok 22 tests\conveyancer-sales.spec.ts:117:5 › search, stage, building and pagination use the full inventory with neutral records (1.2s)
+  ok 23 tests\conveyancer-sales.spec.ts:134:5 › unavailable action data retains base sales and disables incomplete filtering; revocation clears rows (1.4s)
+  ok 24 tests\conveyancer-sales.spec.ts:145:5 › phone and desktop retain readable rows, focus and navigation clearance (1.9s)
+  ok 25 tests\conveyancer-sales.spec.ts:158:5 › fresh visit resets responsibility; developer and agent layouts retain their workspaces (2.0s)
+  ok 26 tests\conveyancer-sales.spec.ts:170:5 › focus refresh keeps filters, skips fresh reads and adds no register polling (1.2s)
+Cached register return to populated frame: 12.0ms (200ms measurement target)
+  ok 27 tests\conveyancer-sales.spec.ts:183:5 › 60-second navigation expiry displays the complete cached register during a delayed refresh (1.4s)
+  ok 28 tests\conveyancer-sales.spec.ts:221:5 › focus and visibility use 15 seconds separately from navigation; connectivity revalidates (2.1s)
+  ok 29 tests\conveyancer-sales.spec.ts:238:5 › a mutation during a register request is followed by exactly one fresh request (2.0s)
+  ok 30 tests\conveyancer-sales.spec.ts:255:5 › failed navigation refresh retains dates but disables actions and safely suspends responsibility filtering (1.2s)
+  ok 31 tests\conveyancer-sales.spec.ts:271:38 › 401 without JSON clears the retained snapshot and returning cannot resurrect it (1.5s)
+  ok 32 tests\conveyancer-sales.spec.ts:271:38 › 403 without JSON clears the retained snapshot and returning cannot resurrect it (1.2s)
+  ok 33 tests\conveyancer-sales.spec.ts:281:5 › pagination survives both return paths with zero additional register requests (2.0s)
+  ok 34 tests\conveyancer-sales.spec.ts:295:7 › workflow success invalidates the unmounted register before reconciliation (2.0s)
+  ok 35 tests\conveyancer-sales.spec.ts:295:7 › workflow reconciliation-fails invalidates the unmounted register before reconciliation (2.0s)
+  ok 36 tests\conveyancer-sales.spec.ts:295:7 › workflow uncertain-response invalidates the unmounted register before reconciliation (1.9s)
+  ok 37 tests\conveyancer-sales.spec.ts:295:7 › workflow leave-before-reconciliation invalidates the unmounted register before reconciliation (2.0s)
+  ok 38 tests\conveyancer-sales.spec.ts:333:5 › All buildings membership changes discard the cache before the replacement response (1.2s)
+  ok 39 tests\conveyancer-sales.spec.ts:350:5 › building switch cancels an old response and never displays the previous building's snapshot (1.1s)
+  ok 40 tests\conveyancer-sales.spec.ts:368:5 › organisation and role changes clear retained register data (1.8s)
+  ok 41 tests\conveyancer-sales.spec.ts:379:5 › explicit portal Refresh while a sale is open refreshes the retained register regardless of age (1.8s)
+  ok 42 tests\conveyancer-sales.spec.ts:388:5 › logout from a sale discards its retained register and pending response (1.3s)
+  x  43 tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout (1.1s)
+(node:26980) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 44 tests\organisation-dashboard.spec.ts:25:5 › organisation work groups multiple tasks, keeps query context and refreshes without clearing team work (1.4s)
+  ok 45 tests\organisation-dashboard.spec.ts:44:5 › phone, tablet, desktop and narrow reflow retain readable controls with synthetic screenshots (2.6s)
+  ok 46 tests\organisation-dashboard.spec.ts:59:5 › a failed refresh retains an explicitly stale snapshot and does not announce all clear (1.1s)
+  ok 47 tests\organisation-dashboard.spec.ts:67:5 › sales-agent worklist remains on the Sales landing and direct task links select completion (1.3s)
+  ok 48 tests\organisation-dashboard.spec.ts:84:5 › pagination counts the full snapshot and scope resets filters (1.3s)
+  ok 49 tests\organisation-dashboard.spec.ts:97:5 › visible work polls once per minute, pauses hidden or inactive, and clears a revoked snapshot (1.3s)
+  ok 50 tests\organisation-dashboard.spec.ts:118:5 › dashboard skips operational media/history and snag drill-through selects its exact authorised record (1.5s)
+  ok 51 tests\sales-legal-workflow.spec.ts:5:5 › per-document approval, query, replacement history and locking keep sections 4–6 independent (3.6s)
+  ok 52 tests\sales-legal-workflow.spec.ts:40:5 › completion slots assign dropped PDFs by destination and independent upload leaves developer approval locked (2.4s)
+  ok 53 tests\sales-legal-workflow.spec.ts:57:5 › post-exchange deposit is locked before exchange, then records a full read-only receipt and audited correction (2.0s)
+  ok 54 tests\sales-legal-workflow.spec.ts:83:52 › developer views historical outstanding deposit but cannot record it (2.9s)
+  ok 55 tests\sales-legal-workflow.spec.ts:83:52 › sales_agent views historical outstanding deposit but cannot record it (1.5s)
+  ok 56 tests\sales-legal-workflow.spec.ts:90:54 › sales_agent sees issued outcomes and can request renewal only after expiry (1.7s)
+  ok 57 tests\sales-legal-workflow.spec.ts:90:54 › conveyancer sees issued outcomes and can request renewal only after expiry (2.1s)
+  ok 58 tests\sales-legal-workflow.spec.ts:107:5 › developer reviews exact recipients, confirms and preserves the sent authority (1.8s)
+  ok 59 tests\sales-legal-workflow.spec.ts:132:5 › missing recipient blocks email review and offers organisation settings (3.6s)
+  ok 60 tests\sales-legal-workflow.spec.ts:140:5 › agent can request authority; conveyancer confirms exchange only while authority is valid (5.5s)
+  ok 61 tests\sales-legal-workflow.spec.ts:150:5 › completion statement approval does not release keys; conveyancer legal confirmation does (1.7s)
+  ok 62 tests\sales-legal-workflow.spec.ts:171:5 › historical completion retains dates and actor names with no invented timestamp (1.2s)
+  ok 63 tests\sales-legal-workflow.spec.ts:180:56 › sales_agent requests notice authority while notice and later controls stay locked (1.3s)
+  ok 64 tests\sales-legal-workflow.spec.ts:180:56 › conveyancer requests notice authority while notice and later controls stay locked (1.2s)
+  ok 65 tests\sales-legal-workflow.spec.ts:194:5 › notice authority preview stays in Step 2, toggles accessibly and preserves failed sends (4.0s)
+  ok 66 tests\sales-legal-workflow.spec.ts:234:5 › developer reviews notice authority without a date and grants it directly (1.4s)
+  ok 67 tests\sales-legal-workflow.spec.ts:247:5 › notice form stages PDF, preserves a manual due date, retries failures and retains replacement history (3.5s)
+  ok 68 tests\sales-legal-workflow.spec.ts:272:5 › Exchange remains selected after its final action when initially opened from the sale status (1.1s)
+  ok 69 tests\sales-legal-workflow.spec.ts:282:5 › Completion remains selected after legal completion when initially opened from the sale status (1.2s)
+  ok 70 tests\sales-loading.spec.ts:8:5 › pending defaults allow sale/version reads but do not expose a complete workspace (1.1s)
+  ok 71 tests\sales-loading.spec.ts:24:5 › switching sale while an old concurrent snapshot loads retains the new selection and figures (1.4s)
+  ok 72 tests\sales-loading.spec.ts:58:5 › failed version read keeps the workspace incomplete and an explicit retry recovers (1.2s)
+  ok 73 tests\sales-loading.spec.ts:72:5 › staging without the name lookup still loads the Sales figures (1.0s)
+  ok 74 tests\sales-loading.spec.ts:84:5 › Sales displays the underlying database error for failed required queries (1.0s)
+  ok 75 tests\sales-stage-tasks.spec.ts:10:5 › Reservation remains selected after approval and unlocks Exchange (1.2s)
+  ok 76 tests\sales-stage-tasks.spec.ts:27:5 › reservation and exchange show their saved milestones, rejection and completed history (2.7s)
+  ok 77 tests\sales-stage-tasks.spec.ts:65:5 › completion survives reload through upload, query, replacement, approval and recording (4.1s)
+  ok 78 tests\sales-stage-tasks.spec.ts:126:5 › task cards use available width without overflow at desktop, tablet and mobile sizes (2.9s)
+  x  79 tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts (45ms)
+
+
+  1) tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "focus": 2,
+        "online": 1,
+        "portal-work-changed": 1,
+        "sale-activity-changed": 1,
+    -   "visibilitychange": 10,
+    +   "visibilitychange": 13,
+      }
+
+      422 |     await page.getByRole("button", { name: /Back to sales overview/ }).click();
+      423 |     await expect(page.getByLabel("Action with", { exact: true })).toBeEnabled();
+    > 424 |     expect(await counts()).toEqual(before);
+          |                            ^
+      425 |   }
+      426 |   expect(f.reads()).toBe(reads);
+      427 |   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+        at <workspace>\tests\conveyancer-sales.spec.ts:424:28
+
+    Error Context: test-results\full-region-functional\conveyancer-sales-repeated-a0928--and-removes-them-on-logout\error-context.md
+
+  2) tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts
+
+    Error: Missing NEXT_PUBLIC_SUPABASE_URL
+
+      4 | function requiredEnv(name: string) {
+      5 |   const value = process.env[name];
+    > 6 |   if (!value) throw new Error(`Missing ${name}`);
+        |                     ^
+      7 |   return value;
+      8 | }
+      9 |
+        at requiredEnv (<workspace>\tests\unit-allocation-runtime.spec.ts:6:21)
+        at <workspace>\tests\unit-allocation-runtime.spec.ts:77:5
+
+    Error Context: test-results\full-region-functional\unit-allocation-runtime-ne-1950f-eaningful-sales-work-starts\error-context.md
+
+  2 failed
+    tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+    tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts
+  77 passed (2.6m)
