@@ -1,0 +1,59 @@
+[Archived output: machine-specific workspace paths replaced with <workspace>.]
+
+
+Running 2 tests using 1 worker
+
+(node:26312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout (1.2s)
+(node:23996) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts (63ms)
+
+
+  1) tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "focus": 2,
+        "online": 1,
+        "portal-work-changed": 1,
+        "sale-activity-changed": 1,
+    -   "visibilitychange": 10,
+    +   "visibilitychange": 13,
+      }
+
+      422 |     await page.getByRole("button", { name: /Back to sales overview/ }).click();
+      423 |     await expect(page.getByLabel("Action with", { exact: true })).toBeEnabled();
+    > 424 |     expect(await counts()).toEqual(before);
+          |                            ^
+      425 |   }
+      426 |   expect(f.reads()).toBe(reads);
+      427 |   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+        at <workspace>\tests\conveyancer-sales.spec.ts:424:28
+
+    Error Context: test-results\full-region-functional\conveyancer-sales-repeated-a0928--and-removes-them-on-logout\error-context.md
+
+  2) tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts
+
+    Error: Missing NEXT_PUBLIC_SUPABASE_URL
+
+      4 | function requiredEnv(name: string) {
+      5 |   const value = process.env[name];
+    > 6 |   if (!value) throw new Error(`Missing ${name}`);
+        |                     ^
+      7 |   return value;
+      8 | }
+      9 |
+        at requiredEnv (<workspace>\tests\unit-allocation-runtime.spec.ts:6:21)
+        at <workspace>\tests\unit-allocation-runtime.spec.ts:77:5
+
+    Error Context: test-results\full-region-functional\unit-allocation-runtime-ne-1950f-eaningful-sales-work-starts\error-context.md
+
+  2 failed
+    tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+    tests\unit-allocation-runtime.spec.ts:75:5 › new-unit setup baseline remains allocatable until meaningful sales work starts

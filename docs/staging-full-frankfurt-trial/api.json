@@ -1,0 +1,2808 @@
+{
+  "samples": [
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 3512.2896,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::mx8kf-1791548260775-a7a9cb73af1e",
+      "serverTiming": "route;dur=2990.42, auth;dur=127.86;desc=\"1 calls\", auth_end;dur=128.12;desc=\"offset from route entry\", db_read;dur=7172.49;desc=\"29 calls\", db_read_end;dur=2945.34;desc=\"offset from route entry\"",
+      "projectionHash": "96e3928d1229bb22c4c77cd5703cb0e0aa20eb9eaec01d4d259100c9fdc8018d",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 3239.4596,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::hnxwv-1791548264034-92e97ceca050",
+      "serverTiming": "route;dur=3027.61, auth;dur=133.86;desc=\"1 calls\", auth_end;dur=134.14;desc=\"offset from route entry\", db_read;dur=7365.54;desc=\"28 calls\", db_read_end;dur=2988.85;desc=\"offset from route entry\"",
+      "projectionHash": "ce8076e13bcff3c81914673465716333cf0bc06dbd365d7cb6141bad2bfaf635",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 714.2044999999998,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::czmzd-1791548267278-1fa2301e9831",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 589.4530999999988,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::6fhvs-1791548268073-7c4fdf42ca99",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 742.4699,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::wmmgt-1791548268577-4f626c826639",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1601.3208000000013,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::zpmh6-1791548269358-4c7cec0e0009",
+      "serverTiming": "route;dur=1430.54, auth;dur=54.02;desc=\"1 calls\", auth_end;dur=54.60;desc=\"offset from route entry\", db_read;dur=4444.99;desc=\"29 calls\", db_read_end;dur=1373.90;desc=\"offset from route entry\"",
+      "projectionHash": "335edee060944f170b12d845112ea6e26389be212144ce315e9eb505c19040b4",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1230.4871999999996,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::cmbbd-1791548270926-5046acceb854",
+      "serverTiming": "route;dur=1160.05, auth;dur=17.60;desc=\"1 calls\", auth_end;dur=18.46;desc=\"offset from route entry\", db_read;dur=3097.63;desc=\"28 calls\", db_read_end;dur=1119.77;desc=\"offset from route entry\"",
+      "projectionHash": "d18a28b349ed9909494e3df6df273a561e22611af51f4907bf0ffee50ec79598",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 166.22560000000158,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::pbnb9-1791548272167-a0672fb02c2a",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 183.52089999999953,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::vfjtm-1791548272343-1a8457e9a459",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 230.0018999999993,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::pbnb9-1791548272534-e6e91a898ee2",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1391.9979999999996,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::pbnb9-1791548272755-a6f0c69c2ef5",
+      "serverTiming": "route;dur=1310.59, auth;dur=24.54;desc=\"1 calls\", auth_end;dur=24.89;desc=\"offset from route entry\", db_read;dur=3686.06;desc=\"29 calls\", db_read_end;dur=1258.66;desc=\"offset from route entry\"",
+      "projectionHash": "d8e5463c75cb59ebbced69f1a0d2731b63ec55f699db0732327d98cfccc47842",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1261.4648000000016,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::xktpz-1791548274148-e178e9d49f96",
+      "serverTiming": "route;dur=1189.50, auth;dur=27.36;desc=\"1 calls\", auth_end;dur=27.78;desc=\"offset from route entry\", db_read;dur=3022.50;desc=\"28 calls\", db_read_end;dur=1145.79;desc=\"offset from route entry\"",
+      "projectionHash": "6cf1e935f960d5561dac67d46b17f72a525bacf0c35c25eddb67d3bea3304be3",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 139.58039999999892,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::rnkg4-1791548275417-a874ab4c3fe1",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 171.0054999999993,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::v8jd6-1791548275560-930927eaf064",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 157.20370000000185,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::rnkg4-1791548275735-47d79871c511",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 3184.5462000000007,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::8r6tx-1791548275925-5c9212ae87df",
+      "serverTiming": "route;dur=2886.60, auth;dur=327.21;desc=\"1 calls\", auth_end;dur=327.51;desc=\"offset from route entry\", db_read;dur=6608.34;desc=\"29 calls\", db_read_end;dur=2841.47;desc=\"offset from route entry\"",
+      "projectionHash": "3e00352ea93c5a1ef7d230eac1800aa832b699b96e0260dae73c07da30f33e3d",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2597.2862000000023,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::8r6tx-1791548279082-1dc3c35e5c87",
+      "serverTiming": "route;dur=2400.09, auth;dur=111.59;desc=\"1 calls\", auth_end;dur=111.86;desc=\"offset from route entry\", db_read;dur=5965.89;desc=\"28 calls\", db_read_end;dur=2360.25;desc=\"offset from route entry\"",
+      "projectionHash": "8999755b7afc47ab9bd94602cc5e9966b6b40451a2b22c7b7aff91751ae0a5f7",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 562.5010000000002,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::qwf7x-1791548281689-458e467176c2",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 512.2489000000023,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::jjzdt-1791548282261-2088e6beb8ec",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 550.9400999999998,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::rw7d2-1791548282774-066574aae8ca",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2694.5995999999977,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::xfpbv-1791548283311-208ab5d1c936",
+      "serverTiming": "route;dur=2492.74, auth;dur=115.12;desc=\"1 calls\", auth_end;dur=115.41;desc=\"offset from route entry\", db_read;dur=6597.43;desc=\"29 calls\", db_read_end;dur=2448.60;desc=\"offset from route entry\"",
+      "projectionHash": "4a568d446979d4c7224eb5337b728a09cec2ae0789dd46878a7cdee6a46df8f7",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2396.5803000000014,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::h2nmp-1791548286024-c1b498db89d6",
+      "serverTiming": "route;dur=2184.90, auth;dur=119.03;desc=\"1 calls\", auth_end;dur=119.36;desc=\"offset from route entry\", db_read;dur=5675.51;desc=\"28 calls\", db_read_end;dur=2141.74;desc=\"offset from route entry\"",
+      "projectionHash": "87d8872ae5175f0e37a8663354101c1072f0d792a8d9ee38fe7a2c4a5057223b",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 497.27240000000165,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::h2nmp-1791548288420-791c85b666ad",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 707.3686999999991,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::tvgp9-1791548288925-3212a2e8a1d3",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 484.5966000000044,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::v6bzk-1791548289622-2a5290142971",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1867.7112999999954,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::9gqgg-1791548290174-4e5bf43e64bb",
+      "serverTiming": "route;dur=1708.49, auth;dur=97.84;desc=\"1 calls\", auth_end;dur=98.13;desc=\"offset from route entry\", db_read;dur=4556.00;desc=\"29 calls\", db_read_end;dur=1662.44;desc=\"offset from route entry\"",
+      "projectionHash": "9780030e6e34b389f1361b1f70d4ca152d382f789747c27f43513d7cdc12fd24",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1355.7922000000035,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::9gqgg-1791548291999-c2d75af75316",
+      "serverTiming": "route;dur=1271.19, auth;dur=31.79;desc=\"1 calls\", auth_end;dur=32.20;desc=\"offset from route entry\", db_read;dur=3618.56;desc=\"28 calls\", db_read_end;dur=1232.59;desc=\"offset from route entry\"",
+      "projectionHash": "7ae456ea4dfb5d90276459765d6a5ea7d5834092b951f86d296c934835e93349",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 199.15879999999743,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::b2977-1791548293364-5cddae9fc914",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 219.60050000000047,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::b2977-1791548293559-38c7fd94ee41",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 210.53029999999853,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::cdp5c-1791548293774-8bcc7a02be5d",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1443.4948999999979,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::cmg96-1791548293988-f5b652e9c236",
+      "serverTiming": "route;dur=1364.67, auth;dur=78.84;desc=\"1 calls\", auth_end;dur=79.18;desc=\"offset from route entry\", db_read;dur=3790.73;desc=\"29 calls\", db_read_end;dur=1318.56;desc=\"offset from route entry\"",
+      "projectionHash": "8ee188c24eeb43a54577c4fe2277e521b5e22c899ff1748cb17cf114a6ad8c21",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1265.1114000000016,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::cmbbd-1791548295433-2b225b96831f",
+      "serverTiming": "route;dur=1187.26, auth;dur=34.17;desc=\"1 calls\", auth_end;dur=34.52;desc=\"offset from route entry\", db_read;dur=3326.28;desc=\"28 calls\", db_read_end;dur=1144.68;desc=\"offset from route entry\"",
+      "projectionHash": "df3e37e655be1b6b3af658872a32a89460680e8b0ca7851b0f0d1ea9315048e4",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 225.60580000000482,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::9gqgg-1791548296712-5e0f49b02431",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 194.58299999999872,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::l5rcp-1791548296949-13ed360e93b6",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 196.79940000000352,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::vt7j6-1791548297124-0da1dc1e3498",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2750.4735999999975,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::f5x2x-1791548297373-82fa440c6436",
+      "serverTiming": "route;dur=2446.37, auth;dur=164.07;desc=\"1 calls\", auth_end;dur=164.37;desc=\"offset from route entry\", db_read;dur=6582.90;desc=\"29 calls\", db_read_end;dur=2401.22;desc=\"offset from route entry\"",
+      "projectionHash": "b353d979076a1a4f8bf99e5dabdc3cd37c955847be224e1fda73a8129dea96ea",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2470.4925999999978,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::rjfnh-1791548300083-7a1d696ec0e1",
+      "serverTiming": "route;dur=2255.41, auth;dur=110.89;desc=\"1 calls\", auth_end;dur=111.16;desc=\"offset from route entry\", db_read;dur=5946.22;desc=\"28 calls\", db_read_end;dur=2217.03;desc=\"offset from route entry\"",
+      "projectionHash": "c84edbbb8a865c74976e8d19cf690935c89b7d7c7839b5a6404b02c14c4a21f8",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 489.0702999999994,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::f5x2x-1791548302561-f7bd0093bfbd",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 492.9016000000047,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::f5x2x-1791548303052-7d250d9ee529",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 768.3652000000002,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::mxl75-1791548303547-9723e3c09384",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2780.0330999999933,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::ndbx9-1791548304314-25a4bbf44548",
+      "serverTiming": "route;dur=2561.70, auth;dur=113.82;desc=\"1 calls\", auth_end;dur=114.15;desc=\"offset from route entry\", db_read;dur=6378.79;desc=\"29 calls\", db_read_end;dur=2517.21;desc=\"offset from route entry\"",
+      "projectionHash": "3efd40b49a631ac2b7924c33ad9ff792b34490a9c663d7a392af14c7b02b4e5d",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2304.6826,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::jpq59-1791548307095-511cd252c87d",
+      "serverTiming": "route;dur=2097.08, auth;dur=113.07;desc=\"1 calls\", auth_end;dur=113.42;desc=\"offset from route entry\", db_read;dur=5642.99;desc=\"28 calls\", db_read_end;dur=2058.25;desc=\"offset from route entry\"",
+      "projectionHash": "b8d6a101b4f1f3e2f891daf9a74c1301e9f431743b6a50a76e168aba57c4f01a",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 506.04060000000027,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::jpq59-1791548309404-d7607252485d",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 516.1304000000018,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::jpq59-1791548309914-2c2039347003",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 545.8963999999978,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::jpq59-1791548310427-8f0a5b95d481",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1546.5697,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::czmzd-1791548311011-193f5bbcb1e9",
+      "serverTiming": "route;dur=1422.41, auth;dur=75.77;desc=\"1 calls\", auth_end;dur=76.11;desc=\"offset from route entry\", db_read;dur=4125.27;desc=\"29 calls\", db_read_end;dur=1361.79;desc=\"offset from route entry\"",
+      "projectionHash": "664770b9438ea7241ee04de6ad7f5a5bf244f1cd76473f9fd1a2cca4cf592353",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1326.5270999999993,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::5bh9t-1791548312540-a4fb9dce5f5c",
+      "serverTiming": "route;dur=1236.32, auth;dur=19.42;desc=\"1 calls\", auth_end;dur=19.68;desc=\"offset from route entry\", db_read;dur=3286.21;desc=\"28 calls\", db_read_end;dur=1196.66;desc=\"offset from route entry\"",
+      "projectionHash": "03d5669a8d6707d1b51dfedeec6e88367a75226a6f2897c9608d3b3635aa6ac1",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 149.8643000000011,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::5bh9t-1791548313860-8dc64a3dc746",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 148.49409999999625,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::kxsd2-1791548314012-a7cbf96cc804",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 189.36270000000513,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::z5zvx-1791548314171-5fc1fc17dce7",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1241.7880000000005,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::v7kjc-1791548314364-f69277930a19",
+      "serverTiming": "route;dur=1145.88, auth;dur=17.80;desc=\"1 calls\", auth_end;dur=18.06;desc=\"offset from route entry\", db_read;dur=3290.60;desc=\"29 calls\", db_read_end;dur=1100.62;desc=\"offset from route entry\"",
+      "projectionHash": "57c7059a172e77a54eb7f3942fd8b4145e4e316612ed93a41ae7fb6597eed347",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1193.1915000000008,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::ldg76-1791548315596-457296c52510",
+      "serverTiming": "route;dur=1107.55, auth;dur=29.04;desc=\"1 calls\", auth_end;dur=29.61;desc=\"offset from route entry\", db_read;dur=2909.12;desc=\"28 calls\", db_read_end;dur=1067.49;desc=\"offset from route entry\"",
+      "projectionHash": "7dc082e1a0752f369269b8c4f5b6f9fc403ce451dc82c9819fad4e4e926ba76e",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 141.0439999999944,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::ldg76-1791548316806-08a622320065",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 224.44200000000274,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::vfjtm-1791548316951-da7769c76890",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 176.4910000000018,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::ldg76-1791548317166-490bfe4ba013",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2935.874100000001,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::ndbx9-1791548317371-d7979aa29a01",
+      "serverTiming": "route;dur=2704.75, auth;dur=131.21;desc=\"1 calls\", auth_end;dur=131.53;desc=\"offset from route entry\", db_read;dur=7106.81;desc=\"29 calls\", db_read_end;dur=2660.62;desc=\"offset from route entry\"",
+      "projectionHash": "621785e77c6b57df8a4e1ba20ad067c06cb30ec9f8234e91fdf14d312b54e340",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 3000.325599999989,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::ndbx9-1791548320284-e7b6c09c2d4a",
+      "serverTiming": "route;dur=2775.31, auth;dur=111.24;desc=\"1 calls\", auth_end;dur=111.51;desc=\"offset from route entry\", db_read;dur=6931.00;desc=\"28 calls\", db_read_end;dur=2734.38;desc=\"offset from route entry\"",
+      "projectionHash": "da5f905d1f4bdaf4e8c2d6a18b2bfbc2b14a236596299db6c682680b249d99ec",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 678.5227999999915,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::8l6vm-1791548323295-569f31ecad44",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 537.3686000000016,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::8l6vm-1791548323978-c5fb43565047",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 719.9002000000037,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::8l6vm-1791548324508-48f092f1aa60",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2835.386400000003,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::mldjq-1791548325244-65313e67b6e6",
+      "serverTiming": "route;dur=2577.70, auth;dur=121.16;desc=\"1 calls\", auth_end;dur=121.45;desc=\"offset from route entry\", db_read;dur=6569.30;desc=\"29 calls\", db_read_end;dur=2530.71;desc=\"offset from route entry\"",
+      "projectionHash": "0c1f97b811d3c98010a9bd8b4fc2c41f5b14ff16b188ad96a9e698eef65a0466",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2322.6947000000073,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::ndbx9-1791548328076-37a066281475",
+      "serverTiming": "route;dur=2121.43, auth;dur=110.38;desc=\"1 calls\", auth_end;dur=110.66;desc=\"offset from route entry\", db_read;dur=5977.55;desc=\"28 calls\", db_read_end;dur=2077.85;desc=\"offset from route entry\"",
+      "projectionHash": "6d747b8db865a47cf822acf79565750bed73bcb59488817003947f3e35299527",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 544.2223999999987,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::gtz2p-1791548330408-f47ff14d2a68",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 713.2033999999985,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::gtz2p-1791548330951-90821e920841",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 538.2488000000012,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::6sbqr-1791548331670-f1a6220ba733",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1675.9869999999937,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::hcbxf-1791548332232-0fae56e41227",
+      "serverTiming": "route;dur=1530.33, auth;dur=44.97;desc=\"1 calls\", auth_end;dur=45.22;desc=\"offset from route entry\", db_read;dur=4071.09;desc=\"29 calls\", db_read_end;dur=1484.64;desc=\"offset from route entry\"",
+      "projectionHash": "07f263d1b6e47843f8f82a0cfaa184789f3182d80b45ea6a97bc59c1e1cdd037",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1375.5550999999978,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::bngwq-1791548333880-0be7d2b39d5d",
+      "serverTiming": "route;dur=1297.26, auth;dur=19.53;desc=\"1 calls\", auth_end;dur=19.78;desc=\"offset from route entry\", db_read;dur=3418.67;desc=\"28 calls\", db_read_end;dur=1258.09;desc=\"offset from route entry\"",
+      "projectionHash": "21f814e2908b5c84159770479786cea23457197c90ead61670340e568d7be0b7",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 189.4927999999927,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::bkr97-1791548335266-347b06eeb7c3",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 208.84120000000985,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::8rbbh-1791548335451-c605f04ba87b",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 249.3539000000019,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::bkr97-1791548335659-428310dbbded",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 1467.5777999999991,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::fra1::bkr97-1791548335924-e19637bd2795",
+      "serverTiming": "route;dur=1382.44, auth;dur=18.91;desc=\"1 calls\", auth_end;dur=19.21;desc=\"offset from route entry\", db_read;dur=3958.60;desc=\"29 calls\", db_read_end;dur=1337.66;desc=\"offset from route entry\"",
+      "projectionHash": "49d74894fb616b8d32645f37e56049331cb570a70552b282463a81f5fe2a1512",
+      "sourceStates": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 1349.1680000000051,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::fra1::w4l59-1791548337417-e32b63369995",
+      "serverTiming": "route;dur=1200.97, auth;dur=19.70;desc=\"1 calls\", auth_end;dur=20.03;desc=\"offset from route entry\", db_read;dur=3211.57;desc=\"28 calls\", db_read_end;dur=1162.62;desc=\"offset from route entry\"",
+      "projectionHash": "c6b069efa23368f2b0b563bd4b0d7c524f2216c1fc5960c3eda97cce9d78e3ac",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 164.59000000001106,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::fra1::6sbqr-1791548338737-8fc928742aba",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 245.6938999999984,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::fra1::w4l59-1791548338901-5325f17a4fa4",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 193.34389999999257,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::fra1::lh68z-1791548339152-44812f161fa4",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "all",
+      "durationMs": 2877.747100000008,
+      "bytes": 286763,
+      "status": 200,
+      "region": "lhr1::iad1::hczgb-1791548339375-344670860c40",
+      "serverTiming": "route;dur=2643.80, auth;dur=133.69;desc=\"1 calls\", auth_end;dur=133.98;desc=\"offset from route entry\", db_read;dur=6667.03;desc=\"29 calls\", db_read_end;dur=2599.14;desc=\"offset from route entry\"",
+      "projectionHash": "a3018110eddef2236e03beebc7724a9dac2de00742aafa6328b03925e3425229",
+      "sourceStates": [
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/dashboard",
+      "scope": "single",
+      "durationMs": 2906.6677999999956,
+      "bytes": 274844,
+      "status": 200,
+      "region": "lhr1::iad1::hczgb-1791548342232-4eb3e1d33670",
+      "serverTiming": "route;dur=2700.58, auth;dur=113.71;desc=\"1 calls\", auth_end;dur=114.12;desc=\"offset from route entry\", db_read;dur=6231.17;desc=\"28 calls\", db_read_end;dur=2660.43;desc=\"offset from route entry\"",
+      "projectionHash": "5b4c98629078b165e3eeceb2bcc965ae505b660f8b3dab63f750524a871a4509",
+      "sourceStates": [
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        }
+      ]
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/rentals/tenancies",
+      "scope": "default",
+      "durationMs": 722.483899999992,
+      "bytes": 28558,
+      "status": 200,
+      "region": "lhr1::iad1::x89jv-1791548345143-0f68eff77488",
+      "serverTiming": null,
+      "projectionHash": "15928c49c7f54fde69d0446504dcbabd248e07be0939835741c3a3aa3e978f8c"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/rentals/rent-risk",
+      "scope": "default",
+      "durationMs": 689.6263999999937,
+      "bytes": 26720,
+      "status": 200,
+      "region": "lhr1::iad1::wt859-1791548345865-c5c9adb91d66",
+      "serverTiming": null,
+      "projectionHash": "686d0cb4ee5a284264514835376d0870802f0af1736870665605ef5df2d1c734"
+    },
+    {
+      "role": "admin",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/units/allocation",
+      "scope": "default",
+      "durationMs": 526.3205000000016,
+      "bytes": 11196,
+      "status": 200,
+      "region": "lhr1::iad1::wt859-1791548346570-4edd1960a662",
+      "serverTiming": null,
+      "projectionHash": "5bf55d14d2fde73c90b22964d3f1aa2ff828fda376c3ad770d187877cb72d8fa"
+    },
+    {
+      "role": "conveyancer",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1838.3620999999985,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::gp9rr-1791548348043-7ed2f8629691",
+      "serverTiming": "route;dur=1594.43, auth;dur=113.41;desc=\"1 calls\", auth_end;dur=113.81;desc=\"offset from route entry\", db_read;dur=2591.62;desc=\"16 calls\", db_read_end;dur=1553.54;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 0,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1992.689400000003,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::gp9rr-1791548349873-4a779dbf70a3",
+      "serverTiming": "route;dur=1849.86, auth;dur=113.10;desc=\"1 calls\", auth_end;dur=113.58;desc=\"offset from route entry\", db_read;dur=2753.47;desc=\"16 calls\", db_read_end;dur=1817.87;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 868.8464999999997,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::g6ggr-1791548351893-3a349703a804",
+      "serverTiming": "route;dur=761.63, auth;dur=60.03;desc=\"1 calls\", auth_end;dur=60.50;desc=\"offset from route entry\", db_read;dur=1087.44;desc=\"16 calls\", db_read_end;dur=721.23;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 0,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 758.2504000000044,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::cmbbd-1791548352725-b2b384e3979d",
+      "serverTiming": "route;dur=705.64, auth;dur=48.27;desc=\"1 calls\", auth_end;dur=48.73;desc=\"offset from route entry\", db_read;dur=1031.85;desc=\"16 calls\", db_read_end;dur=673.54;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 855.1052000000054,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::897kr-1791548353504-217658dfa2da",
+      "serverTiming": "route;dur=731.88, auth;dur=26.29;desc=\"1 calls\", auth_end;dur=26.94;desc=\"offset from route entry\", db_read;dur=1130.99;desc=\"16 calls\", db_read_end;dur=693.06;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 1,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 960.6478000000061,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::zrff5-1791548354346-970671c96608",
+      "serverTiming": "route;dur=896.32, auth;dur=24.34;desc=\"1 calls\", auth_end;dur=24.79;desc=\"offset from route entry\", db_read;dur=1271.45;desc=\"16 calls\", db_read_end;dur=865.28;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1990.912599999996,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::nxx7v-1791548355303-88fb60a99e07",
+      "serverTiming": "route;dur=1769.67, auth;dur=115.92;desc=\"1 calls\", auth_end;dur=116.20;desc=\"offset from route entry\", db_read;dur=2904.11;desc=\"16 calls\", db_read_end;dur=1723.28;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 1,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1643.1399999999994,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::b4mr8-1791548357304-22c098be8af6",
+      "serverTiming": "route;dur=1516.53, auth;dur=109.59;desc=\"1 calls\", auth_end;dur=110.01;desc=\"offset from route entry\", db_read;dur=2454.11;desc=\"16 calls\", db_read_end;dur=1470.59;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1771.3135000000038,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::b4mr8-1791548358940-b13bc7599364",
+      "serverTiming": "route;dur=1577.85, auth;dur=110.83;desc=\"1 calls\", auth_end;dur=111.19;desc=\"offset from route entry\", db_read;dur=2472.48;desc=\"16 calls\", db_read_end;dur=1536.79;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 2,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1648.1205999999947,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::897kr-1791548360716-3af8062f7dcc",
+      "serverTiming": "route;dur=1527.36, auth;dur=111.69;desc=\"1 calls\", auth_end;dur=111.98;desc=\"offset from route entry\", db_read;dur=2429.55;desc=\"16 calls\", db_read_end;dur=1483.12;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1046.5236000000004,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::z47fg-1791548362429-f1f4ed559cff",
+      "serverTiming": "route;dur=841.23, auth;dur=50.90;desc=\"1 calls\", auth_end;dur=51.19;desc=\"offset from route entry\", db_read;dur=1343.86;desc=\"16 calls\", db_read_end;dur=797.96;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 2,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 706.8654000000097,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::ndbx9-1791548363421-4ea26c06bca8",
+      "serverTiming": "route;dur=637.68, auth;dur=38.04;desc=\"1 calls\", auth_end;dur=38.40;desc=\"offset from route entry\", db_read;dur=981.23;desc=\"16 calls\", db_read_end;dur=601.98;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 754.4749999999913,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::ndbx9-1791548364125-c25eeb7ff546",
+      "serverTiming": "route;dur=679.79, auth;dur=22.82;desc=\"1 calls\", auth_end;dur=23.14;desc=\"offset from route entry\", db_read;dur=1079.26;desc=\"16 calls\", db_read_end;dur=627.53;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 3,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 685.1146000000008,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::5bh9t-1791548364929-87d27c805c4b",
+      "serverTiming": "route;dur=554.91, auth;dur=18.08;desc=\"1 calls\", auth_end;dur=18.38;desc=\"offset from route entry\", db_read;dur=865.47;desc=\"16 calls\", db_read_end;dur=509.65;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1673.7121999999945,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::7lwj5-1791548365564-945cb6cf7483",
+      "serverTiming": "route;dur=1467.12, auth;dur=109.02;desc=\"1 calls\", auth_end;dur=109.34;desc=\"offset from route entry\", db_read;dur=2392.75;desc=\"16 calls\", db_read_end;dur=1415.64;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 3,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 2008.9902000000002,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::6fhvs-1791548367242-561ea629993f",
+      "serverTiming": "route;dur=1841.19, auth;dur=114.77;desc=\"1 calls\", auth_end;dur=115.04;desc=\"offset from route entry\", db_read;dur=2800.29;desc=\"16 calls\", db_read_end;dur=1796.33;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1864.4087999999902,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::6fhvs-1791548369275-74da85b85fe8",
+      "serverTiming": "route;dur=1598.21, auth;dur=106.14;desc=\"1 calls\", auth_end;dur=106.49;desc=\"offset from route entry\", db_read;dur=2506.93;desc=\"16 calls\", db_read_end;dur=1559.60;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 4,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1500.6645999999892,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::vt7j6-1791548371109-c5a3a88167d5",
+      "serverTiming": "route;dur=1383.12, auth;dur=114.81;desc=\"1 calls\", auth_end;dur=115.15;desc=\"offset from route entry\", db_read;dur=2282.43;desc=\"16 calls\", db_read_end;dur=1351.28;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 995.8273999999947,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::bngwq-1791548372650-cf877221a39f",
+      "serverTiming": "route;dur=883.60, auth;dur=55.33;desc=\"1 calls\", auth_end;dur=55.65;desc=\"offset from route entry\", db_read;dur=1297.19;desc=\"16 calls\", db_read_end;dur=844.72;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 4,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1147.6497999999992,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::bngwq-1791548373613-98e447964e6c",
+      "serverTiming": "route;dur=1086.68, auth;dur=30.05;desc=\"1 calls\", auth_end;dur=30.50;desc=\"offset from route entry\", db_read;dur=1283.10;desc=\"16 calls\", db_read_end;dur=1054.43;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 695.9513000000006,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::v6bzk-1791548374764-314ce05bcb30",
+      "serverTiming": "route;dur=624.96, auth;dur=33.38;desc=\"1 calls\", auth_end;dur=33.65;desc=\"offset from route entry\", db_read;dur=978.52;desc=\"16 calls\", db_read_end;dur=586.66;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 5,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 654.3690999999963,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::ccgqv-1791548375459-a1037269ee07",
+      "serverTiming": "route;dur=588.66, auth;dur=18.84;desc=\"1 calls\", auth_end;dur=19.10;desc=\"offset from route entry\", db_read;dur=878.27;desc=\"16 calls\", db_read_end;dur=557.37;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 2111.083899999998,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::wt859-1791548376110-831bb66c1ebc",
+      "serverTiming": "route;dur=1909.99, auth;dur=119.96;desc=\"1 calls\", auth_end;dur=120.22;desc=\"offset from route entry\", db_read;dur=3261.36;desc=\"16 calls\", db_read_end;dur=1871.67;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 5,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1639.852199999994,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::mx8kf-1791548378226-9946698dc80e",
+      "serverTiming": "route;dur=1507.97, auth;dur=115.06;desc=\"1 calls\", auth_end;dur=115.32;desc=\"offset from route entry\", db_read;dur=2422.54;desc=\"16 calls\", db_read_end;dur=1476.15;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1796.3139999999985,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::mx8kf-1791548379867-ad5400cc1313",
+      "serverTiming": "route;dur=1576.18, auth;dur=113.05;desc=\"1 calls\", auth_end;dur=113.35;desc=\"offset from route entry\", db_read;dur=2515.34;desc=\"16 calls\", db_read_end;dur=1538.19;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 6,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1646.0602999999974,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::znc9v-1791548381661-d2d925a12af8",
+      "serverTiming": "route;dur=1515.39, auth;dur=296.46;desc=\"1 calls\", auth_end;dur=296.79;desc=\"offset from route entry\", db_read;dur=2222.43;desc=\"16 calls\", db_read_end;dur=1482.21;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 837.5567999999912,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::c9nwr-1791548383348-a6fcf6e783b4",
+      "serverTiming": "route;dur=726.82, auth;dur=47.11;desc=\"1 calls\", auth_end;dur=47.37;desc=\"offset from route entry\", db_read;dur=1077.79;desc=\"16 calls\", db_read_end;dur=688.61;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 6,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 706.3417000000045,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::z52kl-1791548384155-9d93f2b11a8a",
+      "serverTiming": "route;dur=646.73, auth;dur=34.77;desc=\"1 calls\", auth_end;dur=35.05;desc=\"offset from route entry\", db_read;dur=1005.37;desc=\"16 calls\", db_read_end;dur=615.01;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 954.1425000000017,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::fra1::c9nwr-1791548384857-05e03c18daec",
+      "serverTiming": "route;dur=885.49, auth;dur=22.44;desc=\"1 calls\", auth_end;dur=22.74;desc=\"offset from route entry\", db_read;dur=1386.10;desc=\"16 calls\", db_read_end;dur=846.28;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 7,
+      "variant": "b",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 643.0296999999991,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::fra1::c9nwr-1791548385811-21b3cfe4b220",
+      "serverTiming": "route;dur=591.92, auth;dur=33.72;desc=\"1 calls\", auth_end;dur=34.07;desc=\"offset from route entry\", db_read;dur=940.24;desc=\"16 calls\", db_read_end;dur=560.55;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    },
+    {
+      "role": "conveyancer",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "all",
+      "durationMs": 1759.099000000002,
+      "bytes": 83179,
+      "status": 200,
+      "region": "lhr1::iad1::b4mr8-1791548386452-89773d57de7e",
+      "serverTiming": "route;dur=1561.62, auth;dur=106.28;desc=\"1 calls\", auth_end;dur=106.52;desc=\"offset from route entry\", db_read;dur=2496.52;desc=\"16 calls\", db_read_end;dur=1523.41;desc=\"offset from route entry\"",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299"
+    },
+    {
+      "role": "conveyancer",
+      "run": 7,
+      "variant": "a",
+      "endpoint": "/api/sales/register",
+      "scope": "single",
+      "durationMs": 1437.7448999999906,
+      "bytes": 52538,
+      "status": 200,
+      "region": "lhr1::iad1::gp9rr-1791548388225-9b13dadb001b",
+      "serverTiming": "route;dur=1308.75, auth;dur=119.16;desc=\"1 calls\", auth_end;dur=119.41;desc=\"offset from route entry\", db_read;dur=2170.78;desc=\"16 calls\", db_read_end;dur=1277.18;desc=\"offset from route entry\"",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561"
+    }
+  ],
+  "checks": [
+    {
+      "role": "admin",
+      "variant": "a",
+      "name": "unsigned-register",
+      "status": 401,
+      "region": "lhr1::iad1::5bh9t-1791548347082-a35e6748ca5d"
+    },
+    {
+      "role": "admin",
+      "variant": "a",
+      "name": "unsigned-dashboard",
+      "status": 401,
+      "region": "lhr1::iad1::5749t-1791548347233-d1c3404a0d5c"
+    },
+    {
+      "role": "admin",
+      "variant": "b",
+      "name": "unsigned-register",
+      "status": 401,
+      "region": "lhr1::fra1::cscd6-1791548347382-5a507d15c02b"
+    },
+    {
+      "role": "admin",
+      "variant": "b",
+      "name": "unsigned-dashboard",
+      "status": 401,
+      "region": "lhr1::fra1::v7kjc-1791548347500-e70dd7625c9b"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "name": "unsigned-register",
+      "status": 401,
+      "region": "lhr1::iad1::gp9rr-1791548389655-eefccb5bb583"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "name": "unsigned-dashboard",
+      "status": 401,
+      "region": "lhr1::iad1::pjb5j-1791548389806-adc44c7fcdcb"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "name": "forbidden-building",
+      "status": 403,
+      "region": "lhr1::iad1::gp9rr-1791548389961-94bf4f23e9a8"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "a",
+      "name": "forbidden-rentals",
+      "status": 403,
+      "region": "lhr1::iad1::l5rcp-1791548390579-b2a641a957ae"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "name": "unsigned-register",
+      "status": 401,
+      "region": "lhr1::fra1::zpmh6-1791548390973-a04d5bed8b0c"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "name": "unsigned-dashboard",
+      "status": 401,
+      "region": "lhr1::fra1::z52kl-1791548391069-a2c33901ccd3"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "name": "forbidden-building",
+      "status": 403,
+      "region": "lhr1::fra1::s6zr8-1791548391125-8cac707c3774"
+    },
+    {
+      "role": "conveyancer",
+      "variant": "b",
+      "name": "forbidden-rentals",
+      "status": 403,
+      "region": "lhr1::fra1::qv6xl-1791548391339-64c6380f1ab7"
+    }
+  ],
+  "before": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "after": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "unchanged": true,
+  "scopeNote": "Allocation ignores the supplied buildingId query and returns its default authorised portfolio; metadata corrected to default."
+}

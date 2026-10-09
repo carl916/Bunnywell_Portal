@@ -1,0 +1,49 @@
+{
+  "decision": "Do not activate Frankfurt: repeated severe dashboard database-read stalls",
+  "aliasMutations": 0,
+  "projectDefaultMutations": 0,
+  "aliases": [
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "deploymentId": "dpl_6ePNSppjMSUf1BtcLJDCtWwJRxyo",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791546835350
+    },
+    {
+      "alias": "portal.bunnywell.co.uk",
+      "deploymentId": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791396921118
+    },
+    {
+      "alias": "defects.bunnywell.co.uk",
+      "deploymentId": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791396921122
+    }
+  ],
+  "stagingHead": "d6434a0fdab575f9940430e2c2d8bda350ecbf3e",
+  "mainHead": "87ffc9b52884f83c91253858d16fa0fe03b5c8af",
+  "runtimeErrors": {
+    "window": "30m",
+    "a": {
+      "content": [
+        {
+          "type": "text",
+          "text": "## Runtime Log Counts\n\n**Project:** prj_4s8vIyfrGh9DSGJcixTU5slevr5P\n**Grouped by:** requestPath\n**Showing:** Top 25 groups by log count; this may omit other groups.\n\n| requestPath | count |\n|---|---|"
+        }
+      ],
+      "isError": false
+    },
+    "b": {
+      "content": [
+        {
+          "type": "text",
+          "text": "## Runtime Log Counts\n\n**Project:** prj_4s8vIyfrGh9DSGJcixTU5slevr5P\n**Grouped by:** requestPath\n**Showing:** Top 25 groups by log count; this may omit other groups.\n\n| requestPath | count |\n|---|---|"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "recordedAt": "2026-10-09T12:57:01.279Z"
+}

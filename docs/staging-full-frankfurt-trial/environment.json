@@ -1,0 +1,232 @@
+{
+  "applicationCommit": "d6434a0fdab575f9940430e2c2d8bda350ecbf3e",
+  "sourceTree": "84a14ae9c74b624585e4a9d18897a951f7aedd72",
+  "project": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+  "team": "team_x65ctL8Fot37UcabAkdh8f72",
+  "stagingRollback": {
+    "id": "dpl_6ePNSppjMSUf1BtcLJDCtWwJRxyo",
+    "url": "https://bunnywell-portal-enu9sezk1-carl-gilbert-s-projects.vercel.app",
+    "commit": "d6434a0fdab575f9940430e2c2d8bda350ecbf3e",
+    "region": "iad1"
+  },
+  "production": {
+    "id": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+    "url": "https://bunnywell-portal-dmms8oftq-carl-gilbert-s-projects.vercel.app",
+    "commit": "87ffc9b52884f83c91253858d16fa0fe03b5c8af",
+    "region": "iad1",
+    "aliases": [
+      "portal.bunnywell.co.uk",
+      "defects.bunnywell.co.uk"
+    ]
+  },
+  "supabase": {
+    "staging": "vxkpvdtrldwwqiddoyof",
+    "production": "zxgezoiazsubopqhqhim",
+    "region": "eu-central-1"
+  },
+  "variants": {
+    "a": {
+      "id": "dpl_2RDK9tUR3XPArgmC1BNRc6rqs9em",
+      "name": "bunnywell-portal",
+      "url": "bunnywell-portal-1ga9v1i5o-carl-gilbert-s-projects.vercel.app",
+      "type": "LAMBDAS",
+      "state": "READY",
+      "createdAt": 1791547836365,
+      "project": {
+        "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+        "name": "bunnywell-portal",
+        "framework": "nextjs"
+      },
+      "meta": {
+        "githubCommitRef": "codex/full-region-trial-a",
+        "githubCommitSha": "635b3b655c293d1779f305457321f82893a2d83e",
+        "githubCommitMessage": "Isolated whole-portal region trial iad1",
+        "githubRepo": "Bunnywell_Portal",
+        "githubOrg": "carl916"
+      },
+      "alias": [
+        "bunnywell-portal-git-codex-full-023b08-carl-gilbert-s-projects.vercel.app"
+      ],
+      "target": null,
+      "regions": [
+        "iad1"
+      ],
+      "buildingAt": 1791547841717,
+      "ready": 1791547897248,
+      "readyState": "READY",
+      "source": "git",
+      "aliasError": null
+    },
+    "b": {
+      "id": "dpl_65m9VaVnXGP5QPfvuUZ712rgaoKE",
+      "name": "bunnywell-portal",
+      "url": "bunnywell-portal-f65jzpsoj-carl-gilbert-s-projects.vercel.app",
+      "type": "LAMBDAS",
+      "state": "READY",
+      "createdAt": 1791547838658,
+      "project": {
+        "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+        "name": "bunnywell-portal",
+        "framework": "nextjs"
+      },
+      "meta": {
+        "githubCommitRef": "codex/full-region-trial-b",
+        "githubCommitSha": "610e4e998a52495b29870d7694ca5d457e64b118",
+        "githubCommitMessage": "Isolated whole-portal region trial fra1",
+        "githubRepo": "Bunnywell_Portal",
+        "githubOrg": "carl916"
+      },
+      "alias": [
+        "bunnywell-portal-git-codex-full-e81585-carl-gilbert-s-projects.vercel.app"
+      ],
+      "target": null,
+      "regions": [
+        "fra1"
+      ],
+      "buildingAt": 1791547898455,
+      "ready": 1791547965260,
+      "readyState": "READY",
+      "source": "git",
+      "aliasError": null
+    }
+  },
+  "inheritedPreviewEnvMetadata": [
+    {
+      "key": "STAGING_WEB_VITALS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging"
+    },
+    {
+      "key": "SALES_PERF_DIAGNOSTICS",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": "staging"
+    },
+    {
+      "key": "NEXT_PUBLIC_PORTAL_ENV",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "NEXT_PUBLIC_SHOW_ENV_BANNER",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "DIGEST_APP_URL",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "RESEND_API_KEY",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "DIGEST_EMAILS_ENABLED",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "CRON_SECRET",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "DIGEST_FROM_EMAIL",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "target": [
+        "preview"
+      ],
+      "gitBranch": null
+    }
+  ],
+  "phase2cActive": false,
+  "excludedSetupDeployments": [
+    {
+      "id": "dpl_CJP4aJmxzgstmRQJDVGG5X8Lspz6",
+      "variant": "a",
+      "region": "iad1"
+    },
+    {
+      "id": "dpl_86jT1WqoNaTL8Y9zLF8ZZMjZHRKD",
+      "variant": "b",
+      "region": "iad1"
+    }
+  ],
+  "excludedReason": "Deployment API region setting did not change the runtime; replaced by the validated configuration-only commits.",
+  "previewBranchOverrides": {
+    "branches": [
+      "codex/full-region-trial-a",
+      "codex/full-region-trial-b"
+    ],
+    "values": {
+      "SALES_PERF_DIAGNOSTICS": "1",
+      "STAGING_WEB_VITALS": "1"
+    }
+  },
+  "crons": {
+    "staging": [
+      {
+        "path": "/api/cron/completion-uploads",
+        "schedule": "15 3 * * *"
+      },
+      {
+        "path": "/api/cron/snag-digest",
+        "schedule": "30 6 * * *"
+      },
+      {
+        "path": "/api/cron/snag-digest",
+        "schedule": "30 7 * * *"
+      }
+    ],
+    "additionalProduction": [
+      {
+        "path": "/api/cron/backup-health",
+        "schedule": "0 6 * * *"
+      },
+      {
+        "path": "/api/cron/backup-health",
+        "schedule": "0 7 * * *"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+✔ register overlay preserves every cron, existing legal override and unrelated function option (1.4354ms)
+✔ ordinary Git deployments remain unchanged and unrelated or blanket overrides are rejected (0.2134ms)
+✔ generation is staging-only, check mode is read-only, and root configuration is never overwritten (137.5379ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192.7595

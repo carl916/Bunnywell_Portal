@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-09 13:05:57 UTC",
+  "aliases": [
+    {
+      "alias": "staging.bunnywell.co.uk",
+      "deploymentId": "dpl_6ePNSppjMSUf1BtcLJDCtWwJRxyo",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791546835350
+    },
+    {
+      "alias": "portal.bunnywell.co.uk",
+      "deploymentId": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791396921118
+    },
+    {
+      "alias": "defects.bunnywell.co.uk",
+      "deploymentId": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+      "projectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "updatedAt": 1791396921122
+    }
+  ],
+  "unchanged": true,
+  "aliasMutations": 0
+}
