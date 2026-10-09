@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "role": "admin",
+      "scope": "all",
+      "projectionHash": "a221b8a58ebc3984e1a290e0b7aae5f46e365e911216fa7c06c75a6aced31201",
+      "baselineMatchesInstrumented": true,
+      "matchesTracedSample": true,
+      "ordinaryRequestTraceAbsent": true
+    },
+    {
+      "role": "admin",
+      "scope": "single",
+      "projectionHash": "10741e41d9d303e6e4e1f48c03370ca3b4d8aaf5b6475f1cd98f27bdac390694",
+      "baselineMatchesInstrumented": true,
+      "matchesTracedSample": true,
+      "ordinaryRequestTraceAbsent": true
+    },
+    {
+      "role": "conveyancer",
+      "scope": "all",
+      "projectionHash": "a72dd55411cbd6eec0ab9be13f1040283ea9fbbcc0744500ee58a7c215fdd299",
+      "baselineMatchesInstrumented": true,
+      "matchesTracedSample": true,
+      "ordinaryRequestTraceAbsent": true
+    },
+    {
+      "role": "conveyancer",
+      "scope": "single",
+      "projectionHash": "331910d0c8fa312a47fcd996a8590862f496c8333974330f8196e0e487db6561",
+      "baselineMatchesInstrumented": true,
+      "matchesTracedSample": true,
+      "ordinaryRequestTraceAbsent": true
+    }
+  ],
+  "before": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "after": {
+    "units": {
+      "count": 64,
+      "sha256": "ea1e55038486f316efc7262e1ae094b423d0979601e8378832c8df1b46c2aebc"
+    },
+    "attempts": {
+      "count": 66,
+      "sha256": "b05ceb766982a5afa7b2756b9baf4a8f4ee1fb51b1fbe485c710f8b24eee2dfa"
+    },
+    "emails": {
+      "count": 60,
+      "sha256": "810e35f317234479a16f827fe35dfc7eff374dd0e5de0ff7cf17b1a19652c467"
+    },
+    "events": {
+      "count": 590,
+      "sha256": "d76ad258ae3bab53d90131faad3a958bfa388e48a8738d0696ecf51353cf31cf"
+    },
+    "documents": {
+      "count": 131,
+      "sha256": "3ffefdc56dd7f41b46cb5066aa371c1616cc4459c41652f7845b1877f764ac2a"
+    }
+  },
+  "unchanged": true
+}

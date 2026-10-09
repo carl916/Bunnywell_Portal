@@ -1,0 +1,186 @@
+Archived validation output. Local workspace paths removed; existing AuditLog failure source dump condensed.
+
+=== phase2d-unit-tests.txt ===
+✔ read traces require all staging guards, request opt-in and an authorised successful response (87.2263ms)
+✔ traces separate headers/body, preserve SDK consumption and record only allowlisted metadata (55.4657ms)
+✔ route denies unauthenticated, unknown and resident roles without reading portfolio data (646.1104ms)
+✔ tampered building/unit parameters and inaccessible identifiers are denied (70.5568ms)
+✔ compact scoped response is private no-store and never invokes legal expiry, provider or activity mutations (87.8836ms)
+✔ partial source failure reports unavailable instead of leaking DB details or converting to zero (60.5793ms)
+✔ external sales never reads rentals, portfolio fees, snags or resident access requests (71.7403ms)
+✔ representatives and contractors have operational sources only (134.4039ms)
+✔ revocation during a read rejects the snapshot (61.6756ms)
+✔ a source count larger than a page is paginated before aggregation (69.0237ms)
+✔ building access revoked during a read rejects the whole response (76.3038ms)
+✔ equivalent organisation accounts and repeated shared-account sessions see identical business work (20.6174ms)
+✔ developer approvals belong to the team regardless of submission/account history (3.7324ms)
+✔ returned reservation records current reason and return age; historical failed attempts do not count (0.9218ms)
+✔ commercial approval is not duplicated after the reservation satisfied it (1.1747ms)
+✔ direct authority clears stale request; exact expiry is retained and 48-hour warning used (1.4456ms)
+✔ expired and revoked authority renewal cycles exclude superseded authority and accepted exchange (1.9049ms)
+✔ deposit receipt requires the matching expected full source amount and never blocks completion readiness (1.9987ms)
+✔ notice authorisation identifies actual missing arrangements and does not impose expiry (0.7756ms)
+✔ two missing or submitted completion documents count documents separately from affected sales (1.2429ms)
+✔ independent approval, query and replacement use current versions only (4.1515ms)
+✔ a sale can appear in both queues without duplicating a record inside either queue (0.7805ms)
+✔ saved contractual date and date-only due-today semantics survive London summer time (1.6165ms)
+✔ calendar windows are start-inclusive/end-exclusive across both London DST transitions (0.5025ms)
+✔ eligible late handover survives reporting closure; missing PC is context only (0.6565ms)
+✔ information supplied follows only the latest current status cycle (0.2129ms)
+✔ review age comes from entry to the current review, never a comment or updated_at (0.7215ms)
+✔ contractor resolution waits on developer while supplied information returns to contractor (0.3219ms)
+✔ missing trade population is exactly active developer snags; no generic SLA invented (0.2838ms)
+✔ urgent resident defect is ordered ahead of routine sales work (1.0335ms)
+✔ fees respect supersession, voided payments and approved versus submitted positions (2.0906ms)
+✔ passed fixed-term date keeps tenancy occupied; never-let void has unknown age (0.7207ms)
+✔ old tenant arrears never become the replacement tenant’s current risk (0.2538ms)
+✔ pending resident requests remain complete beyond 100 and scoped to requested buildings (0.6053ms)
+✔ zero, partial failure, no buildings and role denial are distinct (0.4731ms)
+✔ buildings with sales/rentals and no snags remain visible and overlap is labelled (0.8154ms)
+✔ navigation encodes explicit scope, exact attempt/version and saved return scope (0.2462ms)
+✔ complete bounded retrieval works beyond API row limits and rejects truncation/change/failure (0.6551ms)
+✔ legacy arrangements with approved documents still require a saved contractual date (1.6224ms)
+✔ inconsistent unit stage blocks a portal-ready claim without changing canonical gates (1.0119ms)
+✔ server diagnostics are opt-in, request-scoped and contain only allowlisted numeric timing data (70.6976ms)
+✔ upload server spans distinguish body reading, decoding, storage reads/writes, verification and finalisation (170.6979ms)
+✔ browser measurements are opt-in, bounded, omit payloads and remain off on the production domain (11.8385ms)
+✔ SIGNED_OUT for a missing or different identity immediately clears cached data (72.3728ms)
+✔ SIGNED_IN for a missing or different identity immediately clears cached data (20.6132ms)
+✔ TOKEN_REFRESHED for a missing or different identity immediately clears cached data (15.6638ms)
+✔ 401 clears data before parsing an invalid body (12.8713ms)
+✔ 403 clears data before parsing an invalid body (12.1037ms)
+✔ a response from another identity or building is never published (13.384ms)
+✔ same-user token refresh retains data and cleanup unsubscribes every refresh event (12.6359ms)
+ℹ tests 50
+ℹ suites 0
+ℹ pass 50
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1520.5235
+
+=== phase2d-regression-tests.txt ===
+(node:11012) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///<workspace>/src/hooks/usePortalBuildingContext.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\<workspace>\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ building context defaults to All buildings and restores valid saved or legacy choices (0.4559ms)
+✔ building context never substitutes a different specific building (0.0814ms)
+✔ the shell owns the accessible desktop and mobile building controls (0.2194ms)
+✖ operational pages inherit global context instead of owning building filters (1.1289ms)
+✔ All buildings keeps unit and building identity visible (0.3705ms)
+✔ Setup order and system-wide Users & access exception are explicit (0.1803ms)
+✔ PostgreSQL legal handoffs refresh both team queues, preserve sibling approval and reject stale colleagues (1062.0316ms)
+✔ defaults do not block attempts/child reads, but still gate the complete snapshot (3.2537ms)
+✔ versions start after documents, while unrelated financial reads are pending (0.3786ms)
+✔ building_sale_defaults permission/read error never publishes a complete snapshot (0.357ms)
+✔ unit_sale_attempts permission/read error never publishes a complete snapshot (0.0746ms)
+✔ unit_sale_terms permission/read error never publishes a complete snapshot (0.0997ms)
+✔ unit_sale_payment_schedule permission/read error never publishes a complete snapshot (0.0737ms)
+✔ unit_sale_documents permission/read error never publishes a complete snapshot (0.0795ms)
+✔ unit_sale_document_versions permission/read error never publishes a complete snapshot (0.0724ms)
+✔ unit_sale_invoices permission/read error never publishes a complete snapshot (0.0868ms)
+✔ unit_sale_invoice_payments permission/read error never publishes a complete snapshot (0.1287ms)
+✔ sale_actor_names permission/read error never publishes a complete snapshot (0.1117ms)
+✔ sale_exchange_deposit_receipts permission/read error never publishes a complete snapshot (0.0821ms)
+✔ rejected transport on one concurrent branch is handled without partial publication (1.0473ms)
+✔ new building/permission scope supersedes the actual concurrent loader, including late errors (0.4729ms)
+✔ RLS-filtered empty attempts/documents issue no dependent reads; missing optional actors remains optional (0.1723ms)
+✔ navigation uses the last successful fetch time, never sliding the 60-second window (1.6433ms)
+✔ focus uses 15 seconds, duplicate focus events share a request, and online forces revalidation (0.5779ms)
+✔ mutation bursts while away are remembered and coalesce into one request on return (0.4596ms)
+✔ explicit Refresh bypasses age even while a sale file is open (0.4405ms)
+✔ an invalidated in-flight response cannot publish or clear the newer invalidation (0.5576ms)
+✔ failed refresh retains rows and an error, and navigation retries even inside the freshness window (0.5349ms)
+✔ logout discards the snapshot and ignores a late successful request (0.3864ms)
+✔ hidden documents defer work and visibility resumes pending invalidation (0.3804ms)
+✔ cleanup aborts, cancels queued work and prevents late publication; Strict Mode can restart (0.394ms)
+✔ timeout retains safe failure state without accepting a late response (0.443ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 31
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1434.2136
+
+
+Failure detail: the existing AuditLog component still matches /setBuildingId|<FilterSelect label="Building"/. The duplicated source dump is omitted.
+
+=== phase2d-browser-tests.txt ===
+
+Running 33 tests using 1 worker
+
+(node:2656) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\conveyancer-sales.spec.ts:45:5 › one direct Sales register; no dashboard, finance, duplicate stage or broad data requests (5.1s)
+Register navigation requests: initial=1, after three returns=1
+  ok  2 tests\conveyancer-sales.spec.ts:59:5 › our team journey reaches the current document and both back paths preserve filters (1.9s)
+  ok  3 tests\conveyancer-sales.spec.ts:85:5 › other team journey shows developer review and the saved due date (1.9s)
+  ok  4 tests\conveyancer-sales.spec.ts:99:5 › a second colleague's fixture replacement appears on manual refresh; mentions do not clear work (1.6s)
+  ok  5 tests\conveyancer-sales.spec.ts:117:5 › search, stage, building and pagination use the full inventory with neutral records (2.0s)
+  ok  6 tests\conveyancer-sales.spec.ts:134:5 › unavailable action data retains base sales and disables incomplete filtering; revocation clears rows (1.8s)
+  ok  7 tests\conveyancer-sales.spec.ts:145:5 › phone and desktop retain readable rows, focus and navigation clearance (2.2s)
+  ok  8 tests\conveyancer-sales.spec.ts:158:5 › fresh visit resets responsibility; developer and agent layouts retain their workspaces (2.0s)
+  ok  9 tests\conveyancer-sales.spec.ts:170:5 › focus refresh keeps filters, skips fresh reads and adds no register polling (2.2s)
+Cached register return to populated frame: 13.0ms (200ms measurement target)
+  ok 10 tests\conveyancer-sales.spec.ts:183:5 › 60-second navigation expiry displays the complete cached register during a delayed refresh (1.4s)
+  ok 11 tests\conveyancer-sales.spec.ts:221:5 › focus and visibility use 15 seconds separately from navigation; connectivity revalidates (2.1s)
+  ok 12 tests\conveyancer-sales.spec.ts:238:5 › a mutation during a register request is followed by exactly one fresh request (1.9s)
+  ok 13 tests\conveyancer-sales.spec.ts:255:5 › failed navigation refresh retains dates but disables actions and safely suspends responsibility filtering (1.2s)
+  ok 14 tests\conveyancer-sales.spec.ts:271:38 › 401 without JSON clears the retained snapshot and returning cannot resurrect it (1.1s)
+  ok 15 tests\conveyancer-sales.spec.ts:271:38 › 403 without JSON clears the retained snapshot and returning cannot resurrect it (1.1s)
+  ok 16 tests\conveyancer-sales.spec.ts:281:5 › pagination survives both return paths with zero additional register requests (2.0s)
+  ok 17 tests\conveyancer-sales.spec.ts:295:7 › workflow success invalidates the unmounted register before reconciliation (4.1s)
+  ok 18 tests\conveyancer-sales.spec.ts:295:7 › workflow reconciliation-fails invalidates the unmounted register before reconciliation (1.9s)
+  ok 19 tests\conveyancer-sales.spec.ts:295:7 › workflow uncertain-response invalidates the unmounted register before reconciliation (2.1s)
+  ok 20 tests\conveyancer-sales.spec.ts:295:7 › workflow leave-before-reconciliation invalidates the unmounted register before reconciliation (1.9s)
+  ok 21 tests\conveyancer-sales.spec.ts:333:5 › All buildings membership changes discard the cache before the replacement response (1.2s)
+  ok 22 tests\conveyancer-sales.spec.ts:350:5 › building switch cancels an old response and never displays the previous building's snapshot (1.1s)
+  ok 23 tests\conveyancer-sales.spec.ts:368:5 › organisation and role changes clear retained register data (1.3s)
+  ok 24 tests\conveyancer-sales.spec.ts:379:5 › explicit portal Refresh while a sale is open refreshes the retained register regardless of age (2.1s)
+  ok 25 tests\conveyancer-sales.spec.ts:388:5 › logout from a sale discards its retained register and pending response (1.7s)
+  x  26 tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout (1.4s)
+(node:29928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 27 tests\organisation-dashboard.spec.ts:25:5 › organisation work groups multiple tasks, keeps query context and refreshes without clearing team work (1.7s)
+  ok 28 tests\organisation-dashboard.spec.ts:44:5 › phone, tablet, desktop and narrow reflow retain readable controls with synthetic screenshots (3.9s)
+  ok 29 tests\organisation-dashboard.spec.ts:59:5 › a failed refresh retains an explicitly stale snapshot and does not announce all clear (1.3s)
+  ok 30 tests\organisation-dashboard.spec.ts:67:5 › sales-agent worklist remains on the Sales landing and direct task links select completion (1.4s)
+  ok 31 tests\organisation-dashboard.spec.ts:84:5 › pagination counts the full snapshot and scope resets filters (1.4s)
+  ok 32 tests\organisation-dashboard.spec.ts:97:5 › visible work polls once per minute, pauses hidden or inactive, and clears a revoked snapshot (1.3s)
+  ok 33 tests\organisation-dashboard.spec.ts:118:5 › dashboard skips operational media/history and snag drill-through selects its exact authorised record (1.4s)
+
+
+  1) tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Object {
+        "focus": 2,
+        "online": 1,
+        "portal-work-changed": 1,
+        "sale-activity-changed": 1,
+    -   "visibilitychange": 10,
+    +   "visibilitychange": 13,
+      }
+
+      422 |     await page.getByRole("button", { name: /Back to sales overview/ }).click();
+      423 |     await expect(page.getByLabel("Action with", { exact: true })).toBeEnabled();
+    > 424 |     expect(await counts()).toEqual(before);
+          |                            ^
+      425 |   }
+      426 |   expect(f.reads()).toBe(reads);
+      427 |   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+        at <workspace>\tests\conveyancer-sales.spec.ts:424:28
+
+    Error Context: test-results\full-region-functional\conveyancer-sales-repeated-a0928--and-removes-them-on-logout\error-context.md
+
+  1 failed
+    tests\conveyancer-sales.spec.ts:401:5 › repeated navigation keeps one set of refresh listeners and removes them on logout
+  32 passed (1.1m)
