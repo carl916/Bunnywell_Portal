@@ -1,0 +1,1045 @@
+{
+  "environment": "Local Node to live staging; not Vercel/database-engine execution",
+  "samples": [
+    {
+      "run": 0,
+      "elapsedMs": 1045.8488,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.10359999999991487,
+          "endMs": 103.09489999999994
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 104.32779999999991,
+          "endMs": 164.4841
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 165.46179999999993,
+          "endMs": 237.01839999999993
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 166.43949999999995,
+          "endMs": 306.64109999999994
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 165.68759999999997,
+          "endMs": 307.17679999999996
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 308.26199999999994,
+          "endMs": 379.193
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 381.28369999999995,
+          "endMs": 527.7804999999998
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 380.87559999999996,
+          "endMs": 545.0036
+        },
+        {
+          "endpoint": "units",
+          "startMs": 380.6735,
+          "endMs": 550.9295
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 381.0655999999999,
+          "endMs": 552.0964999999999
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 553.4434999999999,
+          "endMs": 655.0655999999999
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 658.1422,
+          "endMs": 805.2340999999999
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 657.9640999999999,
+          "endMs": 860.7659999999998
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 862.1771999999999,
+          "endMs": 916.1227999999999
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 916.7548999999999,
+          "endMs": 988.4122
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 916.9243999999999,
+          "endMs": 1001.0478
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 916.9851999999998,
+          "endMs": 1020.2837
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.017299999999977445,
+          "durationMs": 103.58789999999999
+        },
+        {
+          "name": "profile",
+          "startMs": 103.60829999999999,
+          "durationMs": 61.47239999999999
+        },
+        {
+          "name": "access",
+          "startMs": 165.0833,
+          "durationMs": 142.8093
+        },
+        {
+          "name": "input",
+          "startMs": 307.89459999999997,
+          "durationMs": 554.0789000000001
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 861.9771000000001,
+          "durationMs": 54.549999999999955
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 916.5364999999999,
+          "durationMs": 104.11020000000008
+        }
+      ],
+      "deriveMs": 25.195200000000114,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 1,
+      "elapsedMs": 1135.984,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.01630000000000109,
+          "endMs": 52.04909999999995
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 52.37200000000007,
+          "endMs": 121.31389999999988
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 121.8771999999999,
+          "endMs": 174.6956
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 121.74340000000007,
+          "endMs": 187.81320000000005
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 121.92409999999995,
+          "endMs": 252.31459999999993
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 252.7147,
+          "endMs": 329.44949999999994
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 330.19049999999993,
+          "endMs": 414.4225999999999
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 330.0997,
+          "endMs": 424.5688
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 330.15380000000005,
+          "endMs": 490.74429999999984
+        },
+        {
+          "endpoint": "units",
+          "startMs": 329.9595999999999,
+          "endMs": 670.4474999999998
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 671.4744999999998,
+          "endMs": 781.6662999999999
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 783.3766,
+          "endMs": 907.1439
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 783.2168999999999,
+          "endMs": 984.3071
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 985.7262000000001,
+          "endMs": 1050.3112999999998
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 1050.9780999999998,
+          "endMs": 1112.0863
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 1050.9328,
+          "endMs": 1114.6702999999998
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 1050.8058,
+          "endMs": 1121.8094999999998
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0008000000000265572,
+          "durationMs": 52.278299999999945
+        },
+        {
+          "name": "profile",
+          "startMs": 52.281299999999874,
+          "durationMs": 69.30860000000007
+        },
+        {
+          "name": "access",
+          "startMs": 121.59379999999987,
+          "durationMs": 130.9883000000002
+        },
+        {
+          "name": "input",
+          "startMs": 252.5882999999999,
+          "durationMs": 733.0313000000001
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 985.6221999999998,
+          "durationMs": 64.99590000000035
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 1050.6289000000002,
+          "durationMs": 71.28089999999975
+        }
+      ],
+      "deriveMs": 14.064600000000155,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 2,
+      "elapsedMs": 1024.1728000000003,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.017699999999877036,
+          "endMs": 52.83460000000014
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 53.28150000000005,
+          "endMs": 94.25170000000026
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 94.65869999999995,
+          "endMs": 137.61639999999989
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 94.77449999999999,
+          "endMs": 144.8696
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 94.84900000000016,
+          "endMs": 227.06010000000015
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 227.8973000000001,
+          "endMs": 286.3747000000003
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 287.1098000000002,
+          "endMs": 374.1091000000001
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 287.18600000000015,
+          "endMs": 419.41280000000006
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 287.1563000000001,
+          "endMs": 426.3515000000002
+        },
+        {
+          "endpoint": "units",
+          "startMs": 286.9854,
+          "endMs": 448.86180000000013
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 449.85609999999997,
+          "endMs": 573.5749000000001
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 575.1399999999999,
+          "endMs": 762.0482999999999
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 575.0126,
+          "endMs": 866.6738
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 868.3452000000002,
+          "endMs": 930.0421999999999
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 930.6554000000001,
+          "endMs": 982.1357000000003
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 930.7867000000001,
+          "endMs": 983.2503999999999
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 930.8328999999999,
+          "endMs": 1006.4207999999999
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0008000000002539309,
+          "durationMs": 53.17959999999994
+        },
+        {
+          "name": "profile",
+          "startMs": 53.18339999999989,
+          "durationMs": 41.335199999999986
+        },
+        {
+          "name": "access",
+          "startMs": 94.52150000000029,
+          "durationMs": 133.20299999999997
+        },
+        {
+          "name": "input",
+          "startMs": 227.72850000000017,
+          "durationMs": 640.424
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 868.1574,
+          "durationMs": 62.26350000000002
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 930.4342000000001,
+          "durationMs": 76.41190000000006
+        }
+      ],
+      "deriveMs": 17.316599999999653,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 3,
+      "elapsedMs": 862.8219000000004,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.033800000000155705,
+          "endMs": 46.7514000000001
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 47.408600000000206,
+          "endMs": 94.67439999999988
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 95.31869999999981,
+          "endMs": 160.27469999999994
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 95.4411,
+          "endMs": 163.52689999999984
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 95.50889999999981,
+          "endMs": 188.73819999999978
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 189.37440000000015,
+          "endMs": 247.9398000000001
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 248.72119999999995,
+          "endMs": 337.55740000000014
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 248.59540000000015,
+          "endMs": 343.2711999999997
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 248.65880000000016,
+          "endMs": 376.00750000000016
+        },
+        {
+          "endpoint": "units",
+          "startMs": 248.45859999999993,
+          "endMs": 407.69969999999967
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 408.4024000000004,
+          "endMs": 510.4584
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 511.5221999999999,
+          "endMs": 651.7131999999997
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 511.4088999999999,
+          "endMs": 741.2179000000001
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 743.3983999999996,
+          "endMs": 788.7156
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 789.1763999999998,
+          "endMs": 834.7432000000003
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 789.3069,
+          "endMs": 841.9859000000001
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 789.3556000000003,
+          "endMs": 846.2393999999999
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0019999999999527063,
+          "durationMs": 47.283300000000054
+        },
+        {
+          "name": "profile",
+          "startMs": 47.29019999999991,
+          "durationMs": 47.7808
+        },
+        {
+          "name": "access",
+          "startMs": 95.07639999999992,
+          "durationMs": 94.11920000000009
+        },
+        {
+          "name": "input",
+          "startMs": 189.19990000000007,
+          "durationMs": 554.0987999999998
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 743.3017000000004,
+          "durationMs": 45.693599999999606
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 789.0053000000003,
+          "durationMs": 57.951999999999316
+        }
+      ],
+      "deriveMs": 15.855499999999665,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 4,
+      "elapsedMs": 917.4033,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.020499999999628926,
+          "endMs": 76.96189999999933
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 77.52189999999973,
+          "endMs": 151.1251999999995
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 151.60039999999935,
+          "endMs": 198.22850000000017
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 151.72319999999945,
+          "endMs": 201.66829999999936
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 151.76899999999932,
+          "endMs": 237.99169999999958
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 238.71019999999953,
+          "endMs": 287.4867999999997
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 288.23079999999936,
+          "endMs": 372.5550999999996
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 288.1995999999999,
+          "endMs": 385.6952999999994
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 288.15349999999944,
+          "endMs": 405.8037999999997
+        },
+        {
+          "endpoint": "units",
+          "startMs": 288.02930000000015,
+          "endMs": 435.40110000000004
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 436.3044,
+          "endMs": 548.2483999999995
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 549.1795999999995,
+          "endMs": 669.7415999999994
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 549.0524999999998,
+          "endMs": 761.4277999999995
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 763.0882999999994,
+          "endMs": 825.9178000000002
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 826.4539999999997,
+          "endMs": 874.2532999999994
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 826.5780999999997,
+          "endMs": 875.7582999999995
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 826.6201999999994,
+          "endMs": 900.7217
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0010999999994965037,
+          "durationMs": 77.38320000000022
+        },
+        {
+          "name": "profile",
+          "startMs": 77.38819999999942,
+          "durationMs": 74.0627000000004
+        },
+        {
+          "name": "access",
+          "startMs": 151.45769999999993,
+          "durationMs": 87.10040000000026
+        },
+        {
+          "name": "input",
+          "startMs": 238.5617000000002,
+          "durationMs": 524.3841999999995
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 762.9492,
+          "durationMs": 63.3140999999996
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 826.2772999999997,
+          "durationMs": 74.64339999999993
+        }
+      ],
+      "deriveMs": 16.475500000000466,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 5,
+      "elapsedMs": 938.1522000000004,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.0294000000003507,
+          "endMs": 69.21680000000015
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 69.75950000000012,
+          "endMs": 125.26530000000002
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 125.65290000000005,
+          "endMs": 179.48040000000037
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 125.77739999999994,
+          "endMs": 186.52649999999994
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 125.82070000000022,
+          "endMs": 210.16870000000017
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 210.73410000000058,
+          "endMs": 279.1343000000006
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 280.02360000000044,
+          "endMs": 346.08489999999983
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 279.95790000000034,
+          "endMs": 351.7496000000001
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 279.9987000000001,
+          "endMs": 397.5662000000002
+        },
+        {
+          "endpoint": "units",
+          "startMs": 279.84569999999985,
+          "endMs": 456.14840000000004
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 456.89130000000023,
+          "endMs": 555.7269000000006
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 556.9598999999998,
+          "endMs": 687.7624999999998
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 556.8402999999998,
+          "endMs": 772.4376000000002
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 773.0565999999999,
+          "endMs": 830.1889000000001
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 830.8784999999998,
+          "endMs": 878.2163
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 831.1256000000003,
+          "endMs": 888.0560000000005
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 831.0475999999999,
+          "endMs": 922.1710000000003
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.00120000000060827,
+          "durationMs": 69.65999999999985
+        },
+        {
+          "name": "profile",
+          "startMs": 69.66440000000057,
+          "durationMs": 55.8153999999995
+        },
+        {
+          "name": "access",
+          "startMs": 125.48260000000028,
+          "durationMs": 85.16740000000027
+        },
+        {
+          "name": "input",
+          "startMs": 210.65200000000004,
+          "durationMs": 562.3058000000001
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 772.9609,
+          "durationMs": 57.6858000000002
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 830.6637000000001,
+          "durationMs": 91.76389999999992
+        }
+      ],
+      "deriveMs": 15.712900000000445,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 6,
+      "elapsedMs": 838.1636000000008,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.019600000000536966,
+          "endMs": 52.4366
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 52.962500000000546,
+          "endMs": 100.36630000000059
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 101.31960000000072,
+          "endMs": 148.3123000000005
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 101.14220000000023,
+          "endMs": 162.6874000000007
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 101.3701000000001,
+          "endMs": 168.20040000000063
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 168.48070000000007,
+          "endMs": 231.1836000000003
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 231.8140000000003,
+          "endMs": 322.4886000000006
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 231.9328000000005,
+          "endMs": 339.97630000000026
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 231.88590000000022,
+          "endMs": 349.1258000000007
+        },
+        {
+          "endpoint": "units",
+          "startMs": 231.67190000000028,
+          "endMs": 381.39180000000033
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 382.1387000000004,
+          "endMs": 472.1896000000006
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 473.2003000000004,
+          "endMs": 612.1696000000002
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 473.08380000000034,
+          "endMs": 686.7714000000005
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 687.5443000000005,
+          "endMs": 756.5417000000007
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 757.0635000000002,
+          "endMs": 802.1530000000002
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 757.1950000000006,
+          "endMs": 805.4372000000003
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 757.2899000000007,
+          "endMs": 819.6578000000009
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0011000000004059984,
+          "durationMs": 52.86120000000028
+        },
+        {
+          "name": "profile",
+          "startMs": 52.86570000000029,
+          "durationMs": 48.044700000000375
+        },
+        {
+          "name": "access",
+          "startMs": 100.91850000000068,
+          "durationMs": 67.47839999999997
+        },
+        {
+          "name": "input",
+          "startMs": 168.39960000000065,
+          "durationMs": 519.0463
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 687.4494000000004,
+          "durationMs": 69.44400000000041
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 756.9092,
+          "durationMs": 63.1828000000005
+        }
+      ],
+      "deriveMs": 18.05919999999969,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    },
+    {
+      "run": 7,
+      "elapsedMs": 917.6738000000005,
+      "calls": [
+        {
+          "endpoint": "user",
+          "startMs": 0.023799999999937427,
+          "endMs": 54.99229999999989
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 55.506900000000314,
+          "endMs": 106.77770000000055
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 107.6818000000003,
+          "endMs": 162.25830000000042
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 107.82110000000011,
+          "endMs": 177.19660000000022
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 107.50840000000062,
+          "endMs": 186.97130000000016
+        },
+        {
+          "endpoint": "buildings",
+          "startMs": 187.26770000000033,
+          "endMs": 269.6214
+        },
+        {
+          "endpoint": "building_floors",
+          "startMs": 270.2978000000003,
+          "endMs": 332.6320000000005
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 270.4423999999999,
+          "endMs": 336.9202000000005
+        },
+        {
+          "endpoint": "organisations",
+          "startMs": 270.3792000000003,
+          "endMs": 390.6754000000001
+        },
+        {
+          "endpoint": "units",
+          "startMs": 270.1815000000006,
+          "endMs": 424.34430000000066
+        },
+        {
+          "endpoint": "unit_sale_attempts",
+          "startMs": 425.28770000000077,
+          "endMs": 530.5556999999999
+        },
+        {
+          "endpoint": "sale_legal_emails",
+          "startMs": 531.6240000000007,
+          "endMs": 673.3319000000001
+        },
+        {
+          "endpoint": "unit_sale_documents",
+          "startMs": 531.4725000000008,
+          "endMs": 748.4758000000002
+        },
+        {
+          "endpoint": "profiles",
+          "startMs": 749.0688,
+          "endMs": 808.4418000000005
+        },
+        {
+          "endpoint": "user_unit_access",
+          "startMs": 808.8342000000002,
+          "endMs": 867.6926000000003
+        },
+        {
+          "endpoint": "user_building_access",
+          "startMs": 808.9333000000006,
+          "endMs": 870.3562999999995
+        },
+        {
+          "endpoint": "building_organisations",
+          "startMs": 808.9678000000004,
+          "endMs": 901.8904000000002
+        }
+      ],
+      "stages": [
+        {
+          "name": "auth",
+          "startMs": 0.0016000000005078618,
+          "durationMs": 55.378999999999905
+        },
+        {
+          "name": "profile",
+          "startMs": 55.38480000000072,
+          "durationMs": 51.88919999999962
+        },
+        {
+          "name": "access",
+          "startMs": 107.28250000000025,
+          "durationMs": 79.83060000000023
+        },
+        {
+          "name": "input",
+          "startMs": 187.1168000000007,
+          "durationMs": 561.8540999999996
+        },
+        {
+          "name": "profile-recheck",
+          "startMs": 748.9733000000006,
+          "durationMs": 59.73809999999958
+        },
+        {
+          "name": "access-recheck",
+          "startMs": 808.7215000000006,
+          "durationMs": 93.37790000000041
+        }
+      ],
+      "deriveMs": 15.559699999999793,
+      "rows": 134,
+      "sales": 67,
+      "documents": 89,
+      "authorities": 60,
+      "actionsAvailable": true,
+      "bytes": 83179
+    }
+  ]
+}

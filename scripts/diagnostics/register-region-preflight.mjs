@@ -1,0 +1,31 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+dotenv.config({ path: '.env.local', quiet: true });
+const targets = JSON.parse(process.env.REGISTER_PERF_TARGETS);
+if (new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname !== 'vxkpvdtrldwwqiddoyof.supabase.co') throw Error('Staging only');
+for (const origin of Object.values(targets)) if (!/^https:\/\/bunnywell-portal-[a-z0-9]+-carl-gilbert-s-projects\.vercel\.app$/.test(origin)) throw Error('Isolated preview required');
+const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const login = await client.auth.signInWithPassword({ email: process.env.REGISTER_PERF_EMAIL ?? 'carl@accoladeproperties.co.uk', password: process.env.PLAYWRIGHT_ADMIN_PASSWORD });
+if (login.error) throw Error('Login failed');
+const headers = { authorization: `Bearer ${login.data.session.access_token}` }, samples = [], expected = new Map();
+let building;
+for (const scope of ['all', 'single']) for (const [variant, origin] of Object.entries(targets)) {
+  const response = await fetch(`${origin}/api/sales/register?building=${scope === 'all' ? 'all' : building}`, { headers });
+  assert.equal(response.status, 200);
+  const body = await response.json(); assert.equal(body.actionsAvailable, true);
+  building ??= body.rows.find(row=>row.buildingName === 'Forum House').buildingId;
+  const comparable = { ...body, asOf: null };
+  if (expected.has(scope)) assert.deepEqual(comparable, expected.get(scope)); else expected.set(scope, comparable);
+  const region = response.headers.get('x-vercel-id'); assert.ok(region.includes(variant === 'b' ? '::fra1::' : '::iad1::'));
+  assert.match(response.headers.get('cache-control'), /private, no-store/); assert.equal(response.headers.get('vary'), 'Authorization');
+  samples.push({ variant, scope, rows: body.rows.length, bytes: Buffer.byteLength(JSON.stringify(body)), region, serverTiming: response.headers.get('server-timing'), projectionHash: createHash('sha256').update(JSON.stringify(comparable)).digest('hex') });
+  const unsigned = await fetch(`${origin}/api/sales/register?building=all`); assert.equal(unsigned.status, 401);
+  const wrongScope = await fetch(`${origin}/api/sales/register?building=00000000-0000-4000-8000-000000000000`, { headers }); assert.equal(wrongScope.status, 403);
+  const legal = await fetch(`${origin}/api/sales/legal`, { headers }); assert.equal(legal.status, 400); assert.ok(legal.headers.get('x-vercel-id').includes('::iad1::'));
+  samples.at(-1).checks = { unsigned: unsigned.status, inaccessibleBuilding: wrongScope.status, legalValidation: legal.status, legalRegion: legal.headers.get('x-vercel-id') };
+}
+fs.writeFileSync('test-results/register-region-preflight.json', JSON.stringify({ samples, completeProjectionEquivalent: true }, null, 2));
+console.log(JSON.stringify(samples.map(({variant,scope,rows,serverTiming})=>({variant,scope,rows,serverTiming}))));

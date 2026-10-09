@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-09",
+  "node": {
+    "sales": { "passed": 278, "failed": 0 },
+    "refresh": { "passed": 55, "failed": 0 },
+    "dashboard": { "passed": 39, "failed": 0 },
+    "focused": { "passed": 50, "failed": 0 },
+    "stagingConfiguration": { "passed": 3, "failed": 0, "note": "Temporary Git repository creation blocked in sandbox; same test passed with filesystem permission." }
+  },
+  "browser": {
+    "conveyancerAndLoading": { "passed": 47, "failed": 1, "skipped": 1 },
+    "legalAndStages": { "passed": 23, "failed": 0 },
+    "failure": {
+      "test": "conveyancer-sales.spec.ts:401 repeated navigation keeps one set of refresh listeners and removes them on logout",
+      "expectedVisibilityListeners": 10,
+      "actualVisibilityListeners": 13,
+      "otherTrackedCountsUnchanged": true,
+      "reproducedOnUnchangedAPreview": true,
+      "causeEstablished": false
+    },
+    "cachedRegisterReturnMs": 9,
+    "businessRequests": "Intercepted synthetic fixtures; no live legal writes or email"
+  },
+  "typescript": "passed",
+  "changedFileEslint": "passed",
+  "productionBuilds": "Both isolated Vercel Preview production builds READY",
+  "liveComparison": { "registerRequests": 64, "failed": 0, "pairedJourneys": 32, "fasterPairs": 32, "identicalProjectionHashesExcludingAsOf": true },
+  "sharedAliasesUnchanged": {
+    "staging": "dpl_12sbX4J1KmADGjJHav1mioDTAJS2",
+    "production": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W"
+  }
+}
