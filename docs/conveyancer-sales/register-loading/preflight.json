@@ -1,0 +1,65 @@
+{
+  "samples": [
+    {
+      "variant": "a",
+      "scope": "all",
+      "rows": 134,
+      "bytes": 83179,
+      "region": "lhr1::iad1::5749t-1791543386631-802731932b29",
+      "serverTiming": "route;dur=2283.36, auth;dur=370.75;desc=\"1 calls\", auth_end;dur=375.50;desc=\"offset from route entry\", db_read;dur=3081.50;desc=\"16 calls\", db_read_end;dur=2189.22;desc=\"offset from route entry\"",
+      "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+      "checks": {
+        "unsigned": 401,
+        "inaccessibleBuilding": 403,
+        "legalValidation": 400,
+        "legalRegion": "lhr1::iad1::b8mgc-1791543390457-fb9b5a355ec7"
+      }
+    },
+    {
+      "variant": "b",
+      "scope": "all",
+      "rows": 134,
+      "bytes": 83179,
+      "region": "lhr1::fra1::nf9bm-1791543390996-585629807976",
+      "serverTiming": "route;dur=1162.88, auth;dur=144.94;desc=\"1 calls\", auth_end;dur=149.71;desc=\"offset from route entry\", db_read;dur=1539.90;desc=\"16 calls\", db_read_end;dur=1067.31;desc=\"offset from route entry\"",
+      "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+      "checks": {
+        "unsigned": 401,
+        "inaccessibleBuilding": 403,
+        "legalValidation": 400,
+        "legalRegion": "lhr1::iad1::7lwj5-1791543393106-1fc86ca67ea0"
+      }
+    },
+    {
+      "variant": "a",
+      "scope": "single",
+      "rows": 63,
+      "bytes": 52538,
+      "region": "lhr1::iad1::fwczn-1791543393835-2b50bc2cbbee",
+      "serverTiming": "route;dur=1562.57, auth;dur=117.30;desc=\"1 calls\", auth_end;dur=117.96;desc=\"offset from route entry\", db_read;dur=2500.46;desc=\"16 calls\", db_read_end;dur=1523.31;desc=\"offset from route entry\"",
+      "projectionHash": "f33ac6e68f4eee324117b0f3bbe70b8c43658aa0f4904b7ddb6bd83599d4938e",
+      "checks": {
+        "unsigned": 401,
+        "inaccessibleBuilding": 403,
+        "legalValidation": 400,
+        "legalRegion": "lhr1::iad1::5749t-1791543396508-b100b47123a7"
+      }
+    },
+    {
+      "variant": "b",
+      "scope": "single",
+      "rows": 63,
+      "bytes": 52538,
+      "region": "lhr1::fra1::cdp5c-1791543396865-c66454b72cd2",
+      "serverTiming": "route;dur=763.19, auth;dur=26.18;desc=\"1 calls\", auth_end;dur=26.80;desc=\"offset from route entry\", db_read;dur=1262.20;desc=\"16 calls\", db_read_end;dur=716.08;desc=\"offset from route entry\"",
+      "projectionHash": "f33ac6e68f4eee324117b0f3bbe70b8c43658aa0f4904b7ddb6bd83599d4938e",
+      "checks": {
+        "unsigned": 401,
+        "inaccessibleBuilding": 403,
+        "legalValidation": 400,
+        "legalRegion": "lhr1::iad1::f5x2x-1791543398377-68d52a4d418e"
+      }
+    }
+  ],
+  "completeProjectionEquivalent": true
+}

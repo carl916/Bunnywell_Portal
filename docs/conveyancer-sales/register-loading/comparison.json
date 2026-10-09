@@ -1,0 +1,2347 @@
+{
+  "startedAt": "2026-10-09T10:56:50.927Z",
+  "savedAt": "2026-10-09T10:59:31.025Z",
+  "targets": {
+    "a": "https://bunnywell-portal-2vgi8dbtu-carl-gilbert-s-projects.vercel.app",
+    "b": "https://bunnywell-portal-mzwlenoks-carl-gilbert-s-projects.vercel.app"
+  },
+  "rounds": 8,
+  "setup": [
+    {
+      "variant": "a",
+      "mobile": false,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    }
+  ],
+  "samples": [
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 0,
+      "action": "open",
+      "readyMs": 2197.4084999999995,
+      "requestOffsets": [
+        380.27030000000013
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1769.645,
+          "responseStartMs": 1692.249,
+          "responseEndMs": 1769.645,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1585.49, auth;dur=113.72;desc=\"1 calls\", auth_end;dur=114.01;desc=\"offset from route entry\", db_read;dur=2541.92;desc=\"16 calls\", db_read_end;dur=1545.16;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::4btrl-1791543418035-a9e01f509e04",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 2179.6139999999996,
+      "requestOffsets": [
+        273.0857999999989
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1874.393,
+          "responseStartMs": 1796.489,
+          "responseEndMs": 1874.393,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1606.52, auth;dur=120.49;desc=\"1 calls\", auth_end;dur=120.90;desc=\"offset from route entry\", db_read;dur=2553.52;desc=\"16 calls\", db_read_end;dur=1565.41;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::4fnzl-1791543420444-2fc5454ce867",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 0,
+      "action": "open",
+      "readyMs": 1697.8040999999994,
+      "requestOffsets": [
+        395.79140000000007
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1257.915,
+          "responseStartMs": 1241.862,
+          "responseEndMs": 1257.915,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1186.46, auth;dur=106.25;desc=\"1 calls\", auth_end;dur=106.68;desc=\"offset from route entry\", db_read;dur=1489.94;desc=\"16 calls\", db_read_end;dur=1145.51;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::5xnk8-1791543423065-4d9237f27ef7",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 1157.6767999999993,
+      "requestOffsets": [
+        242.7547999999988
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 887.171,
+          "responseStartMs": 871.523,
+          "responseEndMs": 887.171,
+          "bytes": 83179,
+          "serverTiming": "route;dur=807.45, auth;dur=63.57;desc=\"1 calls\", auth_end;dur=64.07;desc=\"offset from route entry\", db_read;dur=1118.71;desc=\"16 calls\", db_read_end;dur=762.53;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::727rw-1791543424918-34a0d7b5f87f",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 1,
+      "action": "open",
+      "readyMs": 1157.7744000000002,
+      "requestOffsets": [
+        313.6216999999997
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 805.929,
+          "responseStartMs": 790.848,
+          "responseEndMs": 805.929,
+          "bytes": 83179,
+          "serverTiming": "route;dur=730.18, auth;dur=28.88;desc=\"1 calls\", auth_end;dur=29.36;desc=\"offset from route entry\", db_read;dur=1068.39;desc=\"16 calls\", db_read_end;dur=669.11;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::xrnwd-1791543426456-c537f2498a0f",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 1169.7540999999983,
+      "requestOffsets": [
+        239.47509999999966
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 892.774,
+          "responseStartMs": 888.583,
+          "responseEndMs": 892.774,
+          "bytes": 83179,
+          "serverTiming": "route;dur=799.28, auth;dur=29.10;desc=\"1 calls\", auth_end;dur=29.77;desc=\"offset from route entry\", db_read;dur=1091.92;desc=\"16 calls\", db_read_end;dur=759.56;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::wt859-1791543427875-0494c4c2f8aa",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 1,
+      "action": "open",
+      "readyMs": 2236.6324999999997,
+      "requestOffsets": [
+        370.86039999999775
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1829.723,
+          "responseStartMs": 1748.517,
+          "responseEndMs": 1829.723,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1630.47, auth;dur=132.78;desc=\"1 calls\", auth_end;dur=133.21;desc=\"offset from route entry\", db_read;dur=2815.01;desc=\"16 calls\", db_read_end;dur=1575.85;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::vt7j6-1791543429485-95d83782ac78",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 2870.0406000000003,
+      "requestOffsets": [
+        267.35719999999856
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2567.303,
+          "responseStartMs": 2487.656,
+          "responseEndMs": 2567.303,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2358.53, auth;dur=112.21;desc=\"1 calls\", auth_end;dur=112.55;desc=\"offset from route entry\", db_read;dur=3203.75;desc=\"16 calls\", db_read_end;dur=2304.05;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::zdc82-1791543431931-614c09273ae2",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 2,
+      "action": "open",
+      "readyMs": 2403.028599999998,
+      "requestOffsets": [
+        358.11269999999786
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1994.549,
+          "responseStartMs": 1913.612,
+          "responseEndMs": 1994.549,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1804.94, auth;dur=107.90;desc=\"1 calls\", auth_end;dur=108.24;desc=\"offset from route entry\", db_read;dur=2875.69;desc=\"16 calls\", db_read_end;dur=1760.91;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::svnhr-1791543435206-6475f80e9eab",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 1902.3832999999977,
+      "requestOffsets": [
+        253.61449999999968
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1626.061,
+          "responseStartMs": 1547.695,
+          "responseEndMs": 1626.061,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1430.55, auth;dur=110.27;desc=\"1 calls\", auth_end;dur=110.66;desc=\"offset from route entry\", db_read;dur=2305.47;desc=\"16 calls\", db_read_end;dur=1385.94;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::4fnzl-1791543437817-5762c1d512ad",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 2,
+      "action": "open",
+      "readyMs": 1400.8592000000026,
+      "requestOffsets": [
+        375.6187000000027
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 980.414,
+          "responseStartMs": 965.424,
+          "responseEndMs": 980.414,
+          "bytes": 83179,
+          "serverTiming": "route;dur=876.90, auth;dur=111.03;desc=\"1 calls\", auth_end;dur=113.77;desc=\"offset from route entry\", db_read;dur=1173.57;desc=\"16 calls\", db_read_end;dur=835.85;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543440162-82b845404f5f",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 1086.0221999999994,
+      "requestOffsets": [
+        251.7373000000007
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 809.513,
+          "responseStartMs": 793.746,
+          "responseEndMs": 809.513,
+          "bytes": 83179,
+          "serverTiming": "route;dur=731.83, auth;dur=21.20;desc=\"1 calls\", auth_end;dur=21.65;desc=\"offset from route entry\", db_read;dur=1141.51;desc=\"16 calls\", db_read_end;dur=690.99;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543441748-0e1d1348730c",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 3,
+      "action": "open",
+      "readyMs": 1098.3607000000047,
+      "requestOffsets": [
+        322.0144
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 733.279,
+          "responseStartMs": 717.856,
+          "responseEndMs": 733.279,
+          "bytes": 83179,
+          "serverTiming": "route;dur=656.54, auth;dur=55.98;desc=\"1 calls\", auth_end;dur=56.25;desc=\"offset from route entry\", db_read;dur=1003.52;desc=\"16 calls\", db_read_end;dur=615.84;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543443224-b380a663cc6d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 1076.1247000000003,
+      "requestOffsets": [
+        249.97439999999915
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 802.1,
+          "responseStartMs": 785.605,
+          "responseEndMs": 802.1,
+          "bytes": 83179,
+          "serverTiming": "route;dur=727.20, auth;dur=28.24;desc=\"1 calls\", auth_end;dur=28.59;desc=\"offset from route entry\", db_read;dur=1004.01;desc=\"16 calls\", db_read_end;dur=685.99;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543444556-453647d00048",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 3,
+      "action": "open",
+      "readyMs": 2248.887999999999,
+      "requestOffsets": [
+        331.0440000000017
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1882.142,
+          "responseStartMs": 1802.034,
+          "responseEndMs": 1882.142,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1694.32, auth;dur=126.77;desc=\"1 calls\", auth_end;dur=127.04;desc=\"offset from route entry\", db_read;dur=2644.70;desc=\"16 calls\", db_read_end;dur=1653.99;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543446031-afcf37a10757",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 1920.6276999999973,
+      "requestOffsets": [
+        270.2140999999974
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1627.683,
+          "responseStartMs": 1549.24,
+          "responseEndMs": 1627.683,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1425.59, auth;dur=118.85;desc=\"1 calls\", auth_end;dur=119.12;desc=\"offset from route entry\", db_read;dur=2328.50;desc=\"16 calls\", db_read_end;dur=1384.91;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::b2977-1791543448536-aa418b3e518c",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 4,
+      "action": "open",
+      "readyMs": 1916.1837000000014,
+      "requestOffsets": [
+        309.14919999999984
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1570.189,
+          "responseStartMs": 1492.722,
+          "responseEndMs": 1570.189,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1386.91, auth;dur=112.50;desc=\"1 calls\", auth_end;dur=112.80;desc=\"offset from route entry\", db_read;dur=2275.45;desc=\"16 calls\", db_read_end;dur=1346.33;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::b2977-1791543450809-b66b775c15cf",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 1935.2917000000016,
+      "requestOffsets": [
+        290.89590000000317
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1614.43,
+          "responseStartMs": 1534.976,
+          "responseEndMs": 1614.43,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1420.53, auth;dur=117.70;desc=\"1 calls\", auth_end;dur=117.97;desc=\"offset from route entry\", db_read;dur=2295.73;desc=\"16 calls\", db_read_end;dur=1381.05;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::2gksg-1791543453021-22c9dabc358c",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 4,
+      "action": "open",
+      "readyMs": 1319.8885999999984,
+      "requestOffsets": [
+        342.18649999999616
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 934.257,
+          "responseStartMs": 918.207,
+          "responseEndMs": 934.257,
+          "bytes": 83179,
+          "serverTiming": "route;dur=864.19, auth;dur=85.06;desc=\"1 calls\", auth_end;dur=85.51;desc=\"offset from route entry\", db_read;dur=1326.26;desc=\"16 calls\", db_read_end;dur=814.40;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543455321-84bd20153776",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 1208.6329000000042,
+      "requestOffsets": [
+        261.24960000000283
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 923.086,
+          "responseStartMs": 907.639,
+          "responseEndMs": 923.086,
+          "bytes": 83179,
+          "serverTiming": "route;dur=843.83, auth;dur=35.44;desc=\"1 calls\", auth_end;dur=36.05;desc=\"offset from route entry\", db_read;dur=1304.00;desc=\"16 calls\", db_read_end;dur=803.37;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::b8mgc-1791543456870-fd308ccc5d1d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 5,
+      "action": "open",
+      "readyMs": 1177.7883000000002,
+      "requestOffsets": [
+        353.1959999999963
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 778.476,
+          "responseStartMs": 762.58,
+          "responseEndMs": 778.476,
+          "bytes": 83179,
+          "serverTiming": "route;dur=715.40, auth;dur=39.57;desc=\"1 calls\", auth_end;dur=39.83;desc=\"offset from route entry\", db_read;dur=1106.71;desc=\"16 calls\", db_read_end;dur=676.89;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::kfsgr-1791543458490-66b1dab295f7",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 1098.6203999999998,
+      "requestOffsets": [
+        248.1929999999993
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 825.202,
+          "responseStartMs": 821.074,
+          "responseEndMs": 825.202,
+          "bytes": 83179,
+          "serverTiming": "route;dur=744.55, auth;dur=18.93;desc=\"1 calls\", auth_end;dur=19.20;desc=\"offset from route entry\", db_read;dur=1224.37;desc=\"16 calls\", db_read_end;dur=706.89;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::ndq6s-1791543459880-dc0a0e915719",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 5,
+      "action": "open",
+      "readyMs": 2069.818699999996,
+      "requestOffsets": [
+        362.8116000000009
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1669.423,
+          "responseStartMs": 1593.651,
+          "responseEndMs": 1669.423,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1482.87, auth;dur=130.93;desc=\"1 calls\", auth_end;dur=131.28;desc=\"offset from route entry\", db_read;dur=2396.87;desc=\"16 calls\", db_read_end;dur=1444.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::jjzdt-1791543461408-c11899d995c1",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 1971.4215999999942,
+      "requestOffsets": [
+        243.7019999999975
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1705.618,
+          "responseStartMs": 1625.257,
+          "responseEndMs": 1705.618,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1501.60, auth;dur=106.73;desc=\"1 calls\", auth_end;dur=107.00;desc=\"offset from route entry\", db_read;dur=2470.97;desc=\"16 calls\", db_read_end;dur=1459.54;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::8485f-1791543463670-26d55ff61b59",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 6,
+      "action": "open",
+      "readyMs": 1954.3294999999998,
+      "requestOffsets": [
+        317.98049999999785
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1588.929,
+          "responseStartMs": 1510.344,
+          "responseEndMs": 1588.929,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1402.63, auth;dur=111.21;desc=\"1 calls\", auth_end;dur=111.50;desc=\"offset from route entry\", db_read;dur=2348.01;desc=\"16 calls\", db_read_end;dur=1364.17;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::cmg96-1791543466029-5c611ed2df66",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 1881.7263999999996,
+      "requestOffsets": [
+        272.1571999999942
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1581.014,
+          "responseStartMs": 1500.302,
+          "responseEndMs": 1581.014,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1382.84, auth;dur=111.86;desc=\"1 calls\", auth_end;dur=112.18;desc=\"offset from route entry\", db_read;dur=2286.80;desc=\"16 calls\", db_read_end;dur=1341.33;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::xfpbv-1791543468254-f51a54334bf1",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 6,
+      "action": "open",
+      "readyMs": 1565.5575000000026,
+      "requestOffsets": [
+        354.84270000000106
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1175.492,
+          "responseStartMs": 1159.637,
+          "responseEndMs": 1175.492,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1054.12, auth;dur=89.52;desc=\"1 calls\", auth_end;dur=90.13;desc=\"offset from route entry\", db_read;dur=1496.49;desc=\"16 calls\", db_read_end;dur=1013.99;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::lh68z-1791543470556-508e51d64f96",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 1158.9671999999991,
+      "requestOffsets": [
+        263.0113000000056
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 859.309,
+          "responseStartMs": 843.255,
+          "responseEndMs": 859.309,
+          "bytes": 83179,
+          "serverTiming": "route;dur=794.71, auth;dur=31.20;desc=\"1 calls\", auth_end;dur=31.55;desc=\"offset from route entry\", db_read;dur=1196.53;desc=\"16 calls\", db_read_end;dur=756.77;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::x89jv-1791543472335-48288672db37",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 7,
+      "action": "open",
+      "readyMs": 1219.9968000000008,
+      "requestOffsets": [
+        320.9343000000008
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 855.673,
+          "responseStartMs": 850.744,
+          "responseEndMs": 855.673,
+          "bytes": 83179,
+          "serverTiming": "route;dur=792.24, auth;dur=53.20;desc=\"1 calls\", auth_end;dur=53.48;desc=\"offset from route entry\", db_read;dur=1221.50;desc=\"16 calls\", db_read_end;dur=753.85;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::dlqng-1791543473871-8643c4ce0a6b",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 1308.8561000000045,
+      "requestOffsets": [
+        237.7583999999988
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1038.676,
+          "responseStartMs": 1021.778,
+          "responseEndMs": 1038.676,
+          "bytes": 83179,
+          "serverTiming": "route;dur=958.41, auth;dur=24.48;desc=\"1 calls\", auth_end;dur=24.83;desc=\"offset from route entry\", db_read;dur=1366.94;desc=\"16 calls\", db_read_end;dur=920.40;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::z7fw7-1791543475309-bcdc68619997",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 7,
+      "action": "open",
+      "readyMs": 2284.952799999999,
+      "requestOffsets": [
+        332.3159999999916
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1908.426,
+          "responseStartMs": 1833.913,
+          "responseEndMs": 1908.426,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1723.77, auth;dur=132.25;desc=\"1 calls\", auth_end;dur=132.57;desc=\"offset from route entry\", db_read;dur=2559.22;desc=\"16 calls\", db_read_end;dur=1683.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::z7fw7-1791543477028-c32fb7a675fd",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 2005.3506999999954,
+      "requestOffsets": [
+        252.30719999999565
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1721.679,
+          "responseStartMs": 1641.777,
+          "responseEndMs": 1721.679,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1438.84, auth;dur=109.09;desc=\"1 calls\", auth_end;dur=109.40;desc=\"offset from route entry\", db_read;dur=2458.52;desc=\"16 calls\", db_read_end;dur=1397.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::dwsjm-1791543479545-98731669326a",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 0,
+      "action": "open",
+      "readyMs": 2229.3475000000035,
+      "requestOffsets": [
+        1022.067200000005
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1140.253,
+          "responseStartMs": 1092.206,
+          "responseEndMs": 1140.253,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1013.43, auth;dur=64.65;desc=\"1 calls\", auth_end;dur=65.27;desc=\"offset from route entry\", db_read;dur=1347.84;desc=\"16 calls\", db_read_end;dur=972.58;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::6dnj7-1791543489939-f6911e6440e5",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 1469.8773000000074,
+      "requestOffsets": [
+        591.3497999999963
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 843.416,
+          "responseStartMs": 809.514,
+          "responseEndMs": 843.416,
+          "bytes": 83179,
+          "serverTiming": "route;dur=728.98, auth;dur=20.74;desc=\"1 calls\", auth_end;dur=21.02;desc=\"offset from route entry\", db_read;dur=1095.23;desc=\"16 calls\", db_read_end;dur=688.12;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::pjb5j-1791543492101-c294bafe23d1",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 0,
+      "action": "open",
+      "readyMs": 3093.9361999999965,
+      "requestOffsets": [
+        1004.2730999999912
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2027.545,
+          "responseStartMs": 1915.248,
+          "responseEndMs": 2027.545,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1801.93, auth;dur=124.85;desc=\"1 calls\", auth_end;dur=125.13;desc=\"offset from route entry\", db_read;dur=2906.30;desc=\"16 calls\", db_read_end;dur=1764.39;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::lh68z-1791543494306-c2369c4294be",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 2635.7148999999918,
+      "requestOffsets": [
+        612.0527000000002
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1984.723,
+          "responseStartMs": 1878.521,
+          "responseEndMs": 1984.723,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1755.56, auth;dur=111.28;desc=\"1 calls\", auth_end;dur=111.55;desc=\"offset from route entry\", db_read;dur=2798.50;desc=\"16 calls\", db_read_end;dur=1718.90;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::b8mgc-1791543497389-0f927edcf8cb",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 1,
+      "action": "open",
+      "readyMs": 2923.6940999999933,
+      "requestOffsets": [
+        997.6141999999963
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1878.982,
+          "responseStartMs": 1782.849,
+          "responseEndMs": 1878.982,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1655.83, auth;dur=118.09;desc=\"1 calls\", auth_end;dur=118.38;desc=\"offset from route entry\", db_read;dur=2626.14;desc=\"16 calls\", db_read_end;dur=1617.30;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::h2nmp-1791543500739-d5ab4aa57ca8",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 2625.2949999999983,
+      "requestOffsets": [
+        603.6198000000004
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1984.603,
+          "responseStartMs": 1877.225,
+          "responseEndMs": 1984.603,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1741.61, auth;dur=115.09;desc=\"1 calls\", auth_end;dur=115.43;desc=\"offset from route entry\", db_read;dur=2609.56;desc=\"16 calls\", db_read_end;dur=1689.80;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::hnxwv-1791543503624-36c10f030c13",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 1,
+      "action": "open",
+      "readyMs": 2037.9762999999948,
+      "requestOffsets": [
+        1001.1542000000045
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 981.539,
+          "responseStartMs": 949.239,
+          "responseEndMs": 981.539,
+          "bytes": 83179,
+          "serverTiming": "route;dur=869.55, auth;dur=61.99;desc=\"1 calls\", auth_end;dur=62.31;desc=\"offset from route entry\", db_read;dur=1266.94;desc=\"16 calls\", db_read_end;dur=829.54;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::jgbgq-1791543506975-6b61ce8dcefb",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 1475.1116000000038,
+      "requestOffsets": [
+        588.300900000002
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 843.851,
+          "responseStartMs": 797.634,
+          "responseEndMs": 843.851,
+          "bytes": 83179,
+          "serverTiming": "route;dur=738.50, auth;dur=33.12;desc=\"1 calls\", auth_end;dur=33.38;desc=\"offset from route entry\", db_read;dur=1040.44;desc=\"16 calls\", db_read_end;dur=698.53;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::jjzdt-1791543508960-c44f80125c0d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 2,
+      "action": "open",
+      "readyMs": 1988.9533999999985,
+      "requestOffsets": [
+        1042.4648000000016
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 892.552,
+          "responseStartMs": 837.726,
+          "responseEndMs": 892.552,
+          "bytes": 83179,
+          "serverTiming": "route;dur=754.00, auth;dur=31.45;desc=\"1 calls\", auth_end;dur=31.79;desc=\"offset from route entry\", db_read;dur=1170.46;desc=\"16 calls\", db_read_end;dur=713.63;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::mx8kf-1791543511218-4f64c1bb2fe0",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 1622.806899999996,
+      "requestOffsets": [
+        608.0673999999999
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 982.56,
+          "responseStartMs": 945.749,
+          "responseEndMs": 982.56,
+          "bytes": 83179,
+          "serverTiming": "route;dur=877.59, auth;dur=20.09;desc=\"1 calls\", auth_end;dur=20.35;desc=\"offset from route entry\", db_read;dur=1294.93;desc=\"16 calls\", db_read_end;dur=837.62;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::jjzdt-1791543513148-7746dfdc2dd5",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 2,
+      "action": "open",
+      "readyMs": 2965.997199999998,
+      "requestOffsets": [
+        1011.340400000001
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1907.256,
+          "responseStartMs": 1809.957,
+          "responseEndMs": 1907.256,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1671.86, auth;dur=110.78;desc=\"1 calls\", auth_end;dur=111.04;desc=\"offset from route entry\", db_read;dur=2705.91;desc=\"16 calls\", db_read_end;dur=1632.54;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::bnsj5-1791543515492-a0c9f3b8c3ff",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 2471.5896000000066,
+      "requestOffsets": [
+        616.1744000000035
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1821.889,
+          "responseStartMs": 1707.497,
+          "responseEndMs": 1821.889,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1574.64, auth;dur=114.67;desc=\"1 calls\", auth_end;dur=114.94;desc=\"offset from route entry\", db_read;dur=2434.92;desc=\"16 calls\", db_read_end;dur=1535.21;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::hnxwv-1791543518421-1bf9fee54525",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 3,
+      "action": "open",
+      "readyMs": 2722.817900000009,
+      "requestOffsets": [
+        992.786300000007
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1671.331,
+          "responseStartMs": 1574.2,
+          "responseEndMs": 1671.331,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1434.38, auth;dur=117.98;desc=\"1 calls\", auth_end;dur=118.24;desc=\"offset from route entry\", db_read;dur=2354.65;desc=\"16 calls\", db_read_end;dur=1382.90;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::bnsj5-1791543521598-94155c8c7113",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 2290.763399999996,
+      "requestOffsets": [
+        586.9442999999883
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1671.151,
+          "responseStartMs": 1557.513,
+          "responseEndMs": 1671.151,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1422.30, auth;dur=110.10;desc=\"1 calls\", auth_end;dur=110.41;desc=\"offset from route entry\", db_read;dur=2292.43;desc=\"16 calls\", db_read_end;dur=1380.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::5749t-1791543524274-07ca914f0d00",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 3,
+      "action": "open",
+      "readyMs": 2040.3698000000004,
+      "requestOffsets": [
+        998.0627000000095
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 991.765,
+          "responseStartMs": 957.181,
+          "responseEndMs": 991.765,
+          "bytes": 83179,
+          "serverTiming": "route;dur=875.22, auth;dur=79.79;desc=\"1 calls\", auth_end;dur=80.05;desc=\"offset from route entry\", db_read;dur=1211.00;desc=\"16 calls\", db_read_end;dur=835.77;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::sxzdz-1791543527302-f0bcc6710ced",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 1556.4397000000026,
+      "requestOffsets": [
+        611.3533000000025
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 913.565,
+          "responseStartMs": 863.079,
+          "responseEndMs": 913.565,
+          "bytes": 83179,
+          "serverTiming": "route;dur=792.38, auth;dur=52.02;desc=\"1 calls\", auth_end;dur=52.64;desc=\"offset from route entry\", db_read;dur=1089.99;desc=\"16 calls\", db_read_end;dur=752.93;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::c9nwr-1791543529316-b368a12975c3",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 4,
+      "action": "open",
+      "readyMs": 1879.7869000000064,
+      "requestOffsets": [
+        969.9712
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 861.766,
+          "responseStartMs": 814.014,
+          "responseEndMs": 861.766,
+          "bytes": 83179,
+          "serverTiming": "route;dur=750.79, auth;dur=35.71;desc=\"1 calls\", auth_end;dur=36.00;desc=\"offset from route entry\", db_read;dur=1048.95;desc=\"16 calls\", db_read_end;dur=711.88;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::f5x2x-1791543531552-b5b262ae9cc8",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 1474.0488999999943,
+      "requestOffsets": [
+        597.3117000000057
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 844.677,
+          "responseStartMs": 789.789,
+          "responseEndMs": 844.677,
+          "bytes": 83179,
+          "serverTiming": "route;dur=719.37, auth;dur=32.30;desc=\"1 calls\", auth_end;dur=32.57;desc=\"offset from route entry\", db_read;dur=1097.24;desc=\"16 calls\", db_read_end;dur=679.80;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::897kr-1791543533417-68e3a22b135f",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 4,
+      "action": "open",
+      "readyMs": 2728.476999999999,
+      "requestOffsets": [
+        989.3214999999909
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1689.935,
+          "responseStartMs": 1594.062,
+          "responseEndMs": 1689.935,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1448.31, auth;dur=125.60;desc=\"1 calls\", auth_end;dur=125.86;desc=\"offset from route entry\", db_read;dur=2368.62;desc=\"16 calls\", db_read_end;dur=1410.93;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::h2nmp-1791543535605-43a2cdb517d9",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 2290.410899999988,
+      "requestOffsets": [
+        570.6839999999938
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1687.903,
+          "responseStartMs": 1583.091,
+          "responseEndMs": 1687.903,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1383.46, auth;dur=112.26;desc=\"1 calls\", auth_end;dur=112.55;desc=\"offset from route entry\", db_read;dur=2260.25;desc=\"16 calls\", db_read_end;dur=1344.65;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::5749t-1791543538273-69a98e91c2cc",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 5,
+      "action": "open",
+      "readyMs": 2763.686699999991,
+      "requestOffsets": [
+        1013.6658000000025
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1699.464,
+          "responseStartMs": 1602.981,
+          "responseEndMs": 1699.464,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1474.15, auth;dur=129.51;desc=\"1 calls\", auth_end;dur=129.79;desc=\"offset from route entry\", db_read;dur=2384.13;desc=\"16 calls\", db_read_end;dur=1436.35;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::l5rcp-1791543541329-a2e76eef1c7d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 2538.1608000000124,
+      "requestOffsets": [
+        601.7130000000179
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1892.868,
+          "responseStartMs": 1793.857,
+          "responseEndMs": 1892.868,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1590.59, auth;dur=109.14;desc=\"1 calls\", auth_end;dur=109.48;desc=\"offset from route entry\", db_read;dur=2513.83;desc=\"16 calls\", db_read_end;dur=1553.10;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::8rbbh-1791543544039-3d89632a2285",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 5,
+      "action": "open",
+      "readyMs": 2056.329700000002,
+      "requestOffsets": [
+        1007.5333000000101
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 997.827,
+          "responseStartMs": 948.892,
+          "responseEndMs": 997.827,
+          "bytes": 83179,
+          "serverTiming": "route;dur=881.38, auth;dur=60.66;desc=\"1 calls\", auth_end;dur=61.03;desc=\"offset from route entry\", db_read;dur=1302.64;desc=\"16 calls\", db_read_end;dur=839.78;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::c9nwr-1791543547313-29980a7b02aa",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 1542.035199999984,
+      "requestOffsets": [
+        615.8360999999859
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 891.38,
+          "responseStartMs": 841.003,
+          "responseEndMs": 891.38,
+          "bytes": 83179,
+          "serverTiming": "route;dur=780.12, auth;dur=35.21;desc=\"1 calls\", auth_end;dur=35.48;desc=\"offset from route entry\", db_read;dur=1158.17;desc=\"16 calls\", db_read_end;dur=739.85;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::c9nwr-1791543549333-5610a80a4109",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 6,
+      "action": "open",
+      "readyMs": 1973.6159000000043,
+      "requestOffsets": [
+        1024.2014999999956
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 892.554,
+          "responseStartMs": 844.201,
+          "responseEndMs": 892.554,
+          "bytes": 83179,
+          "serverTiming": "route;dur=775.91, auth;dur=41.87;desc=\"1 calls\", auth_end;dur=42.14;desc=\"offset from route entry\", db_read;dur=1124.59;desc=\"16 calls\", db_read_end;dur=738.19;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::jlkzr-1791543551610-1324193a0d15",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 1518.889199999976,
+      "requestOffsets": [
+        578.3638999999966
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 909.114,
+          "responseStartMs": 864.044,
+          "responseEndMs": 909.114,
+          "bytes": 83179,
+          "serverTiming": "route;dur=781.79, auth;dur=52.82;desc=\"1 calls\", auth_end;dur=53.43;desc=\"offset from route entry\", db_read;dur=1074.35;desc=\"16 calls\", db_read_end;dur=742.23;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::ndbx9-1791543553518-fad08c2906b4",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 6,
+      "action": "open",
+      "readyMs": 2906.1211000000185,
+      "requestOffsets": [
+        1006.5223000000115
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1838.003,
+          "responseStartMs": 1725.923,
+          "responseEndMs": 1838.003,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1594.79, auth;dur=124.33;desc=\"1 calls\", auth_end;dur=124.61;desc=\"offset from route entry\", db_read;dur=2562.39;desc=\"16 calls\", db_read_end;dur=1554.78;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543555793-6365a4f4f69b",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 2242.2785999999905,
+      "requestOffsets": [
+        592.1635999999999
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1617.584,
+          "responseStartMs": 1508.719,
+          "responseEndMs": 1617.584,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1368.95, auth;dur=109.91;desc=\"1 calls\", auth_end;dur=110.17;desc=\"offset from route entry\", db_read;dur=2285.93;desc=\"16 calls\", db_read_end;dur=1330.66;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543558641-e239ed8b767d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 7,
+      "action": "open",
+      "readyMs": 2980.166599999997,
+      "requestOffsets": [
+        1116.369000000006
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1815.093,
+          "responseStartMs": 1719.573,
+          "responseEndMs": 1815.093,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1547.52, auth;dur=132.16;desc=\"1 calls\", auth_end;dur=132.78;desc=\"offset from route entry\", db_read;dur=2548.42;desc=\"16 calls\", db_read_end;dur=1509.64;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543561730-6d1421eac734",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 2439.84540000002,
+      "requestOffsets": [
+        692.0087000000058
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1708.797,
+          "responseStartMs": 1607.199,
+          "responseEndMs": 1708.797,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1398.43, auth;dur=111.96;desc=\"1 calls\", auth_end;dur=112.31;desc=\"offset from route entry\", db_read;dur=2286.43;desc=\"16 calls\", db_read_end;dur=1360.94;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::7lwj5-1791543564660-48a07d50b384",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 7,
+      "action": "open",
+      "readyMs": 1876.5581999999995,
+      "requestOffsets": [
+        1010.0329999999958
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 817.552,
+          "responseStartMs": 771.436,
+          "responseEndMs": 817.552,
+          "bytes": 83179,
+          "serverTiming": "route;dur=699.84, auth;dur=58.66;desc=\"1 calls\", auth_end;dur=58.95;desc=\"offset from route entry\", db_read;dur=1169.35;desc=\"16 calls\", db_read_end;dur=662.34;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::z52kl-1791543567745-1302bcd5e6bd",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 1407.2823999999964,
+      "requestOffsets": [
+        585.0755000000063
+      ],
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 787.013,
+          "responseStartMs": 743.402,
+          "responseEndMs": 787.013,
+          "bytes": 83179,
+          "serverTiming": "route;dur=673.73, auth;dur=34.11;desc=\"1 calls\", auth_end;dur=34.39;desc=\"offset from route entry\", db_read;dur=1104.44;desc=\"16 calls\", db_read_end;dur=634.91;desc=\"offset from route entry\"",
+          "region": "lhr1::fra1::7lwj5-1791543569552-c2a86c7bfbe4",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "otherFunctions": [
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::svnhr-1791543412343-a83452316c3a"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::5xnk8-1791543416497-0c9b360ad369"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::hflwp-1791543417744-140e5e02a173"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::rmwq8-1791543422826-49261560c99d"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::czmzd-1791543426224-fc520aaee84e"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::b2977-1791543429214-04b1118cb99c"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::qwf7x-1791543434935-ff9606526f60"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::8z2g7-1791543439897-a0c88e81316c"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::8z2g7-1791543442984-cb988bac4031"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::2gksg-1791543445799-3c7392c7ef6d"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::4qhtd-1791543450587-c86f5560cec9"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::pjb5j-1791543455088-fa3c0187345c"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::4gj87-1791543458228-b16dd5b79b02"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::6dnj7-1791543461164-d1c4a73a8f85"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::8485f-1791543465799-39fdf68e24ef"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::b8mgc-1791543470305-71bb8fcc4d4b"
+    },
+    {
+      "variant": "b",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::v7kjc-1791543473633-17bc5c3a111e"
+    },
+    {
+      "variant": "a",
+      "mobile": false,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::czmzd-1791543476800-2505b324f368"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::5xnk8-1791543482381-22a6190d365c"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::b8mgc-1791543483266-943214433026"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::6dnj7-1791543487366-d341171bfd98"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::hczgb-1791543489341-82f5bcc792bc"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::cz4vl-1791543493720-c30d35f9b06e"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::h2nmp-1791543500145-619cbb86ee97"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::kzv9p-1791543506388-4c33c1fa9f25"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::vfjtm-1791543510617-81a6f9f2eb68"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::4qhtd-1791543514911-edd5c156f935"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::zrff5-1791543521006-050c4fbc8eee"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::fbgnj-1791543526728-8dd482998818"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::f5x2x-1791543530983-037b29b441dd"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::zrff5-1791543535035-5feb55427c2c"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::8rbbh-1791543540737-f501bc4e750c"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::94v8v-1791543546713-abe369b73aa0"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::jlkzr-1791543551005-4840344ce437"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::qwf7x-1791543555210-4461793f2d82"
+    },
+    {
+      "variant": "a",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::nvrv9-1791543561051-f3e97ed17d99"
+    },
+    {
+      "variant": "b",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::dq9x5-1791543567169-cb8cfa663f36"
+    }
+  ]
+}

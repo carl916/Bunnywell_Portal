@@ -1,0 +1,75 @@
+{
+  "baseline": "d35a975eb9fe39be41230d0bf3c1c5231420aca2",
+  "stagingDeployment": "dpl_12sbX4J1KmADGjJHav1mioDTAJS2",
+  "productionDeployment": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+  "a": {
+    "id": "dpl_EhB1UkT3QbeNV9hEj2A9kt1ynRVz",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-2vgi8dbtu-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791543001049,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "codex/sales-register-region-a",
+      "githubCommitSha": "975efb9be84c9e14fce673fc96582eb91ccc7fa9",
+      "githubCommitMessage": "Isolated register region A comparison",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "bunnywell-portal-git-codex-sales-72c8ad-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791543153707,
+    "ready": 1791543242356,
+    "readyState": "READY",
+    "aliasError": null
+  },
+  "b": {
+    "id": "dpl_46NU1pr3v23tQ7kszN2Lbkp5Umcx",
+    "name": "bunnywell-portal",
+    "url": "bunnywell-portal-mzwlenoks-carl-gilbert-s-projects.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1791543006219,
+    "creator": {
+      "uid": "ELqgDFMB2LOFEogrQ3A8PVib",
+      "username": "carl916"
+    },
+    "project": {
+      "id": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "name": "bunnywell-portal",
+      "framework": "nextjs"
+    },
+    "meta": {
+      "githubCommitRef": "codex/sales-register-region-b",
+      "githubCommitSha": "00f1d1fc8d0a841808c6d17797cefad3dc35d590",
+      "githubCommitMessage": "Isolated register region B comparison",
+      "githubRepo": "Bunnywell_Portal",
+      "githubOrg": "carl916"
+    },
+    "alias": [
+      "bunnywell-portal-git-codex-sales-d4a3f3-carl-gilbert-s-projects.vercel.app"
+    ],
+    "target": null,
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1791543243699,
+    "ready": 1791543329902,
+    "readyState": "READY",
+    "aliasError": null
+  }
+}

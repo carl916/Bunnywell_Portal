@@ -1,0 +1,1143 @@
+{
+  "note": "Completed desktop repetitions from the corrected desktop run and completed mobile run; aborted pilot runs excluded.",
+  "savedAt": "2026-10-09T10:54:00.577Z",
+  "targets": {
+    "staging": "https://staging.bunnywell.co.uk"
+  },
+  "rounds": 8,
+  "setup": [
+    {
+      "variant": "staging",
+      "mobile": false,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "stagingVerified": true,
+      "browser": "149.0.7827.55"
+    }
+  ],
+  "samples": [
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 0,
+      "action": "open",
+      "readyMs": 2094.5116,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1723.892,
+          "responseStartMs": 1646.288,
+          "responseEndMs": 1723.892,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1540.89, auth;dur=107.26;desc=\"1 calls\", auth_end;dur=107.53;desc=\"offset from route entry\", db_read;dur=2463.57;desc=\"16 calls\", db_read_end;dur=1503.67;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::cz4vl-1791543046902-1150c76a1d0c",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 2116.1278999999995,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1841.091,
+          "responseStartMs": 1763.036,
+          "responseEndMs": 1841.091,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1645.47, auth;dur=114.26;desc=\"1 calls\", auth_end;dur=114.55;desc=\"offset from route entry\", db_read;dur=2603.18;desc=\"16 calls\", db_read_end;dur=1606.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::gp9rr-1791543049246-eb66c2f63a20",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 1,
+      "action": "open",
+      "readyMs": 2056.1916,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1694.71,
+          "responseStartMs": 1606.917,
+          "responseEndMs": 1694.71,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1498.92, auth;dur=109.11;desc=\"1 calls\", auth_end;dur=109.39;desc=\"offset from route entry\", db_read;dur=2456.50;desc=\"16 calls\", db_read_end;dur=1460.61;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::ccgqv-1791543051736-62d2cff5894e",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 1893.5712999999996,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1621.468,
+          "responseStartMs": 1549.678,
+          "responseEndMs": 1621.468,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1423.33, auth;dur=137.73;desc=\"1 calls\", auth_end;dur=138.05;desc=\"offset from route entry\", db_read;dur=2321.67;desc=\"16 calls\", db_read_end;dur=1385.74;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::jh5jj-1791543054030-6e123b0c1655",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 2,
+      "action": "open",
+      "readyMs": 2590.979199999998,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1564.172,
+          "responseStartMs": 1483.532,
+          "responseEndMs": 1564.172,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1376.76, auth;dur=114.17;desc=\"1 calls\", auth_end;dur=114.47;desc=\"offset from route entry\", db_read;dur=2254.43;desc=\"16 calls\", db_read_end;dur=1337.56;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::gtz2p-1791543056975-86b69d9370a0",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 3426.368300000002,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2263.128,
+          "responseStartMs": 2185.638,
+          "responseEndMs": 2263.128,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1628.01, auth;dur=129.81;desc=\"1 calls\", auth_end;dur=130.09;desc=\"offset from route entry\", db_read;dur=2487.43;desc=\"16 calls\", db_read_end;dur=1577.78;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::xtqwr-1791543060382-d956cf75284f",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 3,
+      "action": "open",
+      "readyMs": 3353.2694999999985,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1855.249,
+          "responseStartMs": 1776.942,
+          "responseEndMs": 1855.249,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1544.80, auth;dur=112.08;desc=\"1 calls\", auth_end;dur=112.64;desc=\"offset from route entry\", db_read;dur=2436.59;desc=\"16 calls\", db_read_end;dur=1506.57;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::dwsjm-1791543064207-31a62dc39e98",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 1953.1615999999995,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1657.406,
+          "responseStartMs": 1576.704,
+          "responseEndMs": 1657.406,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1371.87, auth;dur=107.71;desc=\"1 calls\", auth_end;dur=108.05;desc=\"offset from route entry\", db_read;dur=2262.38;desc=\"16 calls\", db_read_end;dur=1328.48;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::w4l59-1791543066550-c7b15f2ed410",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 4,
+      "action": "open",
+      "readyMs": 3202.1672999999973,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2846.937,
+          "responseStartMs": 2757.24,
+          "responseEndMs": 2846.937,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2650.23, auth;dur=318.10;desc=\"1 calls\", auth_end;dur=318.38;desc=\"offset from route entry\", db_read;dur=4055.17;desc=\"16 calls\", db_read_end;dur=2607.40;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::xtqwr-1791543068873-bdc2ec25ddf1",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 2937.0062,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2645.117,
+          "responseStartMs": 2566.177,
+          "responseEndMs": 2645.117,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2445.14, auth;dur=294.52;desc=\"1 calls\", auth_end;dur=294.76;desc=\"offset from route entry\", db_read;dur=3385.27;desc=\"16 calls\", db_read_end;dur=2411.63;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::c9nwr-1791543072331-18396662589b",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 5,
+      "action": "open",
+      "readyMs": 2121.1232999999993,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1728.577,
+          "responseStartMs": 1648.921,
+          "responseEndMs": 1728.577,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1541.57, auth;dur=105.30;desc=\"1 calls\", auth_end;dur=105.56;desc=\"offset from route entry\", db_read;dur=2466.28;desc=\"16 calls\", db_read_end;dur=1519.13;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::rmwq8-1791543075665-d82f8eb72937",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 2215.947899999999,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1926.143,
+          "responseStartMs": 1920.301,
+          "responseEndMs": 1926.143,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1714.85, auth;dur=107.01;desc=\"1 calls\", auth_end;dur=107.27;desc=\"offset from route entry\", db_read;dur=2841.03;desc=\"16 calls\", db_read_end;dur=1684.28;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::vt7j6-1791543078011-904dde62a243",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 6,
+      "action": "open",
+      "readyMs": 2854.9818000000014,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2504.705,
+          "responseStartMs": 2425.618,
+          "responseEndMs": 2504.705,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2244.01, auth;dur=122.34;desc=\"1 calls\", auth_end;dur=122.60;desc=\"offset from route entry\", db_read;dur=3409.50;desc=\"16 calls\", db_read_end;dur=2200.40;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qkjgr-1791543080589-4b0c58f12e61",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 2241.923300000002,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1965.129,
+          "responseStartMs": 1885.399,
+          "responseEndMs": 1965.129,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1768.23, auth;dur=110.14;desc=\"1 calls\", auth_end;dur=110.48;desc=\"offset from route entry\", db_read;dur=2849.30;desc=\"16 calls\", db_read_end;dur=1730.16;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::xtqwr-1791543083693-79616981e88f",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 7,
+      "action": "open",
+      "readyMs": 2798.869200000001,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2414.292,
+          "responseStartMs": 2333.487,
+          "responseEndMs": 2414.292,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2218.10, auth;dur=124.66;desc=\"1 calls\", auth_end;dur=124.91;desc=\"offset from route entry\", db_read;dur=3495.58;desc=\"16 calls\", db_read_end;dur=2179.00;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::mldjq-1791543086347-0027f13b27e4",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": false,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 2381.857100000001,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2091.261,
+          "responseStartMs": 2011.781,
+          "responseEndMs": 2091.261,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1891.71, auth;dur=114.84;desc=\"1 calls\", auth_end;dur=115.09;desc=\"offset from route entry\", db_read;dur=2875.03;desc=\"16 calls\", db_read_end;dur=1855.12;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::b4mr8-1791543089386-ef319254ffbe",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 0,
+      "action": "open",
+      "readyMs": 3343.084499999999,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2267.815,
+          "responseStartMs": 2186.929,
+          "responseEndMs": 2267.815,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2059.12, auth;dur=116.59;desc=\"1 calls\", auth_end;dur=116.91;desc=\"offset from route entry\", db_read;dur=3281.76;desc=\"16 calls\", db_read_end;dur=2028.28;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543191224-48a660f13689",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 0,
+      "action": "refresh",
+      "readyMs": 2844.7214000000004,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2199.81,
+          "responseStartMs": 2099.591,
+          "responseEndMs": 2199.81,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1966.05, auth;dur=294.29;desc=\"1 calls\", auth_end;dur=294.53;desc=\"offset from route entry\", db_read;dur=3215.73;desc=\"16 calls\", db_read_end;dur=1936.80;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::hflwp-1791543194536-2dc4feb449c3",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 1,
+      "action": "open",
+      "readyMs": 2934.569299999999,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1884.239,
+          "responseStartMs": 1772.717,
+          "responseEndMs": 1884.239,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1643.98, auth;dur=117.78;desc=\"1 calls\", auth_end;dur=118.01;desc=\"offset from route entry\", db_read;dur=2579.25;desc=\"16 calls\", db_read_end;dur=1616.92;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::8l6vm-1791543198109-8f7285d99d55",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 1,
+      "action": "refresh",
+      "readyMs": 2485.6223999999984,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1856.844,
+          "responseStartMs": 1730.702,
+          "responseEndMs": 1856.844,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1599.16, auth;dur=112.15;desc=\"1 calls\", auth_end;dur=112.43;desc=\"offset from route entry\", db_read;dur=2535.53;desc=\"16 calls\", db_read_end;dur=1567.69;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::gcpq6-1791543201018-976a56cf7cff",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 2,
+      "action": "open",
+      "readyMs": 2726.341099999998,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1671.788,
+          "responseStartMs": 1559.662,
+          "responseEndMs": 1671.788,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1361.90, auth;dur=113.34;desc=\"1 calls\", auth_end;dur=113.57;desc=\"offset from route entry\", db_read;dur=2260.08;desc=\"16 calls\", db_read_end;dur=1326.47;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::6sbqr-1791543204309-de2d3e93fb76",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 2,
+      "action": "refresh",
+      "readyMs": 2500.118699999999,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1855.911,
+          "responseStartMs": 1729.731,
+          "responseEndMs": 1855.911,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1600.54, auth;dur=112.10;desc=\"1 calls\", auth_end;dur=112.34;desc=\"offset from route entry\", db_read;dur=2533.14;desc=\"16 calls\", db_read_end;dur=1572.70;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::qwf7x-1791543206943-1eb4b475bfb7",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 3,
+      "action": "open",
+      "readyMs": 3129.177300000003,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2035.838,
+          "responseStartMs": 1924.229,
+          "responseEndMs": 2035.838,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1813.36, auth;dur=119.19;desc=\"1 calls\", auth_end;dur=119.48;desc=\"offset from route entry\", db_read;dur=2889.84;desc=\"16 calls\", db_read_end;dur=1775.38;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::2gksg-1791543210193-fcba50b79efd",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 3,
+      "action": "refresh",
+      "readyMs": 2654.3714,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2006.7,
+          "responseStartMs": 1894.2,
+          "responseEndMs": 2006.7,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1769.44, auth;dur=110.71;desc=\"1 calls\", auth_end;dur=110.99;desc=\"offset from route entry\", db_read;dur=2674.23;desc=\"16 calls\", db_read_end;dur=1730.58;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::bkr97-1791543213264-e81f20b9630d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 4,
+      "action": "open",
+      "readyMs": 3048.902299999998,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1966.737,
+          "responseStartMs": 1839.972,
+          "responseEndMs": 1966.737,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1629.29, auth;dur=114.99;desc=\"1 calls\", auth_end;dur=115.24;desc=\"offset from route entry\", db_read;dur=2575.87;desc=\"16 calls\", db_read_end;dur=1600.17;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::jvkhx-1791543216673-e7fd44a2b1d9",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 4,
+      "action": "refresh",
+      "readyMs": 2553.673799999997,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1910.623,
+          "responseStartMs": 1807.059,
+          "responseEndMs": 1910.623,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1678.55, auth;dur=110.48;desc=\"1 calls\", auth_end;dur=110.72;desc=\"offset from route entry\", db_read;dur=2657.09;desc=\"16 calls\", db_read_end;dur=1649.96;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::wt859-1791543219672-1806723ef62f",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 5,
+      "action": "open",
+      "readyMs": 3348.9588000000003,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 2276.643,
+          "responseStartMs": 2150.621,
+          "responseEndMs": 2276.643,
+          "bytes": 83179,
+          "serverTiming": "route;dur=2026.54, auth;dur=315.02;desc=\"1 calls\", auth_end;dur=315.25;desc=\"offset from route entry\", db_read;dur=2773.97;desc=\"16 calls\", db_read_end;dur=1999.75;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::jvkhx-1791543222984-f81a7eafaac3",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 5,
+      "action": "refresh",
+      "readyMs": 2402.9746000000014,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1770.983,
+          "responseStartMs": 1672.071,
+          "responseEndMs": 1770.983,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1539.38, auth;dur=114.41;desc=\"1 calls\", auth_end;dur=114.64;desc=\"offset from route entry\", db_read;dur=2476.49;desc=\"16 calls\", db_read_end;dur=1512.34;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::c9nwr-1791543226293-5007579642fd",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 6,
+      "action": "open",
+      "readyMs": 2708.520599999996,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1651.751,
+          "responseStartMs": 1554.842,
+          "responseEndMs": 1651.751,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1410.68, auth;dur=119.38;desc=\"1 calls\", auth_end;dur=119.67;desc=\"offset from route entry\", db_read;dur=2357.37;desc=\"16 calls\", db_read_end;dur=1388.30;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::wt859-1791543229426-06b986f80a0d",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 6,
+      "action": "refresh",
+      "readyMs": 2581.9438999999984,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1936.858,
+          "responseStartMs": 1839.536,
+          "responseEndMs": 1936.858,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1686.04, auth;dur=119.58;desc=\"1 calls\", auth_end;dur=119.81;desc=\"offset from route entry\", db_read;dur=2660.71;desc=\"16 calls\", db_read_end;dur=1636.53;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::l5rcp-1791543232112-35b1cefdcfd1",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 7,
+      "action": "open",
+      "readyMs": 2895.7186999999976,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1787.748,
+          "responseStartMs": 1735.22,
+          "responseEndMs": 1787.748,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1598.25, auth;dur=120.17;desc=\"1 calls\", auth_end;dur=120.41;desc=\"offset from route entry\", db_read;dur=2573.38;desc=\"16 calls\", db_read_end;dur=1572.17;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::l5rcp-1791543235443-ddd8b1516625",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "run": 7,
+      "action": "refresh",
+      "readyMs": 2270.140999999996,
+      "requests": 1,
+      "ui": {
+        "actionRows": 9,
+        "partyRows": 9,
+        "datedRows": 2
+      },
+      "api": [
+        {
+          "status": 200,
+          "durationMs": 1611.875,
+          "responseStartMs": 1499.441,
+          "responseEndMs": 1611.875,
+          "bytes": 83179,
+          "serverTiming": "route;dur=1378.48, auth;dur=125.40;desc=\"1 calls\", auth_end;dur=125.64;desc=\"offset from route entry\", db_read;dur=2337.96;desc=\"16 calls\", db_read_end;dur=1356.50;desc=\"offset from route entry\"",
+          "region": "lhr1::iad1::c6mjx-1791543238300-358126903e43",
+          "projectionHash": "b19e7dbb27fdadca3365f4550fd59ffc487e07f1b9c945c9db80ebb8bcdf4fab",
+          "rowCount": 134,
+          "actionable": true,
+          "actionRows": 42,
+          "datedRows": 9
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "otherFunctions": [
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::55c4c-1791543185903-33299bc44d7d"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::8rbbh-1791543185929-9c1aa094de33"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::vt7j6-1791543186337-af87027b3cfb"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::ldg76-1791543187614-308de4fc6dc6"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::pwfxg-1791543187705-d4910af63276"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::nxx7v-1791543190563-fd976572dbef"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::mldjq-1791543190623-5db5402458fc"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::6sbqr-1791543193933-4fb0e52fddd3"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::qwf7x-1791543197455-a911de929ff1"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::bngwq-1791543197524-d23040b685c7"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::fbgnj-1791543200425-2fbab05b966e"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::m9pxn-1791543203590-c61947d04c20"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::pwfxg-1791543203647-67204834c314"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::svnhr-1791543206327-83fb2780e9a1"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::fbgnj-1791543209509-bf6208f077aa"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::l5rcp-1791543209562-f0f0c1413577"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::svnhr-1791543212656-332fa5eb911e"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::fbgnj-1791543216077-22578904d029"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::fzx5h-1791543216077-7bba0340e86c"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::nn52q-1791543219073-7942a4ca3287"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::v7kjc-1791543222324-a0c364fb3335"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::wt859-1791543222391-dbcc2c16b8db"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::ldg76-1791543225690-3be7d7af5c8c"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::jgbgq-1791543228781-22a73047973d"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::c9nwr-1791543228847-2559f89f6e2d"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::zrff5-1791543231496-ed83a614ea13"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::zpmh6-1791543234767-a8f2884b3925"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/auth/activity",
+      "status": 200,
+      "region": "lhr1::iad1::rrdmh-1791543234838-8c6355c0612e"
+    },
+    {
+      "variant": "staging",
+      "mobile": true,
+      "endpoint": "/api/performance/vitals",
+      "status": 204,
+      "region": "lhr1::iad1::l4smg-1791543237671-0830b4dfe78e"
+    }
+  ],
+  "mobileStartedAt": "2026-10-09T10:53:05.686Z"
+}
