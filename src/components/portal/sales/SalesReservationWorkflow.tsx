@@ -42,6 +42,7 @@ import {
   SALES_ROUTE_STATUSES,
   isSalesRouteUnit,
   saleStatusLabel,
+  sortUnitsByBuildingFloorOrder,
 } from "@/lib/units/commercial-allocation";
 
 type Profile = {
@@ -854,6 +855,7 @@ export function SalesReservationWorkflow({
   reloadPortalData,
   refreshLegalPortalData,
   salesRefreshKey,
+  conveyancerUnitId,
 }: {
   user: User;
   profile: Profile | null;
@@ -867,6 +869,7 @@ export function SalesReservationWorkflow({
   reloadPortalData: () => Promise<void>;
   refreshLegalPortalData: (sale: string, action: string) => Promise<void>;
   salesRefreshKey?: string | null;
+  conveyancerUnitId?: string;
 }) {
   const salesLoadRevision = useRef(0);
   const salesLoads = useRef(createLoadCoordinator("sales"));
@@ -880,20 +883,27 @@ export function SalesReservationWorkflow({
   const pendingWorkflowStageScrollRef = useRef<SaleWorkflowStage | null>(null);
 
   const buildingId = buildingContextId;
+  const conveyancerFile = profile?.role === "conveyancer";
   const buildingUnits = useMemo(
-    () => sortUnitsByFloorOrder(
-      units.filter((unit) => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit)),
-      buildingFloors,
-      buildingId,
-    ),
-    [buildingFloors, buildingId, units],
+    () => {
+      const available = units.filter((unit) => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit));
+      return conveyancerFile
+        ? sortUnitsByBuildingFloorOrder(available, buildingFloors, buildings)
+        : sortUnitsByFloorOrder(available, buildingFloors, buildingId);
+    },
+    [buildingFloors, buildingId, buildings, conveyancerFile, units],
   );
-  const membershipKey = salesMembershipKey(buildingUnits);
-  const salesKey = JSON.stringify([user.id, profile?.role, profile?.organisation_id, buildingId, membershipKey, salesRefreshKey]);
+  // Navigation keeps all authorised metadata. Only the conveyancer file's
+  // detailed snapshot is narrowed; internal overview/file reuse is unchanged.
+  const fileUnit = conveyancerFile ? buildingUnits.find(unit => unit.id === conveyancerUnitId) : undefined;
+  const salesUnits = conveyancerFile ? (fileUnit ? [fileUnit] : []) : buildingUnits;
+  const salesBuildingId = conveyancerFile ? fileUnit?.building_id ?? "" : buildingId;
+  const membershipKey = salesMembershipKey(salesUnits);
+  const salesKey = JSON.stringify([user.id, profile?.role, profile?.organisation_id, salesBuildingId, membershipKey, salesRefreshKey]);
   const currentSalesKey = useRef(salesKey);
   useEffect(() => { currentSalesKey.current = salesKey; }, [salesKey]);
   useEffect(() => () => { salesLoads.current.invalidate(); salesLoadRevision.current++; }, []);
-  const [unitId, setUnitId] = useState(buildingUnits[0]?.id ?? "");
+  const [unitId, setUnitId] = useState(fileUnit?.id ?? buildingUnits[0]?.id ?? "");
   const [saleActorNames, setSaleActorNames] = useState<SaleActorName[]>([]);
   const profiles: SaleActorProfile[] = [
     ...portalProfiles.map((profile) => ({ ...profile, display_name: saleActorNames.find((actor) => actor.id === profile.id)?.display_name })),
@@ -973,7 +983,7 @@ export function SalesReservationWorkflow({
   const [returnToForSaleReason, setReturnToForSaleReason] = useState("");
   const [invoiceRejectionReason, setInvoiceRejectionReason] = useState("");
   const [completionInvoiceRejectionReason, setCompletionInvoiceRejectionReason] = useState("");
-  const [selectedSaleUnitId, setSelectedSaleUnitId] = useState("");
+  const [selectedSaleUnitId, setSelectedSaleUnitId] = useState(fileUnit?.id ?? "");
   const [salesStageFilter, setSalesStageFilter] = useState<SalesStageFilter>("all");
   const [salesSearch, setSalesSearch] = useState("");
   const [activeWorkflowStage, setActiveWorkflowStage] = useState<SaleWorkflowStage>("reservation");
@@ -1833,7 +1843,10 @@ export function SalesReservationWorkflow({
       const valid = () => current() && revision === salesLoadRevision.current && currentBuilding.current === building && currentSalesKey.current === salesKey;
       setIsLoading(true);
       try {
-        const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), buildingUnits.map(unit => unit.id), building);
+        // Fail closed if the authorised selection disappears. Never fall back
+        // to an unscoped defaults or building-wide detail request.
+        if (conveyancerFile && !fileUnit) throw new Error("This sale is no longer available in your current access scope.");
+        const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), salesUnits.map(unit => unit.id), salesBuildingId);
         if (!valid()) return;
         setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
         setAttempts(fresh.attempts as SaleAttempt[]);

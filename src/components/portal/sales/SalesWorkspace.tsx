@@ -6,8 +6,9 @@ import { ConveyancerSalesRegister } from "./ConveyancerSalesRegister";
 import { INITIAL_REGISTER_FILTERS } from "@/lib/sales/register-presentation";
 import type { RegisterFilters } from "@/lib/sales/register";
 import { useSalesRegister } from "./useSalesRegister";
+import { isSalesRouteUnit } from "@/lib/units/commercial-allocation";
 
-type Props = ComponentProps<typeof SalesReservationWorkflow> & { accessScopeKey?: string | null };
+type Props = Omit<ComponentProps<typeof SalesReservationWorkflow>, "conveyancerUnitId"> & { accessScopeKey?: string | null };
 const subscribe = (notify: () => void) => {
   window.addEventListener("popstate", notify);
   window.addEventListener("conveyancer-sale-navigation", notify);
@@ -39,10 +40,13 @@ function ScopedConveyancerWorkspace({ search, filters, onFilters, ...props }: Pr
   search: string; filters: RegisterFilters; onFilters: (filters: RegisterFilters) => void;
 }) {
   const requested = new URLSearchParams(search).get("salesUnitId");
-  const saleOpen = Boolean(requested && props.units.some(unit => unit.id === requested && (!props.buildingContextId || unit.building_id === props.buildingContextId)));
+  // Resolve from authorised portal metadata before mounting or issuing any detail read.
+  const selectedUnit = props.units.find(unit => unit.id === requested && isSalesRouteUnit(unit) && (!props.buildingContextId || unit.building_id === props.buildingContextId));
   const identity = `${props.user.id}:${props.profile!.role}:${props.profile!.organisation_id ?? ""}`;
-  const register = useSalesRegister(identity, props.buildingContextId, !saleOpen, props.salesRefreshKey);
-  if (saleOpen) return <SalesReservationWorkflow {...props} />;
+  const register = useSalesRegister(identity, props.buildingContextId, !selectedUnit, props.salesRefreshKey);
+  // Reset only the file on unit navigation. The register snapshot/filters retain
+  // their existing owner; old file loads are invalidated by workflow cleanup.
+  if (selectedUnit) return <SalesReservationWorkflow key={selectedUnit.id} {...props} conveyancerUnitId={selectedUnit.id} />;
   return <ConveyancerSalesRegister register={register}
     buildingId={props.buildingContextId} units={props.units} buildings={props.buildings} floors={props.buildingFloors}
     filters={filters} onFilters={onFilters} requestedUnavailable={Boolean(requested)} />;

@@ -15,7 +15,10 @@ test("per-document approval, query, replacement history and locking keep section
   f.failNotice(true);await upload.click();await expect(page.getByRole("alert").filter({hasText:"Upload failed"})).toBeVisible();await expect(documents.getByRole("group")).toHaveCount(2);f.failNotice(false);await upload.click();
   await expect(documents.getByRole("group")).toHaveCount(0);await expect(documents.getByText("Awaiting approval",{exact:true})).toHaveCount(2);
   // D: replacement is available without a query.
-  await statement.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("revised-completion.pdf"));await expect(statement).toContainText("Only this document will need approval.");await documents.getByRole("button",{name:"Upload replacement document"}).click();await expect(statement.getByText("revised-completion.pdf",{exact:true})).toBeVisible();
+  await statement.getByLabel("Replace draft completion statement",{exact:true}).setInputFiles(pdf("revised-completion.pdf"));await expect(statement).toContainText("Only this document will need approval.");await documents.getByRole("button",{name:"Upload replacement document"}).click();
+  // The selected-file card also shows the filename. Wait for reconciliation
+  // before reloading as another role, otherwise the upload can be interrupted.
+  await expect(documents.getByRole("group",{name:"Selected revised-completion.pdf",exact:true})).toHaveCount(0);await expect(statement.getByText("Previous versions (1)",{exact:true})).toBeVisible();await expect(statement.getByText("revised-completion.pdf",{exact:true})).toBeVisible();
   f.profile.role="developer";await f.reloadStage("Completion");
   await expect(documents.getByRole("button",{name:"Approve",exact:true})).toHaveCount(2);await expect(review.locator("button,textarea,input,article")).toHaveCount(0);
   // B: query is local, required and disappears on success; cancel clears a draft.

@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Route } from "@playwright/test";
 
 const buildingId = "10000000-0000-4000-8000-000000000001";
 const unitId = "20000000-0000-4000-8000-000000000001";
@@ -8,6 +8,14 @@ export const at = (day: number) => `2026-08-${String(day).padStart(2, "0")}T12:0
 type Row = Record<string, unknown>;
 
 export async function salesFixture(page: Page, initialPath?: string) {
+  // Optional deterministic response transport for local performance comparisons.
+  const transport = { latencyMs: 0, bytesPerSecond: Infinity };
+  const respond = async (route: Route, json: unknown, headers?: Record<string, string>) => {
+    const body = JSON.stringify(json);
+    const delay = transport.latencyMs + Buffer.byteLength(body) / transport.bytesPerSecond * 1000;
+    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
+    await route.fulfill({ contentType: "application/json", body, headers });
+  };
   const profile = { id: userId, email: "sales-ui@example.test", full_name: "Jane Alexandra Smith-Worthington", role: "developer", active: true, organisation_id: null };
   const unit: Row = { id: unitId, building_id: buildingId, unit_number: "101", floor: "Ground", sale_status: "for_sale", rental_portfolio_status: "not_in_portfolio", parking_bays: [] };
   const attempt: Row = { id: attemptId, building_id: buildingId, unit_id: unitId, attempt_number: 1, is_active: true, workflow_status: "draft", created_at: at(1), buyer_name: "Example Buyer", buyer_person_name: "Example Buyer", buyer_email: "buyer@example.test", buyer_phone: "07000000000", buyer_solicitor_name: "Example Solicitors", reservation_date: "2026-08-01", reservation_terms_checked: true };
@@ -32,12 +40,16 @@ export async function salesFixture(page: Page, initialPath?: string) {
       const name = url.pathname.split('/').at(-1);
       const json = name === 'sale_workflow_context' || name === 'sale_activity_page' ? rows.unit_sale_workflow_events
         : name === 'sale_comment_page' ? { comments: [], hasBefore: false, hasAfter: false }
-        : name === 'sale_comment_unread' ? {} : [];
-      await route.fulfill({ json }); return;
+        : name === 'sale_comment_unread' ? {} : name === 'sale_actor_names' ? rows.sale_actor_names ?? [] : [];
+      await respond(route, json); return;
     }
     let result = rows[url.pathname.split("/").at(-1)!] ?? [];
     for (const [key, value] of url.searchParams) {
       if (value.startsWith("eq.")) result = result.filter((row) => String(row[key]) === value.slice(3));
+      if (value.startsWith("in.(")) {
+        const values = value.slice(4, -1).split(",").map(value => value.replace(/^"|"$/g, ""));
+        result = result.filter(row => values.includes(String(row[key])));
+      }
     }
     // Legal action refreshes use PostgREST's joined document/version shape.
     // Keep the fixture faithful so scoped refreshes retain replacement history.
@@ -48,7 +60,7 @@ export async function salesFixture(page: Page, initialPath?: string) {
     const count = result.length;
     const from = Number(url.searchParams.get("offset") ?? 0), limit = Number(url.searchParams.get("limit") ?? count);
     const paged = result.slice(from, from + limit);
-    await route.fulfill({ headers: { "access-control-expose-headers": "content-range", "content-range": `${from}-${Math.max(from, from + paged.length - 1)}/${count}` }, json: single ? result[0] ?? null : paged });
+    await respond(route, single ? result[0] ?? null : paged, { "access-control-expose-headers": "content-range", "content-range": `${from}-${Math.max(from, from + paged.length - 1)}/${count}` });
   });
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
   const completionPackage = {approved:false,approval:null as null | {statement_version_id:string;account_version_id:string;approved_by_name:string;approved_at:string}};
@@ -81,5 +93,5 @@ export async function salesFixture(page: Page, initialPath?: string) {
     await button.click();
     await expect(page.getByRole("list", { name: `${stage} tasks`, exact: true })).toBeVisible();
   };
-  return { profile, rows, unit, attempt, event, documents, reloadStage, completionPackage };
+  return { profile, rows, unit, attempt, event, documents, reloadStage, completionPackage, transport, respond };
 }
