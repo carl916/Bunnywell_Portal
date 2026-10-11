@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, type MouseEvent } from "react";
-import { SALES_CATEGORIES } from "@/lib/dashboard/work-classification";
-import { INITIAL_SALES_OVERVIEW, saleRecordUrl, salesReviewDestination, salesWorkSummary, selectDeveloperSalesRows, visibleSalesWork, type DeveloperSalesRow, type SalesOverviewFilters } from "@/lib/sales/developer-overview";
+import { useEffect, useMemo, type MouseEvent, type RefCallback } from "react";
+import { saleRecordUrl, salesReviewDestination, salesWorkSummary, selectDeveloperSalesRows, visibleSalesWork, type DeveloperSalesRow, type SalesOverviewFilters } from "@/lib/sales/developer-overview";
 import { formatGbp } from "@/lib/sales/currency";
-import { SALES_ROUTE_STATUSES, saleStatusLabel } from "@/lib/units/commercial-allocation";
+import { saleStatusLabel } from "@/lib/units/commercial-allocation";
 import { SALES_PAGE_SIZE, SalesPagination } from "./SalesPagination";
+import { SalesOverviewControls, type SalesStageTotal } from "./SalesOverviewControls";
 import styles from "./DeveloperSalesResults.module.css";
 
 type Props = {
@@ -13,9 +13,10 @@ type Props = {
   search: string; onOpen: (href: string, unitId: string) => void; prices?: Map<string, number>;
   error: string; refreshing: boolean; onRetry: () => void; now: number;
   stageAges?: Map<string, string>; unread?: Map<string, number>;
+  stages: SalesStageTotal[]; scope: string; resultsSpace: RefCallback<HTMLDivElement>;
 };
 
-export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen, prices, error, refreshing, onRetry, now, stageAges, unread }: Props) {
+export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen, prices, error, refreshing, onRetry, now, stageAges, unread, stages, scope, resultsSpace }: Props) {
   const selected = useMemo(() => selectDeveloperSalesRows(rows ?? [], filters, now), [rows, filters, now]);
   const page = Math.min(filters.page, Math.max(1, Math.ceil(selected.length / SALES_PAGE_SIZE)));
   useEffect(() => { if (rows && page !== filters.page) onFilters({ ...filters, page }); }, [rows, filters, page, onFilters]);
@@ -26,23 +27,16 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
     event.preventDefault(); onOpen(href, unitId);
   }
   return <section className={`panel ${styles.results}`} id="sales-results" aria-labelledby="sales-results-heading" aria-busy={!rows && !error}>
-    <header className={styles.header}><div><h2 id="sales-results-heading">Sales results</h2>
-      <p role="status">{!rows ? error ? "Sales unavailable" : "Loading Sales…" : `${selected.length} ${selected.length === 1 ? "sale" : "sales"}${filters.work === "ours" ? " requiring your team’s attention" : filters.work === "others" ? " waiting on other teams" : " in this view"}${error ? " · last loaded results" : ""}`}</p></div>
+    <header className={styles.header}><h2 id="sales-results-heading">Sales overview</h2>
       {refreshing && rows && <span className={styles.refresh} role="status">Refreshing…</span>}
     </header>
-    <div className={styles.views} role="group" aria-label="Sales responsibility">
-      {(["all", "ours", "others"] as const).map(work => <button type="button" key={work} aria-pressed={filters.work === work} onClick={() => change({ work })}>{({ all: "All sales", ours: "Our actions", others: "Other teams" })[work]}</button>)}
-    </div>
-    <div className={styles.controls}>
-      <label>Stage<select value={filters.stage} onChange={event => change({ stage: event.target.value })}><option value="all">All stages</option>{SALES_ROUTE_STATUSES.map(stage => <option key={stage} value={stage}>{saleStatusLabel(stage)}</option>)}</select></label>
-      <label>Action category<select value={filters.category} onChange={event => change({ category: event.target.value as SalesOverviewFilters["category"] })}><option value="">All action categories</option>{Object.entries(SALES_CATEGORIES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <label className={styles.search}>Search Sales<input type="search" placeholder="Unit or building" value={filters.search} maxLength={200} onChange={event => change({ search: event.target.value })} /></label>
-      <button type="button" className="secondary" onClick={() => onFilters(INITIAL_SALES_OVERVIEW)}>Reset filters</button>
-    </div>
+    <SalesOverviewControls stages={stages} scope={scope} filters={filters} onFilters={onFilters} loading={!rows} />
+    <p className={styles.count} role="status">{!rows ? error ? "Sales unavailable" : "Loading Sales…" : `${selected.length} ${selected.length === 1 ? "sale" : "sales"}${filters.work === "ours" ? " requiring your team’s attention" : filters.work === "others" ? " waiting on other teams" : " in this view"}${error ? " · last loaded results" : ""}`}</p>
+    <div ref={resultsSpace}><div>
     {error && <div className={styles.error} role="alert"><p>{error} {rows && "Showing the last loaded position. Review controls are disabled until a successful refresh."}</p><button type="button" className="secondary" onClick={onRetry} disabled={refreshing}>Retry Sales</button></div>}
     <p className={styles.scrollHint}>Scroll the table sideways for dates and review controls.</p>
     <div className={styles.tableScroll} tabIndex={0} aria-label="Sales table, scroll horizontally for more columns">
-      <table><thead><tr><th>Unit / building</th><th>Stage / price</th><th>Next step</th><th>Key date</th><th><span className={styles.srOnly}>Open sale</span></th></tr></thead>
+      <table><colgroup><col style={{ width: "16%" }} /><col style={{ width: "16%" }} /><col style={{ width: "32%" }} /><col style={{ width: "20%" }} /><col style={{ width: "16%" }} /></colgroup><thead><tr><th>Unit / building</th><th>Stage / price</th><th>Next step</th><th>Key date</th><th><span className={styles.srOnly}>Open sale</span></th></tr></thead>
         <tbody>{!rows && !error ? Array.from({ length: 5 }, (_, index) => <tr key={index} aria-hidden="true">{Array.from({ length: 5 }, (_, cell) => <td key={cell}><span className={styles.skeleton} /></td>)}</tr>) : visible.map(row => {
           const actions = visibleSalesWork(row, filters), first = actions[0];
           const href = saleRecordUrl(salesReviewDestination(actions, row.destination), search), unitHref = saleRecordUrl(row.destination, search);
@@ -61,5 +55,6 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
     </div>
     {rows && !selected.length && <p className={styles.empty}>{error ? "Current responsibilities are unavailable. Retry before treating this view as clear." : "No sales match this view. Try another team, category or filter."}</p>}
     {rows && <SalesPagination total={selected.length} currentPage={page} onPageChange={page => change({ page })} />}
+    </div></div>
   </section>;
 }

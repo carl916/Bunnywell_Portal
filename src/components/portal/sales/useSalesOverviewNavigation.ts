@@ -36,12 +36,15 @@ function scrollContainers(element: Element) {
 function listPosition() {
   const id = new URLSearchParams(window.location.search).get("salesView") === "agent_fees" ? "fee-results" : "sales-results";
   const list = document.getElementById(id);
-  return { scroll: window.scrollY, containers: list ? scrollContainers(list).map(element => element.scrollTop) : [] };
+  const space = id === "sales-results" ? list?.querySelector<HTMLElement>("[data-sales-results-space]")?.dataset.salesResultsSpace : undefined;
+  return { scroll: window.scrollY, containers: list ? scrollContainers(list).map(element => element.scrollTop) : [],
+    ...(space ? { salesResultsSpace: JSON.parse(space) } : {}) };
 }
 function saveBeforeUnload() {
   if (new URLSearchParams(window.location.search).has("salesUnitId")) return;
   const position = listPosition();
-  window.history.replaceState({ ...window.history.state, salesScroll: position.scroll, salesScrollContainers: position.containers }, "");
+  window.history.replaceState({ ...window.history.state, salesScroll: position.scroll, salesScrollContainers: position.containers,
+    ...(position.salesResultsSpace ? { salesResultsSpace: position.salesResultsSpace } : {}) }, "");
 }
 function subscribe(listener: () => void) {
   if (!listeners.size) {
@@ -109,7 +112,8 @@ export function useSalesOverviewNavigation(enabled: boolean, ready: boolean, sel
     const position = listPosition();
     const returnTo = new URLSearchParams(window.location.search).has("salesUnitId") && window.history.state?.salesOverviewReturn ||
       { url: currentUrl(), ...position };
-    window.history.replaceState({ ...window.history.state, salesScroll: position.scroll, salesScrollContainers: position.containers }, "");
+    window.history.replaceState({ ...window.history.state, salesScroll: position.scroll, salesScrollContainers: position.containers,
+      ...(position.salesResultsSpace ? { salesResultsSpace: position.salesResultsSpace } : {}) }, "");
     window.history.pushState({ salesOverviewReturn: returnTo }, "", href);
     window.dispatchEvent(new PopStateEvent("popstate"));
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -118,7 +122,8 @@ export function useSalesOverviewNavigation(enabled: boolean, ready: boolean, sel
     const saved = window.history.state?.salesOverviewReturn;
     // Only accept a local Sales URL from this history entry, never a redirect.
     if (!saved || typeof saved.url !== "string" || !saved.url.startsWith("/?") || new URLSearchParams(saved.url.split("#")[0].slice(2)).get("screen") !== "sales") return false;
-    window.history.pushState({ salesScroll: saved.scroll, salesScrollContainers: saved.containers }, "", saved.url);
+    window.history.pushState({ salesScroll: saved.scroll, salesScrollContainers: saved.containers,
+      ...(saved.salesResultsSpace ? { salesResultsSpace: saved.salesResultsSpace } : {}) }, "", saved.url);
     window.dispatchEvent(new PopStateEvent("popstate"));
     return true;
   }

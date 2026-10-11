@@ -3,7 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { developerSalesFixture } from "./helpers/developer-sales-fixture";
 
 const results = (page: Page) => page.locator("#sales-results");
-const screenshotsRoot = process.env.SALES_UX_SCREENSHOTS ?? "docs/dashboard-sales-phase1/screenshots";
+const screenshotsRoot = process.env.SALES_UX_SCREENSHOTS ?? "test-results/sales-overview-regression";
 const row = (page: Page, number: string) => results(page).getByRole("row").filter({ has: page.getByRole("link", { name: `Unit ${number}`, exact: true }) });
 async function openOverview(page: Page, params = "") {
   await page.goto(`/?screen=sales&building=all${params}#sales-results`);
@@ -12,26 +12,26 @@ async function openOverview(page: Page, params = "") {
 
 test("All sales defaults, unit order, action urgency, mixed teams, categories and reset", async ({ page }) => {
   await developerSalesFixture(page); await openOverview(page);
-  await expect(results(page).getByRole("button", { name: "All sales", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(results(page).getByRole("combobox", { name: "Action with", exact: true })).toHaveValue("all");
   await expect(results(page).locator("tbody tr").first()).toContainText("Unit 101");
   await expect(row(page, "106")).toContainText("Available for reservation");
   await expect(row(page, "107")).toContainText("Legacy completed sale");
   await expect(row(page, "108")).toContainText("Review the missing active sale record");
-  await results(page).getByRole("button", { name: "Our actions", exact: true }).click();
+  await results(page).getByRole("combobox", { name: "Action with", exact: true }).selectOption("ours");
   await expect(results(page).locator("tbody tr").first()).toContainText("Unit 103");
   await expect(row(page,"103")).toContainText("Review completion statement · 1 more action");
-  await results(page).getByLabel("Search Sales", { exact: true }).fill("104");
+  await results(page).getByLabel("Search", { exact: true }).fill("104");
   await expect(row(page,"104")).toContainText("Review payment position");
   await expect(row(page,"104")).not.toContainText("Replace queried");
-  await results(page).getByRole("button", { name: "Other teams", exact: true }).click();
+  await results(page).getByRole("combobox", { name: "Action with", exact: true }).selectOption("others");
   await expect(row(page,"104")).toContainText("Replace queried");
   await expect(row(page,"104")).not.toContainText("Review payment position");
-  await results(page).getByLabel("Search Sales", { exact: true }).fill("104");
+  await results(page).getByLabel("Search", { exact: true }).fill("104");
   await expect(results(page).getByRole("status")).toContainText("1 sale waiting on other teams");
   await results(page).getByRole("button", { name: "Reset filters", exact: true }).click();
-  await expect(results(page).getByRole("button", { name: "All sales", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(results(page).getByLabel("Search Sales", { exact: true })).toHaveValue("");
-  await expect(results(page).getByRole("combobox", { name: "Stage", exact: true })).toHaveValue("all");
+  await expect(results(page).getByRole("combobox", { name: "Action with", exact: true })).toHaveValue("all");
+  await expect(results(page).getByLabel("Search", { exact: true })).toHaveValue("");
+  await expect(results(page).getByRole("button", { name: "All stages", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(results(page).getByLabel("Action category")).toHaveValue("");
 });
 
@@ -39,7 +39,7 @@ test("record return, browser Back and reload retain filters, pagination and retu
   await developerSalesFixture(page); await openOverview(page);
   await results(page).getByRole("button", { name: "Next", exact: true }).click();
   await expect(row(page,"113")).toBeVisible();
-  await results(page).scrollIntoViewIfNeeded();
+  await row(page,"113").getByRole("link",{name:"Review action",exact:true}).scrollIntoViewIfNeeded();
   const top=await page.evaluate(()=>window.scrollY);
   await row(page,"113").getByRole("link",{name:"Review action",exact:true}).click();
   await expect(page.locator("[data-sale-file]")).toBeVisible();
@@ -51,9 +51,9 @@ test("record return, browser Back and reload retain filters, pagination and retu
   await row(page,"114").getByRole("link",{name:"Unit 114",exact:true}).click();
   await expect(page.locator("[data-sale-file]")).toBeVisible(); await page.goBack();
   await expect(row(page,"114")).toBeVisible();
-  await results(page).getByLabel("Search Sales",{exact:true}).fill("101");
+  await results(page).getByLabel("Search",{exact:true}).fill("101");
   await expect(row(page,"101")).toBeVisible(); await page.reload();
-  await expect(results(page).getByLabel("Search Sales",{exact:true})).toHaveValue("101");
+  await expect(results(page).getByLabel("Search",{exact:true})).toHaveValue("101");
   await expect(results(page).getByRole("status")).toContainText("1 sale in this view");
 });
 
@@ -100,8 +100,8 @@ test("All buildings and a selected building retain scope, disable Forecasting an
   await expect(row(page,"101")).toBeVisible(); await page.waitForLoadState("networkidle");
   const reads:string[]=[];
   page.on("request",request=>{if(/unit_sale_attempts|sale_legal_emails|api\/dashboard/.test(request.url()))reads.push(request.url());});
-  await results(page).getByRole("button",{name:"Our actions",exact:true}).focus(); await page.keyboard.press("Enter");
-  await results(page).getByLabel("Search Sales",{exact:true}).fill("101");
+  await results(page).getByRole("combobox",{name:"Action with",exact:true}).selectOption("ours");
+  await results(page).getByLabel("Search",{exact:true}).fill("101");
   for(let repeat=0;repeat<3;repeat++) {
     await row(page,"101").getByRole("link",{name:"Review action",exact:true}).click();
     await expect(page.locator("[data-sale-file]")).toBeVisible();
@@ -109,7 +109,7 @@ test("All buildings and a selected building retain scope, disable Forecasting an
     await expect(row(page,"101")).toBeVisible();
   }
   expect(reads).toEqual([]);
-  await expect(results(page).getByRole("button",{name:"Our actions",exact:true})).toHaveAttribute("aria-pressed","true");
+  await expect(results(page).getByRole("combobox", { name: "Action with", exact: true })).toHaveValue("ours");
 });
 
 for (const width of [1440,390]) test(`loading, retry, background refresh, revocation and layout at ${width}px`, async ({ page }) => {
@@ -125,7 +125,7 @@ for (const width of [1440,390]) test(`loading, retry, background refresh, revoca
   await page.goto("/?screen=sales&building=all#sales-results");
   await expect(results(page)).toHaveAttribute("aria-busy","true");
   await expect(results(page).getByRole("link")).toHaveCount(0);
-  await expect(page.getByRole("heading",{name:"Financial overview",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Financial overview",exact:true})).toHaveCount(1);
   await expect(results(page)).not.toContainText("0 sales");
   await mkdir(screenshotsRoot,{recursive:true});
   await page.screenshot({path:`${screenshotsRoot}/loading-${width}.png`});
@@ -147,9 +147,9 @@ for (const width of [1440,390]) test(`loading, retry, background refresh, revoca
   await page.screenshot({path:`${screenshotsRoot}/refreshing-${width}.png`});
   mode="error";release();await expect(results(page).getByRole("alert")).toContainText("last loaded position");
   await expect(row(page,"101").getByRole("button",{name:"Review unavailable"})).toBeDisabled();
-  await results(page).getByRole("button",{name:"Our actions",exact:true}).click();
-  const selected=results(page).getByRole("button",{name:"Our actions",exact:true});
-  await expect(selected).toHaveAttribute("aria-pressed","true");
+  await results(page).getByRole("combobox", { name: "Action with", exact: true }).selectOption("ours");
+  const selected=results(page).getByRole("combobox",{name:"Action with",exact:true});
+  await expect(selected).toHaveValue("ours");
   const overflow = await page.evaluate(() => ({ width: innerWidth, document: document.documentElement.scrollWidth,
     elements: [...document.querySelectorAll("main, section, header, nav, div, table")].map(element => ({ tag: element.tagName, class: element.className, width: element.getBoundingClientRect().width, right: element.getBoundingClientRect().right, overflow: getComputedStyle(element).overflowX })).filter(item => item.right > innerWidth + 1).slice(0, 12) }));
   expect(overflow.document, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.width);
@@ -173,11 +173,11 @@ test("Sales polish keeps mixed tasks reachable and shows the recorded expired au
   await expect(nav.getByRole("link",{name:/Replace queried/})).toHaveCount(2);
   await nav.getByRole("link",{name:/Review payment position/}).click();await expect(page.locator("#exchange-fee")).toBeVisible();
   await page.getByRole("button",{name:"Back to sales overview"}).click();await expect(row(page,"104")).toBeVisible();
-  await results(page).getByRole("button",{name:"Our actions",exact:true}).click();
+  await results(page).getByRole("combobox", { name: "Action with", exact: true }).selectOption("ours");
   await expect(row(page,"103")).not.toContainText("Action with Developer team");
-  await mkdir("docs/dashboard-sales-phase2/screenshots",{recursive:true});
+  await mkdir("test-results/sales-overview-regression",{recursive:true});
   for(const width of [1440,390]){
     await page.setViewportSize({width,height:1000});await results(page).scrollIntoViewIfNeeded();
-    await page.screenshot({path:`docs/dashboard-sales-phase2/screenshots/sales-polish-${width}.png`});
+    await page.screenshot({path:`test-results/sales-overview-regression/sales-polish-${width}.png`});
   }
 });

@@ -3,6 +3,7 @@
 import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
 import { isSalesExternalRole, isSalesInternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
 import { DeveloperSalesResults } from "./DeveloperSalesResults";
+import { useSalesResultsSpace } from "./useSalesResultsSpace";
 import { useSalesOverviewNavigation } from "./useSalesOverviewNavigation";
 import { deriveDeveloperSalesRows, visibleSalesWork } from "@/lib/sales/developer-overview";
 import { useAgentFeePortfolio } from "./useAgentFeePortfolio";
@@ -1001,6 +1002,7 @@ export function SalesReservationWorkflow({
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState(fileUnit?.id ?? "");
   const [legacyStageFilter, setLegacyStageFilter] = useState<SalesStageFilter>("all");
   const overview = useSalesOverviewNavigation(internalOverview, loadedOverviewScope === overviewScopeKey, selectedSaleUnitId);
+  const resultsSpace = useSalesResultsSpace(overviewScopeKey);
   const salesStageFilter = internalOverview ? overview.filters.stage as SalesStageFilter : legacyStageFilter;
   const setSalesStageFilter = (stage: SalesStageFilter) => internalOverview ? overview.update({ ...overview.filters, stage, page: 1 }) : setLegacyStageFilter(stage);
   const [salesSearch, setSalesSearch] = useState("");
@@ -1497,6 +1499,7 @@ export function SalesReservationWorkflow({
   }, [internalOverview, loadedOverviewScope, overviewScopeKey, user.id, profile, guidanceTime, buildingId, buildings, buildingUnits, buildingFloors, organisations, buildingOrganisations, attempts, documents, versions, guidanceFacts, terms, invoices, invoicePayments, saleActorNames]);
 
   const developerResults = (rows = developerRows) => <DeveloperSalesResults rows={rows} filters={overview.filters} onFilters={overview.update}
+    stages={pipelineSummary} scope={scopeBuilding?.name ?? "All buildings"} resultsSpace={resultsSpace}
     search={overview.search} onOpen={(href, unit) => { setConversationTarget(null); setShowCommercialModel(false); markUnitOpenIntent(unit); beginSalesMeasurement("sale.open"); overview.open(href); }}
     prices={new Map(buildingUnits.map(unit => [unit.id, unitSaleValue(unit)]))} error={salesError} refreshing={isLoading}
     stageAges={new Map(buildingUnits.map(unit => [unit.id, daysSince(saleStatusDate(unit, activeAttemptByUnit.get(unit.id)))]))}
@@ -1531,7 +1534,7 @@ export function SalesReservationWorkflow({
     if (next.section === null || next.section === "progression") params.delete("section");
     if (next.section === "financials" || next.section === "commercial") params.set("section", next.section);
     const hash = next.hash ? `#${next.hash}` : "";
-    window.history.pushState(internalOverview ? window.history.state : null, "", `${window.location.pathname}?${params.toString()}${hash}`);
+    window.history.pushState(internalOverview || conveyancerFile ? window.history.state : null, "", `${window.location.pathname}?${params.toString()}${hash}`);
     window.dispatchEvent(new Event("conveyancer-sale-navigation"));
     if (internalOverview) window.dispatchEvent(new Event("sales-overview-navigation"));
   }
@@ -1554,7 +1557,7 @@ export function SalesReservationWorkflow({
   }
 
   function backToSalesOverview() {
-    if (internalOverview && overview.back()) return;
+    if ((internalOverview || conveyancerFile) && overview.back()) return;
     if (fromFees) {
       const params = new URLSearchParams(overview.search);
       for (const key of ["salesUnitId", "workSale", "workVersion", "workReturn", "section"]) params.delete(key);
@@ -2495,7 +2498,7 @@ export function SalesReservationWorkflow({
     );
   }
 
-  if (internalOverview && (loadedOverviewScope !== overviewScopeKey || Boolean(selectedSaleUnitId && salesError))) {
+  if (internalOverview && selectedSaleUnitId && (loadedOverviewScope !== overviewScopeKey || salesError)) {
     return <div className="grid gap-5"><section className="panel"><h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>{selectedSaleUnitId && <button className="secondary mt-3" onClick={backToSalesOverview}>Back to sales overview</button>}</section>{developerResults(null)}</div>;
   }
   if (!internalOverview && loadedSalesKey !== salesKey) {
@@ -2527,7 +2530,7 @@ export function SalesReservationWorkflow({
             <h3 className="text-xl font-bold text-[#0F3D2E]">Financial overview</h3>
             <p className="mt-1 text-sm text-[#617169]">Forecast sales position for units currently in the sales route.</p>
           </div>
-          <div className={`mt-5 grid gap-4 ${styles.financialOverviewGrid}`}>
+          <div className={`mt-5 grid gap-4 ${styles.financialOverviewGrid}`} aria-hidden={internalOverview && !developerRows} style={internalOverview && !developerRows ? { visibility: "hidden" } : undefined}>
             <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Revenue view</h4>
               <p className="mt-1 text-sm text-[#617169]">Sales-route list-price baseline compared with the current forecast.</p>
@@ -2559,7 +2562,7 @@ export function SalesReservationWorkflow({
           </div>
         </section>}
 
-        <section className="panel">
+        {!internalOverview && <section className="panel">
           <div>
             <h3 className="text-xl font-bold text-[#0F3D2E]">Sales pipeline</h3>
             <p className="mt-1 text-sm text-[#617169]">Click a stage to filter the sales table.</p>
@@ -2571,8 +2574,7 @@ export function SalesReservationWorkflow({
                 className={`rounded-bw-card border p-4 text-left transition ${salesStageFilter === stage.status ? "border-[#0F3D2E] bg-[#fbfcfa] shadow-sm" : "border-[#d9ded6] bg-[#fbfcfa] hover:border-[#0F3D2E]"}`}
                 onClick={() => {
                   setSalesStageFilter(stage.status);
-                  if (internalOverview) document.getElementById("sales-results")?.scrollIntoView({ block: "start" });
-                  else writeSalesUrl({ building: buildingId, unit: null, filter: stage.status });
+                  writeSalesUrl({ building: buildingId, unit: null, filter: stage.status });
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -2584,7 +2586,7 @@ export function SalesReservationWorkflow({
               </button>
             ))}
           </div>
-        </section>
+        </section>}
 
         {internalOverview ? developerResults() : <section className="panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
