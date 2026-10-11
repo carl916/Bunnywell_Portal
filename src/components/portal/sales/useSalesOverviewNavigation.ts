@@ -19,7 +19,7 @@ export function useSalesOverviewNavigation(enabled: boolean, ready: boolean, sel
     const frame = requestAnimationFrame(() => {
       const scroll = window.history.state?.salesScroll;
       if (typeof scroll === "number") window.scrollTo({ top: scroll, behavior: "instant" });
-      else if (window.location.hash === "#sales-results") document.getElementById("sales-results")?.scrollIntoView({ block: "start" });
+      else if (["#sales-results", "#fee-results"].includes(window.location.hash)) document.querySelector(window.location.hash)?.scrollIntoView({ block: "start" });
     });
     return () => cancelAnimationFrame(frame);
   }, [enabled, ready, selected, location]);
@@ -31,7 +31,8 @@ export function useSalesOverviewNavigation(enabled: boolean, ready: boolean, sel
     window.dispatchEvent(new Event(eventName));
   }
   function open(href: string) {
-    const returnTo = { url: `${window.location.pathname}${window.location.search}${window.location.hash}`, scroll: window.scrollY };
+    const returnTo = new URLSearchParams(window.location.search).has("salesUnitId") && window.history.state?.salesOverviewReturn ||
+      { url: `${window.location.pathname}${window.location.search}${window.location.hash}`, scroll: window.scrollY };
     window.history.replaceState({ ...window.history.state, salesScroll: window.scrollY }, "");
     window.history.pushState({ salesOverviewReturn: returnTo }, "", href);
     window.dispatchEvent(new PopStateEvent("popstate"));
@@ -45,5 +46,5 @@ export function useSalesOverviewNavigation(enabled: boolean, ready: boolean, sel
     window.dispatchEvent(new PopStateEvent("popstate"));
     return true;
   }
-  return { filters, update, open, back, search: location.split("#")[0] };
+  return { filters, update, open, back, search: location.split("#")[0], location };
 }

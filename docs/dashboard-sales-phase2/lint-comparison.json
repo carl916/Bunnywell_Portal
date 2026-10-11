@@ -1,0 +1,209 @@
+{
+  "base": "05dc58beef3dde0620c65afd07be25a12519e90a",
+  "before": [
+    {
+      "file": "src/components/portal/ProductionPortalApp.tsx",
+      "errors": 13,
+      "warnings": 20,
+      "rules": [
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 959
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 2837
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 2974
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 6815
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 7040
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 8006
+        },
+        {
+          "rule": "react/no-unescaped-entities",
+          "line": 8250
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 8434
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9231
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9236
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9243
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9247
+        },
+        {
+          "rule": "react-hooks/immutability",
+          "line": 10181
+        }
+      ]
+    },
+    {
+      "file": "src/components/portal/sales/AgentFeesPortfolio.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+      "errors": 2,
+      "warnings": 0,
+      "rules": [
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 1599
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 1704
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "file": "src/components/portal/ProductionPortalApp.tsx",
+      "errors": 13,
+      "warnings": 20,
+      "rules": [
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 959
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 2837
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 2974
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 6815
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 7040
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 8006
+        },
+        {
+          "rule": "react/no-unescaped-entities",
+          "line": 8250
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 8434
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9231
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9236
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9243
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 9247
+        },
+        {
+          "rule": "react-hooks/immutability",
+          "line": 10181
+        }
+      ]
+    },
+    {
+      "file": "src/components/portal/sales/AgentFeesPortfolio.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/components/portal/sales/DeveloperSalesResults.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/components/portal/sales/SaleReviewNavigation.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+      "errors": 2,
+      "warnings": 0,
+      "rules": [
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 1612
+        },
+        {
+          "rule": "react-hooks/set-state-in-effect",
+          "line": 1720
+        }
+      ]
+    },
+    {
+      "file": "src/components/portal/sales/useAgentFeePortfolio.ts",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/components/portal/sales/useSalesOverviewNavigation.ts",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/lib/dashboard/work-classification.ts",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/lib/sales/developer-overview.ts",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    {
+      "file": "src/lib/sales/fee-workspace.ts",
+      "errors": 0,
+      "warnings": 0,
+      "rules": []
+    }
+  ]
+}

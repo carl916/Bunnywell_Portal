@@ -1,0 +1,96 @@
+import { feeWorkCategory } from "../dashboard/work-classification.ts";
+import type { AgentFeePortfolioRow, AgentFeePortfolioInvoiceState } from "./agent-fees-portfolio.ts";
+
+export const FEE_CATEGORIES = {
+  "invoice-review": "Awaiting approval",
+  "payment-position": "Approved unpaid balances",
+  "invoice-submission": "Invoices awaiting submission/correction",
+} as const;
+export type FeeCategory = keyof typeof FEE_CATEGORIES;
+export type FeeFilters = {
+  work: "ours" | "others" | "all"; category: FeeCategory | ""; agent: string;
+  milestone: "all" | "exchange" | "completion"; sort: "work" | "unit"; search: string; page: number;
+};
+export const INITIAL_FEE_FILTERS: FeeFilters = {work:"ours",category:"",agent:"",milestone:"all",sort:"work",search:"",page:1};
+export function readFeeFilters(search:string):FeeFilters {
+  const p=new URLSearchParams(search), category=p.get("feeCategory"), work=p.get("feeWork"), milestone=p.get("feeMilestone"), page=Number(p.get("feePage")??1);
+  const validCategory=category && Object.hasOwn(FEE_CATEGORIES,category) ? category as FeeCategory : "";
+  // Category destinations cannot silently intersect an incompatible team view.
+  const validWork=work==="all" || work==="others" ? work : "ours";
+  return {work:validCategory==="invoice-submission" && validWork==="ours" ? "all" : validCategory && validCategory!=="invoice-submission" && validWork==="others" ? "ours" : validWork,
+    category:validCategory,agent:(p.get("feeAgent")??"").slice(0,100),milestone:milestone==="exchange"||milestone==="completion"?milestone:"all",
+    sort:p.get("feeSort")==="unit"?"unit":"work",search:(p.get("feeSearch")??"").slice(0,200),
+    page:Number.isSafeInteger(page)&&page>0?Math.min(page,10000):1};
+}
+export function writeFeeFilters(p:URLSearchParams,f:FeeFilters) {
+  for(const [key,value] of Object.entries({feeWork:f.work,feeCategory:f.category,feeAgent:f.agent,feeMilestone:f.milestone,feeSort:f.sort,feeSearch:f.search,feePage:String(f.page)})) {
+    if(value) p.set(key,value); else p.delete(key);
+  }
+}
+export function feeCategoryDestination(buildingId:string,category:FeeCategory|"",work:FeeFilters["work"]="ours") {
+  const p=new URLSearchParams({screen:"sales",building:buildingId||"all",salesView:"agent_fees"});
+  const filters=readFeeFilters(new URLSearchParams({feeCategory:category,feeWork:work}).toString());
+  writeFeeFilters(p,filters);
+  return `/?${p}#fee-results`;
+}
+export function selectFeeCategory(filters:FeeFilters,category:FeeCategory|""):FeeFilters {
+  return {...filters,category,work:category==="invoice-submission"?"all":category?"ours":filters.work,page:1};
+}
+export function feeActions(row:AgentFeePortfolioRow) {
+  return [row.exchange,row.completion].filter(s=>s.needsAction && (feeWorkCategory(s.kind)!=="payment-position"||s.outstandingBalance>0)).map(state=>{
+    const category=feeWorkCategory(state.kind), owner=category==="invoice-submission" ? row.agentOrganisationId ? "agent" : "unallocated" : "developer";
+    return {state,category,owner,label:feeActionLabel(state)};
+  }).sort((a,b)=>feeCategoryRank(a.category)-feeCategoryRank(b.category));
+}
+const feeCategoryRank=(category:FeeCategory)=>category==="invoice-review"?0:category==="payment-position"?1:2;
+export function feeActionLabel(state:AgentFeePortfolioInvoiceState) {
+  return state.kind==="awaiting_approval"?`Review ${state.milestone} agent invoice`:
+    state.kind==="rejected"?`Correct ${state.milestone} agent invoice`:
+    feeWorkCategory(state.kind)==="payment-position"?`Review payment position for ${state.milestone}`:`Submit ${state.milestone} agent invoice`;
+}
+export function matchingFeeActions(row:AgentFeePortfolioRow,f:FeeFilters) {
+  return feeActions(row).filter(a=>(!f.category||a.category===f.category)&&(f.milestone==="all"||a.state.milestone===f.milestone)&&
+    (f.work==="all"||f.work==="ours"&&a.owner==="developer"||f.work==="others"&&a.owner==="agent"));
+}
+export function feeScopeRows(rows:AgentFeePortfolioRow[],building:string,agent:string) {
+  return rows.filter(r=>(!building||r.buildingId===building)&&(!agent||(r.agentOrganisationId??"unassigned")===agent));
+}
+export function selectFeeRows(rows:AgentFeePortfolioRow[],f:FeeFilters,unitOrder:Map<string,number>) {
+  const search=f.search.trim().toLocaleLowerCase("en-GB");
+  return rows.filter(row=>(!search||`${row.unitNumber} ${row.buildingName} ${row.agentName}`.toLocaleLowerCase("en-GB").includes(search))&&
+    (f.work==="all"&&!f.category ? f.milestone==="all"||row[f.milestone].isRelevant : matchingFeeActions(row,f).length>0))
+    .sort((a,b)=>{
+      // The compact RPC records no due date or urgent flag. Approval age is not
+      // a deadline. Reviews precede payment positions, then submissions; ties
+      // use configured building/floor/unit order and immutable sale identity.
+      const rank=(r:AgentFeePortfolioRow)=>Math.min(...matchingFeeActions(r,f).map(a=>a.category==="invoice-review"?0:a.category==="payment-position"?1:2),3);
+      return (f.sort==="work"?rank(a)-rank(b):0)||(unitOrder.get(a.unitId)??Infinity)-(unitOrder.get(b.unitId)??Infinity)||a.saleAttemptId.localeCompare(b.saleAttemptId);
+    });
+}
+export function summariseFeeCategories(rows:AgentFeePortfolioRow[]) {
+  const summary=Object.fromEntries(Object.keys(FEE_CATEGORIES).map(key=>[key,{sales:0,tasks:0,amount:0,unallocated:0}])) as Record<FeeCategory,{sales:number;tasks:number;amount:number;unallocated:number}>;
+  let futureNet=0;
+  for(const row of rows) {
+    futureNet+=Math.round(row.futureCompletionFeeNet*100);
+    const actions=feeActions(row);
+    for(const category of Object.keys(FEE_CATEGORIES) as FeeCategory[]) {
+      const matches=actions.filter(a=>a.category===category),s=summary[category];
+      if(matches.length) s.sales++;
+      s.tasks+=matches.length;
+      s.unallocated+=matches.filter(a=>a.owner==="unallocated").length;
+      if(category==="payment-position") s.amount+=matches.reduce((n,a)=>n+Math.round(a.state.outstandingBalance*100),0);
+    }
+  }
+  summary["payment-position"].amount/=100;
+  return {categories:summary,futureNet:futureNet/100};
+}
+export function feeRecordUrl(row:AgentFeePortfolioRow,f:FeeFilters,search:string) {
+  const p=new URLSearchParams(search);
+  p.set("screen","sales");p.set("salesUnitId",row.unitId);p.set("workSale",row.saleAttemptId);p.set("workReturn","fees");p.set("section","financials");
+  for(const key of ["salesView","workVersion","conversation","comment"])p.delete(key);
+  const actions=matchingFeeActions(row,f);
+  const milestone=actions[0]?.state.milestone??(f.milestone==="completion"?"completion":"exchange");
+  // Both milestones share the existing financials workspace. A multi-action
+  // label opens its heading, not one arbitrarily chosen invoice halfway down.
+  return `/?${p}#${actions.length>1?"agent-fees":`${milestone}-fee`}`;
+}

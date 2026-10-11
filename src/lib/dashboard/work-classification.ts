@@ -22,6 +22,13 @@ export const SALES_CATEGORIES = {
 } as const;
 export type SalesCategory = keyof typeof SALES_CATEGORIES;
 
+/** Shared fee category identity, fed by the existing invoice/payment derivation. */
+export function feeWorkCategory(kind: string): "invoice-review" | "payment-position" | "invoice-submission" {
+  if (kind === "awaiting_approval") return "invoice-review";
+  if (kind === "approved_unpaid" || kind === "part_paid") return "payment-position";
+  return "invoice-submission";
+}
+
 export function salesWorkCategory(item: WorkItem): SalesCategory {
   if (!hasWorkOwner(item)) return "unallocated";
   if (item.kind.startsWith("reservation_")) return "reservation";
@@ -31,8 +38,6 @@ export function salesWorkCategory(item: WorkItem): SalesCategory {
   if (/^(missing_|replace_|review_)/.test(item.kind)) return "documents";
   if (item.kind === "legal_completion") return "completion";
   if (item.kind === "deposit_receipt") return "deposit";
-  if (/^fee_.*_awaiting_approval$/.test(item.kind)) return "invoice-review";
-  if (/^fee_.*_(approved_unpaid|part_paid)$/.test(item.kind)) return "payment-position";
-  if (item.kind.startsWith("fee_")) return "invoice-submission";
+  if (item.kind.startsWith("fee_")) return feeWorkCategory(item.kind.replace(/^fee_(exchange|completion)_/, ""));
   return "record-checks";
 }

@@ -49,7 +49,7 @@ export function deriveDeveloperSalesRows(input: DashboardInput): DeveloperSalesR
   });
 }
 
-export function visibleSalesWork(row: DeveloperSalesRow, filters: SalesOverviewFilters) {
+export function visibleSalesWork(row: Pick<DeveloperSalesRow,"work">, filters: SalesOverviewFilters) {
   return row.work.filter(item => (filters.work === "all" || matchesWorkTeam(item, filters.work)) && (!filters.category || salesWorkCategory(item) === filters.category));
 }
 
@@ -79,6 +79,15 @@ export function selectDeveloperSalesRows(rows: DeveloperSalesRow[], filters: Sal
 export function salesWorkSummary(items: WorkItem[]) {
   const first = items[0];
   return first ? `${first.action}${items.length > 1 ? ` · ${items.length - 1} more ${items.length === 2 ? "action" : "actions"}` : ""}${!hasWorkOwner(first) ? " · responsible team unallocated" : ""}` : "";
+}
+
+/** Package reviews share one workspace; mixed sections use the record navigator. */
+export function salesReviewDestination(items:WorkItem[],fallback:WorkDestination):WorkDestination {
+  if(items.length<2)return items[0]?.destination??fallback;
+  const first=items[0].destination??fallback;
+  if(items.every(item=>item.kind.startsWith("review_")))return {...first,versionId:undefined,anchor:"completion-documents-step"};
+  if(items.every(item=>item.kind.startsWith("fee_")))return {...first,versionId:undefined,section:"financials",anchor:"agent-fees"};
+  return {...fallback,section:"progression",anchor:"sales-matching-actions"};
 }
 
 export function saleRecordUrl(destination: WorkDestination, search: string) {

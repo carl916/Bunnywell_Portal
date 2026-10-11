@@ -10,6 +10,8 @@ import {
 import { canPerformSalesAction } from "../src/lib/sales/permissions.ts";
 
 const componentSource = readFileSync("src/components/portal/sales/AgentFeesPortfolio.tsx", "utf8");
+const loaderSource = readFileSync("src/components/portal/sales/useAgentFeePortfolio.ts", "utf8");
+const destinationSource = readFileSync("src/lib/sales/fee-workspace.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const migrationSource = readFileSync("supabase/migrations/20260825c_agent_fee_portfolio.sql", "utf8");
 
@@ -217,13 +219,14 @@ test("portfolio access is developer/admin-only and building scoped in the RPC", 
   assert.equal(canPerformSalesAction("conveyancer", "view_agent_fees_portfolio"), false);
   assert.match(migrationSource, /not in \('admin', 'developer'\)/);
   assert.match(migrationSource, /public\.can_access_sales_building\(attempt\.building_id\)/);
-  assert.match(componentSource, /get_agent_fee_portfolio/);
+  assert.match(loaderSource, /get_agent_fee_portfolio/);
 });
 
-test("clicking a portfolio row opens the matching unit Agent Fees workspace", () => {
-  assert.match(componentSource, /onClick=\{\(\) => onOpenSale\(row\.unitId, row\.buildingId\)\}/);
-  assert.match(workflowSource, /openSaleFile\(nextUnitId, nextBuildingId, true\)/);
-  assert.match(workflowSource, /section: focusAgentFees \? "financials" : "progression"/);
-  assert.match(workflowSource, /hash: focusAgentFees \? "exchange-fee" : null/);
+test("the primary portfolio control opens its matching unit and milestone, retaining Fees as its source", () => {
+  assert.match(componentSource, /feeRecordUrl\(row,filters,navigation.search\)/);
+  assert.match(componentSource, /onClick=\{event=>open\(event,href,row.unitId\)\}/);
+  assert.match(destinationSource, /p.set\("salesUnitId",row.unitId\)/);
+  assert.match(destinationSource, /p.set\("workReturn","fees"\)/);
+  assert.match(destinationSource, /p.set\("section","financials"\)/);
   assert.match(workflowSource, /scrollToPortalSection\(`\$\{milestone\}-fee`\)/);
 });

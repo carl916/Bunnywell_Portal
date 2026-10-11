@@ -1,0 +1,34 @@
+.fees { min-width:0; scroll-margin-top:7rem; }
+.header { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.header h2 { font-size:1.5rem; font-weight:750; color:#0f3d2e; }
+.header p,.scopeNote,.future { font-size:.85rem; color:#53665c; margin-top:.5rem; }
+.views { display:flex; gap:.5rem; flex-wrap:wrap; margin:1.25rem 0; }
+.views button,.categories button { border:1px solid #abbab1; border-radius:.65rem; background:white; padding:.7rem 1rem; text-align:left; color:#214735; }
+.views button { font-weight:700; }
+.views button[aria-pressed="true"] { background:#0f3d2e; color:white; border-color:#0f3d2e; box-shadow:inset 0 -3px #d6a23a; }
+.categories { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }
+.categories button { display:flex; flex-direction:column; gap:.45rem; }
+.categories button[aria-pressed="true"] { background:#edf5ee; border:2px solid #0f3d2e; padding:calc(.7rem - 1px) calc(1rem - 1px); box-shadow:inset 0 -4px #0f3d2e; }
+.categories button span { font-size:.8rem; }
+.categories button .categoryValue { font-size:1.15rem; font-weight:750; }
+.controls { display:flex; align-items:end; flex-wrap:wrap; gap:.8rem; margin:1.4rem 0 1rem; }
+.controls label { display:grid; gap:.3rem; font-size:.8rem; font-weight:650; flex:1 1 9rem; }
+.controls input,.controls select { min-width:0; width:100%; padding:.65rem; border:1px solid #b9c5bd; border-radius:.4rem; background:white; color:#263e31; font-size:.9rem; }
+.resultCount { font-size:.9rem; font-weight:650; margin:.8rem 0; }
+.tableScroll { max-width:100%; overflow-x:auto; border:1px solid #d9ded6; border-radius:.65rem; }
+.tableScroll table { min-width:65rem; width:100%; font-size:.875rem; text-align:left; border-collapse:collapse; }
+.tableScroll th { background:#f4f6f1; color:#52665a; font-size:.75rem; text-transform:uppercase; padding:.8rem; }
+.tableScroll td { padding:.9rem .8rem; border-top:1px solid #e4e9e2; vertical-align:top; }
+.tableScroll td:nth-child(5) { min-width:15rem; }
+.tableScroll small { display:block; margin-top:.3rem; font-size:.75rem; color:#607067; }
+.review { display:inline-block; padding:.6rem .8rem; border-radius:.45rem; font-weight:700; color:white; background:#0f3d2e; white-space:nowrap; text-decoration:none; }
+.review:disabled { background:#dde3dd; color:#526258; cursor:not-allowed; }
+.error { padding:1rem; border:1px solid #d9a897; background:#fff5ef; border-radius:.6rem; margin:1rem 0; }
+.error button { margin-top:.8rem; }
+.empty { padding:1.25rem 0; font-size:.9rem; }
+.scrollHint { font-size:.75rem; color:#5c6c62; margin-bottom:.5rem; }
+.skeleton { display:block; width:7rem; height:1rem; border-radius:.25rem; background:linear-gradient(90deg,#e6ece5,#f4f6f1,#e6ece5); background-size:200% 100%; animation:shimmer 1.8s ease infinite; }
+.fees button:focus-visible,.fees a:focus-visible,.tableScroll:focus-visible { outline:3px solid #ba861c; outline-offset:3px; }
+@keyframes shimmer { to { background-position:-200% 0; } }
+@media(max-width:700px) { .categories { grid-template-columns:1fr; } .views button { flex:1 1 8rem; text-align:center; } .controls label { flex-basis:calc(50% - .8rem); } }
+@media(prefers-reduced-motion:reduce) { .skeleton { animation:none; } }

@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { developerSalesFixture } from "./helpers/developer-sales-fixture";
 
 const results = (page: Page) => page.locator("#sales-results");
+const screenshotsRoot = process.env.SALES_UX_SCREENSHOTS ?? "docs/dashboard-sales-phase1/screenshots";
 const row = (page: Page, number: string) => results(page).getByRole("row").filter({ has: page.getByRole("link", { name: `Unit ${number}`, exact: true }) });
 async function openOverview(page: Page, params = "") {
   await page.goto(`/?screen=sales&building=all${params}#sales-results`);
@@ -61,10 +62,18 @@ test("filtered category landing and each additional task reach existing workflow
   await page.goto("/?screen=sales&building=all&salesWork=ours&salesCategory=documents#sales-results");
   await expect(row(page,"103")).toBeVisible();
   await expect(results(page).getByRole("status")).toContainText("1 sale requiring");
-  await row(page,"103").getByText("All 2 actions",{exact:true}).click();
-  const account=row(page,"103").getByRole("link",{name:"Review statement of account",exact:true});
+  await expect(row(page,"103").locator("details")).toHaveCount(0);
+  await expect(row(page,"103")).not.toContainText("Action with Developer team");
+  await expect(row(page,"103")).toContainText("6 Oct 2026");
+  await row(page,"103").getByRole("link",{name:"Review 2 actions",exact:true}).click();
+  await expect(page).toHaveURL(/#completion-documents-step$/);
+  const matching=page.getByRole("navigation",{name:"Matching actions"});
+  await expect(matching.getByRole("link",{name:"Review completion statement",exact:true})).toBeVisible();
+  const account=matching.getByRole("link",{name:"Review statement of account",exact:true});
   await expect(account).toHaveAttribute("href",/workVersion=.*draft_statement_of_account/);
   await account.click(); await expect(page).toHaveURL(/#completion-documents-step$/);
+  await expect.poll(async()=> (await page.locator("#completion-documents-step").boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(0);
+  await expect.poll(async()=> (await page.locator("#completion-documents-step").boundingBox())?.y ?? Infinity).toBeLessThan(400);
   await expect(page.locator("[data-sale-file]")).toBeVisible();
   await page.getByRole("button",{name:"Back to sales overview"}).click();
   await expect(results(page).getByLabel("Action category")).toHaveValue("documents");
@@ -118,12 +127,12 @@ for (const width of [1440,390]) test(`loading, retry, background refresh, revoca
   await expect(results(page).getByRole("link")).toHaveCount(0);
   await expect(page.getByRole("heading",{name:"Financial overview",exact:true})).toHaveCount(0);
   await expect(results(page)).not.toContainText("0 sales");
-  await mkdir("docs/dashboard-sales-phase1/screenshots",{recursive:true});
-  await page.screenshot({path:`docs/dashboard-sales-phase1/screenshots/loading-${width}.png`});
+  await mkdir(screenshotsRoot,{recursive:true});
+  await page.screenshot({path:`${screenshotsRoot}/loading-${width}.png`});
   mode="error";release();
   await expect(results(page).getByRole("alert")).toContainText("Sales");
   await expect(results(page).getByRole("button",{name:"Retry Sales"})).toBeEnabled();
-  await page.screenshot({path:`docs/dashboard-sales-phase1/screenshots/error-${width}.png`});
+  await page.screenshot({path:`${screenshotsRoot}/error-${width}.png`});
   mode="ok";await results(page).getByRole("button",{name:"Retry Sales"}).click();
   await expect(row(page,"101")).toBeVisible();
   await expect(page.getByRole("button",{name:"Open forecasting",exact:true})).toBeDisabled();
@@ -135,7 +144,7 @@ for (const width of [1440,390]) test(`loading, retry, background refresh, revoca
   await expect(results(page).getByText("Refreshing…",{exact:true})).toBeVisible();
   await expect(row(page,"101")).toBeVisible();
   await results(page).scrollIntoViewIfNeeded();
-  await page.screenshot({path:`docs/dashboard-sales-phase1/screenshots/refreshing-${width}.png`});
+  await page.screenshot({path:`${screenshotsRoot}/refreshing-${width}.png`});
   mode="error";release();await expect(results(page).getByRole("alert")).toContainText("last loaded position");
   await expect(row(page,"101").getByRole("button",{name:"Review unavailable"})).toBeDisabled();
   await results(page).getByRole("button",{name:"Our actions",exact:true}).click();
@@ -149,4 +158,26 @@ for (const width of [1440,390]) test(`loading, retry, background refresh, revoca
   mode="ok";await results(page).getByRole("button",{name:"Retry Sales"}).click();await expect(row(page,"101")).toBeVisible();
   await page.goto(`/?screen=sales&building=${f.unit.building_id}#sales-results`);
   await expect(page.getByRole("button",{name:"Open forecasting",exact:true})).toBeDisabled();
+});
+
+test("Sales polish keeps mixed tasks reachable and shows the recorded expired authority date",async({page})=>{
+  const f=await developerSalesFixture(page);
+  const sale=f.rows.unit_sale_attempts.find(s=>s.unit_id===f.rows.units.find(u=>u.unit_number==="105")!.id)!;
+  f.rows.sale_legal_emails = [{id:"expired-authority",sale_attempt_id:sale.id,kind:"authority",version:1,snapshot:f.snapshot,to_recipients:["legal@example.test"],cc_recipients:[],body:"Synthetic authority",sending_address:"portal@example.test",subject:"Synthetic authority",issued_at:"2026-10-01T12:00:00Z",expires_at:"2026-10-06T16:00:00Z",delivery_status:"sent",revoked_at:null,replaced_by:null}];
+  await openOverview(page);await expect(row(page,"105")).toContainText("Authority expired");await expect(row(page,"105")).toContainText("6 Oct 2026");
+  await expect(row(page,"104")).toContainText("Action with");
+  await expect(row(page,"104").locator("details")).toHaveCount(0);
+  await row(page,"104").getByRole("link",{name:/^Review \d+ actions$/}).click();
+  await expect(page).toHaveURL(/#sales-matching-actions$/);
+  const nav=page.getByRole("navigation",{name:"Matching actions"});
+  await expect(nav.getByRole("link",{name:/Replace queried/})).toHaveCount(2);
+  await nav.getByRole("link",{name:/Review payment position/}).click();await expect(page.locator("#exchange-fee")).toBeVisible();
+  await page.getByRole("button",{name:"Back to sales overview"}).click();await expect(row(page,"104")).toBeVisible();
+  await results(page).getByRole("button",{name:"Our actions",exact:true}).click();
+  await expect(row(page,"103")).not.toContainText("Action with Developer team");
+  await mkdir("docs/dashboard-sales-phase2/screenshots",{recursive:true});
+  for(const width of [1440,390]){
+    await page.setViewportSize({width,height:1000});await results(page).scrollIntoViewIfNeeded();
+    await page.screenshot({path:`docs/dashboard-sales-phase2/screenshots/sales-polish-${width}.png`});
+  }
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, type MouseEvent } from "react";
 import { SALES_CATEGORIES } from "@/lib/dashboard/work-classification";
-import { INITIAL_SALES_OVERVIEW, saleRecordUrl, salesWorkSummary, selectDeveloperSalesRows, visibleSalesWork, type DeveloperSalesRow, type SalesOverviewFilters } from "@/lib/sales/developer-overview";
+import { INITIAL_SALES_OVERVIEW, saleRecordUrl, salesReviewDestination, salesWorkSummary, selectDeveloperSalesRows, visibleSalesWork, type DeveloperSalesRow, type SalesOverviewFilters } from "@/lib/sales/developer-overview";
 import { formatGbp } from "@/lib/sales/currency";
 import { SALES_ROUTE_STATUSES, saleStatusLabel } from "@/lib/units/commercial-allocation";
 import { SALES_PAGE_SIZE, SalesPagination } from "./SalesPagination";
@@ -45,16 +45,15 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
       <table><thead><tr><th>Unit / building</th><th>Stage / price</th><th>Next step</th><th>Key date</th><th><span className={styles.srOnly}>Open sale</span></th></tr></thead>
         <tbody>{!rows && !error ? Array.from({ length: 5 }, (_, index) => <tr key={index} aria-hidden="true">{Array.from({ length: 5 }, (_, cell) => <td key={cell}><span className={styles.skeleton} /></td>)}</tr>) : visible.map(row => {
           const actions = visibleSalesWork(row, filters), first = actions[0];
-          const href = saleRecordUrl(first?.destination ?? row.destination, search), unitHref = saleRecordUrl(row.destination, search);
+          const href = saleRecordUrl(salesReviewDestination(actions, row.destination), search), unitHref = saleRecordUrl(row.destination, search);
           return <tr key={row.unitId}>
             <td><a className={styles.unit} href={unitHref} onClick={event => open(event, unitHref, row.unitId)}>Unit {row.unitNumber}</a><small>{row.buildingName}</small>
               {Boolean(unread?.get(row.unitId)) && <a className={styles.comments} href={`${unitHref}&conversation=${encodeURIComponent(row.destination.saleId ?? "")}`} onClick={event => open(event, `${unitHref}&conversation=${encodeURIComponent(row.destination.saleId ?? "")}`, row.unitId)}>{unread?.get(row.unitId)} unread comments</a>}
             </td>
             <td><span className={styles.stage}>{saleStatusLabel(row.stage)}</span><small>{prices?.get(row.unitId) ? formatGbp(prices.get(row.unitId)!) : "Price not recorded"}</small>{stageAges?.get(row.unitId) && <small>{stageAges.get(row.unitId)} in stage</small>}</td>
-            <td className={styles.next}><p>{salesWorkSummary(actions) || row.warning || row.neutral}</p>{first && <small>Action with {first.responsibility.label}{!first.canAct ? " · authorised colleague required" : ""}</small>}
-              {actions.length > 1 && <details><summary>All {actions.length} actions</summary><ul>{actions.map(item => { const url = item.destination ? saleRecordUrl(item.destination, search) : unitHref; return <li key={item.id}>{error ? <span>{item.action}</span> : <a href={url} onClick={event => open(event, url, row.unitId)}>{item.action}</a>}<small>{item.responsibility.label}</small></li>; })}</ul></details>}
+            <td className={styles.next}><p>{salesWorkSummary(actions) || row.warning || row.neutral}</p>{first && !(filters.work === "ours" && actions.every(item => item.responsibility.kind === "developer" && item.ours && item.canAct)) && <small>Action with {[...new Set(actions.map(item=>item.responsibility.label))].join(" / ")}{!first.canAct ? " · authorised colleague required" : ""}</small>}
             </td>
-            <td><span className={row.keyDate?.warning ? styles.warning : undefined}>{row.keyDate?.label ?? "—"}</span></td>
+            <td><span className={row.keyDate?.warning ? styles.warning : undefined}>{row.keyDate?.label ?? "—"}</span>{row.keyDate && !row.keyDate.label.includes(row.keyDate.actual) && <small>{row.keyDate.actual}</small>}</td>
             <td>{error ? <button type="button" className={styles.review} disabled>Review unavailable</button> : <a className={styles.review} href={href} onClick={event => open(event, href, row.unitId)}>{actions.length > 1 ? `Review ${actions.length} actions` : first ? "Review action" : row.neutral === "Available for reservation" ? "Start reservation" : "Open sale"}</a>}</td>
           </tr>;
         })}</tbody>
