@@ -1,7 +1,7 @@
 import { deriveDashboard } from "../dashboard/model";
 import { deadlineState } from "../dashboard/dates";
 import { hasWorkOwner, isWorkObservation, matchesWorkTeam, SALES_CATEGORIES, salesWorkCategory, type SalesCategory } from "../dashboard/work-classification";
-import type { DashboardInput, WorkDestination, WorkItem } from "../dashboard/types";
+import type { DashboardInput, DashboardSnapshot, WorkDestination, WorkItem } from "../dashboard/types";
 import { deriveSalesRegister, type SalesRegisterRow } from "./register";
 import { SALES_ROUTE_STATUSES } from "../units/commercial-allocation";
 
@@ -38,8 +38,7 @@ export function salesOverviewDestination(buildingId: string, category: SalesCate
   return `/?${params}#sales-results`;
 }
 
-export function deriveDeveloperSalesRows(input: DashboardInput): DeveloperSalesRow[] {
-  const snapshot = deriveDashboard(input);
+export function deriveDeveloperSalesRows(input: DashboardInput, snapshot: DashboardSnapshot = deriveDashboard(input)): DeveloperSalesRow[] {
   return deriveSalesRegister(input, snapshot).rows.map(row => {
     const items = snapshot.items.filter(item => item.module === "sales" && item.unitId === row.unitId);
     const work = items.filter(item => !isWorkObservation(item)).sort((a, b) => rank(row, [a], input.now).urgency - rank(row, [b], input.now).urgency);

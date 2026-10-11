@@ -1523,7 +1523,7 @@ export function ProductionPortalApp() {
     >
       <WorkReturnLink screen={activeTab} />
       {activeTab === "dashboard" && contextReady && (
-        <OrganisationWorklist key={`${profile.id}:${profile.role}:${profile.organisation_id}:${buildingContextId}`} identity={`${profile.id}:${profile.role}:${profile.organisation_id ?? ""}`} buildingId={buildingContextId} />
+        <OrganisationWorklist key={`${profile.id}:${profile.role}:${profile.organisation_id}:${buildingContextId}`} identity={`${profile.id}:${profile.role}:${profile.organisation_id ?? ""}`} buildingId={buildingContextId} scopeLabel={scopedBuildings.find(building => building.id === buildingContextId)?.name} />
       )}
       {portalScreens[activeTab].section === "setup" && (
         <SetupSection

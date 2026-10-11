@@ -3,6 +3,7 @@ import type { LegalEmail } from "../sales/legal-workflow";
 import type { UnitTenancy } from "../rentals/tenancies";
 import type { RentalArrearsEpisode } from "../rentals/rent-risk";
 import type { WorkDeadline } from "./dates";
+import type { InternalOverview } from "./overview";
 
 export type WorkModule = "sales" | "snags" | "other";
 export type WorkParty = { kind: "developer" | "sales_agent" | "conveyancer" | "contractor" | "unallocated"; organisationId: string | null; label: string };
@@ -54,6 +55,7 @@ export type DashboardInput = {
 };
 export type PortfolioSummary = { key: string; label: string; value: number | null; unit: string; detail?: string; module: WorkModule; filter?: string };
 export type DashboardSnapshot = {
+  overview?: InternalOverview;
   asOf: string; scope: { buildingId: string; label: string; team: string; identity: string }; sources: SourceState[];
   items: WorkItem[]; summaries: PortfolioSummary[];
   activity: (WorkContext & { recordKey: string; destination: WorkDestination })[];
