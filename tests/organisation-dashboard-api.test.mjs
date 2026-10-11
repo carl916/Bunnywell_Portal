@@ -46,3 +46,16 @@ test('a source count larger than a page is paginated before aggregation',async()
 });
 
 test("building access revoked during a read rejects the whole response",async()=>{const f=setup({changingAccess:true});assert.equal((await f.get()).status,403);});
+
+test('simplified composition is returned only to internal admins and developers', async () => {
+  for (const role of ['admin', 'developer', 'contractor', 'developer_representative', 'sales_agent', 'conveyancer']) {
+    const f = setup({ role });
+    const response = await f.get(`building=${building.id}`);
+    assert.equal(response.status, 200);
+    const snapshot = await response.json();
+    if (role === 'admin' || role === 'developer') {
+      assert.deepEqual(snapshot.overview.attention.map(row => row.key), ['sales', 'fees', 'snags', 'rentals']);
+      assert.equal(new URL(snapshot.overview.attention[0].ours.href, 'https://test').searchParams.get('building'), building.id);
+    } else assert.equal(snapshot.overview, undefined);
+  }
+});

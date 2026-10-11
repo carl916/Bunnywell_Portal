@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { dashboardRoleAllowed, deriveDashboard } from "@/lib/dashboard/model";
+import { deriveInternalOverview } from "@/lib/dashboard/overview";
 import { DashboardAccessError, dashboardAccessKey, loadDashboardInput } from "@/lib/dashboard/read";
 import { DashboardReadDiagnostics } from "@/lib/dashboard/read-diagnostics";
 import { SalesServerTiming } from "@/lib/sales/server-performance";
@@ -39,7 +40,9 @@ export async function GET(request: Request) {
     trace.setStage("access.final");
     if (accessBefore !== await dashboardAccessKey(client, current.data)) return respond({ error: "Your building or unit access changed. Reload the portal." }, 403);
     trace.setStage("derive");
-    return respond(deriveDashboard(input));
+    const snapshot = deriveDashboard(input);
+    snapshot.overview = deriveInternalOverview(input, snapshot);
+    return respond(snapshot);
   } catch (error) {
     if (error instanceof DashboardAccessError) return respond({ error: error.message }, 403);
     return respond({ error: "Your worklist is unavailable. Refresh to retry." }, 503);

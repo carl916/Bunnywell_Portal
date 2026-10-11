@@ -27,7 +27,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "test:sales-refresh": "node --test tests/sales-action-refresh.test.mjs tests/sales-legal-refresh-ui.test.mjs tests/sales-register-session.test.mjs tests/sales-register-auth.test.mjs",
-    "test:dashboard": "node --test tests/organisation-dashboard.test.mjs tests/organisation-dashboard-api.test.mjs tests/organisation-dashboard-handoffs.test.mjs",
+    "test:dashboard": "node --test tests/organisation-dashboard.test.mjs tests/organisation-dashboard-api.test.mjs tests/organisation-dashboard-handoffs.test.mjs tests/dashboard-overview.test.mjs",
     "test:dashboard:browser": "playwright test --config playwright.dashboard.config.ts",
     "test:fees": "node --test tests/fee-workspace.test.mjs tests/fee-portfolio-loading.test.mjs tests/fee-portfolio-access.test.mjs tests/sales-agent-fees.test.mjs tests/sales-payment-corrections.test.mjs tests/sales-agent-fees-portfolio.test.mjs"
   },

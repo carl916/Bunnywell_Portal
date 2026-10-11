@@ -10,9 +10,11 @@ import { hasWorkOwner } from "@/lib/dashboard/work-classification";
 import { calendarDays, deadlineState, formatWorkDate, londonDate } from "@/lib/dashboard/dates";
 import type { DashboardSnapshot, WorkDestination, WorkItem, WorkModule } from "@/lib/dashboard/types";
 import styles from "./OrganisationWorklist.module.css";
+import { InternalDashboard } from "./InternalDashboard";
+import { isSalesInternalRole } from "@/lib/sales/permissions";
 
 const PAGE_SIZE = 10;
-export function OrganisationWorklist({ identity, buildingId, external = false }: { identity: string; buildingId: string; external?: boolean }) {
+export function OrganisationWorklist({ identity, buildingId, external = false, scopeLabel }: { identity: string; buildingId: string; external?: boolean; scopeLabel?: string }) {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -107,6 +109,8 @@ export function OrganisationWorklist({ identity, buildingId, external = false }:
     {item.deadline && <strong className={styles.deadline}>{item.deadline.basis}: {formatWorkDate(item.deadline.at, item.deadline.precision)} · {({ overdue: "Passed", today: "Due today", soon: "Approaching", future: "Upcoming", none: "" })[deadlineState(item.deadline, asOf)]}</strong>}
     {!item.canAct && <span>Read only here · an authorised colleague is required.</span>}
   </>;
+
+  if (!external && isSalesInternalRole(identity.split(":")[1])) return <InternalDashboard snapshot={current} buildingId={buildingId} scopeLabel={scopeLabel} error={error} refreshing={refreshing} refresh={() => void refresh()} />;
 
   return <section className={styles.root} aria-label={external ? "Sales organisation worklist" : "Portfolio overview"}>
     <header className={styles.header}>
