@@ -153,7 +153,7 @@ test("payments append transactionally and survive client reload", () => {
   assert.match(migrationSource, /client_reference = p_client_reference/);
   assert.match(migrationSource, /unit_sale_invoice_payments_client_reference_idx/);
   assert.match(migrationSource, /drop policy if exists "commercial admins manage sale invoice payments"/);
-  assert.match(refreshSource, /unit_sale_invoice_payments"\)\.select\("\*"\)\.in\("sale_attempt_id", sales\)/);
+  assert.match(refreshSource, /unit_sale_invoice_payments"\)\.select\("\*", guidance \? \{ count: "exact" \} : \{\}\)\.in\("sale_attempt_id", sales\)/);
   assert.match(workflowSource, /loadBuildingSalesData/);
   assert.match(workflowSource, /setInvoicePayments\(fresh.payments/);
   assert.match(workflowSource, /await Promise\.all\(\[loadSalesData\(\), reloadPortalData\(\)\]\)/);

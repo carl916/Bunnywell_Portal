@@ -25,8 +25,8 @@ test('developer approvals belong to the team regardless of submission/account hi
 test('returned reservation records current reason and return age; historical failed attempts do not count',()=>{
   const f=fixture({sales:[{...sale,workflow_status:'rejected',exchanged_at:null,reservation_approved_at:null,reservation_rejected_at:'2026-10-03T12:00:00Z',reservation_rejection_reason:'Correct buyer identity'}]});
   const task=deriveDashboard(f).items.find(i=>i.kind==='reservation_correct');assert.equal(task.context.text,'Correct buyer identity');assert.equal(task.ours,false);
-  for(const status of ['failed','fallen_through','superseded','withdrawn'])assert.equal(kinds({...f,sales:[{...f.sales[0],workflow_status:status}]}).length,0);
-  assert.equal(kinds({...f,sales:[{...f.sales[0],is_active:false}]}).length,0);
+  for(const status of ['failed','fallen_through','superseded','withdrawn'])assert.deepEqual(kinds({...f,sales:[{...f.sales[0],workflow_status:status}]}),['sale_record_check']);
+  assert.deepEqual(kinds({...f,sales:[{...f.sales[0],is_active:false}]}),['sale_record_check']);
 });
 test('commercial approval is not duplicated after the reservation satisfied it',()=>{
   const f=fixture({sales:[{...sale,exchanged_at:null,workflow_status:'approved'}]});assert.ok(!kinds(f).includes('commercial_review'));
@@ -132,7 +132,7 @@ test('pending resident requests remain complete beyond 100 and scoped to request
   f.viewer.role='developer';assert.equal(deriveDashboard(f).items.filter(i=>i.kind==='resident_access').length,0);
 });
 test('zero, partial failure, no buildings and role denial are distinct',()=>{
-  const f=fixture({sales:[]});assert.equal(deriveDashboard(f).items.length,0);
+  const f=fixture({sales:[],units:[{...unit,sale_status:'for_sale'}]});assert.equal(deriveDashboard(f).items.length,0);
   f.sources=f.sources.map(s=>s.key==='sales'?{...s,state:'unavailable'}:s);assert.equal(deriveDashboard(f).summaries.find(s=>s.key==='exchanged').value,null);
   f.buildings=[];f.units=[];assert.equal(deriveDashboard(f).buildings.length,0);
   for(const role of ['resident','user','agent','unknown'])assert.equal(dashboardRoleAllowed(role),false);

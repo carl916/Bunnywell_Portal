@@ -20,7 +20,7 @@ const serverSnapshot = () => null;
 export function SalesWorkspace(props: Props) {
   return props.profile?.role === "conveyancer"
     ? <ConveyancerWorkspace key={`${props.user.id}:${props.profile.role}:${props.profile.organisation_id ?? ""}`} {...props} />
-    : <SalesReservationWorkflow {...props} />;
+    : <SalesReservationWorkflow key={`${props.user.id}:${props.profile?.role}:${props.profile?.organisation_id ?? ""}:${props.accessScopeKey ?? ""}`} {...props} />;
 }
 
 function ConveyancerWorkspace(props: Props) {

@@ -1,4 +1,5 @@
 import type { DashboardSnapshot, WorkDestination, WorkItem, WorkRow } from "./types";
+import { matchesWorkTeam } from "./work-classification";
 
 export function destinationUrl(destination: WorkDestination, scope: string, returnTo = "dashboard") {
   const params = new URLSearchParams({ screen: destination.screen, building: (destination.screen === "setup_buildings" || destination.screen === "rentals" ? destination.buildingId : scope) || "all", workReturn: returnTo, workScope: scope || "all" });
@@ -35,6 +36,6 @@ export function groupWorkItems(items: WorkItem[], buildings: ReadonlyMap<string,
 }
 
 export function filterWork(snapshot: DashboardSnapshot, queue: "ours" | "others", module: "all" | "sales" | "snags" | "other", kind = "") {
-  const items = snapshot.items.filter(item => item.ours === (queue === "ours") && (module === "all" || item.module === module) && (!kind || item.kind === kind));
+  const items = snapshot.items.filter(item => matchesWorkTeam(item, queue) && (module === "all" || item.module === module) && (!kind || item.kind === kind));
   return { items, rows: groupWorkItems(items, new Map(snapshot.buildings.map(b => [b.id, b]))), tasks: items.length, records: new Set(items.map(item => item.recordKey)).size };
 }

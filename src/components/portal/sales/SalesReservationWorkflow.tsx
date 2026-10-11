@@ -1,13 +1,18 @@
 "use client";
 
 import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
-import { isSalesExternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
+import { isSalesExternalRole, isSalesInternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
+import { DeveloperSalesResults } from "./DeveloperSalesResults";
+import { useSalesOverviewNavigation } from "./useSalesOverviewNavigation";
+import { deriveDeveloperSalesRows } from "@/lib/sales/developer-overview";
+import { EMPTY_GUIDANCE_FACTS, loadSalesGuidanceFacts, type SalesGuidanceFacts } from "@/lib/sales/guidance-facts";
+import type { DashboardInput } from "@/lib/dashboard/types";
 
 import { PdfUploadBox } from "./PdfUploadBox";
 import { SalesLegalWorkflow } from "./SalesLegalWorkflow";
 import { SalesTableScroll } from "./SalesTableScroll";
 import { SALES_PAGE_SIZE, SalesPagination, useSalesPagination } from "./SalesPagination";
-import { salesLoadErrorMessage } from "@/lib/sales/load-errors";
+import { isSalesAccessError, salesLoadErrorMessage } from "@/lib/sales/load-errors";
 import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { createLoadCoordinator, salesMembershipKey } from "@/lib/portal-load-lifecycle";
 import { beginSalesMeasurement, salesNavigationReady } from "@/lib/sales/performance";
@@ -16,7 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CheckCircle2, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
-import type { AppRole, Building, BuildingFloor, Organisation, Unit } from "@/lib/data/production";
+import type { AppRole, Building, BuildingFloor, BuildingOrganisation, Organisation, Unit } from "@/lib/data/production";
 import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { calculateAgentInvoicePreview as invoicePreview, calculateDeveloperNet } from "@/lib/sales/commercial-model";
 import { buildDepositStructure, describeReservationFeeHolder, paymentScheduleSummary } from "@/lib/sales/deal-structure";
@@ -24,7 +29,6 @@ import { formatGbp, formatGbpDeduction, parseGbpInput } from "@/lib/sales/curren
 import { canPerformSalesAction } from "@/lib/sales/permissions";
 import { calculateMilestoneFee, deriveAgentFeeSummary, deriveInvoicePaymentPosition, isActiveAgentFeePayment, normalisePayerType, validateAgentFeeStructure, type AgentFeeMilestone } from "@/lib/sales/agent-fees";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { SalesForecastingModule } from "@/components/portal/sales/SalesForecastingModule";
 import { AgentFeesPortfolio } from "@/components/portal/sales/AgentFeesPortfolio";
 import { SaleFileWorkspaceTabs, type SaleFileWorkspace } from "@/components/portal/sales/SaleFileWorkspaceTabs";
 import { SaleConversationLayout, SaleMentionsInbox, UnreadBadge, useSaleConversationLayout, useSaleUnread } from "./SaleConversation";
@@ -190,6 +194,7 @@ type SaleDocumentVersion = {
 
 
 type SaleInvoice = {
+  created_at: string;
   id: string;
   sale_attempt_id: string;
   document_id: string | null;
@@ -849,6 +854,7 @@ export function SalesReservationWorkflow({
   organisations,
   buildings,
   buildingFloors,
+  buildingOrganisations = [],
   units,
   buildingContextId,
   onNotice,
@@ -863,6 +869,7 @@ export function SalesReservationWorkflow({
   organisations: Organisation[];
   buildings: Building[];
   buildingFloors: BuildingFloor[];
+  buildingOrganisations?: BuildingOrganisation[];
   units: Unit[];
   buildingContextId: string;
   onNotice: (notice: string) => void;
@@ -884,14 +891,15 @@ export function SalesReservationWorkflow({
 
   const buildingId = buildingContextId;
   const conveyancerFile = profile?.role === "conveyancer";
+  const internalOverview = isSalesInternalRole(profile?.role);
   const buildingUnits = useMemo(
     () => {
       const available = units.filter((unit) => (!buildingId || unit.building_id === buildingId) && isSalesRouteUnit(unit));
-      return conveyancerFile
+      return conveyancerFile || internalOverview
         ? sortUnitsByBuildingFloorOrder(available, buildingFloors, buildings)
         : sortUnitsByFloorOrder(available, buildingFloors, buildingId);
     },
-    [buildingFloors, buildingId, buildings, conveyancerFile, units],
+    [buildingFloors, buildingId, buildings, conveyancerFile, internalOverview, units],
   );
   // Navigation keeps all authorised metadata. Only the conveyancer file's
   // detailed snapshot is narrowed; internal overview/file reuse is unchanged.
@@ -900,6 +908,11 @@ export function SalesReservationWorkflow({
   const salesBuildingId = conveyancerFile ? fileUnit?.building_id ?? "" : buildingId;
   const membershipKey = salesMembershipKey(salesUnits);
   const salesKey = JSON.stringify([user.id, profile?.role, profile?.organisation_id, salesBuildingId, membershipKey, salesRefreshKey]);
+  const overviewScopeKey = JSON.stringify([user.id, profile?.role, profile?.organisation_id, salesBuildingId, membershipKey]);
+  const [loadedOverviewScope, setLoadedOverviewScope] = useState<string | null>(null);
+  const [salesError, setSalesError] = useState("");
+  const [guidanceFacts, setGuidanceFacts] = useState<SalesGuidanceFacts>(EMPTY_GUIDANCE_FACTS);
+  const [guidanceTime, setGuidanceTime] = useState(0);
   const currentSalesKey = useRef(salesKey);
   useEffect(() => { currentSalesKey.current = salesKey; }, [salesKey]);
   useEffect(() => () => { salesLoads.current.invalidate(); salesLoadRevision.current++; }, []);
@@ -984,7 +997,10 @@ export function SalesReservationWorkflow({
   const [invoiceRejectionReason, setInvoiceRejectionReason] = useState("");
   const [completionInvoiceRejectionReason, setCompletionInvoiceRejectionReason] = useState("");
   const [selectedSaleUnitId, setSelectedSaleUnitId] = useState(fileUnit?.id ?? "");
-  const [salesStageFilter, setSalesStageFilter] = useState<SalesStageFilter>("all");
+  const [legacyStageFilter, setLegacyStageFilter] = useState<SalesStageFilter>("all");
+  const overview = useSalesOverviewNavigation(internalOverview, loadedOverviewScope === overviewScopeKey, selectedSaleUnitId);
+  const salesStageFilter = internalOverview ? overview.filters.stage as SalesStageFilter : legacyStageFilter;
+  const setSalesStageFilter = (stage: SalesStageFilter) => internalOverview ? overview.update({ ...overview.filters, stage, page: 1 }) : setLegacyStageFilter(stage);
   const [salesSearch, setSalesSearch] = useState("");
   const [activeWorkflowStage, setActiveWorkflowStage] = useState<SaleWorkflowStage>("reservation");
   const [activeSalesView, setActiveSalesView] = useState<SalesView>("pipeline");
@@ -992,7 +1008,6 @@ export function SalesReservationWorkflow({
   const [showCommercialModel, setShowCommercialModel] = useState(false);
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
   const [commercialSetupChanged, setCommercialSetupChanged] = useState(false);
-  const [showForecasting, setShowForecasting] = useState(false);
   const [showRejectReservationConfirm, setShowRejectReservationConfirm] = useState(false);
   const [showReturnToForSaleConfirm, setShowReturnToForSaleConfirm] = useState(false);
   const [showRejectInvoiceConfirm, setShowRejectInvoiceConfirm] = useState(false);
@@ -1462,6 +1477,26 @@ export function SalesReservationWorkflow({
   });
   const { currentPage: currentSalesPage, setPage: setSalesPage } = useSalesPagination(filteredSalesUnits.length, JSON.stringify([buildingId, salesSearch, salesStageFilter]));
   const pagedSalesUnits = filteredSalesUnits.slice((currentSalesPage - 1) * SALES_PAGE_SIZE, currentSalesPage * SALES_PAGE_SIZE);
+  const developerRows = useMemo(() => {
+    if (!internalOverview || loadedOverviewScope !== overviewScopeKey) return null;
+    return deriveDeveloperSalesRows({
+      viewer: { id: user.id, role: profile!.role, organisation_id: profile?.organisation_id ?? null },
+      now: guidanceTime, buildingId, buildings, units: buildingUnits, floors: buildingFloors, organisations, buildingOrganisations,
+      sales: attempts as unknown as DashboardInput["sales"],
+      documents: documents.filter(document => !document.redacted_at && !document.superseded_at).map(document => ({ ...document, unit_sale_document_versions: versions.filter(version => version.document_id === document.id) })) as unknown as DashboardInput["documents"],
+      ...guidanceFacts, terms: terms.filter(term => term.is_current),
+      invoices: invoices.map(invoice => ({ ...invoice, fee_milestone: invoice.fee_milestone ?? "exchange" })) as DashboardInput["invoices"],
+      payments: invoicePayments, saleActors: saleActorNames, saleEvents: [], snags: [], handovers: [], tenancies: [], arrears: [], rentalImports: [], accessRequests: [],
+      sources: ["sales", "legal", "fees"].map(key => ({ key, label: key, state: "ready", asOf: new Date(guidanceTime).toISOString() })),
+    });
+  }, [internalOverview, loadedOverviewScope, overviewScopeKey, user.id, profile, guidanceTime, buildingId, buildings, buildingUnits, buildingFloors, organisations, buildingOrganisations, attempts, documents, versions, guidanceFacts, terms, invoices, invoicePayments, saleActorNames]);
+
+  const developerResults = (rows = developerRows) => <DeveloperSalesResults rows={rows} filters={overview.filters} onFilters={overview.update}
+    search={overview.search} onOpen={(href, unit) => { setConversationTarget(null); setShowCommercialModel(false); markUnitOpenIntent(unit); beginSalesMeasurement("sale.open"); overview.open(href); }}
+    prices={new Map(buildingUnits.map(unit => [unit.id, unitSaleValue(unit)]))} error={salesError} refreshing={isLoading}
+    stageAges={new Map(buildingUnits.map(unit => [unit.id, daysSince(saleStatusDate(unit, activeAttemptByUnit.get(unit.id)))]))}
+    unread={new Map(buildingUnits.map(unit => [unit.id, unreadComments[activeAttemptByUnit.get(unit.id)?.id ?? ""] ?? 0]))}
+    onRetry={() => void loadSalesData().catch(() => {})} now={guidanceTime} />;
 
   function nextActionForUnit(unit: Unit) {
     const attempt = activeAttemptByUnit.get(unit.id);
@@ -1491,8 +1526,9 @@ export function SalesReservationWorkflow({
     if (next.section === null || next.section === "progression") params.delete("section");
     if (next.section === "financials" || next.section === "commercial") params.set("section", next.section);
     const hash = next.hash ? `#${next.hash}` : "";
-    window.history.pushState(null, "", `${window.location.pathname}?${params.toString()}${hash}`);
+    window.history.pushState(internalOverview ? window.history.state : null, "", `${window.location.pathname}?${params.toString()}${hash}`);
     window.dispatchEvent(new Event("conveyancer-sale-navigation"));
+    if (internalOverview) window.dispatchEvent(new Event("sales-overview-navigation"));
   }
 
   function openSaleFile(nextUnitId: string, nextBuildingId = buildingId, focusAgentFees = false) {
@@ -1513,6 +1549,7 @@ export function SalesReservationWorkflow({
   }
 
   function backToSalesOverview() {
+    if (internalOverview && overview.back()) return;
     manuallySelectedWorkflowStageRef.current = null;
     setSelectedSaleUnitId("");
     setActiveSalesView("pipeline");
@@ -1580,7 +1617,7 @@ export function SalesReservationWorkflow({
     }
 
     if (urlFilter && SALES_STAGE_FILTERS.some((filter) => filter.value === urlFilter)) {
-      setSalesStageFilter(urlFilter);
+      setLegacyStageFilter(urlFilter);
     }
 
     if (urlView === "agent_fees" && canViewAgentFeesPortfolio) {
@@ -1633,6 +1670,7 @@ export function SalesReservationWorkflow({
       const unit = units.find(item => item.id === requested);
       if (unit) {
         setUnitId(unit.id); setSelectedSaleUnitId(unit.id);
+        if (internalOverview && params.get("conversation")) { setConversationTarget({ unit: unit.id, sale: params.get("conversation")! }); setConversationIntent("open"); }
         const hash = window.location.hash;
         const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(unit);
         manuallySelectedWorkflowStageRef.current = stage;
@@ -1641,7 +1679,7 @@ export function SalesReservationWorkflow({
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [units, workflowStageForUnit]);
+  }, [units, workflowStageForUnit, internalOverview, setConversationIntent]);
 
   // Opening a unit initialises its selected stage. Refetching lifecycle data
   // must preserve the stage the user is currently reviewing.
@@ -1657,6 +1695,8 @@ export function SalesReservationWorkflow({
       if (buildingUnits.length === 0 && unitId) setUnitId("");
     }, 0);
     return () => window.clearTimeout(timer);
+  // URL writes are triggered by membership loss, never by recreating the writer.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSalesView, buildingUnits, salesStageFilter, selectedSaleUnitId, unitId]);
 
   useEffect(() => {
@@ -1818,9 +1858,27 @@ export function SalesReservationWorkflow({
     if (currentSalesKey.current !== salesKey) return;
     salesLoads.current.invalidate();
     const revision = ++salesLoadRevision.current;
-    const fresh = await loadLegalSaleChanges(createSupabaseBrowserClient(), sale, action);
+    const [fresh, facts] = await Promise.all([
+      loadLegalSaleChanges(createSupabaseBrowserClient(), sale, action),
+      internalOverview ? loadSalesGuidanceFacts(createSupabaseBrowserClient(), [sale]) : null,
+    ]).catch(error => {
+      if (internalOverview && currentSalesKey.current === salesKey) {
+        setSalesError(salesLoadErrorMessage(error));
+        if (isSalesAccessError(error)) setLoadedOverviewScope(null);
+      }
+      throw error;
+    });
     if (currentBuilding.current !== building || currentSalesKey.current !== salesKey || revision !== salesLoadRevision.current) return;
     setIsLoading(false);
+    if (facts) {
+      setGuidanceFacts(previous => ({
+        asOf: facts.asOf,
+        authorities: replaceSaleRows(previous.authorities, sale, facts.authorities),
+        depositSources: replaceSaleRows(previous.depositSources, sale, facts.depositSources),
+        deposits: replaceSaleRows(previous.deposits, sale, facts.deposits),
+      }));
+      setGuidanceTime(Date.parse(facts.asOf)); setSalesError("");
+    }
     setAttempts(rows => replaceRowsById(rows, [fresh.attempt as SaleAttempt]));
     setSaleActorNames(rows => replaceRowsById(rows, fresh.actors as SaleActorName[]));
     if (fresh.documents) {
@@ -1846,7 +1904,7 @@ export function SalesReservationWorkflow({
         // Fail closed if the authorised selection disappears. Never fall back
         // to an unscoped defaults or building-wide detail request.
         if (conveyancerFile && !fileUnit) throw new Error("This sale is no longer available in your current access scope.");
-        const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), salesUnits.map(unit => unit.id), salesBuildingId);
+        const fresh = await loadBuildingSalesData(tracedClient(createSupabaseBrowserClient(), "sales", event), salesUnits.map(unit => unit.id), salesBuildingId, internalOverview);
         if (!valid()) return;
         setBuildingSaleDefaults(fresh.defaults as BuildingSaleDefault[]);
         setAttempts(fresh.attempts as SaleAttempt[]);
@@ -1859,10 +1917,17 @@ export function SalesReservationWorkflow({
         setSaleActorNames(fresh.actors as SaleActorName[]);
         setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
         setLoadedSalesKey(salesKey);
+        if (internalOverview) { setGuidanceFacts(fresh.guidance); setGuidanceTime(Date.parse(fresh.guidance.asOf)); setLoadedOverviewScope(overviewScopeKey); setSalesError(""); }
         traceLoad("sales", event, "published");
         if (fresh.namesUnavailable) onNotice("Sales data is available, but some user names need a database update. Please contact an administrator.");
       } catch (error) {
-        if (valid()) onNotice(salesLoadErrorMessage(error));
+        if (valid()) {
+          if (!internalOverview) onNotice(salesLoadErrorMessage(error));
+          if (internalOverview) {
+            setSalesError(salesLoadErrorMessage(error));
+            if (isSalesAccessError(error)) setLoadedOverviewScope(null);
+          }
+        }
         throw error;
       } finally {
         if (valid()) setIsLoading(false);
@@ -2414,7 +2479,10 @@ export function SalesReservationWorkflow({
     );
   }
 
-  if (loadedSalesKey !== salesKey) {
+  if (internalOverview && (loadedOverviewScope !== overviewScopeKey || Boolean(selectedSaleUnitId && salesError))) {
+    return <div className="grid gap-5"><section className="panel"><h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2>{selectedSaleUnitId && <button className="secondary mt-3" onClick={backToSalesOverview}>Back to sales overview</button>}</section>{developerResults(null)}</div>;
+  }
+  if (!internalOverview && loadedSalesKey !== salesKey) {
     return <section className="panel" aria-busy={isLoading} aria-label="Sales loading"><h2 className="text-2xl font-bold text-[#0F3D2E]">Sales</h2><p className="mt-2 text-sm text-[#617169]">{isLoading ? "Loading sales data..." : "Sales data could not be loaded. Use Refresh to try again."}</p></section>;
   }
 
@@ -2487,7 +2555,8 @@ export function SalesReservationWorkflow({
                 className={`rounded-bw-card border p-4 text-left transition ${salesStageFilter === stage.status ? "border-[#0F3D2E] bg-[#fbfcfa] shadow-sm" : "border-[#d9ded6] bg-[#fbfcfa] hover:border-[#0F3D2E]"}`}
                 onClick={() => {
                   setSalesStageFilter(stage.status);
-                  writeSalesUrl({ building: buildingId, unit: null, filter: stage.status });
+                  if (internalOverview) document.getElementById("sales-results")?.scrollIntoView({ block: "start" });
+                  else writeSalesUrl({ building: buildingId, unit: null, filter: stage.status });
                 }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -2501,7 +2570,7 @@ export function SalesReservationWorkflow({
           </div>
         </section>
 
-        <section className="panel">
+        {internalOverview ? developerResults() : <section className="panel">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h3 className="text-xl font-bold text-[#0F3D2E]">Sales results</h3>
@@ -2576,7 +2645,7 @@ export function SalesReservationWorkflow({
             </SalesTableScroll>
 
           <SalesPagination total={filteredSalesUnits.length} currentPage={currentSalesPage} onPageChange={setSalesPage} />
-        </section>
+        </section>}
 
         {canViewSalesForecasting(role) && <section className="panel">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2584,24 +2653,11 @@ export function SalesReservationWorkflow({
               <h3 className="text-xl font-bold text-[#0F3D2E]">Forecasting</h3>
               <p className="mt-1 text-sm text-[#617169]">Building-level scenario modelling for sell, retain, rent and refinance assumptions.</p>
             </div>
-            <button className="secondary" onClick={() => setShowForecasting((value) => !value)} disabled={!buildingId}>
-              {showForecasting ? "Hide forecasting" : "Open forecasting"}
+            <button className="secondary" disabled aria-describedby="forecasting-availability">
+              Open forecasting
             </button>
           </div>
-          {!buildingId && <p className="mt-3 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-3 text-sm text-[#617169]">Select a building in the app header to use building-level forecasting.</p>}
-          {showForecasting && buildingId && (
-            <div className="mt-5">
-              <SalesForecastingModule
-                user={user}
-                profile={profile}
-                buildings={buildings}
-                units={units}
-                onNotice={onNotice}
-                initialBuildingId={buildingId}
-                hideBuildingSelector
-              />
-            </div>
-          )}
+          <p id="forecasting-availability" className="mt-3 text-sm text-[#617169]">Not yet enabled.</p>
         </section>}
       </div>
     );

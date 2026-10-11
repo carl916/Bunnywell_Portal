@@ -1,5 +1,5 @@
 import { buildingAllowsFlatHandover, closingNoticeStartDate, hasPassedExpectedPcWarning, initialDefectsReportingEndDate } from "../building-lifecycle";
-import { sortUnitsByBuildingFloorOrder, saleStatusLabel } from "../units/commercial-allocation";
+import { isSalesRouteUnit, sortUnitsByBuildingFloorOrder, saleStatusLabel } from "../units/commercial-allocation";
 import { canPerformSalesAction, isSalesInternalRole, type SalesStageAction } from "../sales/permissions";
 import { exchangeAuthorityState } from "../sales/authority-state";
 import { sellerConveyancer } from "../sales/responsibility";
@@ -51,7 +51,18 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
       waiting: { since, basis, fallback: false, precision: since?.length === 10 ? "date" : "instant" }, deadline: null, urgent: false, cycleId: cycle, context: null, countingUnit: "task", ...options });
   };
 
-  for (const sale of input.sales.filter(s => buildingMap.has(s.building_id) && s.is_active && !s.redacted_at && !["fallen_through", "superseded", "failed", "withdrawn"].includes(s.workflow_status))) {
+  const activeSales = input.sales.filter(s => buildingMap.has(s.building_id) && s.is_active && !s.redacted_at && !["fallen_through", "superseded", "failed", "withdrawn"].includes(s.workflow_status));
+  const activeSaleCounts = new Map<string, number>();
+  for (const sale of activeSales) activeSaleCounts.set(sale.unit_id, (activeSaleCounts.get(sale.unit_id) ?? 0) + 1);
+  if (available("sales")) for (const unit of units.filter(isSalesRouteUnit)) {
+    const count = activeSaleCounts.get(unit.id) ?? 0;
+    if (count > 1 || count === 0 && ["reserved", "exchanged"].includes(unit.sale_status)) {
+      add({ recordKey: `unit:${unit.id}`, module: "sales", source: "Sale record check", buildingId: unit.building_id, unitId: unit.id, reference: `Unit ${unit.unit_number}`, position: saleStatusLabel(unit.sale_status), destination: { screen: "sales", buildingId: unit.building_id, unitId: unit.id } },
+        "sale_record_check", count > 1 ? "Review multiple active sale attempts" : "Review the missing active sale record", party("developer"), null, "Saved unit stage requires a record check", { canAct: false });
+    }
+  }
+  for (const sale of activeSales) {
+    if (activeSaleCounts.get(sale.unit_id)! > 1) continue;
     const unit = unitMap.get(sale.unit_id);
     if (!unit) continue;
     const events = input.saleEvents.filter(e => e.sale_attempt_id === sale.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
@@ -143,7 +154,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
         if (["approved_unpaid", "part_paid"].includes(state.kind)) approvedFeeBalance += Math.round(state.outstandingBalance * 100);
         if (!state.needsAction) continue;
         const submit = ["rejected", "not_submitted", "invoice_required"].includes(state.kind);
-        const label = state.kind === "awaiting_approval" ? `Review ${milestone} agent invoice` : state.kind === "rejected" ? `Replace queried ${milestone} agent invoice` : submit ? `Submit ${milestone} agent invoice` : `Record payment against ${milestone} approved invoice`;
+        const label = state.kind === "awaiting_approval" ? `Review ${milestone} agent invoice` : state.kind === "rejected" ? `Replace queried ${milestone} agent invoice` : submit ? `Submit ${milestone} agent invoice` : `Review payment position for ${milestone} approved invoice`;
         task(`fee_${milestone}_${state.kind}`, label, submit ? agent : developer, invoice?.approved_at ?? invoice?.created_at ?? (milestone === "completion" ? sale.exchanged_at : sale.reservation_approved_at), invoice?.approved_at ? "Invoice approved — no payment due date recorded" : invoice ? "Invoice submitted" : "Invoice milestone eligible", submit ? "submit_agent_invoice" : state.kind === "awaiting_approval" ? "approve_agent_invoice" : "record_agent_fee_payment", `${milestone}-fee`, { cycleId: invoice?.id ?? null, countingUnit: "invoice" });
       }
     }

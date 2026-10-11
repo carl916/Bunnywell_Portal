@@ -445,7 +445,7 @@ function writeScreenToUrl(tab: Tab, replace = false) {
   params.set("screen", tab);
   const query = params.toString();
   const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
-  if (replace) window.history.replaceState(null, "", nextUrl);
+  if (replace) window.history.replaceState(tab === "sales" ? window.history.state : null, "", nextUrl);
   else window.history.pushState(null, "", nextUrl);
 }
 
@@ -1608,6 +1608,7 @@ export function ProductionPortalApp() {
           organisations={organisations}
           buildings={scopedBuildings}
           buildingFloors={buildingFloors}
+          buildingOrganisations={buildingOrganisations}
           units={scopedUnits}
           buildingContextId={buildingContextId}
           onNotice={setNotice}
