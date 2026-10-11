@@ -55,7 +55,8 @@ test("operational pages inherit global context instead of owning building filter
 
 test("All buildings keeps unit and building identity visible", () => {
   assert.match(sales, /!buildingId && <th[^>]*>Building<\/th>/);
-  assert.match(fees, />Building<\/th>/);
+  assert.match(fees, />Unit \/ building<\/th>/);
+  assert.match(fees, /row.buildingName/);
   assert.match(rentals, /!buildingId && <th[^>]*>Building<\/th>/);
   assert.match(allocation, /!buildingFilter && <th[^>]*>Building<\/th>/);
   assert.match(portal, /contextIsAll && <th[^>]*>Building<\/th>/);

@@ -123,9 +123,10 @@ test("allocation integration retains history while active Rentals follows portfo
 });
 
 test("Agent Fees applies the shared global building scope", () => {
-  assert.match(fees, /Scope: \{scopeLabel\}/);
+  assert.match(fees, /Scope: \{buildingContextId\?buildingContextName:"All buildings"\}/);
   assert.match(fees, /buildingContextId/);
   assert.doesNotMatch(fees, /initialBuildingId/);
   assert.doesNotMatch(fees, />Building<select/);
-  assert.match(fees, /summariseAgentFeePortfolio\(filteredRows\)/);
+  assert.match(fees, /feeScopeRows\(rows\?\?\[\],buildingContextId,filters.agent\)/);
+  assert.match(fees, /summariseFeeCategories\(scopeRows\)/);
 });

@@ -380,6 +380,7 @@ test("Agent Fees suppresses prospective fees after withdrawal but retains actual
   assert.match(migration, /unit\.sale_status in \('for_sale', 'reserved', 'exchanged', 'completed', 'handed_over'\)/);
   assert.match(migration, /or exchange_invoice\.id is not null[\s\S]*or completion_invoice\.id is not null/);
   assert.match(agentFeesUi, /No longer for sale/);
-  assert.match(agentFeesUi, /filteredRows\.length/);
+  assert.match(agentFeesUi, /selectFeeRows\(scopeRows,filters,unitOrder\)/);
+  assert.match(agentFeesUi, /total=\{selected.length\}/);
   assert.doesNotMatch(migration, /delete from public\.unit_sale_invoices|delete from public\.unit_sale_invoice_payments/);
 });

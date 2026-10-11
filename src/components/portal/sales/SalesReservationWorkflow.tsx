@@ -4,7 +4,9 @@ import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
 import { isSalesExternalRole, isSalesInternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
 import { DeveloperSalesResults } from "./DeveloperSalesResults";
 import { useSalesOverviewNavigation } from "./useSalesOverviewNavigation";
-import { deriveDeveloperSalesRows } from "@/lib/sales/developer-overview";
+import { deriveDeveloperSalesRows, visibleSalesWork } from "@/lib/sales/developer-overview";
+import { useAgentFeePortfolio } from "./useAgentFeePortfolio";
+import { SaleReviewNavigation } from "./SaleReviewNavigation";
 import { EMPTY_GUIDANCE_FACTS, loadSalesGuidanceFacts, type SalesGuidanceFacts } from "@/lib/sales/guidance-facts";
 import type { DashboardInput } from "@/lib/dashboard/types";
 
@@ -1032,6 +1034,9 @@ export function SalesReservationWorkflow({
   const canRecordAgentFeePayment = canPerformSalesAction(role, "record_agent_fee_payment");
   const canVoidAgentFeePayment = canPerformSalesAction(role, "void_agent_fee_payment");
   const canViewAgentFeesPortfolio = canPerformSalesAction(role, "view_agent_fees_portfolio");
+  const fromFees = internalOverview && new URLSearchParams(overview.search).get("workReturn") === "fees";
+  const feePortfolio = useAgentFeePortfolio(profile?.id ?? user.id, overviewScopeKey, canViewAgentFeesPortfolio && (activeSalesView === "agent_fees" || fromFees), units);
+  const feeUnitOrder = useMemo(() => new Map(sortUnitsByBuildingFloorOrder(units, buildingFloors, buildings).map((unit,index)=>[unit.id,index])), [units,buildingFloors,buildings]);
 
 
 
@@ -1550,6 +1555,14 @@ export function SalesReservationWorkflow({
 
   function backToSalesOverview() {
     if (internalOverview && overview.back()) return;
+    if (fromFees) {
+      const params = new URLSearchParams(overview.search);
+      for (const key of ["salesUnitId", "workSale", "workVersion", "workReturn", "section"]) params.delete(key);
+      params.set("salesView", "agent_fees");
+      window.history.pushState(null, "", `/?${params}#fee-results`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      return;
+    }
     manuallySelectedWorkflowStageRef.current = null;
     setSelectedSaleUnitId("");
     setActiveSalesView("pipeline");
@@ -1620,7 +1633,7 @@ export function SalesReservationWorkflow({
       setLegacyStageFilter(urlFilter);
     }
 
-    if (urlView === "agent_fees" && canViewAgentFeesPortfolio) {
+    if (!urlUnitId && urlView === "agent_fees" && canViewAgentFeesPortfolio) {
       setActiveSalesView("agent_fees");
       setSelectedSaleUnitId("");
     }
@@ -1631,7 +1644,7 @@ export function SalesReservationWorkflow({
   useEffect(() => {
     if (!selectedSaleUnitId || isLoading || !window.location.search.includes("workReturn=")) return;
     const id = decodeURIComponent(window.location.hash.slice(1));
-    if (!id || !/^(sales-stage-|exchange-deposit-task|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
+    if (!id || !/^(sales-stage-|sales-matching-actions|agent-fees|exchange-deposit-task|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
     const reveal = () => {
       const element = document.getElementById(id);
       if (!element) return false;
@@ -1644,7 +1657,7 @@ export function SalesReservationWorkflow({
     observer.observe(document.body, { childList: true, subtree: true });
     const timer = window.setTimeout(() => observer.disconnect(), 10_000);
     return () => { observer.disconnect(); clearTimeout(timer); };
-  }, [selectedSaleUnitId, isLoading, activeWorkflowStage]);
+  }, [selectedSaleUnitId, isLoading, activeWorkflowStage, activeUnitSection, overview.location]);
 
   useEffect(() => {
     if (!pendingAgentFeesScrollRef.current || !activeAttempt || activeUnitSection !== "financials") return;
@@ -1675,11 +1688,14 @@ export function SalesReservationWorkflow({
         const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(unit);
         manuallySelectedWorkflowStageRef.current = stage;
         setActiveWorkflowStage(stage);
-      } else if (!requested) setSelectedSaleUnitId("");
+      } else if (!requested) {
+        setSelectedSaleUnitId("");
+        setActiveSalesView(params.get("salesView") === "agent_fees" && canViewAgentFeesPortfolio ? "agent_fees" : "pipeline");
+      }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [units, workflowStageForUnit, internalOverview, setConversationIntent]);
+  }, [units, workflowStageForUnit, internalOverview, setConversationIntent, canViewAgentFeesPortfolio]);
 
   // Opening a unit initialises its selected stage. Refetching lifecycle data
   // must preserve the stage the user is currently reviewing.
@@ -2469,11 +2485,11 @@ export function SalesReservationWorkflow({
           <SalesViewTabs activeView={activeSalesView} canViewAgentFees={canViewAgentFeesPortfolio} onChange={changeSalesView} />
         </section>
         <AgentFeesPortfolio
-          requesterId={profile?.id ?? user.id}
+          portfolio={feePortfolio}
           buildingContextId={buildingId}
           buildingContextName={scopeBuilding?.name ?? "Selected building"}
-          refreshKey={units}
-          onOpenSale={(nextUnitId, nextBuildingId) => openSaleFile(nextUnitId, nextBuildingId, true)}
+          unitOrder={feeUnitOrder}
+          onOpenSale={(href, unit) => { setConversationTarget(null); setShowCommercialModel(false); markUnitOpenIntent(unit); overview.open(href); }}
         />
       </div>
     );
@@ -2668,7 +2684,7 @@ export function SalesReservationWorkflow({
       <section className="panel">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <button className="secondary w-fit" onClick={backToSalesOverview}>
-            &lt; Back to sales overview
+            &lt; {fromFees ? "Back to Agent Fees" : "Back to sales overview"}
           </button>
           <SaleMentionsInbox />
           <div className="grid gap-3 sm:grid-cols-2 lg:w-[520px]">
@@ -2698,6 +2714,10 @@ export function SalesReservationWorkflow({
           </div>
         </div>
       </section>
+
+      {internalOverview && new URLSearchParams(overview.search).get("workReturn") === "sales" && selectedSaleUnitId && <SaleReviewNavigation
+        actions={visibleSalesWork(developerRows?.find(row=>row.unitId===selectedSaleUnitId) ?? {work:[]}, overview.filters)}
+        search={overview.search} disabled={Boolean(salesError)} onOpen={overview.open} />}
 
       {selectedUnit && (
         <section className="panel min-w-0">

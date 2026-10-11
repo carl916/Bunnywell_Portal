@@ -2,11 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { salesFixture } from "./helpers/sales-fixture";
 
-const artifacts = "artifacts/sales-controls";
+const artifacts = "test-results/phase2-controls";
 const mentionsButton = (page: Page) => page.getByRole("button", { name: /^@ Mentions/ });
 const popover = (page: Page) => page.getByRole("dialog", { name: "Unread mentions" });
 const pagination = (page: Page) => page.getByRole("navigation", { name: "Results pagination" });
-const feeRows = (page: Page) => page.getByRole("region", { name: "Agent fees", exact: true }).locator("tbody tr[tabindex]");
+const feeRows = (page: Page) => page.getByRole("region", { name: "Agent fees", exact: true }).locator("tbody tr");
 const refreshFees = (page: Page) => Promise.all([
   page.waitForResponse(response => response.url().includes("/rpc/get_agent_fee_portfolio") && response.ok()),
   page.getByRole("button", { name: "Refresh", exact: true }).click(),
@@ -30,7 +30,7 @@ async function fixture(page: Page, mentionCount = 3) {
     completion_invoice: null, exchange_active_payments: [], completion_active_payments: [],
   }));
   let reads = 0;
-  await page.route("**/rest/v1/rpc/get_agent_fee_portfolio", route => route.fulfill({ json: fees }));
+  await page.route("**/rest/v1/rpc/get_agent_fee_portfolio", route => route.fulfill({ json: fees, headers: { "content-range": `0-${fees.length - 1}/${fees.length}`, "access-control-expose-headers": "content-range" } }));
   await page.route("**/rest/v1/rpc/sale_mentions_inbox", route => route.fulfill({ json: mentions }));
   await page.route("**/rest/v1/rpc/sale_comment_page", route => route.fulfill({ json: {
     comments: [{ id: "comment-0", sale_attempt_id: ui.attempt.id, sequence: 1, author_id: "agent", author_name: "Alex Morgan", author_role: "sales_agent", author_organisation: "Bunnywell Sales", body: "Please review the sale update.", parent_id: null, mention_ids: [ui.profile.id], created_at: "2026-09-22T10:30:00Z", edited_at: null, version: 1, unread: true }], hasBefore: false, hasAfter: false,
@@ -141,25 +141,25 @@ test("Agent Fees paginates 62 sales in twelve-row pages without reducing summary
   const f = await fixture(page); await f.openFees();
   await expect(feeRows(page)).toHaveCount(12);
   await expect(pagination(page).getByRole("button", { name: "Previous" })).toBeDisabled();
-  const summary = page.getByText("Outstanding payments", { exact: true }).locator("..");
-  await expect(summary).toContainText("£62,000");
-  await expect(page.getByText("Future completion fees", { exact: true }).locator("..")).toContainText("£77,500");
+  const summary = page.getByRole("button", { name: /^Approved unpaid balances/ });
+  await expect(summary).toContainText("£31,000");
+  await expect(page.getByText("Future uninvoiced completion fees:")).toContainText("£77,500");
   await page.screenshot({ path: `${artifacts}/agent-fees-first-page.png`, fullPage: true });
   await pagination(page).getByRole("button", { name: "Next" }).click();
   await expect(pagination(page)).toContainText("Showing 13–24 of 62");
-  await expect(feeRows(page).first()).toContainText("Unit 113"); await expect(summary).toContainText("£62,000");
+  await expect(feeRows(page).first()).toContainText("Unit 113"); await expect(summary).toContainText("£31,000");
   await pagination(page).getByRole("button", { name: "Previous" }).click();
   await expect(pagination(page)).toContainText("Showing 1–12 of 62");
   for (let pageNumber = 1; pageNumber < 6; pageNumber++) await pagination(page).getByRole("button", { name: "Next" }).click();
   await expect(pagination(page)).toContainText("Showing 61–62 of 62"); await expect(feeRows(page)).toHaveCount(2);
-  await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled(); await expect(summary).toContainText("£62,000");
+  await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled(); await expect(summary).toContainText("£31,000");
   await refreshFees(page);
   await expect(pagination(page)).toContainText("Showing 61–62 of 62");
   f.shrink(15); await refreshFees(page);
   await expect(pagination(page)).toContainText("Showing 13–15 of 15"); await expect(feeRows(page)).toHaveCount(3);
   await expect(feeRows(page).first()).toContainText("Unit 113");
   await expect(pagination(page).getByRole("button", { name: "Next" })).toBeDisabled();
-  await expect(summary).toContainText("£15,000");
+  await expect(summary).toContainText("£0");
   await pagination(page).getByRole("button", { name: "Previous" }).click(); await expect(pagination(page)).toContainText("Showing 1–12 of 15");
 });
 
@@ -172,19 +172,19 @@ test("Agent Fees filters reset pagination and remain selected while paging the f
   await refreshFees(page);
   await expect(pagination(page)).toContainText("Showing 13–24 of 40");
   await expect(page.getByRole("combobox", { name: "Agent", exact: true })).toHaveValue("agent-a");
-  await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("awaiting_approval");
+  await page.getByRole("button", { name: /^Awaiting approval/ }).click();
   await expect(pagination(page)).toContainText("Showing 1–12 of 31");
   await next.click(); await page.getByRole("combobox", { name: "Milestone", exact: true }).selectOption("completion");
   await expect(pagination(page)).toContainText("Showing 0–0 of 0"); await expect(next).toBeDisabled();
-  await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("all");
+  await page.getByRole("button", { name: "All records", exact: true }).click();
   await expect(pagination(page)).toContainText("Showing 1–12 of 20");
   await next.click(); await expect(pagination(page)).toContainText("Showing 13–20 of 20"); await expect(feeRows(page)).toHaveCount(8);
   await expect(page.getByRole("combobox", { name: "Milestone", exact: true })).toHaveValue("completion");
-  await expect(page.getByText("Outstanding payments", { exact: true }).locator("..")).toContainText("£20,000");
+  await expect(page.getByRole("button", { name: /^Approved unpaid balances/ })).toContainText("£9,000");
   await page.getByRole("combobox", { name: "Milestone", exact: true }).selectOption("exchange");
   await expect(pagination(page)).toContainText("Showing 1–12 of 40");
-  await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("rejected");
-  await expect(page.getByText("No sales match the selected filters.")).toBeVisible();
+  await page.getByRole("button", { name: /^Invoices awaiting submission/ }).click();
+  await expect(page.getByText("No sales match this view.", { exact: false })).toBeVisible();
   await expect(pagination(page)).toContainText("Showing 0–0 of 0"); await expect(pagination(page).getByRole("button", { name: "Previous" })).toBeDisabled();
 });
 
@@ -201,7 +201,8 @@ test("shared Sales pagination and mobile Agent Fees keep horizontal scrolling an
   await pagination(page).getByRole("button", { name: "Next" }).click();
   await expect(pagination(page)).toContainText("Showing 13–24 of 62");
   await pagination(page).getByRole("button", { name: "Previous" }).click();
-  await feeRows(page).first().press("Enter");
+  await feeRows(page).first().getByRole("link", { name: "Review action", exact: true }).focus();
+  await page.keyboard.press("Enter");
   await expect(page.getByRole("tab", { name: /^Financials/ })).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(new RegExp(`salesUnitId=${f.unit.id}.*section=financials`));
 });
