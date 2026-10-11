@@ -47,5 +47,5 @@ export function useSalesRegister(identity: string, buildingId: string, visible: 
     previousRefreshKey.current = refreshKey;
     session.refreshNow();
   }, [session, refreshKey]);
-  return state;
+  return { ...state, retry: session.refreshNow };
 }

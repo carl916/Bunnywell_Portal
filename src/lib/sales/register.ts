@@ -1,13 +1,14 @@
 import type { UnitSaleStatus } from "../data/production";
 import { deriveDashboard } from "../dashboard/model";
 import { deadlineState, formatWorkDate, londonDate } from "../dashboard/dates";
+import type { WorkDeadline } from "../dashboard/dates";
 import type { DashboardInput, WorkDestination, WorkItem, WorkParty } from "../dashboard/types";
 import { exchangeAuthorityState } from "./authority-state";
 import { isSalesRouteUnit, sortUnitsByBuildingFloorOrder } from "../units/commercial-allocation";
 
 export type ResponsibilityFilter = "all" | "ours" | "others";
-export type RegisterAction = { id: string; label: string; party: WorkParty; ours: boolean; canAct: boolean; destination: WorkDestination | null };
-export type RegisterDate = { label: string; actual: string; warning: boolean };
+export type RegisterAction = { id: string; label: string; party: WorkParty; ours: boolean; canAct: boolean; destination: WorkDestination | null; deadline: WorkDeadline | null; urgent: boolean };
+export type RegisterDate = { label: string; actual: string; warning: boolean; deadline: WorkDeadline };
 export type SalesRegisterRow = {
   unitId: string; unitNumber: string; buildingId: string; buildingName: string; stage: UnitSaleStatus;
   destination: WorkDestination; actions: RegisterAction[]; neutral: string; warning: string | null;
@@ -54,7 +55,7 @@ export function deriveSalesRegister(input: DashboardInput): SalesRegisterSnapsho
       if (item.kind.startsWith("review_") && reviews.length > 1 && item !== reviews[0]) continue;
       const documentType = ["completion_statement", "draft_statement_of_account"].find(type => item.kind.endsWith(type));
       const groupedReviews = item.kind.startsWith("review_") && reviews.length > 1;
-      actions.push({ id: item.id, label: groupedReviews ? `Review completion documents (${reviews.length})` : label(item), party: item.responsibility, ours: item.ours, canAct: item.canAct,
+      actions.push({ id: item.id, label: groupedReviews ? `Review completion documents (${reviews.length})` : label(item), party: item.responsibility, ours: item.ours, canAct: item.canAct, deadline: item.deadline, urgent: item.urgent,
         destination: item.destination && documentType && !groupedReviews ? { ...item.destination, anchor: `completion-document-${documentType}` } : item.destination });
     }
     let keyDate: RegisterDate | null = null;
@@ -62,14 +63,14 @@ export function deriveSalesRegister(input: DashboardInput): SalesRegisterSnapsho
       if (exchanged && sale.contractual_completion_date) {
         const actual = formatWorkDate(sale.contractual_completion_date, "date");
         const state = deadlineState({ at: sale.contractual_completion_date, precision: "date", basis: "Completion" }, input.now);
-        keyDate = { actual, label: state === "overdue" ? "Completion date passed; completion not recorded" : state === "today" ? "Completion due today" : `Completion due ${actual}`, warning: ["overdue", "today", "soon"].includes(state) };
+        keyDate = { actual, label: state === "overdue" ? "Completion date passed; completion not recorded" : state === "today" ? "Completion due today" : `Completion due ${actual}`, warning: ["overdue", "today", "soon"].includes(state), deadline: { at: sale.contractual_completion_date, precision: "date", basis: "Completion" } };
       } else if (!exchanged && available("legal")) {
         const authority = exchangeAuthorityState(input.authorities.filter(a => a.sale_attempt_id === sale.id), [], sale.authority_requested_at, false, input.now);
         const current = authority.current;
         if (current?.expires_at && !current.replaced_by && !current.revoked_at && authority.issued) {
           const state = deadlineState({ at: current.expires_at, precision: "instant", basis: "Authority" }, input.now);
           const actual = formatWorkDate(current.expires_at);
-          keyDate = { actual, label: state === "overdue" ? "Authority expired" : londonDate(new Date(current.expires_at)) === londonDate(input.now) ? "Authority expires today" : `Authority expires ${actual}`, warning: state !== "future" };
+          keyDate = { actual, label: state === "overdue" ? "Authority expired" : londonDate(new Date(current.expires_at)) === londonDate(input.now) ? "Authority expires today" : `Authority expires ${actual}`, warning: state !== "future", deadline: { at: current.expires_at, precision: "instant", basis: "Authority" } };
         }
       }
     }

@@ -47,7 +47,7 @@ function ScopedConveyancerWorkspace({ search, filters, onFilters, ...props }: Pr
   // Reset only the file on unit navigation. The register snapshot/filters retain
   // their existing owner; old file loads are invalidated by workflow cleanup.
   if (selectedUnit) return <SalesReservationWorkflow key={selectedUnit.id} {...props} conveyancerUnitId={selectedUnit.id} />;
-  return <ConveyancerSalesRegister register={register}
-    buildingId={props.buildingContextId} units={props.units} buildings={props.buildings} floors={props.buildingFloors}
+  return <ConveyancerSalesRegister register={register} onRetry={register.retry}
+    buildingId={props.buildingContextId} buildings={props.buildings}
     filters={filters} onFilters={onFilters} requestedUnavailable={Boolean(requested)} />;
 }

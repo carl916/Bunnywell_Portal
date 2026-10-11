@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { loadTypescriptModule } from './helpers/load-typescript-module.mjs';
 import { fixture, document, sale, unit, building, NOW } from './helpers/dashboard-fixture.mjs';
 const { deriveSalesRegister } = loadTypescriptModule('src/lib/sales/register.ts');
-const { filterSalesRegister, prominentActions, INITIAL_REGISTER_FILTERS } = loadTypescriptModule('src/lib/sales/register-presentation.ts');
+const { filterSalesRegister, prominentActions, INITIAL_REGISTER_FILTERS, sortSalesRegisterByUrgency, salesRegisterCount } = loadTypescriptModule('src/lib/sales/register-presentation.ts');
 const viewer = { id:'legal-1', role:'conveyancer', organisation_id:'legal-org' };
 const snapshot = (overrides={}) => deriveSalesRegister(fixture({ viewer, ...overrides }));
 const filtered = (rows, responsibility, rest={}) => filterSalesRegister(rows, { ...INITIAL_REGISTER_FILTERS, responsibility, ...rest });
@@ -110,4 +110,59 @@ test('failed legal source preserves the base register and dates without claiming
 test('explicit response projection drops restricted aggregates, raw terms and histories',()=>{
   const result=snapshot({forecastRevenue:998877,netSalesProceeds:998877,terms:[{contract_price:262500,net_proceeds:998877}],saleEvents:[{id:'secret',summary:'PRIVATE CONTEXT',sale_attempt_id:sale.id,created_at:'2026-10-07T11:00:00Z',event_type:'completion_recorded'}]});
   const json=JSON.stringify(result);assert.doesNotMatch(json,/998877|PRIVATE CONTEXT|contract_price|summaries|activity|net_proceeds|forecastRevenue/);
+});
+
+test('default/reset filters and contextual counts describe the selected workload', () => {
+  assert.deepEqual(INITIAL_REGISTER_FILTERS, { search: '', stage: 'all', responsibility: 'ours', page: 1 });
+  assert.equal(salesRegisterCount(11, 'ours'), '11 sales requiring your attention');
+  assert.equal(salesRegisterCount(1, 'others'), '1 sale awaiting other teams');
+  assert.equal(salesRegisterCount(0, 'all'), '0 sales across all teams');
+});
+
+test('urgency uses raw current authority/completion deadlines and stable canonical ties before pagination', () => {
+  const cases = [
+    ['future', '2026-12-01'], ['today', '2026-10-07'], ['overdue', '2026-10-06'],
+    ['soon', '2026-10-14'], ['none', null], ['overdue-second', '2026-10-01'],
+  ];
+  const rows = cases.map(([id, date]) => ({ ...snapshot({
+    sales: [{ ...sale, contractual_completion_date: date }],
+    documents: [document('completion_statement', 'query_raised')],
+  }).rows[0], unitId: id }));
+  // Deliberately misleading display labels must have no effect on ordering.
+  rows.forEach(row => { if (row.keyDate) Object.assign(row.keyDate, { label: 'Authority expired', actual: 'not a date', warning: false }); });
+  const expired = snapshot({
+    sales: [{ ...sale, workflow_status: 'approved', exchanged_at: null }],
+    units: [{ ...unit, sale_status: 'reserved' }],
+    authorities: [{ id: 'authority', sale_attempt_id: sale.id, kind: 'authority', version: 1, issued_at: '2026-09-01', sent_at: '2026-09-01', expires_at: '2026-10-07T11:00:00Z' }],
+  }).rows[0];
+  expired.unitId = 'expired';
+  rows.push(expired);
+  assert.equal(expired.keyDate.deadline.precision, 'instant');
+  assert.equal(expired.actions[0].ours, true);
+  assert.deepEqual(sortSalesRegisterByUrgency(rows, NOW).map(row => row.unitId), ['overdue', 'overdue-second', 'expired', 'today', 'soon', 'future', 'none']);
+  assert.equal(rows[0].unitId, 'future', 'sorting must not mutate the retained snapshot');
+  assert.deepEqual(sortSalesRegisterByUrgency(rows, NOW).slice(0, 2).map(row => row.unitId), ['overdue', 'overdue-second']);
+});
+
+test('instant warning window, London date boundaries and urgency flags determine priority without text parsing', () => {
+  const base = snapshot({ documents: [document('completion_statement', 'query_raised')] }).rows[0];
+  const row = (id, deadline, urgent = false, ours = true) => ({ ...base, unitId: id, keyDate: null, actions: [{ ...base.actions[0], deadline, urgent, ours }] });
+  const rows = [
+    row('outside-window', { at: '2026-10-09T12:00:01Z', precision: 'instant' }),
+    row('48-hours', { at: '2026-10-09T12:00:00Z', precision: 'instant' }),
+    row('expired-now', { at: '2026-10-07T12:00:00Z', precision: 'instant' }),
+    row('urgent', null, true), row('other-urgent', null, true, false),
+    row('invalid', { at: 'invalid', precision: 'date' }),
+  ];
+  assert.deepEqual(sortSalesRegisterByUrgency(rows, NOW).map(row => row.unitId), ['expired-now', 'urgent', '48-hours', 'outside-window', 'other-urgent', 'invalid']);
+  const dateRows = [row('tomorrow', { at: '2026-10-26', precision: 'date' }), row('yesterday', { at: '2026-10-24', precision: 'date' }), row('today', { at: '2026-10-25', precision: 'date' })];
+  assert.deepEqual(sortSalesRegisterByUrgency(dateRows, Date.parse('2026-10-24T23:00:00Z')).map(row => row.unitId), ['yesterday', 'tomorrow', 'today']);
+});
+
+test('all matching actions remain available in workflow order, including more than two', () => {
+  const row = snapshot({ documents: [] }).rows[0];
+  const action = row.actions[0];
+  row.actions = [0, 1, 2, 3].map(id => ({ ...action, id: String(id), ours: id !== 2 }));
+  assert.deepEqual(prominentActions(row, 'ours').map(action => action.id), ['0', '1', '3']);
+  assert.equal(prominentActions(row, 'all').length, 4);
 });

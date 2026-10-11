@@ -1,6 +1,7 @@
 import type { RegisterAction, RegisterFilters, ResponsibilityFilter, SalesRegisterRow } from "./register";
+import { deadlineState } from "../dashboard/dates";
 
-export const INITIAL_REGISTER_FILTERS: RegisterFilters = { search: "", stage: "all", responsibility: "all", page: 1 };
+export const INITIAL_REGISTER_FILTERS: RegisterFilters = { search: "", stage: "all", responsibility: "ours", page: 1 };
 
 export function matchesResponsibility(action: RegisterAction, filter: ResponsibilityFilter) {
   if (filter === "all") return true;
@@ -17,5 +18,27 @@ export function filterSalesRegister(rows: SalesRegisterRow[], filters: RegisterF
 }
 
 export function prominentActions(row: SalesRegisterRow, filter: ResponsibilityFilter) {
-  return row.actions.filter(action => matchesResponsibility(action, filter)).slice(0, 2);
+  // Preserve workflow dependency order, and count every matching action (not just the first two).
+  return row.actions.filter(action => matchesResponsibility(action, filter));
+}
+
+export function sortSalesRegisterByUrgency(rows: SalesRegisterRow[], now: number) {
+  const priority = (row: SalesRegisterRow) => {
+    const actions = prominentActions(row, "ours");
+    const deadlines = [row.keyDate?.deadline, ...actions.map(action => action.deadline)].filter(deadline => deadline && Number.isFinite(Date.parse(deadline.at)));
+    const states = deadlines.map(deadline => deadlineState(deadline!, now));
+    if (actions.some(action => action.urgent) || states.includes("overdue")) return 0;
+    if (states.some(state => state === "today" || state === "soon")) return 1;
+    return 2;
+  };
+  // The snapshot is already grouped by building, configured floor and natural unit order.
+  // Keep that canonical order within each urgency tier, including after filtering.
+  return rows.map((row, index) => ({ row, index, priority: priority(row) }))
+    .sort((a, b) => a.priority - b.priority || a.index - b.index).map(({ row }) => row);
+}
+
+export function salesRegisterCount(total: number, responsibility: ResponsibilityFilter) {
+  const sales = `${total} ${total === 1 ? "sale" : "sales"}`;
+  return responsibility === "ours" ? `${sales} requiring your attention`
+    : responsibility === "others" ? `${sales} awaiting other teams` : `${sales} across all teams`;
 }
