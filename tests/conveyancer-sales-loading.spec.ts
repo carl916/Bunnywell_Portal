@@ -3,7 +3,7 @@ import { conveyancerFileFixture, detailedSalesPath } from "./helpers/conveyancer
 
 async function landing(page: Page) {
   await page.goto("/?screen=sales&building=all");
-  await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
+  await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toBeEnabled();
 }
 const ready = (page: Page) => expect(page.getByRole("button", { name: "Request authority to serve notice", exact: true })).toBeEnabled();
 function detailedRequests(page: Page) {
@@ -92,7 +92,7 @@ test("direct URLs reject unknown and out-of-building units before detailed reads
   const calls = detailedRequests(page);
   for (const id of ["unknown-unit", String(f.rows.units[2].id)]) {
     await page.goto(`/?screen=sales&building=${id === "unknown-unit" ? "all" : f.unit.building_id}&salesUnitId=${id}`);
-    await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
+    await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toBeEnabled();
     expect(calls).toHaveLength(0);
   }
 });
@@ -122,7 +122,7 @@ test("known unit-access revocation unmounts the file and excludes its controls",
   await page.getByRole("link", { name: "Unit 103", exact: true }).click(); await ready(page);
   f.rows.units = f.rows.units.filter(row => row.unit_number !== "103");
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
-  await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
+  await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toBeEnabled();
   await expect(page.getByRole("heading", { name: "Unit 103", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Request authority to serve notice", exact: true })).toHaveCount(0);
 });

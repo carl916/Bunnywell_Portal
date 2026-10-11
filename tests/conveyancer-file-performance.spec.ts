@@ -17,7 +17,7 @@ for (const mobile of [false, true]) test(`populated sale readiness: ${mobile ? "
   const samples = [];
   for (let run = 0; run < 6; run++) {
     await page.goto("/?screen=sales&building=all");
-    await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
+    await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toBeEnabled();
     await page.waitForLoadState("networkidle");
     const requests: { url: string; at: number }[] = [];
     const responses: { url: string; bytes: number; at: number; status: number }[] = [];

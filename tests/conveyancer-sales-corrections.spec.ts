@@ -6,7 +6,7 @@ import { deriveSalesRegister } from "../src/lib/sales/register";
 const requireFixture = createRequire(__filename);
 const { reservationRouteFixture } = requireFixture("./helpers/reservation-route-fixture.mjs");
 const { fixture } = requireFixture("./helpers/dashboard-fixture.mjs");
-const evidence = "docs/sales-corrections/screenshots";
+const evidence = "test-results/conveyancer-corrections-screenshots";
 test.beforeAll(() => mkdirSync(evidence, { recursive: true }));
 
 test("authorised agent creates a draft, resumes, uploads, submits, corrects a return and receives developer approval", async ({ page }) => {
@@ -81,11 +81,11 @@ test("building seller conveyancer, single return control and read-only reservati
   f.unit.sale_status = "reserved";
   await page.route("**/api/sales/register?*", route => route.fulfill({ json: deriveSalesRegister(fixture({ buildingId: String(f.unit.building_id), viewer: f.profile, buildings: f.rows.buildings, units: f.rows.units, sales: [f.attempt], organisations: f.rows.organisations })) }));
   await page.goto(`/?screen=sales&building=${f.unit.building_id}`);
-  await page.getByRole("tab", { name: "All teams", exact: true }).click();
+  await page.getByRole("combobox", { name: "Action with", exact: true }).selectOption("all");
   await expect(page.getByRole("table")).toContainText("Synthetic Seller Legal");
   await page.getByLabel("Search", { exact: true }).fill("101");
-  await page.getByLabel("Stage", { exact: true }).selectOption("reserved");
-  await page.getByRole("tab", { name: "Our team", exact: true }).click();
+  await page.getByRole("button", { name: "Reserved", exact: true }).click();
+  await page.getByRole("combobox", { name: "Action with", exact: true }).selectOption("ours");
   await page.screenshot({ path: `${evidence}/configured-conveyancer.png`, fullPage: true });
   await page.getByRole("link", { name: "Unit 101", exact: true }).click();
   await expect(page.getByRole("button", { name: /Back to sales overview/ })).toHaveCount(1);
@@ -93,8 +93,8 @@ test("building seller conveyancer, single return control and read-only reservati
   await page.screenshot({ path: `${evidence}/single-return-control.png`, fullPage: true });
   await page.getByRole("button", { name: /Back to sales overview/ }).click();
   await expect(page.getByLabel("Search", { exact: true })).toHaveValue("101");
-  await expect(page.getByLabel("Stage", { exact: true })).toHaveValue("reserved");
-  await expect(page.getByRole("tab", { name: "Our team", exact: true })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Reserved", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toHaveValue("ours");
   await expect(page).toHaveURL(new RegExp(`building=${f.unit.building_id}`));
   Object.assign(f.attempt, { workflow_status: "draft", reservation_approved_at: null, commercial_approved_at: null }); f.unit.sale_status = "for_sale";
   await page.goto(`/?screen=sales&building=${f.unit.building_id}&salesUnitId=${f.unit.id}`);

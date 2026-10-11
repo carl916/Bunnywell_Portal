@@ -113,10 +113,25 @@ test('explicit response projection drops restricted aggregates, raw terms and hi
 });
 
 test('default/reset filters and contextual counts describe the selected workload', () => {
-  assert.deepEqual(INITIAL_REGISTER_FILTERS, { search: '', stage: 'all', responsibility: 'ours', page: 1 });
-  assert.equal(salesRegisterCount(11, 'ours'), '11 sales requiring your attention');
+  assert.deepEqual(INITIAL_REGISTER_FILTERS, { search: '', stage: 'all', responsibility: 'all', category: '', page: 1 });
+  assert.equal(salesRegisterCount(11, 'ours'), '11 sales requiring your team’s attention');
   assert.equal(salesRegisterCount(1, 'others'), '1 sale awaiting other teams');
   assert.equal(salesRegisterCount(0, 'all'), '0 sales across all teams');
+});
+
+test('stage and team/category refinements intersect on the same action; All teams includes neutral sales', () => {
+  const rows = snapshot({ documents:[document('completion_statement'),document('draft_statement_of_account','query_raised')] }).rows;
+  for (const responsibility of ['all','ours','others']) {
+    assert.equal(filtered(rows, responsibility, { stage:'exchanged', category:'documents' }).length, 1);
+    assert.equal(filtered(rows, responsibility, { stage:'reserved', category:'documents' }).length, 0);
+    assert.equal(filtered(rows, responsibility, { category:'notice' }).length, 0);
+  }
+  const mixed = {...rows[0], actions: rows[0].actions.map(a => ({...a, category:a.ours?'documents':'notice'}))};
+  assert.equal(filtered([mixed], 'ours', { category:'notice' }).length, 0);
+  assert.equal(filtered([mixed], 'others', { category:'notice' }).length, 1);
+  const neutral = snapshot({ sales:[], units:[{...unit,sale_status:'for_sale'}] }).rows;
+  assert.equal(filterSalesRegister(neutral, INITIAL_REGISTER_FILTERS).length, 1);
+  assert.equal(filtered(neutral,'all',{category:'documents'}).length, 0);
 });
 
 test('urgency uses raw current authority/completion deadlines and stable canonical ties before pagination', () => {

@@ -23,7 +23,7 @@ test("synthetic landing request comparison and screenshots", async ({ page }) =>
   const path = "/?screen=sales&building=all";
   const ready = async () => {
     await page.getByRole("table", { name: mode === "before" ? undefined : "Sales register" }).first().waitFor();
-    if (mode === "after") await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
+    if (mode === "after") await expect(page.getByRole("combobox", { name: "Action with", exact: true })).toBeEnabled();
     else await expect(page.getByRole("button", { name: "Refresh work" })).toBeEnabled();
     await expect(page.getByText(/scope changed|worklist scope changed/)).toHaveCount(0);
   };
@@ -45,7 +45,7 @@ test("synthetic landing request comparison and screenshots", async ({ page }) =>
   await writeFile(`docs/conveyancer-sales/requests-${mode}.json`, JSON.stringify({ mode, note: "Same synthetic conveyancer, one accessible building and one sale; intercepted data on local Next dev. Warm assets. Not live database latency.", samples }, null, 2));
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 960 }); await ready();
-    await expect(page.getByRole("heading", { name: "Sales", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: mode === "before" ? "Sales" : "Sales overview", exact: true })).toBeVisible();
     await page.screenshot({ path: `docs/conveyancer-sales/screenshots/${mode}-${width}.png`, fullPage: true });
   }
 });

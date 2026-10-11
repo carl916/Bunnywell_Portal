@@ -5,9 +5,10 @@ import type { WorkDeadline } from "../dashboard/dates";
 import type { DashboardInput, DashboardSnapshot, WorkDestination, WorkItem, WorkParty } from "../dashboard/types";
 import { exchangeAuthorityState } from "./authority-state";
 import { isSalesRouteUnit, sortUnitsByBuildingFloorOrder } from "../units/commercial-allocation";
+import { salesWorkCategory, type SalesCategory } from "../dashboard/work-classification";
 
 export type ResponsibilityFilter = "all" | "ours" | "others";
-export type RegisterAction = { id: string; label: string; party: WorkParty; ours: boolean; canAct: boolean; destination: WorkDestination | null; deadline: WorkDeadline | null; urgent: boolean };
+export type RegisterAction = { id: string; category: SalesCategory; label: string; party: WorkParty; ours: boolean; canAct: boolean; destination: WorkDestination | null; deadline: WorkDeadline | null; urgent: boolean };
 export type RegisterDate = { label: string; actual: string; warning: boolean; deadline: WorkDeadline };
 export type SalesRegisterRow = {
   unitId: string; unitNumber: string; buildingId: string; buildingName: string; stage: UnitSaleStatus;
@@ -18,7 +19,7 @@ export type SalesRegisterSnapshot = {
   asOf: string; scope: { identity: string; buildingId: string; label: string; team: string };
   actionsAvailable: boolean; rows: SalesRegisterRow[];
 };
-export type RegisterFilters = { search: string; stage: string; responsibility: ResponsibilityFilter; page: number };
+export type RegisterFilters = { search: string; stage: string; responsibility: ResponsibilityFilter; category?: SalesCategory | ""; page: number };
 
 // Workflow dependencies take precedence over event age and incidental record-keeping work.
 const order = ["sale_unit_reconciliation", "reservation_prepare", "reservation_review", "reservation_correct", "commercial_review", "authority_request", "authority_follow_up", "exchange_progress", "notice_authority", "notice_request", "notice_arrangements", "notice_dates", "replace_completion_statement", "replace_draft_statement_of_account", "missing_completion_statement", "missing_draft_statement_of_account", "review_completion_statement", "review_draft_statement_of_account", "legal_completion"];
@@ -54,7 +55,7 @@ export function deriveSalesRegister(input: DashboardInput, dashboard: DashboardS
       if (item.kind.startsWith("review_") && reviews.length > 1 && item !== reviews[0]) continue;
       const documentType = ["completion_statement", "draft_statement_of_account"].find(type => item.kind.endsWith(type));
       const groupedReviews = item.kind.startsWith("review_") && reviews.length > 1;
-      actions.push({ id: item.id, label: groupedReviews ? `Review completion documents (${reviews.length})` : label(item), party: item.responsibility, ours: item.ours, canAct: item.canAct, deadline: item.deadline, urgent: item.urgent,
+      actions.push({ id: item.id, category: salesWorkCategory(item), label: groupedReviews ? `Review completion documents (${reviews.length})` : label(item), party: item.responsibility, ours: item.ours, canAct: item.canAct, deadline: item.deadline, urgent: item.urgent,
         destination: item.destination && documentType && !groupedReviews ? { ...item.destination, anchor: `completion-document-${documentType}` } : item.destination });
     }
     let keyDate: RegisterDate | null = null;

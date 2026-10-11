@@ -146,7 +146,7 @@ test("empty fixture retains every explicit view and default on reset", async ({ 
 test("shared Sales hook preserves focus and does not replay deep-link reveal on refinements", async ({ page }) => {
   await instrument(page);await developerSalesFixture(page);await page.goto("/?screen=sales&building=all&salesWork=ours#sales-results");
   const results = page.locator("#sales-results");await expect(results.getByRole("link", { name: "Unit 103", exact: true })).toBeVisible();await frames(page);
-  const search = results.getByLabel("Search Sales", { exact: true });await search.focus();await page.evaluate(() => { window.scrollCalls = []; });
+  const search = results.getByLabel("Search", { exact: true });await search.focus();await page.evaluate(() => { window.scrollCalls = []; });
   await search.pressSequentially("104");await frames(page);await expect(search).toBeFocused();expect(await page.evaluate(() => window.scrollCalls)).toEqual([]);
 });
 
