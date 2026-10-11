@@ -23,7 +23,7 @@ test("synthetic landing request comparison and screenshots", async ({ page }) =>
   const path = "/?screen=sales&building=all";
   const ready = async () => {
     await page.getByRole("table", { name: mode === "before" ? undefined : "Sales register" }).first().waitFor();
-    if (mode === "after") await expect(page.getByLabel("Action with", { exact: true })).toBeEnabled();
+    if (mode === "after") await expect(page.getByRole("tab", { name: "Our team", exact: true })).toBeEnabled();
     else await expect(page.getByRole("button", { name: "Refresh work" })).toBeEnabled();
     await expect(page.getByText(/scope changed|worklist scope changed/)).toHaveCount(0);
   };
