@@ -6,6 +6,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { markUnitOpenIntent } from "@/lib/audit/unit-open";
 import { SaleMentionsInbox } from "../sales/SaleConversation";
 import { destinationUrl, filterWork } from "@/lib/dashboard/presentation";
+import { hasWorkOwner } from "@/lib/dashboard/work-classification";
 import { calendarDays, deadlineState, formatWorkDate, londonDate } from "@/lib/dashboard/dates";
 import type { DashboardSnapshot, WorkDestination, WorkItem, WorkModule } from "@/lib/dashboard/types";
 import styles from "./OrganisationWorklist.module.css";
@@ -86,7 +87,7 @@ export function OrganisationWorklist({ identity, buildingId, external = false }:
   const pageIndex = Math.min(page, Math.max(0, Math.ceil((selected?.records ?? 0) / PAGE_SIZE) - 1));
   const visible = selected?.rows.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE) ?? [];
   const asOf = current ? Date.parse(current.asOf) : 0;
-  const deadlines = current?.items.filter(item => item.urgent || ["overdue", "today", "soon"].includes(deadlineState(item.deadline, asOf, expandedDates ? 30 : 7))) ?? [];
+  const deadlines = current?.items.filter(item => !hasWorkOwner(item) || item.urgent || ["overdue", "today", "soon"].includes(deadlineState(item.deadline, asOf, expandedDates ? 30 : 7))) ?? [];
   const deadlineRecords = new Set(deadlines.map(item => item.recordKey));
   const allowedModules: ("all" | WorkModule)[] = external ? ["all", "sales"] : current?.sources.some(s => s.key === "sales" && s.state !== "not_permitted") ? ["all", "sales", "snags", "other"] : ["all", "snags", "other"];
   const href = (destination: WorkDestination) => destinationUrl(destination, buildingId, external ? "sales" : "dashboard");
@@ -119,7 +120,7 @@ export function OrganisationWorklist({ identity, buildingId, external = false }:
     {failures.length > 0 && <div role="status" className={styles.warning}><p>Partial coverage: {failures.map(f => f.label).join(", ")} unavailable. Refresh to retry. Available counts exclude these sources.</p></div>}
     {!current && !error && <p className={styles.empty}>Checking your organisation’s outstanding work…</p>}
     {current && <>
-      {deadlineRecords.size > 0 && <div className={styles.urgent}><strong>{deadlineRecords.size} records with urgent work or approaching/passed dates</strong><a href="#work-deadlines">Review dates and exceptions</a></div>}
+      {deadlineRecords.size > 0 && <div className={styles.urgent}><strong>{deadlineRecords.size} records with dates or exceptions to review</strong><a href="#work-deadlines">Review dates and exceptions</a></div>}
       <div className={styles.main}>
         <div className={styles.work}>
           <div className={styles.tabs} aria-label="Responsibility">
@@ -141,8 +142,8 @@ export function OrganisationWorklist({ identity, buildingId, external = false }:
           {(selected?.records ?? 0) > PAGE_SIZE && <nav className={styles.pagination} aria-label="Worklist pages"><button className="secondary" disabled={pageIndex === 0} onClick={() => setPage(pageIndex - 1)}>Previous</button><span>{pageIndex * PAGE_SIZE + 1}–{Math.min((pageIndex + 1) * PAGE_SIZE, selected!.records)} of {selected!.records} records</span><button className="secondary" disabled={(pageIndex + 1) * PAGE_SIZE >= selected!.records} onClick={() => setPage(pageIndex + 1)}>Next</button></nav>}
         </div>
         <aside id="work-deadlines" className={styles.aside}><h3>Dates & exceptions</h3><p>Saved dates, not age-based service targets.</p><button className={styles.textButton} onClick={() => setExpandedDates(!expandedDates)}>{expandedDates ? "Show next 7 days" : "Show next 30 days"}</button>
-          {deadlines.length ? <ul>{deadlines.slice(0, 6).map(item => <li key={item.id}><strong>{item.reference}</strong>{actionLink(item)}<span>{item.deadline ? `${item.deadline.basis}: ${formatWorkDate(item.deadline.at, item.deadline.precision)}` : "Urgent resident defect"}</span></li>)}</ul> : <p>No recorded deadlines in this window from available sources.</p>}
-          {deadlines.length > 6 && <p>{deadlines.length - 6} further dated tasks appear in the worklist.</p>}
+          {deadlines.length ? <ul>{(expandedDates ? deadlines : deadlines.slice(0, 6)).map(item => <li key={item.id}><strong>{item.reference}</strong>{actionLink(item)}<span>{!hasWorkOwner(item) ? "Responsible organisation unallocated" : item.deadline ? `${item.deadline.basis}: ${formatWorkDate(item.deadline.at, item.deadline.precision)}` : "Urgent resident defect"}</span></li>)}</ul> : <p>No recorded dates or exceptions in this window from available sources.</p>}
+          {!expandedDates && deadlines.length > 6 && <button className={styles.textButton} onClick={() => setExpandedDates(true)}>Show all dates and exceptions ({deadlines.length})</button>}
         </aside>
       </div>
       {!external && <details className={styles.summaries} open><summary>Portfolio position</summary><dl>{current.summaries.map(summary => <div key={summary.key}><dt>{summary.label}</dt><dd>{summary.value ?? "Unavailable"} <small>{summary.value === null ? "" : summary.unit}</small></dd>{summary.detail && <p>{summary.detail}</p>}</div>)}</dl></details>}

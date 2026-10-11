@@ -15,7 +15,7 @@ test('pending defaults allow sale/version reads but do not expose a complete wor
   });
   await page.reload();
   await expect.poll(() => page.evaluate(() => window.portalLoadTrace?.some(row => row.scope === 'sales' && row.resource === 'unit_sale_document_versions'))).toBe(true);
-  await expect(page.getByRole('region', { name: 'Sales loading' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Sales results' })).toHaveAttribute('aria-busy', 'true');
   await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toHaveCount(0);
   release();
   await expect(page.getByRole('list', { name: 'Reservation tasks', exact: true })).toBeVisible();
@@ -40,7 +40,7 @@ test('switching sale while an old concurrent snapshot loads retains the new sele
     await route.fulfill({ json: [] });
   });
   await page.reload(); await arrived;
-  await expect(page.getByRole('region', { name: 'Sales loading' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Sales results' })).toHaveAttribute('aria-busy', 'true');
   await page.getByRole('button', { name: 'Snags', exact: true }).click();
   await page.evaluate(unit => {
     const url = new URL(location.href); url.searchParams.set('salesUnitId', unit);

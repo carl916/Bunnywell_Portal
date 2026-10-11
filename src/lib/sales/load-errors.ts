@@ -10,3 +10,9 @@ export function isMissingSaleActorNames(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error
     && error.code === "PGRST202" && salesLoadErrorMessage(error).includes("sale_actor_names");
 }
+
+export function isSalesAccessError(error: unknown) {
+  if (typeof error !== "object" || error === null) return false;
+  const value = error as { code?: string; status?: number };
+  return ["42501", "PGRST301", "PGRST302", "PGRST303"].includes(value.code ?? "") || [401, 403].includes(value.status ?? 0);
+}

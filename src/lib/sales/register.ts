@@ -2,7 +2,7 @@ import type { UnitSaleStatus } from "../data/production";
 import { deriveDashboard } from "../dashboard/model";
 import { deadlineState, formatWorkDate, londonDate } from "../dashboard/dates";
 import type { WorkDeadline } from "../dashboard/dates";
-import type { DashboardInput, WorkDestination, WorkItem, WorkParty } from "../dashboard/types";
+import type { DashboardInput, DashboardSnapshot, WorkDestination, WorkItem, WorkParty } from "../dashboard/types";
 import { exchangeAuthorityState } from "./authority-state";
 import { isSalesRouteUnit, sortUnitsByBuildingFloorOrder } from "../units/commercial-allocation";
 
@@ -33,8 +33,7 @@ function label(item: WorkItem) {
 }
 
 /** Explicit non-financial response projection: never serialize the shared input or dashboard snapshot. */
-export function deriveSalesRegister(input: DashboardInput): SalesRegisterSnapshot {
-  const dashboard = deriveDashboard(input);
+export function deriveSalesRegister(input: DashboardInput, dashboard: DashboardSnapshot = deriveDashboard(input)): SalesRegisterSnapshot {
   const available = (key: string) => input.sources.some(source => source.key === key && source.state === "ready");
   const actionsAvailable = available("sales") && available("legal");
   const buildingMap = new Map(input.buildings.filter(b => !input.buildingId || b.id === input.buildingId).map(b => [b.id, b]));

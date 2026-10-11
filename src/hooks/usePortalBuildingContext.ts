@@ -39,7 +39,8 @@ function replaceBuildingContextInUrl(buildingId: string) {
   params.set(BUILDING_CONTEXT_PARAM, buildingId || "all");
   LEGACY_BUILDING_PARAMS.forEach((param) => params.delete(param));
   const search = params.toString();
-  window.history.replaceState(null, "", `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`);
+  // Canonicalising the current Sales scope must retain its record-return entry.
+  window.history.replaceState(params.get("screen") === "sales" ? window.history.state : null, "", `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`);
 }
 
 export function usePortalBuildingContext({

@@ -1,0 +1,38 @@
+import type { WorkItem } from "./types";
+
+/** Dates describe a record; they do not create another outstanding task. */
+export function isWorkObservation(item: WorkItem) {
+  return item.kind === "completion_date";
+}
+
+export function hasWorkOwner(item: WorkItem) {
+  return item.responsibility.kind === "developer" ||
+    item.responsibility.kind !== "unallocated" && Boolean(item.responsibility.organisationId);
+}
+
+export function matchesWorkTeam(item: WorkItem, team: "ours" | "others") {
+  return !isWorkObservation(item) && hasWorkOwner(item) && item.ours === (team === "ours");
+}
+
+export const SALES_CATEGORIES = {
+  reservation: "Reservations", commercial: "Commercial approvals", exchange: "Exchange authority",
+  notice: "Notice arrangements", documents: "Completion documents", completion: "Legal completion",
+  deposit: "Deposit confirmations", "invoice-review": "Invoice reviews", "invoice-submission": "Invoice submissions",
+  "payment-position": "Payment position", "record-checks": "Record checks", unallocated: "Unallocated work",
+} as const;
+export type SalesCategory = keyof typeof SALES_CATEGORIES;
+
+export function salesWorkCategory(item: WorkItem): SalesCategory {
+  if (!hasWorkOwner(item)) return "unallocated";
+  if (item.kind.startsWith("reservation_")) return "reservation";
+  if (item.kind === "commercial_review") return "commercial";
+  if (/^(authority_|exchange_progress|legal_delivery_)/.test(item.kind)) return "exchange";
+  if (item.kind.startsWith("notice_")) return "notice";
+  if (/^(missing_|replace_|review_)/.test(item.kind)) return "documents";
+  if (item.kind === "legal_completion") return "completion";
+  if (item.kind === "deposit_receipt") return "deposit";
+  if (/^fee_.*_awaiting_approval$/.test(item.kind)) return "invoice-review";
+  if (/^fee_.*_(approved_unpaid|part_paid)$/.test(item.kind)) return "payment-position";
+  if (item.kind.startsWith("fee_")) return "invoice-submission";
+  return "record-checks";
+}

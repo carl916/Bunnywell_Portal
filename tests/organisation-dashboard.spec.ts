@@ -85,6 +85,9 @@ test("pagination counts the full snapshot and scope resets filters", async ({ pa
   const f = await workFixture(page);
   f.input.snags = Array.from({ length: 23 }, (_, i) => snag({ id: `snag-${i}`, status: "resolved_by_contractor", created_at: "2026-10-01T12:00:00Z" }));
   f.input.sales = [];
+  // This fixture tests snag pagination; an exchanged unit without an active sale
+  // now correctly produces a separate sale-record exception.
+  f.input.units.forEach(unit => { unit.sale_status = "for_sale"; });
   await page.goto("/?screen=dashboard&building=all");
   await expect(page.getByText("23 affected records · 23 outstanding tasks.", { exact: false })).toBeVisible();
   const pages = page.getByRole("navigation", { name: "Worklist pages" });
