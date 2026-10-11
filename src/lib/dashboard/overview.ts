@@ -4,7 +4,6 @@ import { isSalesInternalRole } from "../sales/permissions";
 import { SALES_ROUTE_STATUSES, saleStatusLabel } from "../units/commercial-allocation";
 import { deadlineState, EXPANDED_DEADLINE_DAYS } from "./dates";
 import { isUnallocatedWork, isWorkObservation, matchesWorkTeam } from "./work-classification";
-import { destinationUrl } from "./presentation";
 import type { DashboardInput, DashboardSnapshot, WorkItem } from "./types";
 
 export type AttentionCount = { value: number | null; unit: string; href?: string };
@@ -64,9 +63,9 @@ export function deriveInternalOverview(input: DashboardInput, snapshot: Dashboar
     const key = outsideSales ? `sales-outside-pipeline:${item.recordKey}` : unallocated ? `unallocated:${item.module}` : item.kind;
     const label = unallocated ? `${area}: responsible team unallocated` : outsideSales ? "Sales work outside the current pipeline" : item.kind === "rental_evidence" ? "Rental buildings without import evidence" : item.kind === "rental_import" ? "Rental buildings with source exceptions" : item.action;
     const screen = item.destination?.screen;
-    const href = outsideSales && item.unitId ? destinationUrl({ screen: "units", buildingId: item.buildingId, unitId: item.unitId }, scope) : unallocated && item.module === "sales" && !outsideSales ? salesOverviewDestination(scope, "unallocated")
+    const href = outsideSales ? undefined : unallocated && item.module === "sales" ? salesOverviewDestination(scope, "unallocated")
       : screen ? moduleDestination(screen, scope, screen === "setup_people" ? { accessReview: "pending" } : {}) : undefined;
-    const group = additional.get(key) ?? { key, label, count: 0, href, linkLabel: outsideSales ? "Open unit" : "Open area", detail: outsideSales ? `${snapshot.buildings.find(building => building.id === item.buildingId)?.name ?? "Building unavailable"} · ${item.reference}. Outside the Sales register; the unit page is the available destination.` : undefined, records: new Set<string>(), buildings: new Set<string>() };
+    const group = additional.get(key) ?? { key, label, count: 0, href, linkLabel: "Open area", detail: outsideSales ? `${snapshot.buildings.find(building => building.id === item.buildingId)?.name ?? "Building unavailable"} · ${item.reference}. Outside the Sales register. Draft-work navigation is unavailable.` : undefined, records: new Set<string>(), buildings: new Set<string>() };
     group.records.add(item.recordKey); group.count = group.records.size;
     if (item.source === "Building lifecycle") group.buildings.add(snapshot.buildings.find(building => building.id === item.buildingId)?.name ?? "Building unavailable");
     additional.set(key, group);

@@ -60,6 +60,21 @@ test("internal summary opens the canonical Sales responsibility view and refresh
   await expect(page.getByText("1 sale requiring your team’s attention", { exact: true })).toBeVisible();
 });
 
+test("outside-pipeline drafts show their record and the unsupported destination limitation", async ({ page }) => {
+  const f = await workFixture(page);
+  f.input.units[0].sale_status = "not_released";
+  f.input.sales[0].workflow_status = "draft";
+  f.input.sales[0].exchanged_at = null;
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto("/?screen=dashboard&building=all");
+  const attention = page.getByRole("region", { name: "Work needing attention", exact: true });
+  await expect(attention.getByText(/Workflow Test House · Unit 2\. Outside the Sales register\. Draft-work navigation is unavailable\./)).toBeVisible();
+  await expect(attention.getByRole("link", { name: "Open unit", exact: true })).toHaveCount(0);
+  await expect(attention.getByText("Review with an authorised colleague", { exact: true })).toBeVisible();
+  await mkdir("docs/dashboard-stage2b/screenshots", { recursive: true });
+  await page.screenshot({ path: "docs/dashboard-stage2b/screenshots/dashboard-outside-pipeline.png", fullPage: true });
+});
+
 test("phone, tablet, desktop and narrow reflow retain readable controls with synthetic screenshots", async ({ page }) => {
   await workFixture(page);
   await mkdir("docs/dashboard-stage2b/screenshots", { recursive: true });

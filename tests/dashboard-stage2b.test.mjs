@@ -86,6 +86,18 @@ test('full fee portfolio counts distinct eligible historical attempts without ex
   assert.equal(new Set(result.snapshot.items.filter(i => i.kind.startsWith('fee_') && matchesWorkTeam(i, 'ours')).map(i => i.recordKey)).size, 2);
 });
 
+test('outside-pipeline draft work remains separate without linking to the hidden Units screen', () => {
+  const f = fixture({ units: [{ ...unit, sale_status: 'not_released' }], sales: [{ ...sale, workflow_status: 'draft', exchanged_at: null }] });
+  const result = overview(f);
+  assert.equal(result.sales.reduce((sum, stage) => sum + stage.value, 0), 0);
+  const draft = result.additional.find(item => item.key.startsWith('sales-outside-pipeline:'));
+  assert.equal(draft.count, 1);
+  assert.equal(draft.href, undefined);
+  assert.ok(draft.detail.includes(building.name));
+  assert.ok(draft.detail.includes(unit.unit_number));
+  assert.match(draft.detail, /navigation is unavailable/);
+});
+
 test('canonical payment actions exclude nonpositive balances and retain partial, voided and reservation-credit rules', () => {
   for (const balance of [0, -25]) {
     const row = portfolio([fees({ exchange_invoice: invoice({ expected_payable_amount: balance }) })])[0];

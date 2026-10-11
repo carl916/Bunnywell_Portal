@@ -46,7 +46,7 @@ test('Sales adapter matches the deployed portfolio SQL on historic eligibility, 
   await f.as('developer');
   const raw = (await f.db.query('select * from get_agent_fee_portfolio($1)',[f.ids.developer])).rows;
   const fromRpc = deriveFeePortfolio(raw,input.buildings,input.organisations), fromSales = feePortfolioFromSales(input);
-  const positions = rows => rows.map(row => ({ id:row.saleAttemptId, owner:row.agentOrganisationId, price:row.salePrice, exchange:row.exchange.kind, remaining:row.exchange.outstandingBalance, actions:feeActions(row).map(action=>({category:action.category,milestone:action.milestone,kind:action.state.kind,balance:action.state.outstandingBalance})) })).sort((a,b)=>a.id.localeCompare(b.id));
+  const positions = rows => rows.map(row => ({ id:row.saleAttemptId, owner:row.agentOrganisationId, price:row.salePrice, exchange:row.exchange.kind, remaining:row.exchange.outstandingBalance, actions:feeActions(row).map(action=>({category:action.category,milestone:action.state.milestone,kind:action.state.kind,balance:action.state.outstandingBalance})) })).sort((a,b)=>a.id.localeCompare(b.id));
   assert.deepEqual(positions(fromSales),positions(fromRpc));
   assert.equal(fromRpc.length,3); assert.ok(!fromRpc.some(row=>row.saleAttemptId===excluded));
   assert.equal(Number(raw.find(row=>row.sale_attempt_id===history).contract_price),200000);
