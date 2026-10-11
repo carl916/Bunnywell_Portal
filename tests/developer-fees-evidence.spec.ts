@@ -27,7 +27,7 @@ test("matched fee requests and desktop/mobile evidence", async ({ page }) => {
     await page.evaluate(()=>window.scrollTo({top:0,behavior:"instant"}));
     await page.screenshot({path:`${root}/screenshots/${mode}-fees-${width}.png`,fullPage:width>=700});
     if(mode==="after") {
-      await page.getByRole("button",{name:/^Approved unpaid balances/}).click();
+      await page.getByRole("button",{name:/^Approved unpaid/}).click();
       await page.evaluate(()=>window.scrollTo({top:0,behavior:"instant"}));
       await page.screenshot({path:`${root}/screenshots/after-unpaid-${width}.png`,fullPage:width>=700});
       if(width<700){

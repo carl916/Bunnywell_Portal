@@ -1,16 +1,23 @@
-.fees { min-width:0; scroll-margin-top:7rem; }
+/* Replaced rows are not stable viewport anchors. Normal scrolling, history
+   restoration and unavoidable document-height clamping remain enabled. */
+.fees { min-width:0; scroll-margin-top:7rem; overflow-anchor:none; }
+/* Chromium can anchor the document's bottom outside the excluded subtree when
+   typing grows empty results. Opt out at the actual scroll container, only
+   while this Fees list is mounted; records and other screens retain anchoring. */
+:global(html):has(.fees) { overflow-anchor:none; }
 .header { display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
 .header h2 { font-size:1.5rem; font-weight:750; color:#0f3d2e; }
 .header p,.scopeNote,.future { font-size:.85rem; color:#53665c; margin-top:.5rem; }
-.views { display:flex; gap:.5rem; flex-wrap:wrap; margin:1.25rem 0; }
-.views button,.categories button { border:1px solid #abbab1; border-radius:.65rem; background:white; padding:.7rem 1rem; text-align:left; color:#214735; }
-.views button { font-weight:700; }
+.views { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.5rem; margin:1.25rem 0 .75rem; }
+.views button { display:flex; flex-direction:column; justify-content:space-between; gap:.6rem; min-width:0; min-height:8rem; border:1px solid #abbab1; border-radius:.65rem; background:#fafbf7; padding:.75rem; text-align:left; color:#214735; font-size:.85rem; }
 .views button[aria-pressed="true"] { background:#0f3d2e; color:white; border-color:#0f3d2e; box-shadow:inset 0 -3px #d6a23a; }
-.categories { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }
-.categories button { display:flex; flex-direction:column; gap:.45rem; }
-.categories button[aria-pressed="true"] { background:#edf5ee; border:2px solid #0f3d2e; padding:calc(.7rem - 1px) calc(1rem - 1px); box-shadow:inset 0 -4px #0f3d2e; }
-.categories button span { font-size:.8rem; }
-.categories button .categoryValue { font-size:1.15rem; font-weight:750; }
+.summary { display:grid; gap:.3rem; font-size:.75rem; }
+.categoryValue { font-size:1.1rem; font-weight:750; }
+.scopeNote { position:relative; display:flex; flex-wrap:wrap; align-items:baseline; gap:.4rem; }
+.scopeNote summary { cursor:pointer; text-decoration:underline; }
+.scopeNote details p { position:absolute; z-index:2; top:100%; left:0; width:min(22rem,100%); padding:.8rem; border:1px solid #abbab1; border-radius:.5rem; background:#fffef7; box-shadow:0 4px 15px #0f3d2e20; }
+.legacyScope { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; font-size:.8rem; padding:.6rem; background:#fff8e7; border-radius:.4rem; }
+.legacyScope button { text-decoration:underline; font-weight:650; }
 .controls { display:flex; align-items:end; flex-wrap:wrap; gap:.8rem; margin:1.4rem 0 1rem; }
 .controls label { display:grid; gap:.3rem; font-size:.8rem; font-weight:650; flex:1 1 9rem; }
 .controls input,.controls select { min-width:0; width:100%; padding:.65rem; border:1px solid #b9c5bd; border-radius:.4rem; background:white; color:#263e31; font-size:.9rem; }
@@ -28,7 +35,8 @@
 .empty { padding:1.25rem 0; font-size:.9rem; }
 .scrollHint { font-size:.75rem; color:#5c6c62; margin-bottom:.5rem; }
 .skeleton { display:block; width:7rem; height:1rem; border-radius:.25rem; background:linear-gradient(90deg,#e6ece5,#f4f6f1,#e6ece5); background-size:200% 100%; animation:shimmer 1.8s ease infinite; }
-.fees button:focus-visible,.fees a:focus-visible,.tableScroll:focus-visible { outline:3px solid #ba861c; outline-offset:3px; }
+.fees button:focus-visible,.fees a:focus-visible,.fees summary:focus-visible,.tableScroll:focus-visible { outline:3px solid #ba861c; outline-offset:3px; }
 @keyframes shimmer { to { background-position:-200% 0; } }
-@media(max-width:700px) { .categories { grid-template-columns:1fr; } .views button { flex:1 1 8rem; text-align:center; } .controls label { flex-basis:calc(50% - .8rem); } }
+@media(max-width:1000px) { .views { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:700px) { .views { grid-template-columns:repeat(2,minmax(0,1fr)); } .views button { min-height:7.5rem; } .controls label { flex-basis:calc(50% - .8rem); } }
 @media(prefers-reduced-motion:reduce) { .skeleton { animation:none; } }

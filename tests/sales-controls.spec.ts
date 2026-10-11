@@ -141,7 +141,7 @@ test("Agent Fees paginates 62 sales in twelve-row pages without reducing summary
   const f = await fixture(page); await f.openFees();
   await expect(feeRows(page)).toHaveCount(12);
   await expect(pagination(page).getByRole("button", { name: "Previous" })).toBeDisabled();
-  const summary = page.getByRole("button", { name: /^Approved unpaid balances/ });
+  const summary = page.getByRole("button", { name: /^Approved unpaid/ });
   await expect(summary).toContainText("£31,000");
   await expect(page.getByText("Future uninvoiced completion fees:")).toContainText("£77,500");
   await page.screenshot({ path: `${artifacts}/agent-fees-first-page.png`, fullPage: true });
@@ -180,11 +180,11 @@ test("Agent Fees filters reset pagination and remain selected while paging the f
   await expect(pagination(page)).toContainText("Showing 1–12 of 20");
   await next.click(); await expect(pagination(page)).toContainText("Showing 13–20 of 20"); await expect(feeRows(page)).toHaveCount(8);
   await expect(page.getByRole("combobox", { name: "Milestone", exact: true })).toHaveValue("completion");
-  await expect(page.getByRole("button", { name: /^Approved unpaid balances/ })).toContainText("£9,000");
+  await expect(page.getByRole("button", { name: /^Approved unpaid/ })).toContainText("£9,000");
   await page.getByRole("combobox", { name: "Milestone", exact: true }).selectOption("exchange");
   await expect(pagination(page)).toContainText("Showing 1–12 of 40");
-  await page.getByRole("button", { name: /^Invoices awaiting submission/ }).click();
-  await expect(page.getByText("No sales match this view.", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: /^Invoices to submit/ }).click();
+  await expect(page.getByText("No required invoice submissions or corrections match these refinements.", { exact: true })).toBeVisible();
   await expect(pagination(page)).toContainText("Showing 0–0 of 0"); await expect(pagination(page).getByRole("button", { name: "Previous" })).toBeDisabled();
 });
 
