@@ -6,6 +6,7 @@ import { DeveloperSalesResults } from "./DeveloperSalesResults";
 import { useSalesResultsSpace } from "./useSalesResultsSpace";
 import { useSalesOverviewNavigation } from "./useSalesOverviewNavigation";
 import { deriveDeveloperSalesRows, visibleSalesWork } from "@/lib/sales/developer-overview";
+import { buildingSalesResponsibility } from "@/lib/sales/responsibility";
 import { useAgentFeePortfolio } from "./useAgentFeePortfolio";
 import { SaleReviewNavigation } from "./SaleReviewNavigation";
 import { EMPTY_GUIDANCE_FACTS, loadSalesGuidanceFacts, type SalesGuidanceFacts } from "@/lib/sales/guidance-facts";
@@ -1037,7 +1038,7 @@ export function SalesReservationWorkflow({
   const canVoidAgentFeePayment = canPerformSalesAction(role, "void_agent_fee_payment");
   const canViewAgentFeesPortfolio = canPerformSalesAction(role, "view_agent_fees_portfolio");
   const fromFees = internalOverview && new URLSearchParams(overview.search).get("workReturn") === "fees";
-  const feePortfolio = useAgentFeePortfolio(profile?.id ?? user.id, overviewScopeKey, canViewAgentFeesPortfolio && (activeSalesView === "agent_fees" || fromFees), units);
+  const feePortfolio = useAgentFeePortfolio(profile?.id ?? user.id, overviewScopeKey, canViewAgentFeesPortfolio && (activeSalesView === "agent_fees" || fromFees), units, buildings, organisations);
   const feeUnitOrder = useMemo(() => new Map(sortUnitsByBuildingFloorOrder(units, buildingFloors, buildings).map((unit,index)=>[unit.id,index])), [units,buildingFloors,buildings]);
 
 
@@ -1408,7 +1409,7 @@ export function SalesReservationWorkflow({
   const reservationCanBeEdited = canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
   const reservationCanBeReviewed = canApproveReservation && reservationState === "awaiting_approval";
   const awaitingReservationEntry = !canSubmitReservation && ["not_started", "rejected"].includes(reservationState);
-  const reservationAgentName = organisations.find(item => item.id === (activeAttempt?.sales_agent_organisation_id ?? selectedBuilding?.sales_agent_organisation_id))?.name ?? "the sales agent or an authorised developer";
+  const reservationAgentName = buildingSalesResponsibility(selectedBuilding, "sales_agent", organisations).label;
   const approvalBlocked = !activeAttempt || !reservationVersion || reservationDateMissing || reservationDateIsFuture || !hasRequiredBuyerInfo(activeAttempt);
   const commercialModelLocked = Boolean(activeAttempt && !["draft", "rejected", "reservation_query_raised"].includes(activeAttempt.workflow_status));
   const commercialModelEditable = canManageCommercialTerms && !commercialModelLocked;
@@ -1491,7 +1492,7 @@ export function SalesReservationWorkflow({
       now: guidanceTime, buildingId, buildings, units: buildingUnits, floors: buildingFloors, organisations, buildingOrganisations,
       sales: attempts as unknown as DashboardInput["sales"],
       documents: documents.filter(document => !document.redacted_at && !document.superseded_at).map(document => ({ ...document, unit_sale_document_versions: versions.filter(version => version.document_id === document.id) })) as unknown as DashboardInput["documents"],
-      ...guidanceFacts, terms: terms.filter(term => term.is_current),
+      ...guidanceFacts, terms,
       invoices: invoices.map(invoice => ({ ...invoice, fee_milestone: invoice.fee_milestone ?? "exchange" })) as DashboardInput["invoices"],
       payments: invoicePayments, saleActors: saleActorNames, saleEvents: [], snags: [], handovers: [], tenancies: [], arrears: [], rentalImports: [], accessRequests: [],
       sources: ["sales", "legal", "fees"].map(key => ({ key, label: key, state: "ready", asOf: new Date(guidanceTime).toISOString() })),

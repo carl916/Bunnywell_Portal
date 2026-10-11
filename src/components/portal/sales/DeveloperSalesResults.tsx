@@ -17,9 +17,12 @@ type Props = {
 };
 
 export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen, prices, error, refreshing, onRetry, now, stageAges, unread, stages, scope, resultsSpace }: Props) {
-  const selected = useMemo(() => selectDeveloperSalesRows(rows ?? [], filters, now), [rows, filters, now]);
+  const workUnavailable = rows?.some(row => row.workUnavailable) ?? false;
+  const workFiltered = filters.work !== "all" || Boolean(filters.category);
+  const selected = useMemo(() => workUnavailable && workFiltered ? [] : selectDeveloperSalesRows(rows ?? [], filters, now), [rows, filters, now, workUnavailable, workFiltered]);
+  const displayError = error || (workUnavailable ? "Action counts are unavailable because workflow or fee inputs are incomplete. Refresh before reviewing team work." : "");
   const page = Math.min(filters.page, Math.max(1, Math.ceil(selected.length / SALES_PAGE_SIZE)));
-  useEffect(() => { if (rows && page !== filters.page) onFilters({ ...filters, page }); }, [rows, filters, page, onFilters]);
+  useEffect(() => { if (rows && !workUnavailable && page !== filters.page) onFilters({ ...filters, page }); }, [rows, filters, page, onFilters, workUnavailable]);
   const visible = selected.slice((page - 1) * SALES_PAGE_SIZE, page * SALES_PAGE_SIZE);
   const change = (patch: Partial<SalesOverviewFilters>) => onFilters({ ...filters, ...patch, page: patch.page ?? 1 });
   function open(event: MouseEvent<HTMLAnchorElement>, href: string, unitId: string) {
@@ -30,10 +33,10 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
     <header className={styles.header}><h2 id="sales-results-heading">Sales overview</h2>
       {refreshing && rows && <span className={styles.refresh} role="status">Refreshing…</span>}
     </header>
-    <SalesOverviewControls stages={stages} scope={scope} filters={filters} onFilters={onFilters} loading={!rows} />
-    <p className={styles.count} role="status">{!rows ? error ? "Sales unavailable" : "Loading Sales…" : `${selected.length} ${selected.length === 1 ? "sale" : "sales"}${filters.work === "ours" ? " requiring your team’s attention" : filters.work === "others" ? " waiting on other teams" : " in this view"}${error ? " · last loaded results" : ""}`}</p>
+    <SalesOverviewControls stages={stages} scope={scope} filters={filters} onFilters={onFilters} loading={!rows || workUnavailable} />
+    <p className={styles.count} role="status">{!rows ? displayError ? "Sales unavailable" : "Loading Sales…" : workUnavailable && workFiltered ? "Action counts unavailable" : `${selected.length} ${selected.length === 1 ? "sale" : "sales"}${filters.work === "ours" ? " requiring your team’s attention" : filters.work === "others" ? " waiting on other teams" : " in this view"}${error ? " · last loaded results" : ""}`}</p>
     <div ref={resultsSpace}><div>
-    {error && <div className={styles.error} role="alert"><p>{error} {rows && "Showing the last loaded position. Review controls are disabled until a successful refresh."}</p><button type="button" className="secondary" onClick={onRetry} disabled={refreshing}>Retry Sales</button></div>}
+    {displayError && <div className={styles.error} role="alert"><p>{displayError} {rows && "Showing the last loaded position. Review controls are disabled until a successful refresh."}</p><button type="button" className="secondary" onClick={onRetry} disabled={refreshing}>Retry Sales</button></div>}
     <p className={styles.scrollHint}>Scroll the table sideways for dates and review controls.</p>
     <div className={styles.tableScroll} tabIndex={0} aria-label="Sales table, scroll horizontally for more columns">
       <table><colgroup><col style={{ width: "16%" }} /><col style={{ width: "16%" }} /><col style={{ width: "32%" }} /><col style={{ width: "20%" }} /><col style={{ width: "16%" }} /></colgroup><thead><tr><th>Unit / building</th><th>Stage / price</th><th>Next step</th><th>Key date</th><th><span className={styles.srOnly}>Open sale</span></th></tr></thead>
@@ -48,12 +51,12 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
             <td className={styles.next}><p>{salesWorkSummary(actions) || row.warning || row.neutral}</p>{first && !(filters.work === "ours" && actions.every(item => item.responsibility.kind === "developer" && item.ours && item.canAct)) && <small>Action with {[...new Set(actions.map(item=>item.responsibility.label))].join(" / ")}{!first.canAct ? " · authorised colleague required" : ""}</small>}
             </td>
             <td><span className={row.keyDate?.warning ? styles.warning : undefined}>{row.keyDate?.label ?? "—"}</span>{row.keyDate && !row.keyDate.label.includes(row.keyDate.actual) && <small>{row.keyDate.actual}</small>}</td>
-            <td>{error ? <button type="button" className={styles.review} disabled>Review unavailable</button> : <a className={styles.review} href={href} onClick={event => open(event, href, row.unitId)}>{actions.length > 1 ? `Review ${actions.length} actions` : first ? "Review action" : row.neutral === "Available for reservation" ? "Start reservation" : "Open sale"}</a>}</td>
+            <td>{displayError ? <button type="button" className={styles.review} disabled>Review unavailable</button> : <a className={styles.review} href={href} onClick={event => open(event, href, row.unitId)}>{actions.length > 1 ? `Review ${actions.length} actions` : first ? "Review action" : row.neutral === "Available for reservation" ? "Start reservation" : "Open sale"}</a>}</td>
           </tr>;
         })}</tbody>
       </table>
     </div>
-    {rows && !selected.length && <p className={styles.empty}>{error ? "Current responsibilities are unavailable. Retry before treating this view as clear." : "No sales match this view. Try another team, category or filter."}</p>}
+    {rows && !selected.length && <p className={styles.empty}>{displayError ? "Current responsibilities are unavailable. Retry before treating this view as clear." : "No sales match this view. Try another team, category or filter."}</p>}
     {rows && <SalesPagination total={selected.length} currentPage={page} onPageChange={page => change({ page })} />}
     </div></div>
   </section>;

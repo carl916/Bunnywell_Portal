@@ -14,6 +14,7 @@ export type AgentFeePortfolioInvoice = {
   expected_payable_amount?: number | null;
   reservation_fee_deduction?: number | null;
   agent_contribution_deduction?: number | null;
+  created_at?: string | null;
 };
 
 export type AgentFeePortfolioInput = {
@@ -59,6 +60,9 @@ export type AgentFeePortfolioStatusFilter =
 export type AgentFeePortfolioMilestoneFilter = "all" | AgentFeeMilestone;
 
 export type AgentFeePortfolioInvoiceState = {
+  invoiceId?: string;
+  approvedAt?: string | null;
+  submittedAt?: string | null;
   milestone: AgentFeeMilestone;
   kind: AgentFeePortfolioInvoiceKind;
   outstandingBalance: number;
@@ -224,8 +228,8 @@ export function deriveAgentFeePortfolioRow(input: AgentFeePortfolioInput): Agent
     agentOrganisationId: input.agentOrganisationId ?? null,
     agentName: input.agentName?.trim() || "Unassigned",
     salePrice,
-    exchange,
-    completion,
+    exchange: { ...exchange, invoiceId: input.exchangeInvoice?.id, approvedAt: input.exchangeInvoice?.approved_at, submittedAt: input.exchangeInvoice?.created_at },
+    completion: { ...completion, invoiceId: input.completionInvoice?.id, approvedAt: input.completionInvoice?.approved_at, submittedAt: input.completionInvoice?.created_at },
     currentOutstanding,
     futureCompletionFeeNet: onSalesRoute && !input.completionInvoice ? completionExpected.netAmount : 0,
     overallStatus,

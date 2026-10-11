@@ -6,7 +6,7 @@ const row={sale_attempt_id:"s",building_id:"b",building_name:"Synthetic",unit_id
 function loader(response){
   const calls=[];
   const mod=loadTypescriptModule("src/components/portal/sales/useAgentFeePortfolio.ts",{overrides:{"@/lib/supabase/client":{createSupabaseBrowserClient:()=>({rpc:async(...args)=>{calls.push(args);return response;}})}}});
-  return {...mod,calls};
+  return {...mod,queryAgentFeePortfolio:id=>mod.queryAgentFeePortfolio(id,[{id:"b",sales_agent_organisation_id:null}],[]),calls};
 }
 test("one compact authorised RPC checks exact completeness and accepts genuine empty data",async()=>{
   const f=loader({data:[],count:0,error:null});assert.deepEqual(await f.queryAgentFeePortfolio("developer"),[]);

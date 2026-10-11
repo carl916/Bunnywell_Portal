@@ -35,8 +35,8 @@ function label(item: WorkItem) {
 
 /** Explicit non-financial response projection: never serialize the shared input or dashboard snapshot. */
 export function deriveSalesRegister(input: DashboardInput, dashboard: DashboardSnapshot = deriveDashboard(input)): SalesRegisterSnapshot {
-  const available = (key: string) => input.sources.some(source => source.key === key && source.state === "ready");
-  const actionsAvailable = available("sales") && available("legal");
+  const available = (key: string) => dashboard.sources.some(source => source.key === key && source.state === "ready");
+  const actionsAvailable = available("sales") && available("legal") && available("appointments");
   const buildingMap = new Map(input.buildings.filter(b => !input.buildingId || b.id === input.buildingId).map(b => [b.id, b]));
   const units = sortUnitsByBuildingFloorOrder(input.units.filter(u => buildingMap.has(u.building_id) && isSalesRouteUnit(u)), input.floors, [...buildingMap.values()]);
   const rows = units.map((unit): SalesRegisterRow => {

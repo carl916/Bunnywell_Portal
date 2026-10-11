@@ -6,8 +6,12 @@ export function isWorkObservation(item: WorkItem) {
 }
 
 export function hasWorkOwner(item: WorkItem) {
-  return item.responsibility.kind === "developer" ||
-    item.responsibility.kind !== "unallocated" && Boolean(item.responsibility.organisationId);
+  return item.responsibility.allocation !== "unavailable" && (item.responsibility.kind === "developer" ||
+    item.responsibility.kind !== "unallocated" && Boolean(item.responsibility.organisationId));
+}
+
+export function isUnallocatedWork(item: WorkItem) {
+  return !isWorkObservation(item) && item.responsibility.allocation !== "unavailable" && !hasWorkOwner(item);
 }
 
 export function matchesWorkTeam(item: WorkItem, team: "ours" | "others") {
@@ -30,7 +34,7 @@ export function feeWorkCategory(kind: string): "invoice-review" | "payment-posit
 }
 
 export function salesWorkCategory(item: WorkItem): SalesCategory {
-  if (!hasWorkOwner(item)) return "unallocated";
+  if (isUnallocatedWork(item)) return "unallocated";
   if (item.kind.startsWith("reservation_")) return "reservation";
   if (item.kind === "commercial_review") return "commercial";
   if (/^(authority_|exchange_progress|legal_delivery_)/.test(item.kind)) return "exchange";

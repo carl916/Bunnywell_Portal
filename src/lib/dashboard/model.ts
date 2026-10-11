@@ -2,13 +2,16 @@ import { buildingAllowsFlatHandover, closingNoticeStartDate, hasPassedExpectedPc
 import { isSalesRouteUnit, sortUnitsByBuildingFloorOrder, saleStatusLabel } from "../units/commercial-allocation";
 import { canPerformSalesAction, isSalesInternalRole, type SalesStageAction } from "../sales/permissions";
 import { exchangeAuthorityState } from "../sales/authority-state";
-import { sellerConveyancer } from "../sales/responsibility";
+import { buildingSalesResponsibility, sellerConveyancer } from "../sales/responsibility";
 import { completionDocumentApproved, completionDocumentsApproved, completionDocumentLabels, completionDocumentTypes, currentCompletionVersion } from "../sales/completion-review";
 import { completionNoticeState } from "../sales/completion-notice";
-import { deriveAgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
+import { feePortfolioFromSales } from "../sales/fee-portfolio-data";
+import { feeActions } from "../sales/fee-workspace";
+import type { AgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
+import { historicalActorLabel } from "../sales/actor-identity";
 import { activeTenancy, currentVoidDays, tenancyEndingWithinDays } from "../rentals/tenancies";
 import { deriveTenancyRentRisk } from "../rentals/rent-risk";
-import { calendarDays, deadlineState, londonDate, recentBusinessWindow } from "./dates";
+import { calendarDays, deadlineState, formatWorkDate, londonDate, recentBusinessWindow } from "./dates";
 import { currentInformationSupplied, isActiveSnag, latestStatusTransition, needsTrade } from "./snags";
 import type { DashboardInput, DashboardSnapshot, PortfolioSummary, WorkContext, WorkItem, WorkParty } from "./types";
 
@@ -29,7 +32,11 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
   const units = sortUnitsByBuildingFloorOrder(input.units.filter(u => buildingMap.has(u.building_id)), input.floors, buildings);
   const unitMap = new Map(units.map(u => [u.id, u]));
   const unitOrder = new Map(units.map((u, index) => [u.id, index]));
-  const available = (key: string) => input.sources.find(source => source.key === key)?.state === "ready";
+  const sources = input.sources.map(source => ({ ...source }));
+  const available = (key: string) => sources.find(source => source.key === key)?.state === "ready";
+  if (!sources.some(source => source.key === "appointments")) sources.push({ key: "appointments", label: "Building sales appointments",
+    state: input.sales.some(sale => buildingMap.has(sale.building_id) && ["sales_agent", "conveyancer"].some(role =>
+      buildingSalesResponsibility(buildingMap.get(sale.building_id), role as "sales_agent" | "conveyancer", input.organisations).allocation === "unavailable")) ? "unavailable" : "ready", asOf: new Date(now).toISOString() });
   const orgName = (id: string | null) => input.organisations.find(o => o.id === id)?.name;
   const relationshipOrg = (buildingId: string, role: string) => {
     const ids = [...new Set(input.buildingOrganisations.filter(link => link.building_id === buildingId && link.role_on_project === role && link.active !== false).map(link => link.organisation_id))];
@@ -66,17 +73,17 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     const unit = unitMap.get(sale.unit_id);
     if (!unit) continue;
     const events = input.saleEvents.filter(e => e.sale_attempt_id === sale.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
-    const contextFor = (event = events[0]): WorkContext | null => event ? { id: event.id, text: event.summary ?? event.event_type.replaceAll("_", " "), at: event.created_at, account: event.created_by_user_id ? event.actor_name ?? "Unknown account" : null } : null;
+    const contextFor = (event = events[0]): WorkContext | null => event ? { id: event.id, text: event.summary ?? event.event_type.replaceAll("_", " "), at: event.created_at, account: historicalActorLabel({ snapshotName: event.actor_name, userId: event.created_by_user_id, profiles: input.saleActors ?? [], fallback: "Account not recorded" }) } : null;
     const saleDocs = input.documents.filter(d => d.sale_attempt_id === sale.id);
     const documentPosition = saleDocs.filter(d => completionDocumentTypes.some(type => type === d.document_type)).map(d => `${d.document_type === "completion_statement" ? "Statement" : "Account"}: ${completionDocumentApproved(d) ? "approved" : d.status === "query_raised" ? "queried" : "awaiting approval"}`).join("; ");
     const base = { recordKey: `sale:${sale.id}`, module: "sales" as const, source: "Sale", buildingId: sale.building_id, unitId: unit.id, reference: `Unit ${unit.unit_number}`, position: `${saleStatusLabel(unit.sale_status)}${documentPosition ? ` · ${documentPosition}` : ""}`, destination: { screen: "sales" as const, buildingId: sale.building_id, unitId: unit.id, saleId: sale.id } };
     const developer = party("developer");
     // Seller-side responsibility comes from Sales contacts, never buyer solicitor details.
-    const agent = party("sales_agent", sale.sales_agent_organisation_id ?? buildingMap.get(sale.building_id)?.sales_agent_organisation_id ?? relationshipOrg(sale.building_id, "sales_agent"));
+    const agent = buildingSalesResponsibility(buildingMap.get(sale.building_id), "sales_agent", input.organisations);
     const conveyancer = sellerConveyancer(buildingMap.get(sale.building_id), input.organisations);
     const task = (kind: string, label: string, responsible: WorkParty, since: string | null, basis: string, permission: SalesStageAction, anchor: string, options: Partial<WorkItem> = {}) =>
       add({ ...base, destination: { ...base.destination, anchor, section: anchor.includes("fee") ? "financials" : "progression", ...options.destination } }, kind, label, responsible, since, basis,
-        { context: contextFor(), canAct: canPerformSalesAction(viewer.role, permission), ...options });
+        { context: contextFor(), canAct: canPerformSalesAction(viewer.role, permission) && (internal || owns(responsible)), ...options });
     const completed = Boolean(sale.completed_at || sale.legal_completed_at || sale.workflow_status === "completed");
     const exchanged = Boolean(sale.exchanged_at || completed);
     const approved = Boolean(sale.reservation_approved_at || ["approved", "reservation_approved", "ready_for_exchange", "awaiting_commercial_approval", "exchanged", "completion_pending", "completed"].includes(sale.workflow_status));
@@ -142,25 +149,38 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     if (available("legal")) for (const email of input.authorities.filter(e => e.sale_attempt_id === sale.id && !e.replaced_by && !e.revoked_at && ["failed", "bounced", "complained", "delivery_delayed"].includes(e.delivery_status))) {
       task(`legal_delivery_${email.kind}`, `Review legal email: ${email.delivery_status.replaceAll("_", " ")}`, developer, email.issued_at, "Email issued; provider check time not recorded", "approve_exchange", "sales-stage-exchange", { cycleId: email.id });
     }
-    if (available("fees") && internal) {
-      const terms = input.terms.find(t => t.sale_attempt_id === sale.id);
-      const invoiceFor = (milestone: string) => input.invoices.filter(i => i.sale_attempt_id === sale.id && i.fee_milestone === milestone && !["superseded", "void", "voided"].includes(i.status)).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-      const exchangeInvoice = invoiceFor("exchange"), completionInvoice = invoiceFor("completion");
-      const position = deriveAgentFeePortfolioRow({ saleAttemptId: sale.id, buildingId: sale.building_id, buildingName: buildingMap.get(sale.building_id)!.name, unitId: unit.id, unitNumber: unit.unit_number, unitSaleStatus: unit.sale_status, workflowStatus: sale.workflow_status,
-        salePrice: terms?.contract_price, exchangeFeePercent: terms?.exchange_agent_fee_percent, completionFeePercent: terms?.completion_agent_fee_percent, vatRate: terms?.vat_rate,
-        exchangeInvoice, completionInvoice, exchangePayments: input.payments.filter(p => p.invoice_id === exchangeInvoice?.id), completionPayments: input.payments.filter(p => p.invoice_id === completionInvoice?.id) });
-      for (const milestone of ["exchange", "completion"] as const) {
-        const state = position[milestone], invoice = invoiceFor(milestone);
-        if (["approved_unpaid", "part_paid"].includes(state.kind)) approvedFeeBalance += Math.round(state.outstandingBalance * 100);
-        if (!state.needsAction) continue;
-        const submit = ["rejected", "not_submitted", "invoice_required"].includes(state.kind);
-        const label = state.kind === "awaiting_approval" ? `Review ${milestone} agent invoice` : state.kind === "rejected" ? `Replace queried ${milestone} agent invoice` : submit ? `Submit ${milestone} agent invoice` : `Review payment position for ${milestone} approved invoice`;
-        task(`fee_${milestone}_${state.kind}`, label, submit ? agent : developer, invoice?.approved_at ?? invoice?.created_at ?? (milestone === "completion" ? sale.exchanged_at : sale.reservation_approved_at), invoice?.approved_at ? "Invoice approved — no payment due date recorded" : invoice ? "Invoice submitted" : "Invoice milestone eligible", submit ? "submit_agent_invoice" : state.kind === "awaiting_approval" ? "approve_agent_invoice" : "record_agent_fee_payment", `${milestone}-fee`, { cycleId: invoice?.id ?? null, countingUnit: "invoice" });
-      }
-    }
     const window = recentBusinessWindow(now);
+    const latestTypes = new Set<string>();
     for (const event of events.filter(e => Date.parse(e.created_at) >= window.start && Date.parse(e.created_at) < window.end && /^(reservation_|authority_|exchange_recorded|completion_|agent_invoice_|agent_fee_)/.test(e.event_type))) {
-      activity.push({ ...contextFor(event)!, recordKey: base.recordKey, destination: { ...base.destination, section: "activity" } });
+      if (latestTypes.has(event.event_type)) continue;
+      latestTypes.add(event.event_type);
+      activity.push({ ...contextFor(event)!, reference: base.reference, buildingName: buildingMap.get(sale.building_id)?.name, recordKey: base.recordKey, destination: { ...base.destination, section: "activity" } });
+    }
+  }
+
+  // Fees use their own eligible attempt population. Sales selectors project
+  // current-register attempts only; historical fees never expand that list.
+  if (available("fees") && internal) {
+    let portfolio: AgentFeePortfolioRow[] = [];
+    try { portfolio = input.feePortfolio ?? feePortfolioFromSales(input); }
+    catch {
+      const source = sources.find(source => source.key === "fees")!;
+      source.state = "unavailable"; source.asOf = null;
+      source.detail = "Agent fee inputs are incomplete; fee actions and balances are unavailable.";
+    }
+    for (const row of portfolio.filter(row => buildingMap.has(row.buildingId))) {
+      const owner = buildingSalesResponsibility(buildingMap.get(row.buildingId), "sales_agent", input.organisations);
+      for (const { state, category, label } of feeActions(row)) {
+        const submit = category === "invoice-submission";
+        if (category === "payment-position") approvedFeeBalance += Math.round(state.outstandingBalance * 100);
+        const permission = submit ? "submit_agent_invoice" : category === "invoice-review" ? "approve_agent_invoice" : "record_agent_fee_payment";
+        add({ recordKey: `sale:${row.saleAttemptId}`, module: "sales", source: "Agent Fees", buildingId: row.buildingId, unitId: row.unitId,
+          reference: `Unit ${row.unitNumber}`, position: "Eligible fee sale attempt",
+          destination: { screen: "sales", buildingId: row.buildingId, unitId: row.unitId, saleId: row.saleAttemptId, section: "financials", anchor: `${state.milestone}-fee` } },
+          `fee_${state.milestone}_${state.kind}`, label, submit ? owner : party("developer"), state.approvedAt ?? state.submittedAt ?? null,
+          state.approvedAt ? "Invoice approved — no payment due date recorded" : state.submittedAt ? "Invoice submitted" : "Action start date unavailable",
+          { canAct: canPerformSalesAction(viewer.role, permission), cycleId: state.invoiceId ?? null, countingUnit: "invoice" });
+      }
     }
   }
 
@@ -221,7 +241,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
   if (internal && available("rent_risk")) for (const building of buildings) {
     const latest = input.rentalImports.filter(r => r.building_id === building.id).sort((a, b) => b.started_at.localeCompare(a.started_at))[0];
     if (!latest && units.some(u => u.building_id === building.id && u.rental_portfolio_status === "active")) add({ recordKey: `rental-source:${building.id}`, module: "other", source: "Rental source", buildingId: building.id, unitId: null, reference: building.name, position: "No rental import evidence is recorded", destination: { screen: "rentals", buildingId: building.id } }, "rental_evidence", "Check reported rent evidence before treating the portfolio as clear", party("developer"), null, "Source data-through date unavailable");
-    if (latest && (latest.status === "failed" || latest.error_count > 0 || latest.data_quality_issue_count > 0)) add({ recordKey: `import:${latest.id}`, module: "other", source: "Rental import", buildingId: building.id, unitId: null, reference: building.name, position: `Latest import ${latest.status}; evidence through ${latest.data_as_of ?? "unknown"}`, destination: { screen: "rentals", buildingId: building.id } }, "rental_import", "Review rental source exceptions", party("developer"), latest.completed_at ?? latest.started_at, "Latest import result; dashboard refresh does not update source evidence");
+    if (latest && (latest.status === "failed" || latest.error_count > 0 || latest.data_quality_issue_count > 0)) add({ recordKey: `import:${latest.id}`, module: "other", source: "Rental import", buildingId: building.id, unitId: null, reference: building.name, position: `Latest import ${latest.status}; evidence through ${latest.data_as_of ? formatWorkDate(latest.data_as_of, latest.data_as_of.length === 10 ? "date" : "instant") : "unknown"}`, destination: { screen: "rentals", buildingId: building.id } }, "rental_import", "Review rental source exceptions", party("developer"), latest.completed_at ?? latest.started_at, "Latest import result; dashboard refresh does not update source evidence");
   }
   if (operational) for (const building of buildings) {
     const base = { recordKey: `building:${building.id}`, module: "other" as const, source: "Building lifecycle", buildingId: building.id, unitId: null, reference: building.name, position: "Lifecycle review", destination: viewer.role === "admin" ? { screen: "setup_buildings" as const, buildingId: building.id } : null };
@@ -246,7 +266,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     summary("document_reviews", "Completion reviews", items.filter(i => i.kind.startsWith("review_")).length, "documents", "sales", "legal", `${new Set(items.filter(i => i.kind.startsWith("review_")).map(i => i.recordKey)).size} affected sale files`);
     summary("approved_fees", "Approved unpaid agent invoices", items.filter(i => /fee_.*_(approved_unpaid|part_paid)$/.test(i.kind)).length, "invoices", "sales", "fees", `${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(approvedFeeBalance / 100)} approved cash balance including VAT and recorded deductions. No assumed payment deadline.`);
     const importDates = buildings.map(b => input.rentalImports.filter(r => r.building_id === b.id && r.status === "succeeded" && r.data_as_of).sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.data_as_of).filter((at): at is string => Boolean(at)).sort();
-    summary("reported_arrears", "Current-tenancy arrears actions", items.filter(i => i.kind === "rent_risk").length, "episodes", "other", "rent_risk", `${importDates.length ? `Source evidence dates ${importDates[0]} to ${importDates.at(-1)}.` : "No import evidence date available."} No reported arrears is not proof that rent is paid.`);
+    summary("reported_arrears", "Current-tenancy arrears actions", items.filter(i => i.kind === "rent_risk").length, "episodes", "other", "rent_risk", `${importDates.length ? `Source evidence through ${formatWorkDate(importDates[0], importDates[0].length === 10 ? "date" : "instant")}${importDates[0] === importDates.at(-1) ? "" : ` to ${formatWorkDate(importDates.at(-1)!, importDates.at(-1)!.length === 10 ? "date" : "instant")}`}.` : "No import evidence date available."} No reported arrears is not proof that rent is paid.`);
     summary("pc_ineligible", "Completed, awaiting PC eligibility", units.filter(u => u.sale_status === "completed" && !buildingAllowsFlatHandover(buildingMap.get(u.building_id), today) && !u.handover_date).length, "units", "other", "handovers", "Lifecycle context; handover is not yet available.");
   }
   const urgency = (item: WorkItem) => item.urgent ? 0 : deadlineState(item.deadline, now) === "overdue" ? 1 : ["today", "soon"].includes(deadlineState(item.deadline, now)) ? 2 : 3;
@@ -255,7 +275,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     || (unitOrder.get(a.unitId ?? "") ?? Infinity) - (unitOrder.get(b.unitId ?? "") ?? Infinity) || a.id.localeCompare(b.id));
   return {
     asOf: new Date(now).toISOString(), scope: { buildingId: input.buildingId, label: input.buildingId ? buildingMap.get(input.buildingId)?.name ?? "Unavailable building" : "All accessible buildings", team: operational ? "Developer team" : viewer.organisationName ?? orgName(viewer.organisation_id) ?? "Organisation not recorded", identity: `${viewer.id}:${viewer.role}:${viewer.organisation_id ?? ""}` },
-    sources: input.sources, items, summaries,
+    sources, items, summaries,
     activity: [...new Map(activity.sort((a, b) => b.at.localeCompare(a.at)).map(e => [e.id, e])).values()].slice(0, 7),
     buildings: buildings.map(b => ({ id: b.id, name: b.name, sales: available("sales") ? units.filter(u => u.building_id === b.id && ["for_sale", "reserved", "exchanged", "completed", "handed_over"].includes(u.sale_status)).length : null, rentals: available("rentals") ? units.filter(u => u.building_id === b.id && u.rental_portfolio_status === "active").length : null, snags: available("snags") ? input.snags.filter(s => s.building_id === b.id && s.source_type === "developer_snag" && isActiveSnag(s)).length : null, defects: available("snags") ? input.snags.filter(s => s.building_id === b.id && s.source_type === "leaseholder_defect" && isActiveSnag(s)).length : null })),
   };

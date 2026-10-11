@@ -29,7 +29,8 @@ function ConveyancerWorkspace(props: Props) {
   // Reset before rendering on every known scope change, including All buildings.
   // URL refinements survive a sale visit; ordinary unit/status updates do not change membership.
   const scope = JSON.stringify([props.buildingContextId, props.accessScopeKey,
-    props.buildings.map(b => [b.id, b.conveyancer_organisation_id ?? null]).sort(),
+    props.buildings.map(b => [b.id, b.conveyancer_organisation_id === undefined ? "unavailable" : b.conveyancer_organisation_id,
+      b.sales_agent_organisation_id === undefined ? "unavailable" : b.sales_agent_organisation_id]).sort(),
     props.units.map(u => [u.id, u.building_id]).sort()]);
   return <ScopedConveyancerWorkspace key={scope} {...props} search={search} />;
 }

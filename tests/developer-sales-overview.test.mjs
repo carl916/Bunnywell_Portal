@@ -55,11 +55,11 @@ test('available and legacy completed units never fabricate reservation tasks; mi
 });
 
 test('payment position is positive approved balance with no assumed deadline and an existing financials destination', () => {
-  const f=fixture({invoices:[{id:'invoice',sale_attempt_id:sale.id,status:'approved',fee_milestone:'exchange',expected_payable_amount:100,created_at:'2026-09-01',approved_at:'2026-09-02'}]});
+  const f=fixture({invoices:[{id:'invoice',sale_attempt_id:sale.id,status:'approved',invoice_type:'sales_agent',fee_milestone:'exchange',expected_payable_amount:100,created_at:'2026-09-01',approved_at:'2026-09-02'}]});
   const item=deriveDeveloperSalesRows(f)[0].work.find(i=>salesWorkCategory(i)==='payment-position');
   assert.match(item.action,/Review payment position/);assert.equal(item.deadline,null);
   assert.equal(item.destination.section,'financials');assert.equal(item.destination.anchor,'exchange-fee');
-  f.payments=[{invoice_id:'invoice',amount:100,voided_at:null}];
+  f.payments=[{payment_source:'bank_transfer',invoice_id:'invoice',amount:100,voided_at:null}];
   assert.ok(!deriveDeveloperSalesRows(f)[0].work.some(i=>salesWorkCategory(i)==='payment-position'));
 });
 

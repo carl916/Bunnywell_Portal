@@ -1,4 +1,5 @@
 import type { Unit } from "../data/production.ts";
+import { reportingDate } from "../reporting-date.ts";
 
 export type TenancySourceType = "manual" | "spreadsheet_import" | "document" | "email";
 
@@ -27,9 +28,7 @@ function dateValue(value: string) {
   return Date.parse(`${value.slice(0, 10)}T00:00:00Z`);
 }
 
-export function todayDate() {
-  return new Date().toISOString().slice(0, 10);
-}
+export const todayDate = reportingDate;
 
 export function tenancyState(tenancy: Pick<UnitTenancy, "tenancy_start_date" | "tenancy_end_date">, today = todayDate()): TenancyState {
   if (tenancy.tenancy_start_date > today) return "scheduled";
