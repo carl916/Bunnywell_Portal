@@ -1,0 +1,498 @@
+{
+  "mode": "after",
+  "fixture": "Local production build, intercepted synthetic data",
+  "samples": [
+    {
+      "run": 1,
+      "requests": 31,
+      "decodedBytes": 51072,
+      "detail": [
+        {
+          "path": "/auth/v1/user",
+          "bytes": 213,
+          "status": 200
+        },
+        {
+          "path": "/api/auth/activity",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/buildings",
+          "bytes": 206,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/units",
+          "bytes": 5389,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_floors",
+          "bytes": 211,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_types",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_type_areas",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/trades",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/organisations",
+          "bytes": 132,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_organisations",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_attempts",
+          "bytes": 19274,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_sale_defaults",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_mentions_inbox",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/get_agent_fee_portfolio",
+          "bytes": 15514,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_documents",
+          "bytes": 905,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_legal_emails",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_sources",
+          "bytes": 271,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_receipts",
+          "bytes": 297,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_terms",
+          "bytes": 5295,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_payment_schedule",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoices",
+          "bytes": 1970,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoice_payments",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_actor_names",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_document_versions",
+          "bytes": 793,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_comment_unread",
+          "bytes": 2,
+          "status": 200
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "requests": 31,
+      "decodedBytes": 51072,
+      "detail": [
+        {
+          "path": "/auth/v1/user",
+          "bytes": 213,
+          "status": 200
+        },
+        {
+          "path": "/api/auth/activity",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/buildings",
+          "bytes": 206,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/units",
+          "bytes": 5389,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_floors",
+          "bytes": 211,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_types",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_type_areas",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/trades",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/organisations",
+          "bytes": 132,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_organisations",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_attempts",
+          "bytes": 19274,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_sale_defaults",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_mentions_inbox",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/get_agent_fee_portfolio",
+          "bytes": 15514,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_documents",
+          "bytes": 905,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_legal_emails",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_sources",
+          "bytes": 271,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_receipts",
+          "bytes": 297,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_actor_names",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_terms",
+          "bytes": 5295,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_payment_schedule",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoices",
+          "bytes": 1970,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoice_payments",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_document_versions",
+          "bytes": 793,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_comment_unread",
+          "bytes": 2,
+          "status": 200
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "requests": 31,
+      "decodedBytes": 51072,
+      "detail": [
+        {
+          "path": "/auth/v1/user",
+          "bytes": 213,
+          "status": 200
+        },
+        {
+          "path": "/api/auth/activity",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/buildings",
+          "bytes": 206,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/units",
+          "bytes": 5389,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_floors",
+          "bytes": 211,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_types",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_type_areas",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/trades",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/organisations",
+          "bytes": 132,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_organisations",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/profiles",
+          "bytes": 182,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_unit_access",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/user_building_access",
+          "bytes": 105,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_attempts",
+          "bytes": 19274,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/building_sale_defaults",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_mentions_inbox",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/get_agent_fee_portfolio",
+          "bytes": 15514,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_documents",
+          "bytes": 905,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_legal_emails",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_sources",
+          "bytes": 271,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/sale_exchange_deposit_receipts",
+          "bytes": 297,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_terms",
+          "bytes": 5295,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_payment_schedule",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoices",
+          "bytes": 1970,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_invoice_payments",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_actor_names",
+          "bytes": 2,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/unit_sale_document_versions",
+          "bytes": 793,
+          "status": 200
+        },
+        {
+          "path": "/rest/v1/rpc/sale_comment_unread",
+          "bytes": 2,
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "interactionRequests": [
+    "/rest/v1/rpc/sale_mentions_inbox",
+    "/rest/v1/rpc/sale_comment_page",
+    "/rest/v1/rpc/sale_discussion_people",
+    "/rest/v1/rpc/sale_mentions_inbox"
+  ]
+}

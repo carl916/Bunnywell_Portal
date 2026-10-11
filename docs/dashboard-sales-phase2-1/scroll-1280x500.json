@@ -1,0 +1,458 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 500
+  },
+  "samples": [
+    {
+      "name": "Our actions",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 867,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 646,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 793,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 1382,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 1607,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 1607,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 1382,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 793,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 646,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Our actions",
+      "requestedTop": 0,
+      "before": {
+        "y": 0,
+        "control": 488.390625
+      },
+      "after": {
+        "y": 0,
+        "max": 867,
+        "control": 488.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Our actions",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 867,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 646,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 793,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 1382,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 1607,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 1607,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 1382,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 793,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 646,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Our actions",
+      "requestedTop": 120,
+      "before": {
+        "y": 120,
+        "control": 368.390625
+      },
+      "after": {
+        "y": 120,
+        "max": 867,
+        "control": 368.390625,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Our actions",
+      "requestedTop": 10000,
+      "before": {
+        "y": 1607,
+        "control": -1118.609375
+      },
+      "after": {
+        "y": 867,
+        "max": 867,
+        "control": -378.609375,
+        "calls": []
+      },
+      "clamped": true
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 10000,
+      "before": {
+        "y": 867,
+        "control": -378.609375
+      },
+      "after": {
+        "y": 646,
+        "max": 646,
+        "control": -157.609375,
+        "calls": []
+      },
+      "clamped": true
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 10000,
+      "before": {
+        "y": 646,
+        "control": -157.609375
+      },
+      "after": {
+        "y": 646,
+        "max": 793,
+        "control": -157.609375,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 10000,
+      "before": {
+        "y": 793,
+        "control": -304.609375
+      },
+      "after": {
+        "y": 793,
+        "max": 1382,
+        "control": -304.609375,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 10000,
+      "before": {
+        "y": 1382,
+        "control": -893.609375
+      },
+      "after": {
+        "y": 1382,
+        "max": 1607,
+        "control": -893.609375,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "All records",
+      "requestedTop": 10000,
+      "before": {
+        "y": 1607,
+        "control": -1118.609375
+      },
+      "after": {
+        "y": 1607,
+        "max": 1607,
+        "control": -1118.609375,
+        "calls": []
+      },
+      "clamped": false
+    },
+    {
+      "name": "Invoices to submit/correct",
+      "requestedTop": 10000,
+      "before": {
+        "y": 1607,
+        "control": -1118.609375
+      },
+      "after": {
+        "y": 1382,
+        "max": 1382,
+        "control": -893.609375,
+        "calls": []
+      },
+      "clamped": true
+    },
+    {
+      "name": "Approved unpaid",
+      "requestedTop": 10000,
+      "before": {
+        "y": 1382,
+        "control": -893.609375
+      },
+      "after": {
+        "y": 793,
+        "max": 793,
+        "control": -304.609375,
+        "calls": []
+      },
+      "clamped": true
+    },
+    {
+      "name": "Awaiting approval",
+      "requestedTop": 10000,
+      "before": {
+        "y": 793,
+        "control": -304.609375
+      },
+      "after": {
+        "y": 646,
+        "max": 646,
+        "control": -157.609375,
+        "calls": []
+      },
+      "clamped": true
+    },
+    {
+      "name": "Our actions",
+      "requestedTop": 10000,
+      "before": {
+        "y": 646,
+        "control": -157.609375
+      },
+      "after": {
+        "y": 646,
+        "max": 867,
+        "control": -157.609375,
+        "calls": []
+      },
+      "clamped": false
+    }
+  ]
+}
