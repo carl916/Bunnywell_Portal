@@ -1,0 +1,537 @@
+{
+  "environment": "Deployed staging HTTPS",
+  "baseline": null,
+  "commit": "1562549b0c4aa609f8ae205f190d8ddf34e1a8aa",
+  "samples": [
+    {
+      "run": 0,
+      "variant": "deployed",
+      "scope": "all",
+      "durationMs": 4197.2059,
+      "bytes": 15942,
+      "items": 5,
+      "hash": "1d894e2fec6352d83cccf2188ae4b9771114937e1f98aafce15669f76ca75e92",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=4015.81, auth;dur=492.15;desc=\"1 calls\", auth_end;dur=493.10;desc=\"offset from route entry\", db_read;dur=9513.82;desc=\"27 calls\", db_read_end;dur=3957.42;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 0,
+      "variant": "deployed",
+      "scope": "single",
+      "durationMs": 3756.4570999999996,
+      "bytes": 15808,
+      "items": 5,
+      "hash": "306c850cd9fd08bffe8196a257f9b34077f2da4f196658fc4ca6bab082582853",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=3593.43, auth;dur=327.13;desc=\"1 calls\", auth_end;dur=327.59;desc=\"offset from route entry\", db_read;dur=8478.76;desc=\"26 calls\", db_read_end;dur=3525.33;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 1,
+      "variant": "deployed",
+      "scope": "all",
+      "durationMs": 3134.7330999999995,
+      "bytes": 15942,
+      "items": 5,
+      "hash": "1d894e2fec6352d83cccf2188ae4b9771114937e1f98aafce15669f76ca75e92",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2991.56, auth;dur=311.85;desc=\"1 calls\", auth_end;dur=312.28;desc=\"offset from route entry\", db_read;dur=7572.80;desc=\"27 calls\", db_read_end;dur=2935.48;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 1,
+      "variant": "deployed",
+      "scope": "single",
+      "durationMs": 3139.6748000000007,
+      "bytes": 15808,
+      "items": 5,
+      "hash": "306c850cd9fd08bffe8196a257f9b34077f2da4f196658fc4ca6bab082582853",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2993.58, auth;dur=141.89;desc=\"1 calls\", auth_end;dur=142.49;desc=\"offset from route entry\", db_read;dur=6578.32;desc=\"26 calls\", db_read_end;dur=2947.56;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 2,
+      "variant": "deployed",
+      "scope": "all",
+      "durationMs": 2706.344399999998,
+      "bytes": 15942,
+      "items": 5,
+      "hash": "1d894e2fec6352d83cccf2188ae4b9771114937e1f98aafce15669f76ca75e92",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2547.21, auth;dur=119.74;desc=\"1 calls\", auth_end;dur=120.06;desc=\"offset from route entry\", db_read;dur=7063.93;desc=\"27 calls\", db_read_end;dur=2479.80;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 2,
+      "variant": "deployed",
+      "scope": "single",
+      "durationMs": 2649.105499999998,
+      "bytes": 15808,
+      "items": 5,
+      "hash": "306c850cd9fd08bffe8196a257f9b34077f2da4f196658fc4ca6bab082582853",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2526.41, auth;dur=135.39;desc=\"1 calls\", auth_end;dur=135.87;desc=\"offset from route entry\", db_read;dur=6035.39;desc=\"26 calls\", db_read_end;dur=2482.47;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 3,
+      "variant": "deployed",
+      "scope": "all",
+      "durationMs": 3199.254399999998,
+      "bytes": 15942,
+      "items": 5,
+      "hash": "1d894e2fec6352d83cccf2188ae4b9771114937e1f98aafce15669f76ca75e92",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=3056.16, auth;dur=321.31;desc=\"1 calls\", auth_end;dur=321.73;desc=\"offset from route entry\", db_read;dur=7118.32;desc=\"27 calls\", db_read_end;dur=2988.12;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 3,
+      "variant": "deployed",
+      "scope": "single",
+      "durationMs": 2782.739300000001,
+      "bytes": 15808,
+      "items": 5,
+      "hash": "306c850cd9fd08bffe8196a257f9b34077f2da4f196658fc4ca6bab082582853",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2637.45, auth;dur=306.78;desc=\"1 calls\", auth_end;dur=307.07;desc=\"offset from route entry\", db_read;dur=6257.63;desc=\"26 calls\", db_read_end;dur=2595.89;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 4,
+      "variant": "deployed",
+      "scope": "all",
+      "durationMs": 3166.4779000000017,
+      "bytes": 15942,
+      "items": 5,
+      "hash": "1d894e2fec6352d83cccf2188ae4b9771114937e1f98aafce15669f76ca75e92",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=3027.63, auth;dur=123.91;desc=\"1 calls\", auth_end;dur=124.26;desc=\"offset from route entry\", db_read;dur=7643.96;desc=\"27 calls\", db_read_end;dur=2960.57;desc=\"offset from route entry\"",
+      "trace": null
+    },
+    {
+      "run": 4,
+      "variant": "deployed",
+      "scope": "single",
+      "durationMs": 2414.062099999999,
+      "bytes": 15808,
+      "items": 5,
+      "hash": "306c850cd9fd08bffe8196a257f9b34077f2da4f196658fc4ca6bab082582853",
+      "sources": [
+        {
+          "key": "access",
+          "state": "ready"
+        },
+        {
+          "key": "appointments",
+          "state": "ready"
+        },
+        {
+          "key": "fees",
+          "state": "ready"
+        },
+        {
+          "key": "handovers",
+          "state": "ready"
+        },
+        {
+          "key": "history",
+          "state": "ready"
+        },
+        {
+          "key": "legal",
+          "state": "ready"
+        },
+        {
+          "key": "rent_risk",
+          "state": "ready"
+        },
+        {
+          "key": "rentals",
+          "state": "ready"
+        },
+        {
+          "key": "sales",
+          "state": "ready"
+        },
+        {
+          "key": "snags",
+          "state": "ready"
+        }
+      ],
+      "serverTiming": "route;dur=2284.16, auth;dur=115.58;desc=\"1 calls\", auth_end;dur=115.91;desc=\"offset from route entry\", db_read;dur=6073.01;desc=\"26 calls\", db_read_end;dur=2240.26;desc=\"offset from route entry\"",
+      "trace": null
+    }
+  ]
+}

@@ -46,3 +46,16 @@ test('traces separate headers/body, preserve SDK consumption and record only all
   assert.equal(span.operation, 'units'); assert.equal(span.retry, 2); assert.equal(span.page, 2); assert.equal(span.rows, 1); assert.equal(span.upstreamMs, 3);
   assert.ok(span.bodyEnd >= span.headers); assert.ok(span.bodyMs >= 10); assert.equal(span.bytes, Buffer.byteLength(secret));
 });
+
+test('the fee portfolio RPC is identified by name without disclosing requester identifiers', async t => {
+  const keys = ['DASHBOARD_READ_DIAGNOSTICS', 'SALES_PERF_DIAGNOSTICS', 'VERCEL_ENV', 'NEXT_PUBLIC_SUPABASE_URL'];
+  const previous = keys.map(k => process.env[k]);
+  t.after(() => keys.forEach((k, i) => previous[i] === undefined ? delete process.env[k] : process.env[k] = previous[i]));
+  Object.assign(process.env, { DASHBOARD_READ_DIAGNOSTICS: '1', SALES_PERF_DIAGNOSTICS: '1', VERCEL_ENV: 'preview', NEXT_PUBLIC_SUPABASE_URL: 'https://vxkpvdtrldwwqiddoyof.supabase.co' });
+  const { DashboardReadDiagnostics } = loadTypescriptModule('src/lib/dashboard/read-diagnostics.ts');
+  const trace = new DashboardReadDiagnostics(new Request('http://local', { headers: { 'x-bunnywell-diagnostic': 'dashboard-tail' } }), 'dashboard', async () => new Response('[]'));
+  trace.authorize('admin'); trace.setStage('data');
+  await (await trace.fetch('https://private.invalid/rest/v1/rpc/get_agent_fee_portfolio', { method: 'POST', body: '{"p_requester_id":"private-viewer"}' })).text();
+  const json = gunzipSync(Buffer.from(trace.response(new Response()).headers.get('x-bunnywell-read-trace'), 'base64')).toString();
+  assert.equal(JSON.parse(json).spans[0].operation, 'get_agent_fee_portfolio'); assert.doesNotMatch(json, /private|requester/);
+});

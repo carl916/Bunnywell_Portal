@@ -8,7 +8,7 @@ const operations = new Set([
   "buildings", "units", "building_floors", "organisations", "unit_sale_attempts",
   "snags", "handovers", "unit_tenancies", "resident_access_requests", "unit_sale_documents",
   "sale_legal_emails", "sale_exchange_deposit_receipts", "sale_exchange_deposit_sources",
-  "sale_workflow_context", "sale_actor_names", "unit_sale_invoices", "unit_sale_invoice_payments",
+  "sale_workflow_context", "sale_actor_names", "get_agent_fee_portfolio", "unit_sale_invoices", "unit_sale_invoice_payments",
   "unit_sale_terms", "rental_arrears_episodes", "rental_import_runs",
 ]);
 type Stage = "auth.validate" | "profile.initial" | "access.initial" | "data" | "profile.final" | "access.final" | "derive";
