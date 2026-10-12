@@ -1,0 +1,86 @@
+{
+  "conditions": "Local Next dev, Chromium, warm assets, same synthetic developer and single accessible building (initial all-building URL resolves to that building); intercepted data, no database latency.",
+  "samples": [
+    {
+      "run": 1,
+      "usableMs": 951,
+      "browserRequests": 28,
+      "supabaseRequests": 17,
+      "dataPaths": [
+        "/auth/v1/user",
+        "/rest/v1/profiles",
+        "/api/auth/activity",
+        "/rest/v1/buildings",
+        "/rest/v1/units",
+        "/rest/v1/building_floors",
+        "/rest/v1/unit_types",
+        "/rest/v1/unit_type_areas",
+        "/rest/v1/trades",
+        "/rest/v1/organisations",
+        "/rest/v1/building_organisations",
+        "/rest/v1/profiles",
+        "/rest/v1/user_building_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_building_access",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/api/dashboard"
+      ]
+    },
+    {
+      "run": 2,
+      "usableMs": 900,
+      "browserRequests": 28,
+      "supabaseRequests": 17,
+      "dataPaths": [
+        "/auth/v1/user",
+        "/rest/v1/profiles",
+        "/api/auth/activity",
+        "/rest/v1/buildings",
+        "/rest/v1/units",
+        "/rest/v1/building_floors",
+        "/rest/v1/unit_types",
+        "/rest/v1/unit_type_areas",
+        "/rest/v1/trades",
+        "/rest/v1/organisations",
+        "/rest/v1/building_organisations",
+        "/rest/v1/profiles",
+        "/rest/v1/user_building_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_building_access",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/api/dashboard"
+      ]
+    },
+    {
+      "run": 3,
+      "usableMs": 979,
+      "browserRequests": 28,
+      "supabaseRequests": 17,
+      "dataPaths": [
+        "/auth/v1/user",
+        "/rest/v1/profiles",
+        "/api/auth/activity",
+        "/rest/v1/buildings",
+        "/rest/v1/units",
+        "/rest/v1/building_floors",
+        "/rest/v1/unit_types",
+        "/rest/v1/unit_type_areas",
+        "/rest/v1/trades",
+        "/rest/v1/organisations",
+        "/rest/v1/building_organisations",
+        "/rest/v1/profiles",
+        "/rest/v1/user_building_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_unit_access",
+        "/rest/v1/user_building_access",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/rest/v1/rpc/sale_mentions_inbox",
+        "/api/dashboard"
+      ]
+    }
+  ]
+}
