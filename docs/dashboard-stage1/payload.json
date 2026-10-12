@@ -1,0 +1,12 @@
+{
+  "conditions": "60 synthetic authorised sales, eight near-term dates; identical fixed time and input. Uncompressed UTF-8 JSON. Not the staging HAR population.",
+  "before": {
+    "bytes": 171194,
+    "items": 188
+  },
+  "after": {
+    "bytes": 12311,
+    "items": 8
+  },
+  "reductionPercent": 92.8
+}

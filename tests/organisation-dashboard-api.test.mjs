@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {loadTypescriptModule} from './helpers/load-typescript-module.mjs';
 import {building,unit,sale} from './helpers/dashboard-fixture.mjs';
 
-function setup({role='developer',active=true,failSource='',changingProfile=false,changingAccess=false}={}){
+function setup({role='developer',active=true,failSource='',changingProfile=false,changingAccess=false,responseComposer}={}){
   const calls=[];let profileReads=0,accessReads=0;
   const profile={id:'viewer',role,organisation_id:'legal-org',active};
   const tables={user_building_access:[{id:'access',user_id:'viewer',building_id:building.id}],profiles:[profile],buildings:[building],units:[unit],building_floors:[],organisations:[],building_organisations:[],unit_sale_attempts:[sale],unit_sale_documents:[],sale_legal_emails:[],sale_exchange_deposit_receipts:[],sale_exchange_deposit_sources:[],unit_sale_invoices:[],unit_sale_invoice_payments:[],unit_sale_terms:[],snags:[],handovers:[],unit_tenancies:[],rental_arrears_episodes:[],rental_import_runs:[],resident_access_requests:[]};
@@ -11,7 +11,7 @@ function setup({role='developer',active=true,failSource='',changingProfile=false
     calls.push(table);let rows=[...(tables[table]??[])],single=false,start=0,end=Infinity;
     const q={select(){return q;},order(){return q;},range(a,b){start=a;end=b;return q;},limit(){return q;},not(){return q;},is(key){rows=rows.filter(r=>r[key]==null);return q;},in(key,ids){if(!key.includes('.'))rows=rows.filter(r=>ids.includes(r[key]));return q;},eq(key,val){if(!key.includes('.'))rows=rows.filter(r=>r[key]===val);return q;},single(){single=true;return q;},then(resolve){if(table==='user_building_access'&&changingAccess&&++accessReads>1)rows=[];if(table==='profiles'&&changingProfile&&++profileReads>1)rows=[{...profile,active:false}];return Promise.resolve({data:single?rows[0]:rows.slice(start,end+1),count:rows.length,error:table===failSource?{message:'PRIVATE database details'}:null}).then(resolve);}};return q;
   },rpc:async(name)=>{calls.push(name);return {data:[],error:null,count:0};}};
-  const route=loadTypescriptModule('src/app/api/dashboard/route.ts',{overrides:{'@supabase/supabase-js':{createClient:(url,key,options)=>{assert.equal(key,'public-test-key');assert.equal(options.auth.persistSession,false);assert.equal(options.global.headers.Authorization,'Bearer synthetic');return client;}},'@/lib/supabase/admin':{requiredEnv:key=>key==='NEXT_PUBLIC_SUPABASE_ANON_KEY'?'public-test-key':'https://synthetic.invalid'}}});
+  const route=loadTypescriptModule('src/app/api/dashboard/route.ts',{overrides:{...(responseComposer?{'@/lib/dashboard/response':{dashboardResponse:responseComposer}}:{}),'@supabase/supabase-js':{createClient:(url,key,options)=>{assert.equal(key,'public-test-key');assert.equal(options.auth.persistSession,false);assert.equal(options.global.headers.Authorization,'Bearer synthetic');return client;}},'@/lib/supabase/admin':{requiredEnv:key=>key==='NEXT_PUBLIC_SUPABASE_ANON_KEY'?'public-test-key':'https://synthetic.invalid'}}});
   const get=(query='building=all',signed=true)=>route.GET(new Request(`http://local/api/dashboard?${query}`,{headers:signed?{authorization:'Bearer synthetic'}:{}}));
   return {get,calls,tables};
 }
@@ -42,7 +42,7 @@ test('representatives and contractors have operational sources only',async()=>{
 test('revocation during a read rejects the snapshot',async()=>{const f=setup({changingProfile:true});assert.equal((await f.get()).status,403);});
 test('a source count larger than a page is paginated before aggregation',async()=>{
   const f=setup({role:'admin'});f.tables.resident_access_requests=Array.from({length:301},(_,i)=>({id:`r${i}`,status:'pending',created_at:'2026-10-01',requested_units:[{building_id:building.id}]}));
-  const body=await (await f.get()).json();assert.equal(body.items.filter(i=>i.kind==='resident_access').length,301);assert.equal(f.calls.filter(t=>t==='resident_access_requests').length,2);
+  const body=await (await f.get()).json();assert.equal(body.overview.additional.find(i=>i.key==='resident_access').count,301);assert.equal(f.calls.filter(t=>t==='resident_access_requests').length,2);
 });
 
 test("building access revoked during a read rejects the whole response",async()=>{const f=setup({changingAccess:true});assert.equal((await f.get()).status,403);});
@@ -57,5 +57,19 @@ test('simplified composition is returned only to internal admins and developers'
       assert.deepEqual(snapshot.overview.attention.map(row => row.key), ['sales', 'fees', 'snags', 'rentals']);
       assert.equal(new URL(snapshot.overview.attention[0].ours.href, 'https://test').searchParams.get('building'), building.id);
     } else assert.equal(snapshot.overview, undefined);
+  }
+});
+
+test('transport reduction preserves the route read plan and complete authorised summaries', async () => {
+  const { deriveDashboard } = loadTypescriptModule('src/lib/dashboard/model.ts');
+  const { deriveInternalOverview, datesToReview } = loadTypescriptModule('src/lib/dashboard/overview.ts');
+  for (const role of ['admin', 'developer', 'sales_agent', 'conveyancer', 'contractor', 'developer_representative']) {
+    const before = setup({ role, responseComposer: input => { const full = deriveDashboard(input); full.overview = deriveInternalOverview(input, full); return full; } });
+    const after = setup({ role });
+    const full = await (await before.get()).json(), reduced = await (await after.get()).json();
+    assert.deepEqual(after.calls, before.calls, `${role}: no authentication/access or source reads removed`);
+    assert.deepEqual(reduced.summaries, full.summaries);
+    assert.deepEqual(reduced.overview, full.overview);
+    assert.deepEqual(reduced.items, full.overview ? datesToReview(full) : full.items);
   }
 });

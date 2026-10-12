@@ -2,8 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { createRequire } from "node:module";
 import { mkdir } from "node:fs/promises";
 import { salesFixture } from "./helpers/sales-fixture";
-import { deriveDashboard } from "../src/lib/dashboard/model";
-import { deriveInternalOverview } from "../src/lib/dashboard/overview";
+import { dashboardResponse } from "../src/lib/dashboard/response";
 import type { DashboardInput } from "../src/lib/dashboard/types";
 const { fixture, document, snag } = createRequire(__filename)("./helpers/dashboard-fixture.mjs");
 
@@ -28,9 +27,7 @@ async function workFixture(page: Page, role = "developer") {
     const scope = new URL(route.request().url()).searchParams.get("building");
     if (delay) await new Promise(resolve => setTimeout(resolve, delay));
     const scoped = { ...input, buildingId: scope === "all" ? "" : scope ?? "", snags: input.snags.filter(snag => scope === "all" || snag.building_id === scope) };
-    const snapshot = deriveDashboard(scoped);
-    snapshot.overview = deriveInternalOverview(scoped, snapshot);
-    await route.fulfill({ json: snapshot });
+    await route.fulfill({ json: dashboardResponse(scoped) });
   });
   return { ...f, input, reads: () => reads, delay: (ms: number) => { delay = ms; }, fail: (value: boolean, status = 503) => { failed = value; failureStatus = status; } };
 }

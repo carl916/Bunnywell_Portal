@@ -7,6 +7,7 @@ import { readComplete } from "@/lib/dashboard/pagination";
 import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
 import { traceLoad, tracedClient } from "@/lib/performance/load-trace";
 import { createLoadCoordinator, createSessionLifecycle } from "@/lib/portal-load-lifecycle";
+import { createPortalScreenLoader, portalScreenResources, type PortalScreenResource } from "@/lib/portal-screen-data";
 import { portalAccessKey } from "@/lib/portal-access-snapshot";
 import { BuildingSalesContacts } from "./sales/BuildingSalesContacts";
 import { validSharedSystemEmail } from "@/lib/sales/legal-workflow";
@@ -855,7 +856,7 @@ export function ProductionPortalApp() {
   const [accessibleBuildingIds, setAccessibleBuildingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [operationalReady, setOperationalReady] = useState(false);
+  const [loadedResources, setLoadedResources] = useState<PortalScreenResource[]>([]);
   const [authRedirect, setAuthRedirect] = useState<AuthRedirectState | null>(null);
   const [salesRefreshRevision, setSalesRefreshRevision] = useState(0);
   const [lastDataRefreshAt, setLastDataRefreshAt] = useState<string | null>(null);
@@ -863,7 +864,7 @@ export function ProductionPortalApp() {
   const lastActivityAtRef = useRef<string | null>(null);
   const portalLoads = useRef(createLoadCoordinator("portal"));
   const loadedAccessKey = useRef<string | null>(null);
-  const loadedScreen = useRef<string | null>(null);
+  const screenData = useRef(createPortalScreenLoader());
 
   const role = profile?.role ?? "user";
   const tabs = roleTabs(role);
@@ -906,10 +907,10 @@ export function ProductionPortalApp() {
     if (user?.id) window.sessionStorage.removeItem(`bunnywell.portal.buildingContext.${user.id}`);
     portalLoads.current.invalidate();
     loadedAccessKey.current = null;
-    loadedScreen.current = null;
+    screenData.current.invalidate();
+    setLoadedResources([]);
     setUser(null);
     setProfile(null);
-    setOperationalReady(false);
     setActiveTab("dashboard");
     clearScreenFromUrl();
     setSnagListFilters({});
@@ -964,6 +965,7 @@ export function ProductionPortalApp() {
     const supabase = createSupabaseBrowserClient();
     const redirectState = readAuthRedirectState();
     const coordinator = portalLoads.current;
+    const screenLoader = screenData.current;
     let cancelled = false;
     const lifecycle = createSessionLifecycle<User>({
       validate: async () => {
@@ -979,7 +981,7 @@ export function ProductionPortalApp() {
         await loadAll(verifiedUser.id, verifiedUser.email, event);
       },
       clear: clearPortalState,
-      invalidate: () => coordinator.invalidate(),
+      invalidate: () => { coordinator.invalidate(); screenLoader.invalidate(); setLoadedResources([]); },
       recheck: recheckPortalAccess,
       error: error => setNotice(readableError(error)),
     });
@@ -1028,7 +1030,7 @@ export function ProductionPortalApp() {
       lifecycle.observe(event, session);
     });
 
-    return () => { cancelled = true; lifecycle.dispose(); coordinator.invalidate(); data.subscription.unsubscribe(); };
+    return () => { cancelled = true; lifecycle.dispose(); coordinator.invalidate(); screenLoader.invalidate(); data.subscription.unsubscribe(); };
   }, [supabaseEnabled]);
 
   useEffect(() => {
@@ -1150,6 +1152,7 @@ export function ProductionPortalApp() {
     if (!userId) return;
     return portalLoads.current.run(userId, event, async valid => {
       if (!valid()) return;
+      screenData.current.invalidate();
       const supabase = tracedClient(createSupabaseBrowserClient(), "portal", event);
       const profileSelect = "id,email,name,full_name,role,resident_type,organisation_id,active,created_at,last_active_at";
       let profileResult = await supabase
@@ -1183,119 +1186,46 @@ export function ProductionPortalApp() {
       const profileIdForAccess = loadedProfile?.id ?? userId;
       const requestedTab = screenFromUrl() ?? defaultTabForRole(loadedProfile.role);
       const detailTab = canAccessScreen(loadedProfile.role, requestedTab) ? requestedTab : defaultTabForRole(loadedProfile.role);
-      const needsOperationalDetails = ["snags", "units", "resident_home", "resident_snags"].includes(detailTab);
-      const empty = () => Promise.resolve({ data: [], error: null });
       const complete = async (table: string, order = "id") => {
         try {
           const data = await readComplete(async (from, to) => await supabase.from(table).select("*", { count: "exact" }).order(order).order("id").range(from, to));
           return { data, error: null };
         } catch (error) { return { data: [], error: { message: readableError(error, "Could not load the complete list. Refresh to retry.") } }; }
       };
-      const [
-        buildingsResult,
-        unitsResult,
-        areasResult,
-        floorsResult,
-        unitTypesResult,
-        unitTypeAreasResult,
-        tradesResult,
-        orgsResult,
-        buildingOrganisationsResult,
-        profilesResult,
-        allBuildingAccessResult,
-        allUnitAccessResult,
-        accessRequestsResult,
-        snagsResult,
-        photosResult,
-        eventsResult,
-        auditEventsResult,
-        handoversResult,
-        handoverKeyItemsResult,
-        handoverPhotosResult,
-        metersResult,
-        accessResult,
-        buildingAccessResult,
-      ] = await Promise.all([
+      const [buildingsResult, unitsResult, buildingOrganisationsResult, accessResult, buildingAccessResult] = await Promise.all([
         complete("buildings", "name"),
         complete("units", "unit_number"),
-        needsOperationalDetails || portalScreens[detailTab].section === "setup" ? fetchAllAreas(supabase) : empty(),
-        supabase.from("building_floors").select("*").order("sort_order"),
-        supabase.from("unit_types").select("*").order("name"),
-        supabase.from("unit_type_areas").select("*").order("sort_order"),
-        supabase.from("trades").select("*").order("sort_order"),
-        supabase.from("organisations").select("*").order("name"),
         supabase.from("building_organisations").select("*"),
-        supabase.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
-        supabase.from("user_building_access").select("user_id,building_id,role_on_building"),
-        supabase.from("user_unit_access").select("user_id,unit_id,access_type"),
-        detailTab === "setup_people" && loadedProfile.role === "admin" ? complete("resident_access_requests", "created_at") : empty(),
-        needsOperationalDetails ? complete("snags", "created_at") : empty(),
-        needsOperationalDetails ? complete("snag_photos", "created_at") : empty(),
-        needsOperationalDetails ? complete("snag_events", "created_at") : empty(),
-        Promise.resolve({ data: [], count: 0, error: null }),
-        needsOperationalDetails ? complete("handovers", "created_at") : empty(),
-        needsOperationalDetails ? complete("handover_key_items", "sort_order") : empty(),
-        needsOperationalDetails ? complete("handover_photos", "created_at") : empty(),
-        needsOperationalDetails ? complete("meter_readings", "created_at") : empty(),
         supabase.from("user_unit_access").select("unit_id").eq("user_id", profileIdForAccess),
         supabase.from("user_building_access").select("building_id").eq("user_id", profileIdForAccess),
       ]);
 
       if (!valid()) return;
 
-      setOperationalReady(needsOperationalDetails && ![snagsResult, photosResult, eventsResult, handoversResult, handoverKeyItemsResult, handoverPhotosResult, metersResult].some(result => result.error));
-      const accessError = [accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
+      const accessError = [buildingsResult.error, unitsResult.error, accessResult.error, buildingAccessResult.error, buildingOrganisationsResult.error].find(Boolean);
       if (accessError) { setProfile(null); loadedAccessKey.current = null; throw accessError; }
-      loadedAccessKey.current = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
-
-      const firstError = [
-        buildingsResult.error,
-        unitsResult.error,
-        areasResult.error,
-        buildingOrganisationsResult.error,
-        accessRequestsResult.error,
-        snagsResult.error,
-      ].find(Boolean);
-
-      if (firstError) {
-        setNotice(`Production schema is not ready yet: ${firstError.message}`);
-      } else {
-        setNotice((current) => current.startsWith("Production schema is not ready") ? "" : current);
-      }
+      const nextAccessKey = portalAccessKey(loadedProfile, accessResult.data ?? [], buildingAccessResult.data ?? [], buildingOrganisationsResult.data ?? []);
+      const sameAccess = nextAccessKey === loadedAccessKey.current;
+      if (!sameAccess) screenData.current.invalidate();
+      // Keep the current screen mounted during a same-scope mutation refresh.
+      // Other screens must load fresh data when revisited after that mutation.
+      // A navigation may already have finished fresh reads while the shell loaded.
+      const completedResources = screenData.current.loaded();
+      setLoadedResources(current => sameAccess ? [...new Set([
+        ...current.filter(resource => portalScreenResources(detailTab, loadedProfile.role).includes(resource)),
+        ...completedResources,
+      ])] : []);
+      loadedAccessKey.current = nextAccessKey;
 
       const recordedActivityAt = lastActivityAtRef.current;
       const profileWithCurrentActivity = loadedProfile && loadedProfile.id === userId && recordedActivityAt
         ? { ...loadedProfile, last_active_at: recordedActivityAt }
         : loadedProfile;
-      const loadedProfiles = (profilesResult.data ?? []) as Profile[];
-      const profilesWithCurrentActivity = recordedActivityAt
-        ? loadedProfiles.map((item) => item.id === userId ? { ...item, last_active_at: recordedActivityAt } : item)
-        : loadedProfiles;
-
       setProfile(profileWithCurrentActivity);
       setBuildings((buildingsResult.data ?? []) as Building[]);
       setUnits((unitsResult.data ?? []) as Unit[]);
-      setAreas((areasResult.data ?? []) as Area[]);
-      setBuildingFloors((floorsResult.data ?? []) as BuildingFloor[]);
-      setUnitTypes((unitTypesResult.data ?? []) as UnitType[]);
-      setUnitTypeAreas((unitTypeAreasResult.data ?? []) as UnitTypeArea[]);
-      setTrades((tradesResult.data ?? []) as Trade[]);
-      setOrganisations((orgsResult.data ?? []) as Organisation[]);
       const loadedBuildingOrganisations = (buildingOrganisationsResult.data ?? []) as BuildingOrganisation[];
       setBuildingOrganisations(loadedBuildingOrganisations);
-      setProfiles(profilesWithCurrentActivity);
-      setUserBuildingAccess((allBuildingAccessResult.data ?? []) as UserBuildingAccess[]);
-      setUserUnitAccess((allUnitAccessResult.data ?? []) as UserUnitAccess[]);
-      setAccessRequests((accessRequestsResult.data ?? []) as ResidentAccessRequest[]);
-      setSnags((snagsResult.data ?? []) as ProductionSnag[]);
-      setPhotos((photosResult.data ?? []) as SnagPhoto[]);
-      setEvents((eventsResult.data ?? []) as SnagEvent[]);
-      setAuditEvents((auditEventsResult.data ?? []) as AuditEvent[]);
-      setAuditTotalCount(auditEventsResult.count ?? auditEventsResult.data?.length ?? 0);
-      setHandovers((handoversResult.data ?? []) as Handover[]);
-      setHandoverKeyItems((handoverKeyItemsResult.data ?? []) as HandoverKeyItem[]);
-      setHandoverPhotos((handoverPhotosResult.data ?? []) as HandoverPhoto[]);
-      setMeterReadings((metersResult.data ?? []) as MeterReading[]);
       setAccessibleUnitIds((accessResult.data ?? []).map((row) => row.unit_id));
       const organisationBuildingIds = loadedProfile?.organisation_id
         ? loadedBuildingOrganisations
@@ -1321,20 +1251,73 @@ export function ProductionPortalApp() {
         ...organisationBuildingIds,
       ])));
       setLastDataRefreshAt(new Date().toISOString());
-      loadedScreen.current = detailTab;
+      await loadScreenData(loadedProfile, detailTab, event);
+      if (!valid()) return;
       traceLoad("portal", event, "published");
     }, event === "explicit-refresh" || event === "operation-refresh" || event === "screen-open" || event.startsWith("auth:"));
   }
 
+  async function loadScreenData(person: Profile, screen: Tab, event = "screen-open") {
+    const client = tracedClient(createSupabaseBrowserClient(), "portal", event);
+    const complete = (table: string, order = "id") => readComplete(async (from, to) =>
+      await client.from(table).select("*", { count: "exact" }).order(order).order("id").range(from, to));
+    await screenData.current.ensure(portalScreenResources(screen, person.role), async resource => {
+      switch (resource) {
+        case "snags": return complete("snags", "created_at");
+        case "photos": return complete("snag_photos", "created_at");
+        case "events": return complete("snag_events", "created_at");
+        case "handovers": return complete("handovers", "created_at");
+        case "handoverKeys": return complete("handover_key_items", "sort_order");
+        case "handoverPhotos": return complete("handover_photos", "created_at");
+        case "meters": return complete("meter_readings", "created_at");
+        case "accessRequests": return complete("resident_access_requests", "created_at");
+      }
+      const queries = {
+        areas: () => fetchAllAreas(client),
+        floors: () => client.from("building_floors").select("*").order("sort_order"),
+        unitTypes: () => client.from("unit_types").select("*").order("name"),
+        unitTypeAreas: () => client.from("unit_type_areas").select("*").order("sort_order"),
+        trades: () => client.from("trades").select("*").order("sort_order"),
+        organisations: () => client.from("organisations").select("*").order("name"),
+        profiles: () => client.from("profiles").select("id,email,name,full_name,phone,role,resident_type,organisation_id,active,created_at,last_active_at").order("email"),
+        buildingAccess: () => client.from("user_building_access").select("user_id,building_id,role_on_building"),
+        unitAccess: () => client.from("user_unit_access").select("user_id,unit_id,access_type"),
+      };
+      const result = await queries[resource]();
+      if (result.error) throw result.error;
+      return result.data ?? [];
+    }, (resource, rows) => {
+      switch (resource) {
+        case "areas": setAreas(rows as Area[]); break;
+        case "floors": setBuildingFloors(rows as BuildingFloor[]); break;
+        case "unitTypes": setUnitTypes(rows as UnitType[]); break;
+        case "unitTypeAreas": setUnitTypeAreas(rows as UnitTypeArea[]); break;
+        case "trades": setTrades(rows as Trade[]); break;
+        case "organisations": setOrganisations(rows as Organisation[]); break;
+        case "profiles": setProfiles((rows as Profile[]).map(item => item.id === person.id && lastActivityAtRef.current ? { ...item, last_active_at: lastActivityAtRef.current } : item)); break;
+        case "buildingAccess": setUserBuildingAccess(rows as UserBuildingAccess[]); break;
+        case "unitAccess": setUserUnitAccess(rows as UserUnitAccess[]); break;
+        case "accessRequests": setAccessRequests(rows as ResidentAccessRequest[]); break;
+        case "snags": setSnags(rows as ProductionSnag[]); break;
+        case "photos": setPhotos(rows as SnagPhoto[]); break;
+        case "events": setEvents(rows as SnagEvent[]); break;
+        case "handovers": setHandovers(rows as Handover[]); break;
+        case "handoverKeys": setHandoverKeyItems(rows as HandoverKeyItem[]); break;
+        case "handoverPhotos": setHandoverPhotos(rows as HandoverPhoto[]); break;
+        case "meters": setMeterReadings(rows as MeterReading[]); break;
+      }
+      const completedResources = screenData.current.loaded();
+      setLoadedResources(current => [...new Set([...current, ...completedResources])]);
+    });
+  }
+
   useEffect(() => {
-    if (!user || !profile || isLoading) return;
-    if (loadedScreen.current === tab) return;
-    if (!["snags", "units", "resident_home", "resident_snags"].includes(tab) && portalScreens[tab].section !== "setup") return;
-    const timer = window.setTimeout(() => void loadAll(user.id, user.email, "screen-open").catch(error => setNotice(readableError(error, "Could not load this screen. Refresh to retry."))), 0);
+    if (!user || !profile || isLoading || !canAccessScreen(profile.role, tab)) return;
+    const timer = window.setTimeout(() => void loadScreenData(profile, tab).catch(error => setNotice(readableError(error, "Could not load this screen. Refresh to retry."))), 0);
     return () => window.clearTimeout(timer);
-    // Open details once per navigation; mutations retain the existing explicit refresh path.
+    // Loaded and in-flight resources are shared across screens within this session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, user?.id, profile?.id, isLoading]);
+  }, [tab, user?.id, profile?.id, profile?.role, profile?.organisation_id, isLoading]);
 
   async function recheckPortalAccess(verifiedUser: User) {
     const previousAccessKey = loadedAccessKey.current;
@@ -1347,7 +1330,7 @@ export function ProductionPortalApp() {
     ]);
     if (previousAccessKey !== loadedAccessKey.current) return false;
     const error = [person.error, unitAccess.error, buildingAccess.error, links.error].find(Boolean);
-    if (error) { portalLoads.current.invalidate(); setProfile(null); throw error; }
+    if (error) { portalLoads.current.invalidate(); screenData.current.invalidate(); setLoadedResources([]); setProfile(null); throw error; }
     const changed = portalAccessKey(person.data, unitAccess.data ?? [], buildingAccess.data ?? [], links.data ?? []) !== loadedAccessKey.current;
     traceLoad("access", "auth:SIGNED_IN", changed ? "changed" : "unchanged");
     return changed;
@@ -1358,6 +1341,7 @@ export function ProductionPortalApp() {
     try {
       await loadAll(user?.id, user?.email, "explicit-refresh");
       setSalesRefreshRevision(value => value + 1);
+      window.dispatchEvent(new Event("portal-work-changed"));
     } catch (error) {
       setNotice(readableError(error, "Could not reload your portal access. Use Refresh to try again."));
     }
@@ -1506,6 +1490,7 @@ export function ProductionPortalApp() {
   }
 
   const activeTab = profile && !canAccessScreen(role, tab) ? defaultTabForRole(role) : tab;
+  const screenReady = portalScreenResources(activeTab, role).every(resource => loadedResources.includes(resource));
 
   return (
     <Shell
@@ -1525,7 +1510,7 @@ export function ProductionPortalApp() {
       {activeTab === "dashboard" && contextReady && (
         <OrganisationWorklist key={`${profile.id}:${profile.role}:${profile.organisation_id}:${buildingContextId}`} identity={`${profile.id}:${profile.role}:${profile.organisation_id ?? ""}`} buildingId={buildingContextId} scopeLabel={scopedBuildings.find(building => building.id === buildingContextId)?.name} />
       )}
-      {portalScreens[activeTab].section === "setup" && (
+      {portalScreens[activeTab].section === "setup" && screenReady && (
         <SetupSection
           activeTab={activeTab}
           setTab={setTab}
@@ -1551,8 +1536,8 @@ export function ProductionPortalApp() {
           reload={loadAll}
         />
       )}
-      {["snags", "units", "resident_home", "resident_snags"].includes(activeTab) && !operationalReady && <section className="panel"><p role="status">Loading operational records. If this does not complete, refresh to retry.</p></section>}
-      {activeTab === "snags" && operationalReady && (
+      {!screenReady && <section className="panel"><p role="status">Loading screen records. If this does not complete, refresh to retry.</p></section>}
+      {activeTab === "snags" && screenReady && (
         <SnagWorkflow
           user={user}
           profile={profile}
@@ -1576,7 +1561,7 @@ export function ProductionPortalApp() {
           requestedFilters={snagListFilters}
         />
       )}
-      {activeTab === "units" && operationalReady && (
+      {activeTab === "units" && screenReady && (
         <UnitsSection
           user={user}
           profile={profile}
@@ -1600,7 +1585,7 @@ export function ProductionPortalApp() {
           uploadSnagMedia={uploadSnagMedia}
         />
       )}
-      {activeTab === "sales" && contextReady && (
+      {activeTab === "sales" && contextReady && screenReady && (
         <SalesWorkspace
           user={user}
           profile={profile}
@@ -1621,7 +1606,7 @@ export function ProductionPortalApp() {
             buildingOrganisations.map(link => ({ ...link, role_on_project: link.role_on_project ?? "" })))}
         />
       )}
-      {activeTab === "rentals" && (
+      {activeTab === "rentals" && screenReady && (
         <RentalsWorkspace
           role={role}
           buildings={scopedBuildings}
@@ -1641,7 +1626,7 @@ export function ProductionPortalApp() {
           }}
         />
       )}
-      {(activeTab === "resident_home" || activeTab === "resident_snags") && operationalReady && (
+      {(activeTab === "resident_home" || activeTab === "resident_snags") && screenReady && (
         <LeaseholderDefects
           user={user}
           profile={profile}
