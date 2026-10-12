@@ -85,8 +85,9 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
           <div className={styles.sourceLinks}>{general("snags", "Developer snags", { snagSource: "developer_snag" })}{general("snags", "Resident defects", { snagSource: "leaseholder_defect" })}</div>
         </div>
         <div><div className={styles.groupHeading}><h3>Rentals</h3>{general("rentals", "Open Rentals")}</div>
-          <div><p className={styles.rentalCaption}>{noRentals ? "No active rental units" : loading ? <DashboardSkeleton variant="secondary" /> : null}</p><dl className={styles.metrics}><div><dt>Occupied</dt><dd>{metric("occupied")}</dd></div><div><dt>Void</dt><dd>{metric("voids")}</dd></div></dl></div>
-          <p className={styles.evidence}>{rentalEvidence ?? (loading ? <><DashboardSkeleton /><DashboardSkeleton /><DashboardSkeleton variant="secondary" /></> : "Rental evidence unavailable. No reported arrears is not proof that rent is paid.")}</p>
+          <dl className={styles.metrics}><div><dt>Occupied</dt><dd>{metric("occupied")}</dd></div><div><dt>Void</dt><dd>{metric("voids")}</dd></div></dl>
+          <div><p className={styles.rentalCaption}>{noRentals ? "No active rental units" : loading ? <DashboardSkeleton variant="secondary" /> : null}</p>
+            <p className={styles.evidence}>{rentalEvidence ?? (loading ? <><DashboardSkeleton /><DashboardSkeleton /><DashboardSkeleton variant="secondary" /></> : "Rental evidence unavailable. No reported arrears is not proof that rent is paid.")}</p></div>
         </div>
       </div>
     </section>
