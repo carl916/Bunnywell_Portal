@@ -1,0 +1,232 @@
+{
+  "method": "SQL under each existing staging identity's JWT claims, same postgres definer context; full ordered JSON comparison, not browser authentication",
+  "scope": {
+    "saleIds": 127
+  },
+  "identities": [
+    {
+      "identity": 1,
+      "role": "admin",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 523,
+      "bytes": 327800
+    },
+    {
+      "identity": 2,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 3,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 4,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 5,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 6,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 7,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 8,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 9,
+      "role": "developer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 10,
+      "role": "developer_representative",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 11,
+      "role": "developer_representative",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 12,
+      "role": "developer_representative",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 13,
+      "role": "developer_representative",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 14,
+      "role": "developer_representative",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 15,
+      "role": "contractor",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 16,
+      "role": "resident",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 17,
+      "role": "resident",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 18,
+      "role": "sales_agent",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 19,
+      "role": "sales_agent",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 483,
+      "bytes": 304669
+    },
+    {
+      "identity": 20,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 21,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 22,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 23,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 24,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 25,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 26,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 27,
+      "role": "conveyancer",
+      "active": false,
+      "exact_ordered_json_equal": true,
+      "event_count": 0,
+      "bytes": 2
+    },
+    {
+      "identity": 28,
+      "role": "conveyancer",
+      "active": true,
+      "exact_ordered_json_equal": true,
+      "event_count": 483,
+      "bytes": 304669
+    }
+  ]
+}
