@@ -179,7 +179,7 @@ test("building changes withhold previous counts while all sections stay mounted"
   await expect(page.getByRole("heading", { name: "Work needing attention" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Dates to review" })).toBeVisible();
   await expect(page.getByRole("link", { name: "1 unit row", exact: true })).toHaveCount(0);
-  await expect(page.getByText("Loading dashboard…", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Work needing attention", exact: true })).toHaveAttribute("aria-busy", "true");
   await expect(page.getByRole("link", { name: "0 unit rows", exact: true }).first()).toBeVisible();
   await expect(page.getByRole("region", { name: "Dashboard", exact: true })).toContainText("Empty House · Developer team");
   f.delay(0);
