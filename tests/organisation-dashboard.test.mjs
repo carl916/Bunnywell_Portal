@@ -115,7 +115,7 @@ test('urgent resident defect is ordered ahead of routine sales work',()=>{
   const s=deriveDashboard(fixture({documents:docs(),snags:[snag({source_type:'leaseholder_defect',priority_code:'P1',status:'new',sla_due_date:'2026-10-07'})]}));assert.equal(s.items[0].source,'Resident defect');assert.equal(s.items[0].urgent,true);
 });
 test('fees respect supersession, voided payments and approved versus submitted positions',()=>{
-  const f=fixture({invoices:[{id:'invoice',sale_attempt_id:sale.id,fee_milestone:'exchange',status:'approved',gross_amount:1200,expected_payable_amount:1200,approved_at:'2026-10-01',created_at:'2026-09-01'}],payments:[{invoice_id:'invoice',amount:1200,voided_at:'2026-10-02'}]});
+  const f=fixture({invoices:[{id:'invoice',sale_attempt_id:sale.id,invoice_type:'sales_agent',fee_milestone:'exchange',status:'approved',gross_amount:1200,expected_payable_amount:1200,approved_at:'2026-10-01',created_at:'2026-09-01'}],payments:[{payment_source:'bank_transfer',invoice_id:'invoice',amount:1200,voided_at:'2026-10-02'}]});
   assert.ok(kinds(f).includes('fee_exchange_approved_unpaid'));f.payments[0].voided_at=null;assert.ok(!kinds(f).some(k=>k.startsWith('fee_')));
   f.invoices[0].status='superseded';assert.ok(!kinds(f).some(k=>k.startsWith('fee_')));
 });

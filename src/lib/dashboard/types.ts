@@ -4,9 +4,11 @@ import type { UnitTenancy } from "../rentals/tenancies";
 import type { RentalArrearsEpisode } from "../rentals/rent-risk";
 import type { WorkDeadline } from "./dates";
 import type { InternalOverview } from "./overview";
+import type { AgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
+import type { AgentFeePayment } from "../sales/agent-fees";
 
 export type WorkModule = "sales" | "snags" | "other";
-export type WorkParty = { kind: "developer" | "sales_agent" | "conveyancer" | "contractor" | "unallocated"; organisationId: string | null; label: string };
+export type WorkParty = { kind: "developer" | "sales_agent" | "conveyancer" | "contractor" | "unallocated"; organisationId: string | null; label: string; allocation?: "appointed" | "unallocated" | "unavailable" };
 export type WorkContext = { id: string; text: string; at: string; account: string | null };
 export type WorkDestination = { screen: "sales" | "snags" | "units" | "rentals" | "setup_people" | "setup_buildings"; buildingId: string; unitId?: string; saleId?: string; snagId?: string; requestId?: string; section?: string; anchor?: string; filter?: string; source?: string; versionId?: string };
 export type WorkItem = {
@@ -37,8 +39,8 @@ export type WorkDocument = {
 };
 export type WorkAuthority = Pick<LegalEmail, "id" | "sale_attempt_id" | "kind" | "version" | "issued_at" | "expires_at" | "revoked_at" | "replaced_by" | "exchanged_at" | "delivery_status" | "sent_at" | "resend_message_id">;
 export type WorkSaleEvent = { id: string; sale_attempt_id: string; event_type: string; created_at: string; created_by_user_id: string | null; actor_name?: string | null; summary?: string; version_id?: string | null; metadata?: { versionId?: string; queryNote?: string } };
-export type WorkInvoice = { id: string; sale_attempt_id: string; status: string; fee_milestone: "exchange" | "completion"; gross_amount: number | null; expected_payable_amount: number | null; reservation_fee_deduction?: number | null; agent_contribution_deduction?: number | null; approved_at: string | null; created_at: string };
-export type WorkTerms = { sale_attempt_id: string; contract_price: number | null; exchange_agent_fee_percent: number | null; completion_agent_fee_percent: number | null; vat_rate: number | null };
+export type WorkInvoice = { id: string; sale_attempt_id: string; invoice_type?: string; status: string; fee_milestone: "exchange" | "completion"; gross_amount: number | null; expected_payable_amount: number | null; reservation_fee_deduction?: number | null; agent_contribution_deduction?: number | null; approved_at: string | null; created_at: string };
+export type WorkTerms = { sale_attempt_id: string; is_current?: boolean; version_number?: number; contract_price: number | null; exchange_agent_fee_percent: number | null; completion_agent_fee_percent: number | null; vat_rate: number | null };
 export type SourceState = { key: string; label: string; state: "ready" | "unavailable" | "not_permitted"; detail?: string; asOf: string | null };
 export type DashboardInput = {
   viewer: WorkViewer; now: number; buildingId: string; buildings: Building[]; units: Unit[]; floors: BuildingFloor[];
@@ -46,7 +48,8 @@ export type DashboardInput = {
   saleActors?: { id: string; display_name: string }[]; sales: WorkSale[]; documents: WorkDocument[]; authorities: WorkAuthority[]; saleEvents: WorkSaleEvent[];
   deposits: { sale_attempt_id: string; source_id: string; expected_amount: number; received_amount: number }[];
   depositSources: { id: string; sale_attempt_id: string; source_kind: string; expected_amount: number | null }[];
-  invoices: WorkInvoice[]; terms: WorkTerms[]; payments: { invoice_id: string; amount: number; voided_at: string | null }[];
+  feePortfolio?: AgentFeePortfolioRow[];
+  invoices: WorkInvoice[]; terms: WorkTerms[]; payments: (AgentFeePayment & { invoice_id: string })[];
   snags: (ProductionSnag & { snag_events: SnagEvent[] })[]; handovers: { unit_id: string }[];
   tenancies: UnitTenancy[]; arrears: RentalArrearsEpisode[];
   rentalImports: { id: string; building_id: string | null; status: string; data_as_of: string | null; started_at: string; completed_at: string | null; error_count: number; data_quality_issue_count: number }[];
@@ -58,6 +61,6 @@ export type DashboardSnapshot = {
   overview?: InternalOverview;
   asOf: string; scope: { buildingId: string; label: string; team: string; identity: string }; sources: SourceState[];
   items: WorkItem[]; summaries: PortfolioSummary[];
-  activity: (WorkContext & { recordKey: string; destination: WorkDestination })[];
+  activity: (WorkContext & { recordKey: string; reference?: string; buildingName?: string; destination: WorkDestination })[];
   buildings: { id: string; name: string; sales: number | null; rentals: number | null; snags: number | null; defects: number | null }[];
 };

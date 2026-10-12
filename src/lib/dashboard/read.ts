@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DashboardInput, WorkViewer } from "./types";
 import { canOpenSalesPipeline, isSalesInternalRole } from "../sales/permissions";
+import { readAgentFeePortfolio } from "../sales/fee-portfolio-data";
 import { portalAccessKey } from "../portal-access-snapshot";
 
 import { readComplete, DASHBOARD_SOURCE_LIMIT } from "./pagination";
@@ -115,13 +116,9 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
       input.saleEvents = events; input.saleActors = actors;
     }),
     source("fees", "Agent invoice position", internal, async () => {
-      if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");
-      const [invoices, payments, terms] = await Promise.all([
-        byIds<DashboardInput["invoices"][number]>("unit_sale_invoices", "id,sale_attempt_id,status,fee_milestone,gross_amount,expected_payable_amount,reservation_fee_deduction,agent_contribution_deduction,approved_at,created_at", "sale_attempt_id", salesIds),
-        byIds<DashboardInput["payments"][number]>("unit_sale_invoice_payments", "id,invoice_id,amount,voided_at", "sale_attempt_id", salesIds),
-        byIds<DashboardInput["terms"][number]>("unit_sale_terms", "id,sale_attempt_id,contract_price,exchange_agent_fee_percent,completion_agent_fee_percent,vat_rate", "sale_attempt_id", salesIds, q => q.eq("is_current", true)),
-      ]);
-      Object.assign(input, { invoices, payments, terms });
+      // The canonical full portfolio RPC replaces the three active-only reads.
+      // Reuse all accessible building metadata: the RPC is portfolio scoped.
+      input.feePortfolio = await readAgentFeePortfolio(client, viewer.id, buildings, input.organisations, buildingId);
     }),
     source("rent_risk", "Reported rental arrears", internal, async () => {
       if (input.sources.find(s => s.key === "rentals")?.state !== "ready") throw new Error("Rental source unavailable.");

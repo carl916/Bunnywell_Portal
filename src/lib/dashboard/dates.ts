@@ -1,12 +1,11 @@
-export const DASHBOARD_TIME_ZONE = "Europe/London";
+import { REPORTING_TIME_ZONE, reportingDate } from "../reporting-date";
+export const DASHBOARD_TIME_ZONE = REPORTING_TIME_ZONE;
 export const AUTHORITY_WARNING_HOURS = 48;
 export const COMPLETION_WARNING_DAYS = 7;
 export const EXPANDED_DEADLINE_DAYS = 30;
 const DAY = 86_400_000;
 
-export function londonDate(now: number | Date = Date.now()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: DASHBOARD_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
-}
+export const londonDate = reportingDate;
 
 export function calendarDays(left: string, right: string) {
   return Math.round((Date.parse(`${right.slice(0, 10)}T12:00:00Z`) - Date.parse(`${left.slice(0, 10)}T12:00:00Z`)) / DAY);

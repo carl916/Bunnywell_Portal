@@ -39,6 +39,7 @@
 .attentionTable small, .datesTable small, .activity small, .additional small { display: block; font-size: .75rem; color: #607066; font-weight: 400; margin-top: .2rem; line-height: 1.45; }
 .attentionTable small { max-width: 36rem; }
 .countLink { font-weight: 650; }
+.unallocated { display: block; margin-top: .25rem; font-size: .75rem; color: #77501e; }
 .additional { padding-top: .9rem; min-height: 5rem; }
 .additional ul, .activity ul { list-style: none; padding: 0; margin-top: .4rem; }
 .additional li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; font-size: .8rem; padding: .3rem 0; }

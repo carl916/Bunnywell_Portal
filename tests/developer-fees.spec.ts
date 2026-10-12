@@ -88,7 +88,7 @@ for(const width of [1440,390])test(`initial loading, error, retry, stale refresh
 test("empty and external role direct URLs remain distinct",async({page})=>{
   const f=await agentFeesFixture(page);f.rows.unit_sale_attempts=[];
   await open(page);await expect(fees(page).getByRole("status")).toHaveText("0 sales in this filtered view");
-  f.profile.role="sales_agent";await open(page);
+  f.profile.role="sales_agent";await open(page);await page.reload();
   await expect(page.getByRole("tab",{name:"Agent Fees",exact:true})).toHaveCount(0);await expect(fees(page)).toHaveCount(0);
 });
 
@@ -111,6 +111,6 @@ test("building and agent scope hide protected snapshots while a new scope loads;
   await expect(fees(page).getByRole("status")).toHaveText("0 sales in this filtered view");
   await expect(fees(page).getByRole("button",{name:/^Approved unpaid/})).toContainText("£3,000");
   await page.route("**/rest/v1/rpc/get_agent_fee_portfolio",async route=>route.fulfill({json:[{...f.portfolio()[0],contract_price:null}],headers:{"content-range":"0-0/1","access-control-expose-headers":"content-range"}}));
-  await page.reload();await expect(fees(page).getByRole("alert")).toContainText("missing current fee terms");
+  await page.reload();await expect(fees(page).getByRole("alert")).toContainText("missing fee terms");
   await expect(fees(page).getByRole("status")).toHaveText("Fee counts unavailable");
 });

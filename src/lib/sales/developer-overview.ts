@@ -1,6 +1,6 @@
 import { deriveDashboard } from "../dashboard/model";
 import { deadlineState } from "../dashboard/dates";
-import { hasWorkOwner, isWorkObservation, matchesWorkTeam, SALES_CATEGORIES, salesWorkCategory, type SalesCategory } from "../dashboard/work-classification";
+import { isUnallocatedWork, isWorkObservation, matchesWorkTeam, SALES_CATEGORIES, salesWorkCategory, type SalesCategory } from "../dashboard/work-classification";
 import type { DashboardInput, DashboardSnapshot, WorkDestination, WorkItem } from "../dashboard/types";
 import { deriveSalesRegister, type SalesRegisterRow } from "./register";
 import { SALES_ROUTE_STATUSES } from "../units/commercial-allocation";
@@ -8,7 +8,7 @@ import { SALES_ROUTE_STATUSES } from "../units/commercial-allocation";
 export type SalesWorkView = "all" | "ours" | "others";
 export type SalesOverviewFilters = { work: SalesWorkView; category: SalesCategory | ""; stage: string; search: string; page: number };
 export const INITIAL_SALES_OVERVIEW: SalesOverviewFilters = { work: "all", category: "", stage: "all", search: "", page: 1 };
-export type DeveloperSalesRow = SalesRegisterRow & { work: WorkItem[]; observations: WorkItem[] };
+export type DeveloperSalesRow = SalesRegisterRow & { work: WorkItem[]; observations: WorkItem[]; workUnavailable?: boolean };
 
 export function readSalesOverviewFilters(search: string): SalesOverviewFilters {
   const params = new URLSearchParams(search);
@@ -40,10 +40,10 @@ export function salesOverviewDestination(buildingId: string, category: SalesCate
 
 export function deriveDeveloperSalesRows(input: DashboardInput, snapshot: DashboardSnapshot = deriveDashboard(input)): DeveloperSalesRow[] {
   return deriveSalesRegister(input, snapshot).rows.map(row => {
-    const items = snapshot.items.filter(item => item.module === "sales" && item.unitId === row.unitId);
+    const items = snapshot.items.filter(item => item.module === "sales" && item.unitId === row.unitId && (!item.kind.startsWith("fee_") || item.recordKey === `sale:${row.destination.saleId}`));
     const work = items.filter(item => !isWorkObservation(item)).sort((a, b) => rank(row, [a], input.now).urgency - rank(row, [b], input.now).urgency);
     const hasSale = input.sales.some(s => s.unit_id === row.unitId && s.is_active && !s.redacted_at && !["fallen_through", "superseded", "failed", "withdrawn"].includes(s.workflow_status));
-    return { ...row, work, observations: items.filter(isWorkObservation),
+    return { ...row, work, workUnavailable: snapshot.sources.some(source => ["sales", "legal", "fees", "appointments"].includes(source.key) && source.state === "unavailable"), observations: items.filter(isWorkObservation),
       neutral: !hasSale && row.stage === "for_sale" ? "Available for reservation" : !hasSale && ["completed", "handed_over"].includes(row.stage) ? "Legacy completed sale · no active sale file" : row.neutral };
   });
 }
@@ -77,7 +77,7 @@ export function selectDeveloperSalesRows(rows: DeveloperSalesRow[], filters: Sal
 
 export function salesWorkSummary(items: WorkItem[]) {
   const first = items[0];
-  return first ? `${first.action}${items.length > 1 ? ` · ${items.length - 1} more ${items.length === 2 ? "action" : "actions"}` : ""}${!hasWorkOwner(first) ? " · responsible team unallocated" : ""}` : "";
+  return first ? `${first.action}${items.length > 1 ? ` · ${items.length - 1} more ${items.length === 2 ? "action" : "actions"}` : ""}${isUnallocatedWork(first) ? " · responsible team unallocated" : ""}` : "";
 }
 
 /** Package reviews share one workspace; mixed sections use the record navigator. */

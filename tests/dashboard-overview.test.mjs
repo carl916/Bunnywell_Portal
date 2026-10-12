@@ -52,7 +52,7 @@ test('Sales counts open exactly the canonical responsibility view, counting rows
 test('unavailable dependent sources cannot masquerade as zero or a partial exact count', () => {
   const empty = compose(fixture({ sales: [], units: [] }));
   assert.equal(empty.overview.attention[0].ours.value, 0);
-  assert.match(render(empty), /0 sales/);
+  assert.match(render(empty), /0 unit rows/);
   for (const [source, row] of [['legal', 'sales'], ['fees', 'fees'], ['snags', 'snags'], ['rent_risk', 'rentals']]) {
     const input = fixture(); input.sources = input.sources.map(s => s.key === source ? { ...s, state: 'unavailable' } : s);
     const snapshot = compose(input);
@@ -79,15 +79,15 @@ test('only admin and developer receive the simplified composition; shared extern
 });
 
 test('unsupported exact views stay non-interactive and each area has a real general destination', () => {
-  const snapshot = compose(fixture({ invoices: [{ id: 'invoice', sale_attempt_id: sale.id, fee_milestone: 'exchange', status: 'submitted', gross_amount: 120, created_at: '2026-10-01' }], snags: [snag({ trade_id: null })] }));
+  const snapshot = compose(fixture({ invoices: [{ id: 'invoice', sale_attempt_id: sale.id, invoice_type: 'sales_agent', fee_milestone: 'exchange', status: 'submitted', gross_amount: 120, created_at: '2026-10-01' }], snags: [snag({ trade_id: null })] }));
   for (const key of ['fees', 'snags', 'rentals']) {
     const row = snapshot.overview.attention.find(r => r.key === key);
     assert.equal(row.ours.href, undefined); assert.equal(row.others.href, undefined);
     assert.ok(row.href);
   }
   const fees = snapshot.overview.attention.find(r => r.key === 'fees');
-  assert.equal(fees.ours.value, 1); assert.equal(fees.ours.unit, 'sales');
-  assert.match(fees.note, /earlier sale attempts/);
+  assert.equal(fees.ours.value, 1); assert.equal(fees.ours.unit, 'sale attempts');
+  assert.match(fees.note, /historical/);
   const snags = snapshot.overview.attention.find(r => r.key === 'snags');
   assert.equal(snags.ours.value, 1); assert.equal(snags.others.value, 1);
   assert.equal(new URL(fees.href, 'https://test').searchParams.get('salesView'), 'agent_fees');
@@ -100,7 +100,8 @@ test('handover, access, lifecycle, unallocated and rental evidence work are not 
     accessRequests: [{ id: 'request', created_at: '2026-10-01', requested_units: [{ building_id: building.id }] }],
   });
   let snapshot = compose(input);
-  for (const key of ['handover', 'resident_access', 'rental_evidence', 'unallocated:snags']) assert.ok(snapshot.overview.additional.some(g => g.key === key), key);
+  for (const key of ['handover', 'resident_access', 'rental_evidence']) assert.ok(snapshot.overview.additional.some(g => g.key === key), key);
+  assert.equal(snapshot.overview.attention.find(r=>r.key==='snags').unallocated.value,1);
   assert.equal(snapshot.overview.attention.find(r => r.key === 'rentals').ours.value, 1);
   input.buildings = [{ ...building, pc_confirmed: false, pc_date: '2026-09-01' }];
   snapshot = compose(input);
@@ -127,7 +128,7 @@ test('dates preserve priority and saved-date language; all remaining exceptions 
 test('structure exists during loading, activity is collapsed and internal worklist controls are gone', () => {
   for (const snapshot of [null, compose(fixture())]) {
     const html = render(snapshot);
-    const labels = ['Dashboard</h1>', 'Portfolio position', 'Work needing attention', 'Dates to review', 'Recent activity · Last 7 days'];
+    const labels = ['Dashboard</h1>', 'Portfolio position', 'Work needing attention', 'Dates to review', 'Recent sales activity'];
     let previous = -1;
     for (const label of labels) { const at = html.indexOf(label); assert.ok(at > previous, label); previous = at; }
     assert.doesNotMatch(html, /<details[^>]* open|Worklist pages|Work modules|aria-label="Responsibility"|Latest business context/);

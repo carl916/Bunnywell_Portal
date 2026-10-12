@@ -219,7 +219,8 @@ test("portfolio access is developer/admin-only and building scoped in the RPC", 
   assert.equal(canPerformSalesAction("conveyancer", "view_agent_fees_portfolio"), false);
   assert.match(migrationSource, /not in \('admin', 'developer'\)/);
   assert.match(migrationSource, /public\.can_access_sales_building\(attempt\.building_id\)/);
-  assert.match(loaderSource, /get_agent_fee_portfolio/);
+  assert.match(loaderSource, /readAgentFeePortfolio/);
+  assert.match(readFileSync("src/lib/sales/fee-portfolio-data.ts", "utf8"), /get_agent_fee_portfolio/);
 });
 
 test("the primary portfolio control opens its matching unit and milestone, retaining Fees as its source", () => {
