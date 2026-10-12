@@ -6,9 +6,9 @@ Based on staging `1562549` (PR #45), 12 October 2026. Target: `staging`. No UI, 
 
 The dependency change removes the measured source barrier, but **a repeatable end-to-end latency improvement is not established**. The first comparison reduced median local-handler latency against live staging Supabase by 4–5%: 1,522 → 1,451 ms for all buildings, and 1,512 → 1,449 ms for Forum House. Eight of ten paired requests improved in each scope. The all-building worst sample did not improve (1,925 → 1,958 ms); this is a modest scheduling gain, not a demonstrated tail-latency fix.
 
-A second, independent ten-pair batch did not repeat the latency gain: all-building medians were **1,566 → 1,590 ms** and single-building medians **1,527 → 1,593 ms**. Only 4/10 and 3/10 pairs improved. The Sales-history dependency wait still fell **24.51 → 0.62 ms** and **31.77 → 0.58 ms**. Complete authorised snapshots (including items omitted from Stage 1 transport) matched in all 20 confirmation pairs; their hashing/extra derivation occurs outside the timer. Network/service variability and changed overlap outweigh this small saving in some runs. Keep this PR in draft pending comparable deployed evidence; the success criteria are not yet met.
+A second, independent ten-pair batch did not repeat the latency gain: all-building medians were **1,566 → 1,590 ms** and single-building medians **1,527 → 1,593 ms**. Only 4/10 and 3/10 pairs improved. The Sales-history dependency wait still fell **24.51 → 0.62 ms** and **31.77 → 0.58 ms**. Complete authorised snapshots (including items omitted from Stage 1 transport) matched in all 20 confirmation pairs; their hashing/extra derivation occurs outside the timer. Network/service variability and changed overlap outweigh this small saving in some runs. Keep this PR in draft pending a repeatable overall gain and deployed per-read attribution; the success criteria are not yet met.
 
-These are real database/network measurements from a local Node process, **not simulated delays and not deployed Vercel latency**. The deployed staging baseline remains slower: median 3,166 ms all buildings, 2,783 ms single building. No deployed before/after conclusion or consistent sub-two-second claim is established by the local results.
+The local runs contain real database/network latency, **not simulated delays and not Vercel latency**. A subsequent deployed comparison is also mixed, as shown below. Neither environment demonstrates the requested consistent sub-two-second response. The scheduling change is a tested candidate, not a recommendation to merge on performance grounds.
 
 ## Method
 
@@ -69,6 +69,23 @@ Medians, milliseconds unless specified. Local A/B: ten observations per cell. De
 
 Summed fetch time is Server-Timing's cumulative remote fetch duration to headers. It is **not elapsed wall time or SQL time**. Per-call RTT through SDK consumption appears separately in the inventory. The data-source phase is measured between `data` and `profile.final`; the full response also requires initial/final access gates and derivation. There is no single operation whose duration equals the entire critical path.
 
+## Deployed comparison
+
+After creating draft PR #46, the existing Git integration built preview commit `6ab3b69338da184dbb36e9951c27f4c2f1aad24d` successfully: deployment `dpl_9WjvZ5dY3bRpYNWn7GyAzyXb9Fs2`, [preview](https://bunnywell-portal-minhksv0f-carl-gilbert-s-projects.vercel.app). Metadata confirms the same project and `iad1` region as staging; the public build contains only the staging Supabase URL. No deployment or environment configuration was changed. Later commits only update evidence/scripts/reporting, not the deployed runtime candidate.
+
+Ten alternating pairs per scope, same admin session/database, sequential read-only requests:
+
+| HTTPS API latency | Staging baseline | PR preview |
+|---|---:|---:|
+| All buildings median | 2,980 ms | 3,004 ms |
+| All buildings worst | 5,182 ms | 4,313 ms |
+| Single building median | 2,968 ms | 2,760 ms |
+| Single building worst | 3,788 ms | 3,826 ms |
+
+Only 5/10 paired requests improved in either scope (median paired savings 63 ms all, 19 ms single); the change in marginal medians alone overstates consistency. All response hashes, item counts and byte sizes matched. No request in this comparison reached two seconds. First-use and process-warm effects were not controlled; do not interpret the worst-case improvement as proof of a cold-start fix.
+
+The preview does **not** return Server-Timing or detailed trace headers under its existing configuration. Staging returns Server-Timing but no detailed trace. Therefore deployed optimized handler duration, final-read offset, per-query times and request counts are unverified; the unchanged counts are established by local route traces and regression tests. Different diagnostic flags are an additional comparison limitation. There is no basis here to assert that SQL or networking alone caused the variable result. [All deployed samples](deployed-paired.json).
+
 ## Database-work review and remaining opportunities
 
 - The fee RPC returns 62 eligible attempts / 36,546 bytes for both scopes before application filtering. It costs about 187 ms locally and is not the final barrier. Filtering to current active dashboard sales would lose historical invoices. Filtering returned table rows would also change the current full-portfolio validation contract, and may not reduce work inside its PL/pgSQL body. Keep the canonical query and full metadata validation until a separate measured change proves equivalent eligibility, failure handling and benefit.
@@ -83,7 +100,7 @@ Summed fetch time is Server-Timing's cumulative remote fetch duration to headers
 - Rentals: 57 passed; one existing regex assertion fails (`Agent Fees applies the shared global building scope`). Both its test and the component are unchanged from staging; Stage 1 documents the same failure.
 - Browser dashboard/Sales suite: 38 passed, two opt-in benchmarks skipped; one polling case failed during navigation. It passed in an isolated baseline run and again with the optimized reader (39 distinct cases passed).
 - Browser Agent Fees: 15 passed, two opt-in captures skipped; three failed initially (focus/navigation/refresh timing). Two passed on targeted rerun; the remaining mobile case passed with the baseline and optimized reader in isolation (18 distinct cases passed). No production UI or test expectations were changed to make these pass.
-- TypeScript and changed-file ESLint pass without errors or warnings. No UI/component changes.
+- TypeScript and changed-file ESLint pass without errors or warnings. The automatic Vercel preview build succeeded. No UI/component changes.
 - Focused tests cover slow/failed requests, rejected promises, partial legal/history/rental failures, inaccessible scope, failed dimensions, profile/building revocation during loading, all supported roles, historical/unallocated fees, deterministic complete snapshots, the nine-read ceiling, paging and Sales-register mode.
 
 ## Reproduction
@@ -99,6 +116,6 @@ $env:STAGE2_ROUNDS='10'
 node scripts/diagnostics/dashboard-stage2.mjs
 ```
 
-For the unchanged deployed baseline, omit `STAGE2_BASELINE`, set `STAGE2_ORIGIN=https://staging.bunnywell.co.uk`, use a new output filename and five rounds. The harness refuses other backends, unsupported origins, unavailable source snapshots and overwritten evidence. It stops on a response over ten seconds or changed authorised results. Extra complete-snapshot comparison runs after the latency timer stops.
+For the unchanged deployed baseline, omit `STAGE2_BASELINE`, set `STAGE2_ORIGIN=https://staging.bunnywell.co.uk`, use a new output filename and five rounds. For deployed A/B also set `STAGE2_PREVIEW_ORIGIN` to the verified PR preview. The harness checks its public staging backend before sending the JWT. It refuses other backends, unsupported origins, unavailable source snapshots and overwritten evidence. It stops on a response over ten seconds or changed authorised results. Extra complete-snapshot comparison runs after the latency timer stops.
 
-Raw safe evidence: [pre-edit local baseline](local-before.json), [deployed baseline](deployed-before.json), [paired local runs](local-paired.json), [independent confirmation](local-confirmation.json), [summary](measurements.json). Revert the reader change to roll back scheduling; no data migration or shared cache is involved. Do not merge or deploy to production as part of this task.
+Raw safe evidence: [pre-edit local baseline](local-before.json), [deployed baseline](deployed-before.json), [paired local runs](local-paired.json), [independent confirmation](local-confirmation.json), [deployed A/B](deployed-paired.json), [summary](measurements.json). Revert the reader change to roll back scheduling; no data migration or shared cache is involved. Do not merge or deploy to production as part of this task.

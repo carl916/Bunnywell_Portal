@@ -19,6 +19,20 @@ assert.ok(output?.startsWith('test-results/'), 'Use ignored test-results output'
 assert.ok(!fs.existsSync(output), 'Refusing to overwrite evidence');
 const origin = process.env.STAGE2_ORIGIN;
 if (origin) assert.equal(origin, 'https://staging.bunnywell.co.uk');
+const preview = process.env.STAGE2_PREVIEW_ORIGIN;
+if (preview) {
+  assert.ok(origin, 'Preview comparison requires the deployed staging baseline');
+  assert.match(preview, /^https:\/\/bunnywell-portal-[a-z0-9]+-carl-gilbert-s-projects\.vercel\.app$/);
+  // Verify the public build uses staging before sending the staging user's JWT.
+  const response = await fetch(preview, { redirect: 'error' }); assert.ok(response.ok);
+  const html = await response.text(), hosts = new Set();
+  for (const match of html.matchAll(/<script[^>]+src="([^"]+)"/g)) {
+    const url = new URL(match[1], preview); assert.equal(url.origin, preview);
+    const script = await (await fetch(url)).text();
+    for (const host of script.matchAll(/https:\/\/[a-z]+\.supabase\.co/g)) hosts.add(host[0]);
+  }
+  assert.deepEqual([...hosts], ['https://vxkpvdtrldwwqiddoyof.supabase.co']);
+}
 const rounds = Number(process.env.STAGE2_ROUNDS ?? 5);
 assert.ok(Number.isInteger(rounds) && rounds > 0 && rounds <= 20);
 // This harness is a local process, not a deployment. Enable the existing guarded
@@ -56,11 +70,11 @@ function localHandler(reader) {
     } },
   } }).GET;
 }
-const variants = origin ? { deployed: null } : {
+const variants = origin ? (preview ? { baseline: origin, current: preview } : { deployed: origin }) : {
   ...(process.env.STAGE2_BASELINE ? { baseline: localHandler(historicalReader(process.env.STAGE2_BASELINE)) } : {}),
   current: localHandler(),
 };
-const evidence = { environment: origin ? 'Deployed staging HTTPS' : 'Local Node handler, live staging Supabase (not Vercel latency)', baseline: process.env.STAGE2_BASELINE ?? null, commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), started: new Date().toISOString(), samples: [] };
+const evidence = { environment: origin ? (preview ? 'Deployed staging versus verified branch preview HTTPS' : 'Deployed staging HTTPS') : 'Local Node handler, live staging Supabase (not Vercel latency)', baseline: process.env.STAGE2_BASELINE ?? null, targets: origin ? { baseline: origin, ...(preview ? { current: preview } : {}) } : undefined, commit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), started: new Date().toISOString(), samples: [] };
 fs.mkdirSync(path.dirname(output), { recursive: true });
 const save = () => fs.writeFileSync(output, JSON.stringify(evidence, null, 2));
 const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -75,10 +89,10 @@ try {
   for (let run = 0; run < rounds; run++) {
     const order = Object.entries(variants); if (run % 2) order.reverse();
     for (const scope of ['all', 'single']) for (const [variant, handler] of order) {
-      const request = new Request(`${origin ?? 'http://local'}/api/dashboard?building=${scope === 'all' ? 'all' : building.data.id}`, { headers });
+      const request = new Request(`${typeof handler === 'string' ? handler : 'http://local'}/api/dashboard?building=${scope === 'all' ? 'all' : building.data.id}`, { headers });
       completeInput = undefined;
       const start = performance.now();
-      const response = handler ? await handler(request) : await fetch(request, { signal: AbortSignal.timeout(20000) });
+      const response = typeof handler === 'function' ? await handler(request) : await fetch(request, { signal: AbortSignal.timeout(20000) });
       const text = await response.text(), durationMs = performance.now() - start;
       assert.equal(response.status, 200, 'Dashboard request failed; body withheld');
       let completeSnapshotHash;
