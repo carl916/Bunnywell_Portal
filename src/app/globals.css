@@ -322,6 +322,8 @@ textarea.field {
   backdrop-filter: blur(14px);
 }
 
+.mobile-compact-brand { display: none; }
+
 .account-pill {
   display: inline-flex;
   min-height: 2.5rem;
@@ -408,6 +410,13 @@ textarea.field {
   padding: 0.45rem;
   box-shadow: 0 18px 46px rgba(15, 61, 46, 0.18);
   backdrop-filter: blur(16px);
+  transition: transform 160ms ease-out, visibility 160ms;
+}
+
+.mobile-bottom-nav[data-hidden="true"] {
+  transform: translateY(calc(100% + 3rem + env(safe-area-inset-bottom, 0px)));
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .mobile-nav-item {
@@ -419,6 +428,9 @@ textarea.field {
   color: var(--bw-muted);
   font-size: 0.68rem;
   font-weight: 750;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
   transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
@@ -446,12 +458,22 @@ textarea.field {
   align-items: flex-end;
   background: rgba(15, 61, 46, 0.28);
   padding: 0.75rem;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  color: var(--foreground);
 }
+
+.mobile-menu-backdrop::backdrop { background: transparent; }
 
 .mobile-menu-panel {
   width: 100%;
   max-height: min(82vh, 42rem);
   overflow: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--bw-border);
   border-radius: var(--bw-radius-panel, 1.25rem);
   background: #ffffff;
@@ -978,10 +1000,58 @@ tbody tr:hover {
 }
 
 @media (max-width: 767px) {
+  html[data-portal-toolbars] {
+    scroll-padding-top: calc(var(--portal-mobile-header, 0px) + 12px);
+    scroll-padding-bottom: calc(var(--portal-mobile-bottom, 0px) + 12px);
+  }
+
+  /* The full header retains its natural place at the start of the document.
+     Once compact, the excess sticks above the viewport, not in a spacer below
+     the strip. Changing toolbar state never moves the document's content. */
+  .app-header[data-compact="true"] {
+    top: calc(-1 * var(--mobile-header-slide, 0px));
+  }
+
+  .portal-workspace .app-header { min-height: calc(var(--mobile-compact-height, 0px) + 1px); }
+  .portal-full-brand > div { min-width: 0; }
+  .mobile-menu-trigger { flex: none; }
+
+  .mobile-compact-brand {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    inset-inline: 0;
+    min-height: 60px;
+    align-items: center;
+    gap: 8px;
+    padding: 0.375rem 76px 0.375rem 16px;
+    visibility: hidden;
+  }
+
+  .mobile-compact-logo { width: 32px; height: 32px; object-fit: contain; flex: none; }
+  .mobile-compact-context { min-width: 0; }
+  .mobile-compact-building { font-size: 0.8125rem; line-height: 1.25; font-weight: 700; color: var(--bw-primary); overflow-wrap: anywhere; }
+  .mobile-environment-indicator { display: inline-block; margin-top: 0.125rem; padding: 0.0625rem 0.375rem; border: 1px solid #e7c37d; border-radius: 4px; background: #fff8ec; color: #735327; font-size: 0.6875rem; line-height: 1.25; font-weight: 750; }
+  .app-header[data-compact="true"] .mobile-compact-brand { visibility: visible; }
+  .app-header[data-compact="true"] :is(.environment-banner, .portal-full-brand) { visibility: hidden; }
+  .app-header[data-compact="true"] .mobile-menu-trigger { position: absolute; right: 16px; bottom: 0; height: var(--portal-mobile-header); display: flex; align-items: center; }
+  .app-header[data-compact="true"] .mobile-menu-trigger button { width: 44px; padding-inline: 0; }
+  .mobile-menu-trigger button { min-width: 44px; min-height: 44px; }
+
+  .portal-workspace .sticky-actions,
+  .portal-workspace .panel > div > .primary:last-child,
+  .portal-workspace .form-section + .primary,
+  .portal-workspace section > .primary.mt-4.w-full {
+    bottom: calc(var(--portal-mobile-bottom, 5.5rem) + 0.5rem);
+  }
+
   .active-panel-target,
   .active-panel-with-context {
     scroll-margin-top: calc(6.75rem + env(safe-area-inset-top, 0px));
   }
+
+  .portal-workspace .active-panel-target,
+  .portal-workspace .active-panel-with-context { scroll-margin-top: 0.75rem; }
 
   .mobile-bottom-nav {
     display: grid;
@@ -1035,7 +1105,16 @@ tbody tr:hover {
 [data-portal-screen="sales"] .panel { min-width: 0; }
 @media (max-width: 767px) {
   .app-shell { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
+  .portal-workspace { padding-bottom: var(--portal-mobile-nav-space, calc(6.5rem + env(safe-area-inset-bottom, 0px))); }
   .mobile-bottom-nav { bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bottom-nav, .mobile-nav-item { transition: none; }
+}
+
+@media (max-width: 359px) {
+  .mobile-bottom-nav { grid-template-columns: minmax(0, 1.25fr) repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 639px) {
   [data-portal-screen="sales"] > .portal-content { padding-inline: clamp(0.5rem, 2.5vw, 1rem); }
