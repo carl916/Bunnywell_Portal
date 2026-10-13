@@ -94,13 +94,14 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
   await Promise.all([
     source("legal", "Authorities and completion documents", canOpenSalesPipeline(viewer.role), async () => {
       if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");
-      const [documents, authorities, deposits, depositSources] = await Promise.all([
+      const [documents, authorities, deposits, depositSources, furtherDeposits] = await Promise.all([
         byIds<DashboardInput["documents"][number]>("unit_sale_documents", "id,sale_attempt_id,document_type,status,query_note,approved_version_id,approved_at,updated_at,updated_by_user_id,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,is_current,redacted_at,uploaded_at)", "sale_attempt_id", salesIds, q => q.is("redacted_at", null).is("superseded_at", null).in("document_type", ["completion_statement", "draft_statement_of_account", "completion_correspondence"]).eq("unit_sale_document_versions.is_current", true).is("unit_sale_document_versions.redacted_at", null)),
         byIds<DashboardInput["authorities"][number]>("sale_legal_emails", "id,sale_attempt_id,kind,version,issued_at,expires_at,revoked_at,replaced_by,exchanged_at,delivery_status,sent_at,resend_message_id", "sale_attempt_id", salesIds),
-        register ? [] : byIds<DashboardInput["deposits"][number]>("sale_exchange_deposit_receipts", "id,sale_attempt_id,source_id,expected_amount,received_amount", "sale_attempt_id", salesIds),
-        register ? [] : byIds<DashboardInput["depositSources"][number]>("sale_exchange_deposit_sources", "id,sale_attempt_id,source_kind,expected_amount", "sale_attempt_id", salesIds),
+        byIds<DashboardInput["deposits"][number]>("sale_exchange_deposit_receipts", "id,sale_attempt_id,source_id,expected_amount,received_amount", "sale_attempt_id", salesIds),
+        byIds<DashboardInput["depositSources"][number]>("sale_exchange_deposit_sources", "id,sale_attempt_id,source_kind,expected_amount", "sale_attempt_id", salesIds),
+        byIds<NonNullable<DashboardInput["furtherDeposits"]>[number]>("sale_further_deposit_facts", "id,sale_attempt_id,required,percent,expected_amount,received_amount,timing,months_after_exchange,exchanged_at,pc_date,deadline,terms_version", "sale_attempt_id", salesIds),
       ]);
-      Object.assign(input, { documents, authorities, deposits, depositSources });
+      Object.assign(input, { documents, authorities, deposits, depositSources, furtherDeposits });
     }),
     source("history", "Recent sales business activity", !register && canOpenSalesPipeline(viewer.role), async () => {
       if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");

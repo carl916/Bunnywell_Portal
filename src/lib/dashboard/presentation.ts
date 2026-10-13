@@ -10,6 +10,7 @@ export function destinationUrl(destination: WorkDestination, scope: string, retu
       params.set("section", "progression"); params.set("conversation", destination.saleId); params.set("workActivity", "1");
     } else if (destination.section) params.set("section", destination.section);
     if (destination.filter) params.set("salesFilter", destination.filter);
+    if (destination.section === "financials") params.set("financialView", destination.anchor?.includes("deposit") ? "deposits" : "agent_fees");
     if (destination.versionId) params.set("workVersion", destination.versionId);
   }
   if (destination.screen === "snags") {

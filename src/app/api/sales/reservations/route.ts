@@ -1,3 +1,4 @@
+import { timingError, type FurtherDepositTiming } from "@/lib/sales/further-deposit";
 import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppRole } from "@/lib/data/production";
@@ -70,6 +71,7 @@ type ReservationPayload = {
   completionAgentFeePercent?: string | number | null;
   solicitorFee?: string | number | null;
   exchangeDepositPercent?: string | number | null;
+  furtherDepositTiming?: FurtherDepositTiming | null;
   secondDepositEnabled?: boolean | null;
   secondDepositPercent?: string | number | null;
   secondDepositMonthsAfterExchange?: string | number | null;
@@ -411,10 +413,19 @@ function termsSnapshotFromDefaults(input: {
   const secondDepositEnabled = Boolean((usePayloadCommercials ? payloadSecondDepositEnabled : null) ?? currentTerms?.second_deposit_enabled ?? defaults?.second_deposit_enabled ?? false);
   const secondDepositPercent = Number((usePayloadCommercials ? payloadSecondDepositPercent : null) ?? currentTerms?.second_deposit_percent ?? defaults?.second_deposit_percent ?? 0);
   const secondDepositMonthsSource = (usePayloadCommercials ? payloadSecondDepositMonths : null)
-    ?? currentTerms?.second_deposit_months_after_exchange
-    ?? defaults?.second_deposit_months_after_exchange;
+    ?? (currentTerms ? currentTerms.second_deposit_months_after_exchange : defaults?.second_deposit_months_after_exchange);
   const secondDepositMonthsAfterExchange = normaliseInteger(secondDepositMonthsSource as string | number | null | undefined);
+  const furtherDepositTiming = (usePayloadCommercials && hasPayloadValue("furtherDepositTiming") ? payload?.furtherDepositTiming : currentTerms ? currentTerms.further_deposit_timing : defaults?.further_deposit_timing) as FurtherDepositTiming | null;
+  if (usePayloadCommercials) {
+    for (const key of ["exchangeDepositPercent", "secondDepositPercent"] as const) {
+      if (hasPayloadValue(key) && (key === "exchangeDepositPercent" || secondDepositEnabled) && normalisePercent(payload?.[key]) == null) throw new Error("Enter deposit percentages between 0% and 100%.");
+    }
+    if (secondDepositEnabled && (furtherDepositTiming?.basis ?? "after_exchange") === "after_exchange" && hasPayloadValue("secondDepositMonthsAfterExchange")
+      && (payload?.secondDepositMonthsAfterExchange == null || String(payload.secondDepositMonthsAfterExchange).trim() === "" || !Number.isInteger(Number(payload.secondDepositMonthsAfterExchange)) || Number(payload.secondDepositMonthsAfterExchange) < 0)) throw new Error("Enter a whole number of calendar months; leave incomplete legacy terms for confirmation.");
+  }
+  if (usePayloadCommercials && hasPayloadValue("furtherDepositTiming") && secondDepositEnabled && furtherDepositTiming?.basis === "fixed" && timingError(furtherDepositTiming, null, true)) throw new Error(timingError(furtherDepositTiming, null, true)!);
   const depositStructure = buildDepositStructure({
+    furtherDepositTiming,
     exchangeDepositPercent,
     secondDepositEnabled,
     secondDepositPercent,
@@ -472,6 +483,7 @@ function termsSnapshotFromDefaults(input: {
       ? hasPayloadValue("solicitorFee") ? normaliseMoney(payload?.solicitorFee) : Number(currentTerms?.solicitor_fee ?? defaults?.default_sales_solicitor_fee ?? 882)
       : Number(currentTerms?.solicitor_fee ?? defaults?.default_sales_solicitor_fee ?? 882),
     exchange_deposit_percent: depositStructure.exchangeDepositPercent,
+    further_deposit_timing: depositStructure.furtherDepositTiming,
     second_deposit_enabled: depositStructure.secondDepositEnabled,
     second_deposit_percent: depositStructure.secondDepositEnabled ? depositStructure.secondDepositPercent : null,
     second_deposit_months_after_exchange: depositStructure.secondDepositEnabled ? depositStructure.secondDepositMonthsAfterExchange : null,
@@ -485,6 +497,7 @@ async function replacePaymentSchedule(adminClient: SupabaseClient, requester: Re
   const rows = buildPaymentScheduleRows({
     contractPrice: terms.contract_price === null || terms.contract_price === undefined ? null : Number(terms.contract_price),
     exchangeDepositPercent: Number(terms.exchange_deposit_percent ?? 10),
+    furtherDepositTiming: terms.further_deposit_timing as FurtherDepositTiming | null,
     secondDepositEnabled: Boolean(terms.second_deposit_enabled),
     secondDepositPercent: Number(terms.second_deposit_percent ?? 0),
     secondDepositMonthsAfterExchange: normaliseInteger(terms.second_deposit_months_after_exchange as string | number | null | undefined),
@@ -1193,12 +1206,14 @@ async function saveCommercialModel(adminClient: SupabaseClient, requester: Reque
   const scheduleRows = buildPaymentScheduleRows({
     contractPrice: termsPatch.contract_price === null || termsPatch.contract_price === undefined ? null : Number(termsPatch.contract_price),
     exchangeDepositPercent: Number(termsPatch.exchange_deposit_percent ?? 10),
+    furtherDepositTiming: termsPatch.further_deposit_timing,
     secondDepositEnabled: Boolean(termsPatch.second_deposit_enabled),
     secondDepositPercent: Number(termsPatch.second_deposit_percent ?? 0),
     secondDepositMonthsAfterExchange: normaliseInteger(termsPatch.second_deposit_months_after_exchange as string | number | null | undefined),
   });
 
-  const { data, error } = await adminClient.rpc("save_unit_commercial_model_with_agent_fees", {
+  const { data, error } = await adminClient.rpc("save_unit_commercial_model_with_deposits", {
+    p_further_deposit_timing: termsPatch.further_deposit_timing,
     p_unit_id: unitId,
     p_requester_id: requester.id,
     p_list_price_at_offer: termsPatch.list_price_at_offer,

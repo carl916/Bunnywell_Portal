@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DashboardInput } from "../dashboard/types";
 
-export type SalesGuidanceFacts = Pick<DashboardInput, "authorities" | "depositSources" | "deposits"> & { asOf: string };
-export const EMPTY_GUIDANCE_FACTS: SalesGuidanceFacts = { authorities: [], depositSources: [], deposits: [], asOf: new Date(0).toISOString() };
+export type SalesGuidanceFacts = Pick<DashboardInput, "authorities" | "depositSources" | "deposits"> & { furtherDeposits: NonNullable<DashboardInput["furtherDeposits"]>; asOf: string };
+export const EMPTY_GUIDANCE_FACTS: SalesGuidanceFacts = { authorities: [], depositSources: [], deposits: [], furtherDeposits: [], asOf: new Date(0).toISOString() };
 
 /** Compact, bounded batches over already authorised sales, never a read per row. */
 export async function loadSalesGuidanceFacts(client: SupabaseClient, sales: string[]): Promise<SalesGuidanceFacts> {
@@ -25,10 +25,11 @@ export async function loadSalesGuidanceFacts(client: SupabaseClient, sales: stri
     }
     return result;
   }
-  const [authorities, depositSources, deposits] = await Promise.all([
+  const [authorities, depositSources, deposits, furtherDeposits] = await Promise.all([
     read("sale_legal_emails", "id,sale_attempt_id,kind,version,issued_at,expires_at,revoked_at,replaced_by,exchanged_at,delivery_status,sent_at,resend_message_id"),
     read("sale_exchange_deposit_sources", "id,sale_attempt_id,source_kind,expected_amount"),
     read("sale_exchange_deposit_receipts", "id,sale_attempt_id,source_id,expected_amount,received_amount"),
+    read("sale_further_deposit_facts", "id,sale_attempt_id,required,percent,expected_amount,received_amount,timing,months_after_exchange,exchanged_at,pc_date,deadline,terms_version"),
   ]);
-  return { authorities, depositSources, deposits, asOf: new Date().toISOString() } as unknown as SalesGuidanceFacts;
+  return { authorities, depositSources, deposits, furtherDeposits, asOf: new Date().toISOString() } as unknown as SalesGuidanceFacts;
 }

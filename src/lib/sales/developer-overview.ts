@@ -53,7 +53,7 @@ export function visibleSalesWork(row: Pick<DeveloperSalesRow,"work">, filters: S
 }
 
 function rank(row: SalesRegisterRow, items: WorkItem[], now: number) {
-  const progression = items.some(item => !item.kind.startsWith("fee_") && item.kind !== "deposit_receipt");
+  const progression = items.some(item => !item.kind.startsWith("fee_") && !item.kind.includes("deposit"));
   const dates = [...items.map(item => item.deadline), progression ? row.keyDate?.deadline ?? null : null].filter(d => d !== null);
   const states = dates.map(d => deadlineState(d, now));
   const urgency = items.some(item => item.urgent) || states.includes("overdue") ? 0 : states.some(s => s === "today" || s === "soon") ? 1 : 2;

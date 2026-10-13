@@ -1,4 +1,9 @@
 "use client";
+import { SaleDeposits } from "./SaleDeposits";
+import { financialSubview } from "@/lib/sales/financial-navigation";
+import { FurtherDepositTimingFields } from "./FurtherDepositTimingFields";
+import { timingDescription, type FurtherDepositTiming } from "@/lib/sales/further-deposit";
+
 
 import { OrganisationWorklist } from "../dashboard/OrganisationWorklist";
 import { isSalesExternalRole, isSalesInternalRole, canViewSalesForecasting } from "@/lib/sales/permissions";
@@ -127,6 +132,7 @@ type SaleTerms = {
   vat_rate: number;
   solicitor_fee: number | null;
   exchange_deposit_percent: number | null;
+  further_deposit_timing?: FurtherDepositTiming | null;
   second_deposit_enabled: boolean | null;
   second_deposit_percent: number | null;
   second_deposit_months_after_exchange: number | null;
@@ -141,6 +147,7 @@ type BuildingSaleDefault = {
   reservation_fee: number | null;
   reservation_fee_holder_default: string;
   exchange_deposit_percent: number | null;
+  further_deposit_timing?: FurtherDepositTiming | null;
   second_deposit_enabled: boolean | null;
   second_deposit_percent: number | null;
   second_deposit_months_after_exchange: number | null;
@@ -927,7 +934,6 @@ export function SalesReservationWorkflow({
     ...saleActorNames.filter((actor) => !portalProfiles.some((person) => person.id === actor.id)),
   ];
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
-  const [depositReceiptSales, setDepositReceiptSales] = useState<string[]>([]);
   const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
   const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
   const [conversationTarget, setConversationTarget] = useState<{ unit: string; sale?: string; comment?: string } | null>(null);
@@ -965,6 +971,7 @@ export function SalesReservationWorkflow({
   const [completionAgentFeePercent, setCompletionAgentFeePercent] = useState("");
   const [solicitorFee, setSolicitorFee] = useState("");
   const [exchangeDepositPercent, setExchangeDepositPercent] = useState("10");
+  const [furtherDepositTiming, setFurtherDepositTiming] = useState<FurtherDepositTiming | null>(null);
   const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
   const [secondDepositPercent, setSecondDepositPercent] = useState("");
   const [secondDepositMonthsAfterExchange, setSecondDepositMonthsAfterExchange] = useState("");
@@ -1009,6 +1016,7 @@ export function SalesReservationWorkflow({
   const [salesSearch, setSalesSearch] = useState("");
   const [activeWorkflowStage, setActiveWorkflowStage] = useState<SaleWorkflowStage>("reservation");
   const [activeSalesView, setActiveSalesView] = useState<SalesView>("pipeline");
+  const [depositView, setDepositView] = useState<"deposits" | "agent_fees">("deposits");
   const [activeUnitSection, setActiveUnitSection] = useState<UnitSaleSection>("progression");
   const [showCommercialModel, setShowCommercialModel] = useState(false);
   const [showAdvancedDealSetup, setShowAdvancedDealSetup] = useState(false);
@@ -1103,12 +1111,14 @@ export function SalesReservationWorkflow({
   const displaySolicitorFee = activeTerms?.solicitor_fee ?? selectedBuildingDefault?.default_sales_solicitor_fee ?? 882;
   const displayDepositStructure = buildDepositStructure({
     exchangeDepositPercent: activeTerms?.exchange_deposit_percent ?? selectedBuildingDefault?.exchange_deposit_percent ?? 10,
-    secondDepositEnabled: activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled ?? false,
+    furtherDepositTiming: activeTerms ? activeTerms.further_deposit_timing : selectedBuildingDefault?.further_deposit_timing,
+      secondDepositEnabled: activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled ?? false,
     secondDepositPercent: activeTerms?.second_deposit_percent ?? selectedBuildingDefault?.second_deposit_percent ?? 0,
-    secondDepositMonthsAfterExchange: activeTerms?.second_deposit_months_after_exchange ?? selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
+    secondDepositMonthsAfterExchange: (activeTerms ? activeTerms.second_deposit_months_after_exchange : selectedBuildingDefault?.second_deposit_months_after_exchange) ?? null,
   });
   const buildingDefaultDepositStructure = buildDepositStructure({
     exchangeDepositPercent: selectedBuildingDefault?.exchange_deposit_percent ?? 10,
+    furtherDepositTiming: selectedBuildingDefault?.further_deposit_timing,
     secondDepositEnabled: selectedBuildingDefault?.second_deposit_enabled ?? false,
     secondDepositPercent: selectedBuildingDefault?.second_deposit_percent ?? 0,
     secondDepositMonthsAfterExchange: selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
@@ -1132,6 +1142,7 @@ export function SalesReservationWorkflow({
   const previewAgentContributionType = agentContributionValueType;
   const previewAgentContribution = contributionAmount(previewAgentContributionValue, previewAgentContributionType, previewContractPrice);
   const previewDepositStructure = buildDepositStructure({
+    furtherDepositTiming,
     exchangeDepositPercent: normaliseNumberInput(exchangeDepositPercent) ?? displayDepositStructure.exchangeDepositPercent,
     secondDepositEnabled,
     secondDepositPercent: normaliseNumberInput(secondDepositPercent) ?? 0,
@@ -1330,7 +1341,7 @@ export function SalesReservationWorkflow({
     && (selectedUnit.sale_status !== "for_sale" || activeAttempt?.reservation_approved_at || activeAttempt?.exchanged_at || activeAttempt?.completed_at),
   );
   const buildingDefaultsDifferFromSnapshot = Boolean(
-    saleUsesProtectedSnapshot
+    activeTerms
     && selectedBuildingDefault
     && (
       (activeTerms?.agent_fee_percent ?? null) !== (selectedBuildingDefault.default_agent_fee_percent ?? null)
@@ -1341,6 +1352,7 @@ export function SalesReservationWorkflow({
       || (activeTerms?.exchange_deposit_percent ?? null) !== (selectedBuildingDefault.exchange_deposit_percent ?? null)
       || Boolean(activeTerms?.second_deposit_enabled) !== Boolean(selectedBuildingDefault.second_deposit_enabled)
       || (activeTerms?.second_deposit_percent ?? null) !== (selectedBuildingDefault.second_deposit_percent ?? null)
+      || JSON.stringify(activeTerms?.further_deposit_timing ?? null) !== JSON.stringify(selectedBuildingDefault.further_deposit_timing ?? null)
       || (activeTerms?.second_deposit_months_after_exchange ?? null) !== (selectedBuildingDefault.second_deposit_months_after_exchange ?? null)
       || (activeTerms?.completion_balance_percent ?? null) !== buildingDefaultDepositStructure.completionBalancePercent
     ),
@@ -1370,7 +1382,7 @@ export function SalesReservationWorkflow({
     {
       key: "exchange" as const,
       label: "Exchange",
-      status: exchangeRecorded ? depositReceiptSales.includes(activeAttempt?.id ?? "") ? "Exchanged · Deposit received" : "Exchanged · Deposit confirmation outstanding" : reservationApproved ? "Authority to exchange" : "Locked",
+      status: exchangeRecorded ? "Exchanged" : reservationApproved ? "Authority to exchange" : "Locked",
     },
     {
       key: "completion" as const,
@@ -1435,9 +1447,9 @@ export function SalesReservationWorkflow({
         sale_attempt_id: activeAttempt?.id ?? "",
         sequence_no: 2,
         payment_stage: "delayed_deposit",
-        label: `${displayDepositStructure.secondDepositPercent}% second deposit`,
+        label: `${displayDepositStructure.secondDepositPercent}% further deposit`,
         due_event: "manual_date",
-        due_offset_days: (displayDepositStructure.secondDepositMonthsAfterExchange ?? 0) * 31,
+        due_offset_days: null,
         percent_of_contract_price: displayDepositStructure.secondDepositPercent,
         fixed_amount: null,
         expected_amount: selectedContractValue ? selectedContractValue * (displayDepositStructure.secondDepositPercent / 100) : null,
@@ -1534,6 +1546,7 @@ export function SalesReservationWorkflow({
     if (next.view === "agent_fees") params.set("salesView", next.view);
     if (next.section === null || next.section === "progression") params.delete("section");
     if (next.section === "financials" || next.section === "commercial") params.set("section", next.section);
+    if (next.section === "financials" && !params.has("financialView")) params.set("financialView", depositView);
     const hash = next.hash ? `#${next.hash}` : "";
     window.history.pushState(internalOverview || conveyancerFile ? window.history.state : null, "", `${window.location.pathname}?${params.toString()}${hash}`);
     window.dispatchEvent(new Event("conveyancer-sale-navigation"));
@@ -1550,6 +1563,7 @@ export function SalesReservationWorkflow({
     setSelectedSaleUnitId(nextUnitId);
     setActiveSalesView("pipeline");
     setActiveUnitSection(focusAgentFees ? "financials" : "progression");
+    if (focusAgentFees) { setDepositView("agent_fees"); const url = new URL(window.location.href); url.searchParams.set("financialView", "agent_fees"); window.history.replaceState(window.history.state, "", url); }
     setShowCommercialModel(false);
     const nextUnit = units.find((unit) => unit.id === nextUnitId);
     setActiveWorkflowStage(nextUnit ? workflowStageForUnit(nextUnit) : "reservation");
@@ -1584,6 +1598,11 @@ export function SalesReservationWorkflow({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function changeDepositView(view: "deposits" | "agent_fees") {
+    setDepositView(view); setActiveUnitSection("financials");
+    const params = new URLSearchParams(window.location.search); params.set("section", "financials"); params.set("financialView", view);
+    window.history.pushState(window.history.state, "", window.location.pathname + "?" + params);
+  }
   function changeUnitSection(section: UnitSaleSection) {
     pendingAgentFeesScrollRef.current = null;
     setActiveUnitSection(section);
@@ -1608,6 +1627,8 @@ export function SalesReservationWorkflow({
     const urlFilter = params.get("salesFilter") as SalesStageFilter | null;
     const urlView = params.get("salesView");
     const urlSection = params.get("section") as UnitSaleSection | null;
+    setDepositView(financialSubview(params, window.location.hash));
+    if (window.location.hash.includes("deposit")) setActiveUnitSection("financials");
 
     if (urlUnitId && units.some((unit) => unit.id === urlUnitId)) {
       const conversation = params.get("conversation");
@@ -1626,7 +1647,7 @@ export function SalesReservationWorkflow({
         if (params.has("workReturn")) manuallySelectedWorkflowStageRef.current = stage;
       }
       if (urlSection === "financials" || urlSection === "commercial") {
-        setActiveUnitSection(urlSection);
+        setActiveUnitSection(window.location.hash.includes("deposit") ? "financials" : urlSection);
         if (urlSection === "financials" && (window.location.hash === "#exchange-fee" || window.location.hash === "#completion-fee")) {
           pendingAgentFeesScrollRef.current = window.location.hash === "#completion-fee" ? "completion" : "exchange";
         }
@@ -1648,7 +1669,7 @@ export function SalesReservationWorkflow({
   useEffect(() => {
     if (!selectedSaleUnitId || isLoading || !window.location.search.includes("workReturn=")) return;
     const id = decodeURIComponent(window.location.hash.slice(1));
-    if (!id || !/^(sales-stage-|sales-matching-actions|agent-fees|exchange-deposit-task|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
+    if (!id || !/^(sales-stage-|sales-matching-actions|agent-fees|exchange-deposit-task|further-deposit|sale-deposits|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
     const reveal = () => {
       const element = document.getElementById(id);
       if (!element) return false;
@@ -1682,7 +1703,8 @@ export function SalesReservationWorkflow({
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const section = params.get("section");
-      setActiveUnitSection(section === "financials" || section === "commercial" ? section : "progression");
+      setActiveUnitSection(window.location.hash.includes("deposit") ? "financials" : section === "financials" || section === "commercial" ? section : "progression");
+      setDepositView(financialSubview(params, window.location.hash));
       const requested = params.get("salesUnitId");
       const unit = units.find(item => item.id === requested);
       if (unit) {
@@ -1746,12 +1768,14 @@ export function SalesReservationWorkflow({
       setCompletionAgentFeePercent(selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
       setSolicitorFee(selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
       setExchangeDepositPercent(selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
+      setFurtherDepositTiming(selectedBuildingDefault?.further_deposit_timing ?? null);
       setSecondDepositEnabled(Boolean(selectedBuildingDefault?.second_deposit_enabled));
       setSecondDepositPercent(selectedBuildingDefault?.second_deposit_percent?.toString() ?? "");
       setSecondDepositMonthsAfterExchange(selectedBuildingDefault?.second_deposit_months_after_exchange?.toString() ?? "");
       setDepositSummary(paymentScheduleSummary({
         exchangeDepositPercent: selectedBuildingDefault?.exchange_deposit_percent ?? 10,
-        secondDepositEnabled: selectedBuildingDefault?.second_deposit_enabled ?? false,
+        furtherDepositTiming: selectedBuildingDefault?.further_deposit_timing,
+    secondDepositEnabled: selectedBuildingDefault?.second_deposit_enabled ?? false,
         secondDepositPercent: selectedBuildingDefault?.second_deposit_percent ?? 0,
         secondDepositMonthsAfterExchange: selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
       }));
@@ -1820,14 +1844,16 @@ export function SalesReservationWorkflow({
     setCompletionAgentFeePercent(activeTerms?.completion_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
     setSolicitorFee(activeTerms?.solicitor_fee?.toString() ?? selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
     setExchangeDepositPercent(activeTerms?.exchange_deposit_percent?.toString() ?? selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
+    setFurtherDepositTiming(activeTerms ? activeTerms.further_deposit_timing ?? null : selectedBuildingDefault?.further_deposit_timing ?? null);
     setSecondDepositEnabled(Boolean(activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled));
     setSecondDepositPercent(activeTerms?.second_deposit_percent?.toString() ?? selectedBuildingDefault?.second_deposit_percent?.toString() ?? "");
-    setSecondDepositMonthsAfterExchange(activeTerms?.second_deposit_months_after_exchange?.toString() ?? selectedBuildingDefault?.second_deposit_months_after_exchange?.toString() ?? "");
+    setSecondDepositMonthsAfterExchange((activeTerms ? activeTerms.second_deposit_months_after_exchange : selectedBuildingDefault?.second_deposit_months_after_exchange)?.toString() ?? "");
     setDepositSummary(activeTerms?.deposit_summary ?? paymentScheduleSummary({
       exchangeDepositPercent: activeTerms?.exchange_deposit_percent ?? selectedBuildingDefault?.exchange_deposit_percent ?? 10,
+      furtherDepositTiming: activeTerms ? activeTerms.further_deposit_timing : selectedBuildingDefault?.further_deposit_timing,
       secondDepositEnabled: activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled ?? false,
       secondDepositPercent: activeTerms?.second_deposit_percent ?? selectedBuildingDefault?.second_deposit_percent ?? 0,
-      secondDepositMonthsAfterExchange: activeTerms?.second_deposit_months_after_exchange ?? selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
+      secondDepositMonthsAfterExchange: (activeTerms ? activeTerms.second_deposit_months_after_exchange : selectedBuildingDefault?.second_deposit_months_after_exchange) ?? null,
     }));
     setCommercialSummary(activeTerms?.commercial_summary ?? "");
     setInvoiceReference(activeInvoice?.invoice_reference ?? "");
@@ -1896,6 +1922,7 @@ export function SalesReservationWorkflow({
         authorities: replaceSaleRows(previous.authorities, sale, facts.authorities),
         depositSources: replaceSaleRows(previous.depositSources, sale, facts.depositSources),
         deposits: replaceSaleRows(previous.deposits, sale, facts.deposits),
+        furtherDeposits: replaceSaleRows(previous.furtherDeposits, sale, facts.furtherDeposits),
       }));
       setGuidanceTime(Date.parse(facts.asOf)); setSalesError("");
     }
@@ -1910,7 +1937,6 @@ export function SalesReservationWorkflow({
         return [...rows.filter(row => !affected.has(row.document_id)), ...versions];
       });
     }
-    if (fresh.deposit) setDepositReceiptSales(rows => [...rows.filter(id => id !== sale), ...fresh.deposit!.map(row => row.sale_attempt_id as string)]);
   }
 
   function loadSalesData(event = "operation-refresh") {
@@ -1935,7 +1961,6 @@ export function SalesReservationWorkflow({
         setInvoices(fresh.invoices as SaleInvoice[]);
         setInvoicePayments(fresh.payments as SaleInvoicePayment[]);
         setSaleActorNames(fresh.actors as SaleActorName[]);
-        setDepositReceiptSales([...new Set(fresh.deposits.map(row => row.sale_attempt_id as string))]);
         setLoadedSalesKey(salesKey);
         if (internalOverview) { setGuidanceFacts(fresh.guidance); setGuidanceTime(Date.parse(fresh.guidance.asOf)); setLoadedOverviewScope(overviewScopeKey); setSalesError(""); }
         traceLoad("sales", event, "published");
@@ -1995,14 +2020,16 @@ export function SalesReservationWorkflow({
     setCompletionAgentFeePercent(activeTerms?.completion_agent_fee_percent?.toString() ?? selectedBuildingDefault?.default_completion_agent_fee_percent?.toString() ?? "0");
     setSolicitorFee(activeTerms?.solicitor_fee?.toString() ?? selectedBuildingDefault?.default_sales_solicitor_fee?.toString() ?? "882");
     setExchangeDepositPercent(activeTerms?.exchange_deposit_percent?.toString() ?? selectedBuildingDefault?.exchange_deposit_percent?.toString() ?? "10");
+    setFurtherDepositTiming(activeTerms ? activeTerms.further_deposit_timing ?? null : selectedBuildingDefault?.further_deposit_timing ?? null);
     setSecondDepositEnabled(Boolean(activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled));
     setSecondDepositPercent(activeTerms?.second_deposit_percent?.toString() ?? selectedBuildingDefault?.second_deposit_percent?.toString() ?? "");
-    setSecondDepositMonthsAfterExchange(activeTerms?.second_deposit_months_after_exchange?.toString() ?? selectedBuildingDefault?.second_deposit_months_after_exchange?.toString() ?? "");
+    setSecondDepositMonthsAfterExchange((activeTerms ? activeTerms.second_deposit_months_after_exchange : selectedBuildingDefault?.second_deposit_months_after_exchange)?.toString() ?? "");
     setDepositSummary(activeTerms?.deposit_summary ?? paymentScheduleSummary({
       exchangeDepositPercent: activeTerms?.exchange_deposit_percent ?? selectedBuildingDefault?.exchange_deposit_percent ?? 10,
+      furtherDepositTiming: activeTerms ? activeTerms.further_deposit_timing : selectedBuildingDefault?.further_deposit_timing,
       secondDepositEnabled: activeTerms?.second_deposit_enabled ?? selectedBuildingDefault?.second_deposit_enabled ?? false,
       secondDepositPercent: activeTerms?.second_deposit_percent ?? selectedBuildingDefault?.second_deposit_percent ?? 0,
-      secondDepositMonthsAfterExchange: activeTerms?.second_deposit_months_after_exchange ?? selectedBuildingDefault?.second_deposit_months_after_exchange ?? null,
+      secondDepositMonthsAfterExchange: (activeTerms ? activeTerms.second_deposit_months_after_exchange : selectedBuildingDefault?.second_deposit_months_after_exchange) ?? null,
     }));
     setCommercialSummary(activeTerms?.commercial_summary ?? "");
     setInvoiceReference(activeInvoice?.invoice_reference ?? "");
@@ -2293,6 +2320,7 @@ export function SalesReservationWorkflow({
           secondDepositEnabled,
           secondDepositPercent,
           secondDepositMonthsAfterExchange,
+          furtherDepositTiming,
           depositSummary,
         });
       }
@@ -2747,7 +2775,7 @@ export function SalesReservationWorkflow({
             { label: "Current stage", value: <>{currentLegalStage.label}{currentLegalStageDate ? ` · ${formatDate(currentLegalStageDate)}` : ""}</> },
           ]} />
           {buildingDefaultsDifferFromSnapshot && (
-            <p className="mt-2 text-xs text-[#617169]">This sale uses the deal setup agreed at reservation. Building defaults may have changed since.</p>
+            <p className="mt-2 text-xs text-[#617169]">{saleUsesProtectedSnapshot ? "This sale uses the deal setup agreed at reservation. Building defaults may have changed since." : "This unit has commercial terms that differ from the building defaults. Review the retained override in Commercial before reservation."}</p>
           )}
 
           <SaleConversationLayout userId={user.id} unitId={selectedUnit.id}
@@ -2799,7 +2827,7 @@ export function SalesReservationWorkflow({
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value text-right">{money(displayReservationFee)}</strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange deposit ({formatPercentValue(displayDepositStructure.exchangeDepositPercent)})</span><strong className="numeric-value text-right">{money(selectedExchangeDeposit)}</strong></div>
                 {displayDepositStructure.secondDepositEnabled && (
-                  <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Second deposit ({formatPercentValue(displayDepositStructure.secondDepositPercent)})</span><strong className="numeric-value text-right">{money(selectedSecondDeposit)}</strong></div>
+                  <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Further deposit ({formatPercentValue(displayDepositStructure.secondDepositPercent)})</span><strong className="numeric-value text-right">{money(selectedSecondDeposit)}</strong></div>
                 )}
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion balance ({formatPercentValue(displayDepositStructure.completionBalancePercent)})</span><strong className="numeric-value text-right">{money(selectedCompletionBalance)}</strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer contribution / cashback</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
@@ -2895,7 +2923,7 @@ export function SalesReservationWorkflow({
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value">{formatPercentValue(previewCompletionAgentFeePercent, 4)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(previewReservationFee)}</strong></div>
                           <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
-                          {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Second deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
+                          {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Further deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
                           <div className="flex justify-between gap-3"><span>Completion balance</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
                         </div>
                       </div>
@@ -2934,19 +2962,19 @@ export function SalesReservationWorkflow({
                         <label className="field-label">Exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         {secondDepositEnabled && (
                           <>
-                            <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
-                            <label className="field-label">Months after exchange<input className="field" inputMode="numeric" value={secondDepositMonthsAfterExchange} onChange={(event) => setSecondDepositMonthsAfterExchange(event.target.value)} disabled={!commercialModelEditable} /></label>
+                            <label className="field-label">Further deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} disabled={!commercialModelEditable} /></label>
+                            <fieldset disabled={!commercialModelEditable} className="contents"><FurtherDepositTimingFields value={furtherDepositTiming} months={secondDepositMonthsAfterExchange} onChange={setFurtherDepositTiming} onMonths={setSecondDepositMonthsAfterExchange} pcDate={selectedBuilding?.pc_date ?? selectedBuilding?.practical_completion_date} /></fieldset>
                           </>
                         )}
                         </div>
                         <label className="mt-3 flex w-fit items-center gap-2 text-sm text-[#34413a]">
                           <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" disabled={!commercialModelEditable} />
-                          Optional second deposit
+                          Optional further deposit
                         </label>
                         <div className={`mt-3 border-t py-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] text-[#34413a]" : "rounded-bw-inset border-[#D6A23A] bg-[#fff8e7] px-3 text-[#5c4a1f]"}`} role="status" data-testid="payment-schedule-summary">
                           <div className={styles.feeRow}>
                             <div>Exchange deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
-                            {previewDepositStructure.secondDepositEnabled && <div>Second deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
+                            {previewDepositStructure.secondDepositEnabled && <div>Further deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
                             <div>Completion balance<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
                           </div>
                           {previewDepositStructure.isValid && <p className="mt-2 border-t border-[#e8e5dc] pt-2 font-semibold">Total 100% <CheckCircle2 className="ml-1 inline-block text-[#18794e]" size={15} aria-label="Valid payment schedule" /></p>}
@@ -3143,7 +3171,7 @@ export function SalesReservationWorkflow({
                           { label: "Reservation fee", value: money(displayReservationFee) },
                           { label: "Reservation fee holder", value: describeReservationFeeHolder(displayReservationFeeHolder) },
                           { label: "Exchange deposit", value: formatPercentValue(displayDepositStructure.exchangeDepositPercent) },
-                          ...(displayDepositStructure.secondDepositEnabled ? [{ label: "Second deposit", value: `${formatPercentValue(displayDepositStructure.secondDepositPercent)} after ${displayDepositStructure.secondDepositMonthsAfterExchange ?? 0} months` }] : []),
+                          ...(displayDepositStructure.secondDepositEnabled ? [{ label: "Further deposit", value: `${formatPercentValue(displayDepositStructure.secondDepositPercent)} · ${timingDescription(displayDepositStructure.furtherDepositTiming, displayDepositStructure.secondDepositMonthsAfterExchange)}` }] : []),
                           { label: "Completion balance", value: formatPercentValue(displayDepositStructure.completionBalancePercent) },
                         ]} />
                       </div>
@@ -3289,7 +3317,13 @@ export function SalesReservationWorkflow({
             </StageWorkspace>
           )}
 
-          {activeUnitSection === "financials" && activeAttempt && reservationApproved && (
+          {activeUnitSection === "financials" && <div id="sale-financials" className="border-x border-[#d9ded6] bg-white px-4 pt-4 sm:px-6">
+            <div role="group" aria-label="Financials view" className="inline-flex max-w-full gap-1 rounded-lg bg-[#eef1eb] p-1">
+              {(["deposits", "agent_fees"] as const).map(view => <button key={view} id={"financials-" + view} type="button" aria-pressed={depositView === view} onClick={() => changeDepositView(view)} className={"rounded-md px-4 py-2 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D6A23A] " + (depositView === view ? "bg-[#0F3D2E] text-white shadow-sm" : "text-[#52645b] hover:bg-white")}>{view === "deposits" ? "Deposits" : "Agent fees"}</button>)}
+            </div>
+          </div>}
+          {activeUnitSection === "financials" && depositView === "deposits" && (activeAttempt ? <SaleDeposits key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} onNotice={onNotice} onChanged={async (sale, action) => { await refreshLegalSale(sale, action); }} /> : <p className="border bg-white p-5 text-sm">Deposit terms can be previewed in Commercial. No purchaser collection is required for an unreserved unit.</p>)}
+          {activeUnitSection === "financials" && depositView === "agent_fees" && activeAttempt && reservationApproved && (
             <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="min-w-0 scroll-mt-4 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white px-4 py-6 sm:px-6 sm:py-7">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e2ded3] pb-5">
                 <div>
@@ -3583,7 +3617,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "progression" && (activeWorkflowStage === "exchange" || activeWorkflowStage === "completion") && activeAttempt && (
-            <SalesLegalWorkflow key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async (sale, action, measurement) => { await settleRefreshes([refreshLegalSale(sale, action).then(() => measurement?.mark("sales_reload_completed")), refreshLegalPortalData(attempts.find(row => row.id === sale)?.unit_id ?? "", action).then(() => measurement?.mark("portal_reload_completed"))]); }} />
+            <SalesLegalWorkflow onManageDeposits={() => changeDepositView("deposits")} key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} stage={activeWorkflowStage} role={role} onNotice={onNotice} onChanged={async (sale, action, measurement) => { await settleRefreshes([refreshLegalSale(sale, action).then(() => measurement?.mark("sales_reload_completed")), refreshLegalPortalData(attempts.find(row => row.id === sale)?.unit_id ?? "", action).then(() => measurement?.mark("portal_reload_completed"))]); }} />
           )}
 
           {activeUnitSection === "progression" && activeWorkflowStage === "handover" && (
@@ -3649,7 +3683,7 @@ export function SalesReservationWorkflow({
             </div>
           )}
 
-          {activeUnitSection === "financials" && (!activeAttempt || !reservationApproved) && (
+          {activeUnitSection === "financials" && depositView === "agent_fees" && (!activeAttempt || !reservationApproved) && (
             <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-5 text-sm text-[#617169]">
               Agent fees become available after the reservation is approved.
             </section>

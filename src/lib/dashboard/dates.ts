@@ -27,9 +27,15 @@ export function recentBusinessWindow(now: number, days = 7) {
   return { start: londonMidnight(addCalendarDays(today, 1 - days)), end: londonMidnight(addCalendarDays(today, 1)) };
 }
 
-export type WorkDeadline = { at: string; precision: "date" | "instant"; basis: string };
+export type WorkDeadline = { at: string; precision: "date" | "instant"; basis: string; kind?: "deposit" };
 export function deadlineState(deadline: WorkDeadline | null, now: number, upcomingDays = COMPLETION_WARNING_DAYS) {
   if (!deadline) return "none";
+  if (deadline.kind === "deposit") {
+    const date = deadline.precision === "date" ? deadline.at : londonDate(new Date(deadline.at));
+    const days = calendarDays(londonDate(now), date);
+    if (deadline.precision === "instant" ? Date.parse(deadline.at) <= now : days < 0) return "overdue";
+    return days === 0 ? "today" : days <= 30 ? "soon" : "future";
+  }
   if (deadline.precision === "instant") {
     const remaining = Date.parse(deadline.at) - now;
     return remaining <= 0 ? "overdue" : remaining <= AUTHORITY_WARNING_HOURS * 3_600_000 ? "soon" : "future";

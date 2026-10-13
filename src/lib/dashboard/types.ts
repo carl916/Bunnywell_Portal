@@ -6,6 +6,7 @@ import type { WorkDeadline } from "./dates";
 import type { InternalOverview } from "./overview";
 import type { AgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
 import type { AgentFeePayment } from "../sales/agent-fees";
+import type { FurtherDepositFact } from "../sales/further-deposit";
 
 export type WorkModule = "sales" | "snags" | "other";
 export type WorkParty = { kind: "developer" | "sales_agent" | "conveyancer" | "contractor" | "unallocated"; organisationId: string | null; label: string; allocation?: "appointed" | "unallocated" | "unavailable" };
@@ -47,6 +48,7 @@ export type DashboardInput = {
   organisations: { id: string; name: string }[]; buildingOrganisations: BuildingOrganisation[];
   saleActors?: { id: string; display_name: string }[]; sales: WorkSale[]; documents: WorkDocument[]; authorities: WorkAuthority[]; saleEvents: WorkSaleEvent[];
   deposits: { sale_attempt_id: string; source_id: string; expected_amount: number; received_amount: number }[];
+  furtherDeposits?: FurtherDepositFact[];
   depositSources: { id: string; sale_attempt_id: string; source_kind: string; expected_amount: number | null }[];
   feePortfolio?: AgentFeePortfolioRow[];
   invoices: WorkInvoice[]; terms: WorkTerms[]; payments: (AgentFeePayment & { invoice_id: string })[];

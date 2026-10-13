@@ -25,6 +25,7 @@ export function buildBuildingSaleDefaultsPayload(input: BuildingSaleDefaultsInpu
     second_deposit_enabled: input.depositStructure.secondDepositEnabled,
     second_deposit_percent: input.depositStructure.secondDepositEnabled ? input.depositStructure.secondDepositPercent : null,
     second_deposit_months_after_exchange: input.depositStructure.secondDepositEnabled ? input.depositStructure.secondDepositMonthsAfterExchange : null,
+    further_deposit_timing: input.depositStructure.furtherDepositTiming,
     default_vat_rate: 20,
     default_sales_solicitor_fee: 882,
   };

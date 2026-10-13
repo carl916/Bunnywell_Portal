@@ -35,7 +35,7 @@ test("commercial audiences and editor render only in Commercial", () => {
 });
 
 test("Agent fees render only in Financials and not in the legal stage selector", () => {
-  assert.match(workflowSource, /activeUnitSection === "financials" && activeAttempt && reservationApproved/);
+  assert.match(workflowSource, /activeUnitSection === "financials" && depositView === "agent_fees" && activeAttempt && reservationApproved/);
   const selectorStart = workflowSource.indexOf('id="unit-sale-progression"');
   const reservationStart = workflowSource.indexOf('activeWorkflowStage === "reservation"', selectorStart);
   const stageSelector = workflowSource.slice(selectorStart, reservationStart);

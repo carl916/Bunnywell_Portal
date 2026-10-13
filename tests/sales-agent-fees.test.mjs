@@ -67,7 +67,7 @@ test("sale terms snapshot building milestone defaults", () => {
   assert.match(routeSource, /defaults\?\.default_exchange_agent_fee_percent/);
   assert.match(routeSource, /exchange_agent_fee_percent: exchangeAgentFeePercent/);
   assert.match(routeSource, /completion_agent_fee_percent: completionAgentFeePercent/);
-  assert.match(routeSource, /save_unit_commercial_model_with_agent_fees/);
+  assert.match(routeSource, /save_unit_commercial_model_with_deposits/);
   assert.match(migrationSource, /update public\.unit_sale_terms[\s\S]*exchange_agent_fee_percent/);
 });
 
