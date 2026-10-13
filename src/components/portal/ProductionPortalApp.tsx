@@ -1,4 +1,7 @@
 "use client";
+import { FurtherDepositTimingFields } from "./sales/FurtherDepositTimingFields";
+import { timingError, timingDescription, type FurtherDepositTiming } from "@/lib/sales/further-deposit";
+
 
 import { OrganisationWorklist } from "./dashboard/OrganisationWorklist";
 import { WorkReturnLink } from "./dashboard/WorkReturnLink";
@@ -3739,11 +3742,12 @@ function BuildingSalesSetup({
   const [secondDepositEnabled, setSecondDepositEnabled] = useState(false);
   const [secondDepositPercent, setSecondDepositPercent] = useState("");
   const [secondDepositMonths, setSecondDepositMonths] = useState("");
+  const [furtherDepositTiming, setFurtherDepositTiming] = useState<FurtherDepositTiming | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [savedValues, setSavedValues] = useState({
     buildCost: "", agentFeePercent: "", exchangeAgentFeePercent: "", completionAgentFeePercent: "",
     reservationFee: "", reservationFeeHolder: "sales_agent", exchangeDepositPercent: "10",
-    secondDepositEnabled: false, secondDepositPercent: "", secondDepositMonths: "",
+    secondDepositEnabled: false, secondDepositPercent: "", secondDepositMonths: "", furtherDepositTiming: null as FurtherDepositTiming | null,
   });
 
   function applySalesValues(values: typeof savedValues) {
@@ -3757,9 +3761,11 @@ function BuildingSalesSetup({
     setSecondDepositEnabled(values.secondDepositEnabled);
     setSecondDepositPercent(values.secondDepositPercent);
     setSecondDepositMonths(values.secondDepositMonths);
+    setFurtherDepositTiming(values.furtherDepositTiming);
   }
 
   const depositStructure = buildDepositStructure({
+    furtherDepositTiming,
     exchangeDepositPercent: moneyInputToNumber(exchangeDepositPercent) ?? 10,
     secondDepositEnabled,
     secondDepositPercent: moneyInputToNumber(secondDepositPercent) ?? 0,
@@ -3795,6 +3801,7 @@ function BuildingSalesSetup({
           secondDepositEnabled: Boolean(data?.second_deposit_enabled),
           secondDepositPercent: data?.second_deposit_percent?.toString() ?? "",
           secondDepositMonths: data?.second_deposit_months_after_exchange?.toString() ?? "",
+          furtherDepositTiming: data?.further_deposit_timing ?? null,
         };
         setBuildCost(loadedValues.buildCost);
         setAgentFeePercent(loadedValues.agentFeePercent);
@@ -3806,6 +3813,7 @@ function BuildingSalesSetup({
         setSecondDepositEnabled(loadedValues.secondDepositEnabled);
         setSecondDepositPercent(loadedValues.secondDepositPercent);
         setSecondDepositMonths(loadedValues.secondDepositMonths);
+        setFurtherDepositTiming(loadedValues.furtherDepositTiming);
         setSavedValues(loadedValues);
       } catch (error) {
         if (!cancelled) onNotice(error instanceof Error ? error.message : "Could not load sales setup.");
@@ -3820,6 +3828,7 @@ function BuildingSalesSetup({
   }, [building.id, onNotice]);
 
   async function saveSalesDefaults() {
+    if (secondDepositEnabled && timingError(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths), true)) { onNotice(timingError(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths), true)!); return; }
     if (!depositStructure.isValid) {
       onNotice(depositStructure.error ?? "Payment schedule is invalid.");
       return;
@@ -3856,8 +3865,8 @@ function BuildingSalesSetup({
           building_id: building.id,
           sequence_no: 2,
           payment_stage: "delayed_deposit",
-          label: `${depositStructure.secondDepositPercent}% second deposit`,
-          due_offset_days: (depositStructure.secondDepositMonthsAfterExchange ?? 0) * 31,
+          label: `${depositStructure.secondDepositPercent}% further deposit`,
+          due_offset_days: null,
           percent_of_contract_price: depositStructure.secondDepositPercent,
           includes_reservation_fee: false,
         }] : []),
@@ -3887,7 +3896,7 @@ function BuildingSalesSetup({
         .insert(scheduleRows);
       if (insertScheduleError) throw insertScheduleError;
 
-      const cascade = await applyDefaultDealSetupToUnreservedUnits(supabase, defaultsPayload, scheduleRows);
+      const cascade = await applyDefaultDealSetupToUnreservedUnits(supabase, defaultsPayload);
       await recordAudit({
         event_type: "building_deal_defaults_updated",
         entity_type: "building",
@@ -3895,8 +3904,8 @@ function BuildingSalesSetup({
         summary: `Sales deal defaults updated: ${building.name}`,
         metadata: { building: building.name, ...defaultsPayload, deposit_summary: paymentScheduleSummary(depositStructure), cascade },
       });
-      onNotice(`Sales setup saved for ${building.name}. ${defaultDealSetupCascadeSummary(cascade)}`);
-      setSavedValues({ buildCost, agentFeePercent, exchangeAgentFeePercent, completionAgentFeePercent, reservationFee, reservationFeeHolder, exchangeDepositPercent, secondDepositEnabled, secondDepositPercent, secondDepositMonths });
+      onNotice(`Sales setup saved for ${building.name}. ${defaultDealSetupCascadeSummary(cascade)} Deposit overrides are preserved; review exceptions in each unit's Commercial terms.`);
+      setSavedValues({ buildCost, agentFeePercent, exchangeAgentFeePercent, completionAgentFeePercent, reservationFee, reservationFeeHolder, exchangeDepositPercent, secondDepositEnabled, secondDepositPercent, secondDepositMonths, furtherDepositTiming });
       setIsEditing(false);
       await reload();
     } catch (error) {
@@ -3913,14 +3922,6 @@ function BuildingSalesSetup({
   async function applyDefaultDealSetupToUnreservedUnits(
     supabase: ReturnType<typeof createSupabaseBrowserClient>,
     defaultsPayload: ReturnType<typeof buildBuildingSaleDefaultsPayload>,
-    defaultScheduleRows: Array<{
-      sequence_no: number;
-      payment_stage: string;
-      label: string;
-      due_offset_days: number;
-      percent_of_contract_price: number;
-      includes_reservation_fee: boolean;
-    }>,
   ) {
     if (units.length === 0) {
       return classifyDefaultDealSetupCascade({ units, attempts: [] });
@@ -3947,6 +3948,11 @@ function BuildingSalesSetup({
 
     const cascade = classifyDefaultDealSetupCascade({ units, attempts, documents });
     if (cascade.eligibleAttemptIds.length === 0) return cascade;
+    // Deposit inheritance is handled atomically by the defaults trigger. A
+    // deposit-only change must not reapply fees over unit-specific fee settings.
+    if (agentFeePercent === savedValues.agentFeePercent && exchangeAgentFeePercent === savedValues.exchangeAgentFeePercent
+      && completionAgentFeePercent === savedValues.completionAgentFeePercent && reservationFee === savedValues.reservationFee
+      && reservationFeeHolder === savedValues.reservationFeeHolder) return cascade;
 
     const { data: termRows, error: termsError } = await supabase
       .from("unit_sale_terms")
@@ -3968,12 +3974,6 @@ function BuildingSalesSetup({
       completion_agent_fee_percent: defaultsPayload.default_completion_agent_fee_percent,
       vat_rate: defaultsPayload.default_vat_rate,
       solicitor_fee: defaultsPayload.default_sales_solicitor_fee,
-      exchange_deposit_percent: defaultsPayload.exchange_deposit_percent,
-      second_deposit_enabled: defaultsPayload.second_deposit_enabled,
-      second_deposit_percent: defaultsPayload.second_deposit_percent,
-      second_deposit_months_after_exchange: defaultsPayload.second_deposit_months_after_exchange,
-      completion_balance_percent: depositStructure.completionBalancePercent,
-      deposit_summary: paymentScheduleSummary(depositStructure),
       updated_by_user_id: sessionData.session?.user.id ?? null,
       updated_at: now,
     };
@@ -3983,38 +3983,6 @@ function BuildingSalesSetup({
       .update(termsPatch)
       .in("id", currentTerms.map((term) => term.id));
     if (termsUpdateError) throw termsUpdateError;
-
-    const currentTermByAttemptId = new Map(currentTerms.map((term) => [term.sale_attempt_id, term.id]));
-    const saleAttemptIdsWithTerms = Array.from(currentTermByAttemptId.keys());
-    const { error: deleteUnitScheduleError } = await supabase
-      .from("unit_sale_payment_schedule")
-      .delete()
-      .in("sale_attempt_id", saleAttemptIdsWithTerms);
-    if (deleteUnitScheduleError) throw deleteUnitScheduleError;
-
-    const unitScheduleRows = saleAttemptIdsWithTerms.flatMap((saleAttemptId) => defaultScheduleRows.map((row) => ({
-      sale_attempt_id: saleAttemptId,
-      sale_terms_id: currentTermByAttemptId.get(saleAttemptId) ?? null,
-      sequence_no: row.sequence_no,
-      payment_stage: row.payment_stage,
-      label: row.label,
-      due_event: row.payment_stage === "completion" ? "completion" : row.payment_stage === "exchange" ? "exchange" : "manual_date",
-      due_offset_days: row.due_offset_days,
-      percent_of_contract_price: row.percent_of_contract_price,
-      fixed_amount: null,
-      includes_reservation_fee: row.includes_reservation_fee,
-      expected_amount: null,
-      status: "pending",
-      created_by_user_id: sessionData.session?.user.id ?? null,
-      updated_by_user_id: sessionData.session?.user.id ?? null,
-    })));
-
-    if (unitScheduleRows.length > 0) {
-      const { error: insertUnitScheduleError } = await supabase
-        .from("unit_sale_payment_schedule")
-        .insert(unitScheduleRows);
-      if (insertUnitScheduleError) throw insertUnitScheduleError;
-    }
 
     return cascade;
   }
@@ -4029,7 +3997,7 @@ function BuildingSalesSetup({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-[#0F3D2E]">Sales setup</h3>
-            <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot.</p>
+            <p className="mt-1 text-sm text-[#617169]">These defaults apply to unreserved units. Reserved, exchanged and completed sale files keep their own agreed commercial snapshot. Explicit deposit overrides and reservation drafts remain unchanged; review their Commercial terms separately.</p>
           </div>
           <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)} disabled={isLoading}>{isLoading ? "Loading…" : "Edit"}</button>
         </div>
@@ -4037,7 +4005,7 @@ function BuildingSalesSetup({
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: {buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : "Not set"}</dd></div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{agentFeePercent ? `${agentFeePercent}% total` : "Not set"}</dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : "Not set"}</dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Deposits</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange / {depositStructure.completionBalancePercent}% completion</dd><dd className="mt-0.5 text-xs text-[#617169]">Second deposit: {secondDepositEnabled ? `${secondDepositPercent || "0"}% after ${secondDepositMonths || "0"} months` : "None"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Deposits</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange / {depositStructure.completionBalancePercent}% completion</dd><dd className="mt-0.5 text-xs text-[#617169]">Further deposit: {secondDepositEnabled ? `${secondDepositPercent || "0"}% · ${timingDescription(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths))}` : "None"}</dd></div>
         </dl>
       </section>
     );
@@ -4085,12 +4053,12 @@ function BuildingSalesSetup({
             <label className="field-label">Initial exchange deposit %<input className="field" inputMode="decimal" value={exchangeDepositPercent} onChange={(event) => setExchangeDepositPercent(event.target.value)} /></label>
             <label className="option-card min-h-11 px-3 py-2 md:col-span-2">
               <input checked={secondDepositEnabled} onChange={(event) => setSecondDepositEnabled(event.target.checked)} type="checkbox" />
-              Optional second deposit
+              Optional further deposit
             </label>
             {secondDepositEnabled && (
               <>
-                <label className="field-label">Second deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} /></label>
-                <label className="field-label">Second deposit timing<input className="field" inputMode="numeric" value={secondDepositMonths} onChange={(event) => setSecondDepositMonths(event.target.value)} placeholder="Months after exchange" /></label>
+                <label className="field-label">Further deposit %<input className="field" inputMode="decimal" value={secondDepositPercent} onChange={(event) => setSecondDepositPercent(event.target.value)} /></label>
+                <FurtherDepositTimingFields value={furtherDepositTiming} months={secondDepositMonths} onChange={setFurtherDepositTiming} onMonths={setSecondDepositMonths} pcDate={building.pc_date ?? building.practical_completion_date} />
               </>
             )}
           </div>
@@ -4103,7 +4071,7 @@ function BuildingSalesSetup({
           </div>
           <div className={`mt-4 rounded-bw-inset border p-3 text-sm ${depositStructure.isValid ? "border-[#d9ded6] bg-white text-[#34413a]" : "border-[#D6A23A] bg-[#fff8e7] text-[#5c4a1f]"}`}>
             <div className="flex justify-between gap-4">
-              <span>Completion balance</span>
+              <span>Scheduled on completion (excluding statement adjustments)</span>
               <strong className="numeric-value">{depositStructure.completionBalancePercent}%</strong>
             </div>
             <p className="mt-1 text-xs">{depositStructure.error ?? paymentScheduleSummary(depositStructure)}</p>

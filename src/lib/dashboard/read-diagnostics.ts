@@ -7,7 +7,7 @@ const operations = new Set([
   "profiles", "user_unit_access", "user_building_access", "building_organisations",
   "buildings", "units", "building_floors", "organisations", "unit_sale_attempts",
   "snags", "handovers", "unit_tenancies", "resident_access_requests", "unit_sale_documents",
-  "sale_legal_emails", "sale_exchange_deposit_receipts", "sale_exchange_deposit_sources",
+  "sale_legal_emails", "sale_exchange_deposit_receipts", "sale_exchange_deposit_sources", "sale_further_deposit_facts",
   "sale_workflow_context", "sale_actor_names", "unit_sale_invoices", "unit_sale_invoice_payments",
   "unit_sale_terms", "rental_arrears_episodes", "rental_import_runs",
 ]);

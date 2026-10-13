@@ -1,3 +1,4 @@
+import { timingDescription, type FurtherDepositTiming } from "./further-deposit";
 import type { Organisation } from "@/lib/data/production";
 import { absoluteSaleFileUrl, portalBaseUrl } from "@/lib/portal-url";
 import { emailMoney as money, renderLegalEmailContent } from "./legal-email";
@@ -66,12 +67,12 @@ export function authorityTerms(snapshot: LegalSnapshot) {
     ["Contract price", money(t.contract_price)],
     ["Reservation fee", `${money(t.reservation_fee)} (held by ${String(t.reservation_fee_holder || "not recorded").replaceAll("_", " ")})`],
     ["Exchange deposit", `${money(Number(t.contract_price || 0) * Number(t.exchange_deposit_percent || 0) / 100)} (${t.exchange_deposit_percent ?? "Not recorded"}%)`],
-    ["Payment structure", String(t.deposit_summary || `${t.exchange_deposit_percent ?? "Not recorded"}% on exchange${t.second_deposit_enabled ? `; ${t.second_deposit_percent}% ${t.second_deposit_months_after_exchange} months after exchange` : ""}; ${t.completion_balance_percent ?? "remaining balance"}${t.completion_balance_percent != null ? "%" : ""} on completion`)],
+    ["Payment structure", String(t.deposit_summary || `${t.exchange_deposit_percent ?? "Not recorded"}% on exchange${t.second_deposit_enabled ? `; ${t.second_deposit_percent}% further deposit: ${timingDescription(t.further_deposit_timing as FurtherDepositTiming | null, t.second_deposit_months_after_exchange == null ? null : Number(t.second_deposit_months_after_exchange))}` : ""}; ${t.completion_balance_percent ?? "remaining balance"}${t.completion_balance_percent != null ? "%" : ""} on completion`)],
     ["Incentives or contributions", `Developer: ${money(t.developer_contribution)}; agent: ${money(t.agent_contribution)}; other concessions: ${money(t.other_concessions)}`],
     ["Parking", `${String(t.parking_location_details || "No location recorded")}; value ${money(t.parking_value)}; contribution ${money(t.parking_contribution_value)}`],
     ["Completion information", snapshot.building.completion_information || "Contractual completion date to be confirmed by the conveyancer"],
     ["Special terms or agreed variations", [t.commercial_summary, ...(Array.isArray(t.additional_special_conditions) ? t.additional_special_conditions : [])].filter(Boolean).join("; ") || "None recorded"],
-    ...snapshot.schedule.map((row) => [`Payment: ${row.label}`, `${money(row.expected_amount ?? row.fixed_amount)}; ${row.percent_of_contract_price ?? "—"}%; due ${row.due_event ?? row.due_date ?? "as agreed"}${row.due_offset_days ? ` + ${row.due_offset_days} days` : ""}${row.notes ? `; ${row.notes}` : ""}`]),
+    ...snapshot.schedule.map((row) => [`Payment: ${row.payment_stage === "delayed_deposit" ? "Further deposit" : row.label}`, `${money(row.expected_amount ?? row.fixed_amount)}; ${row.percent_of_contract_price ?? "—"}%; due ${row.payment_stage === "delayed_deposit" ? timingDescription(t.further_deposit_timing as FurtherDepositTiming | null, t.second_deposit_months_after_exchange == null ? null : Number(t.second_deposit_months_after_exchange)) : `${row.due_event ?? row.due_date ?? "as agreed"}${row.due_offset_days ? ` + ${row.due_offset_days} days` : ""}`}${row.notes ? `; ${row.notes}` : ""}`]),
   ];
 }
 

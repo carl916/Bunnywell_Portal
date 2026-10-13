@@ -1,3 +1,4 @@
+import { timingDescription, type FurtherDepositTiming } from "./further-deposit";
 import type { LegalSnapshot } from "./legal-workflow";
 import { describeReservationFeeHolder, paymentScheduleSummary } from "./deal-structure";
 import { isCalendarDate } from "./completion-notice";
@@ -8,7 +9,7 @@ type Payment = { label: string; percentage: string; amount: string; due: string;
 const number = (value: unknown) => value == null || value === "" || !Number.isFinite(Number(value)) ? null : Number(value);
 export const emailMoney = (value: unknown) => number(value) == null ? "Not recorded" : new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(Number(value));
 const percent = (value: unknown) => number(value) == null ? "—" : `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 4 }).format(Number(value))}%`;
-const clean = (value: unknown) => String(value ?? "").replace(/\bmanual_date\b/g, "agreed date").replace(/\bdelayed_deposit\b/g, "second deposit").replace(/\breservation_fee\b/g, "reservation fee").replace(/\bsales_agent\b/g, "sales agent").trim();
+const clean = (value: unknown) => String(value ?? "").replace(/\bmanual_date\b/g, "agreed date").replace(/\bdelayed_deposit\b/g, "further deposit").replace(/\breservation_fee\b/g, "reservation fee").replace(/\bsales_agent\b/g, "sales agent").trim();
 
 export function emailDate(value: string) {
   if (!isCalendarDate(value)) return "Not recorded";
@@ -38,7 +39,7 @@ export function legalEmailPayments(snapshot: LegalSnapshot): Payment[] {
     const balance = number(t.completion_balance_percent) ?? (exchange != null && second != null ? 100 - exchange - second : null);
     schedule = [
       ...(exchange != null ? [{ label: "Exchange deposit", percent_of_contract_price: exchange, due_event: "exchange", includes_reservation_fee: true }] : []),
-      ...(t.second_deposit_enabled && second != null ? [{ label: "Second deposit", percent_of_contract_price: second, due_event: "manual_date", payment_stage: "delayed_deposit", due_offset_days: number(t.second_deposit_months_after_exchange) == null ? null : Number(t.second_deposit_months_after_exchange) * 31 }] : []),
+      ...(t.second_deposit_enabled && second != null ? [{ label: "Further deposit", percent_of_contract_price: second, due_event: "manual_date", payment_stage: "delayed_deposit", due_offset_days: null }] : []),
       ...(balance != null ? [{ label: "Completion balance", percent_of_contract_price: balance, due_event: "completion" }] : []),
     ];
   }
@@ -46,9 +47,9 @@ export function legalEmailPayments(snapshot: LegalSnapshot): Payment[] {
     const percentage = number(row.percent_of_contract_price);
     const price = number(t.contract_price);
     const amount = number(row.expected_amount) ?? number(row.fixed_amount) ?? (price != null && percentage != null ? price * percentage / 100 : null);
-    const label = clean(row.label || ({ exchange: "Exchange deposit", delayed_deposit: "Second deposit", completion: "Completion balance", reservation: "Reservation fee" }[String(row.payment_stage)] || "Payment"));
+    const label = clean((row.payment_stage === "delayed_deposit" ? "Further deposit" : row.label) || ({ exchange: "Exchange deposit", delayed_deposit: "Further deposit", completion: "Completion balance", reservation: "Reservation fee" }[String(row.payment_stage)] || "Payment"));
     const withoutPercent = percentage != null && label.startsWith(`${percentage}% `) ? label.slice(`${percentage}% `.length) : label;
-    return { label: withoutPercent.charAt(0).toUpperCase() + withoutPercent.slice(1), percentage: percent(percentage), amount: emailMoney(amount), due: paymentDue(row), notes: [row.includes_reservation_fee ? "Includes reservation fee" : "", clean(row.notes)].filter(Boolean).join(". ") };
+    return { label: withoutPercent.charAt(0).toUpperCase() + withoutPercent.slice(1), percentage: percent(percentage), amount: emailMoney(amount), due: row.payment_stage === "delayed_deposit" ? timingDescription(t.further_deposit_timing as FurtherDepositTiming | null, number(t.second_deposit_months_after_exchange)) : paymentDue(row), notes: [row.includes_reservation_fee ? "Includes reservation fee" : "", clean(row.notes)].filter(Boolean).join(". ") };
   });
 }
 
@@ -61,8 +62,9 @@ function commercialDetails(snapshot: LegalSnapshot): Detail[] {
   // Preserve bespoke payment terms, while omitting the auto-generated summary
   // that duplicates the authoritative payment rows.
   const summary = clean(t.deposit_summary);
-  const generated = paymentScheduleSummary({ exchangeDepositPercent: number(t.exchange_deposit_percent), secondDepositEnabled: Boolean(t.second_deposit_enabled), secondDepositPercent: number(t.second_deposit_percent), secondDepositMonthsAfterExchange: number(t.second_deposit_months_after_exchange) });
-  if (summary && summary !== generated) terms.push(`Additional payment terms: ${summary}`);
+  const generated = paymentScheduleSummary({ furtherDepositTiming: t.further_deposit_timing as FurtherDepositTiming | null, exchangeDepositPercent: number(t.exchange_deposit_percent), secondDepositEnabled: Boolean(t.second_deposit_enabled), secondDepositPercent: number(t.second_deposit_percent), secondDepositMonthsAfterExchange: number(t.second_deposit_months_after_exchange) });
+  const legacyGenerated = `${number(t.exchange_deposit_percent)}% on exchange${t.second_deposit_enabled ? `, ${number(t.second_deposit_percent)}% ${number(t.second_deposit_months_after_exchange)} months after exchange` : ""}, ${number(t.completion_balance_percent)}% on completion`;
+  if (summary && summary !== generated && summary !== legacyGenerated) terms.push(`Additional payment terms: ${summary}`);
   return [["Incentives and contributions", incentives], ["Parking arrangements", parking], ["Special terms or agreed variations", terms.join("\n") || "None"], ["Completion arrangements", clean(snapshot.building.completion_information) || "Contractual completion date to be confirmed by the conveyancer"]];
 }
 

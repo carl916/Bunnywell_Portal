@@ -11,7 +11,7 @@ const SALE_FILE_WORKSPACES: Array<{
   panelId: string;
 }> = [
   { key: "progression", label: "Progression", description: "Sale lifecycle", panelId: "unit-sale-progression" },
-  { key: "financials", label: "Financials", description: "Invoices & payments", panelId: "agent-fees" },
+  { key: "financials", label: "Financials", description: "Deposits & agent fees", panelId: "sale-financials" },
   { key: "commercial", label: "Commercial", description: "Terms & fees", panelId: "unit-sale-commercial" },
 ];
 

@@ -5,6 +5,7 @@ import { exchangeAuthorityState } from "../sales/authority-state";
 import { buildingSalesResponsibility, sellerConveyancer } from "../sales/responsibility";
 import { completionDocumentApproved, completionDocumentsApproved, completionDocumentLabels, completionDocumentTypes, currentCompletionVersion } from "../sales/completion-review";
 import { completionNoticeState } from "../sales/completion-notice";
+import { furtherDepositState } from "../sales/further-deposit";
 import { feePortfolioFromSales } from "../sales/fee-portfolio-data";
 import { feeActions } from "../sales/fee-workspace";
 import type { AgentFeePortfolioRow } from "../sales/agent-fees-portfolio";
@@ -82,7 +83,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     const agent = buildingSalesResponsibility(buildingMap.get(sale.building_id), "sales_agent", input.organisations);
     const conveyancer = sellerConveyancer(buildingMap.get(sale.building_id), input.organisations);
     const task = (kind: string, label: string, responsible: WorkParty, since: string | null, basis: string, permission: SalesStageAction, anchor: string, options: Partial<WorkItem> = {}) =>
-      add({ ...base, destination: { ...base.destination, anchor, section: anchor.includes("fee") ? "financials" : "progression", ...options.destination } }, kind, label, responsible, since, basis,
+      add({ ...base, destination: { ...base.destination, anchor, section: /fee|deposit/.test(anchor) ? "financials" : "progression", ...options.destination } }, kind, label, responsible, since, basis,
         { context: contextFor(), canAct: canPerformSalesAction(viewer.role, permission) && (internal || owns(responsible)), ...options });
     const completed = Boolean(sale.completed_at || sale.legal_completed_at || sale.workflow_status === "completed");
     const exchanged = Boolean(sale.exchanged_at || completed);
@@ -145,6 +146,22 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
       const source = input.depositSources.find(d => d.sale_attempt_id === sale.id);
       const receipt = input.deposits.some(d => d.sale_attempt_id === sale.id && d.source_id === source?.id && Number(d.expected_amount) === Number(source.expected_amount) && Number(d.received_amount) === Number(source.expected_amount));
       if (!receipt) task("deposit_receipt", source?.expected_amount == null ? "Review unavailable deposit confirmation basis" : "Confirm receipt of the full expected exchange deposit", conveyancer, sale.exchanged_at, "Exchange date — record-keeping exception", "confirm_exchange_deposit", "exchange-deposit-task");
+      const further = input.furtherDeposits?.find(d => d.sale_attempt_id === sale.id);
+      if (further?.required) {
+        const state = furtherDepositState(further, now);
+        const amount = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(value);
+        if (state.outstanding !== 0 || state.excess > 0) {
+          const review = state.outstanding == null || !state.confirmed;
+          const label = state.excess > 0 ? `Further deposit: review ${amount(state.excess)} excess receipt`
+            : state.outstanding == null ? "Further deposit amount needs confirmation"
+            : completed ? `Reconcile further deposit records: ${amount(state.outstanding)} receipt not fully recorded`
+            : review ? `Further deposit · ${state.payment}: deadline needs confirmation · ${amount(state.outstanding)} receipt not fully recorded${state.forecast ? " · PC forecast only" : ""}`
+            : `Further deposit · ${state.payment} · ${state.timing}: receipt not fully recorded — confirm or chase ${amount(state.outstanding)}${state.time ? ` (deadline ${state.time} UK time)` : ""}`;
+          task("further_deposit_receipt", label, conveyancer, sale.exchanged_at, completed ? "Completed sale — record reconciliation" : "Retained further-deposit terms", "confirm_exchange_deposit", "further-deposit", {
+            deadline: !review && !completed && state.outstanding !== 0 && state.date ? { at: state.instant ?? state.date, precision: state.instant ? "instant" : "date", basis: "Further deposit contractual deadline (UK time)", kind: "deposit" } : null,
+          });
+        }
+      }
     }
     if (available("legal")) for (const email of input.authorities.filter(e => e.sale_attempt_id === sale.id && !e.replaced_by && !e.revoked_at && ["failed", "bounced", "complained", "delivery_delayed"].includes(e.delivery_status))) {
       task(`legal_delivery_${email.kind}`, `Review legal email: ${email.delivery_status.replaceAll("_", " ")}`, developer, email.issued_at, "Email issued; provider check time not recorded", "approve_exchange", "sales-stage-exchange", { cycleId: email.id });

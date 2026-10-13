@@ -27,7 +27,7 @@ test('exchange payment information appears once, uses human triggers, and keeps 
   for(const content of [email.body,email.html]) {
     assert.doesNotMatch(content,/manual_date|delayed_deposit|due_event|Payment structure|No location recorded|value £0/);
     for(const value of ['£32,500.00','£16,250.00','£276,250.00'])assert.equal(content.split(value).length-1,1);
-    assert.match(content,/93 days after exchange/);assert.match(content,/On exchange/);assert.match(content,/On completion/);
+    assert.match(content,/3 calendar months after legal exchange/);assert.match(content,/On exchange/);assert.match(content,/On completion/);
     assert.match(content,/£2,000.00 \(held by Sales agent\)/);assert.match(content,/Includes reservation fee/);assert.match(content,/Developer: £5,000.00/);
     assert.match(content,/Integrated kitchen appliances included/);assert.match(content,/Completion following notice under the contract/);
   }
@@ -63,7 +63,7 @@ test('zero optional amounts are concise and nonzero parking, custom terms and no
   Object.assign(empty.terms,{developer_contribution:null,agent_contribution:undefined,other_concessions:''});assert.match(render('authority',empty).body,/Incentives and contributions: None/);
   Object.assign(empty.terms,{parking_location_details:'Bay 24',parking_value:15000,parking_contribution_value:1200,deposit_summary:'Second deposit subject to agreed retention.'});empty.schedule[1].notes='Pay to the stakeholder account.';
   const custom=render('authority',empty);for(const body of [custom.html,custom.body])for(const text of ['Bay 24','£15,000.00','£1,200.00','Second deposit subject to agreed retention.','Pay to the stakeholder account.'])assert.ok(body.includes(text));
-  empty.schedule=[];assert.equal(legalEmailPayments(empty).length,3);assert.match(render('authority',empty).body,/93 days after exchange/);
+  empty.schedule=[];assert.equal(legalEmailPayments(empty).length,3);assert.match(render('authority',empty).body,/3 calendar months after legal exchange/);
   empty.schedule=[{payment_stage:'other',label:'Retention',fixed_amount:123.45,due_event:'manual_date',due_date:'2026-09-29'}];assert.match(render('authority',empty).body,/29 September 2026/);assert.match(render('authority',empty).body,/£123.45/);
 });
 

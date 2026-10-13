@@ -20,7 +20,7 @@ test("deal structure calculates Forum House-style 10/5/85 schedule", () => {
   assert.equal(structure.secondDepositPercent, 5);
   assert.equal(structure.completionBalancePercent, 85);
   assert.equal(structure.totalPercent, 100);
-  assert.equal(paymentScheduleSummary(structure), "10% on exchange, 5% 6 months after exchange, 85% on completion");
+  assert.equal(paymentScheduleSummary(structure), "10% on exchange, 5% further deposit: 6 calendar months after legal exchange, 85% on completion");
 });
 
 test("deal structure validates deposits above 100%", () => {

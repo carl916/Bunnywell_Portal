@@ -7,7 +7,7 @@ import { authorityStatus, authorityTerms, legalDateTime, resolveSalesRecipients,
 import { canPerformSalesAction } from "@/lib/sales/permissions";
 import { PdfUploadBox, type UploadVersion } from "./PdfUploadBox";
 import { CompletionDocuments, type CompletionPackage } from "./CompletionDocuments";
-import { ExchangeDepositReceipt, type ExchangeDepositContext } from "./ExchangeDepositReceipt";
+import { type ExchangeDepositContext } from "./ExchangeDepositReceipt";
 import { authorityBadge, exchangeAuthorityState } from "@/lib/sales/authority-state";
 import { workflowActorLabel, type ActorProfile } from "@/lib/sales/actor-identity";
 import { addWorkingDays, completionNoticeState, noticeFileError, validNoticeDates, type CompletionNoticeState } from "@/lib/sales/completion-notice";
@@ -49,8 +49,8 @@ async function legalRequest<T>(sale: string, body?: Record<string, unknown> | Fo
   return result as T;
 }
 
-export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, refreshKey }: {
-  refreshKey?: string | null; saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: (sale: string, action: string, measurement?: SalesMeasurement) => Promise<void>;
+export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, refreshKey, onManageDeposits }: {
+  onManageDeposits?: () => void; refreshKey?: string | null; saleId: string; stage: "exchange" | "completion"; role: string; onNotice: (message: string) => void; onChanged: (sale: string, action: string, measurement?: SalesMeasurement) => Promise<void>;
 }) {
   const [context, setContext] = useState<Context | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -144,7 +144,7 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
   const exchanged = Boolean(attempt.exchanged_at) || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
   const authority = exchangeAuthorityState(emails, context.events ?? [], attempt.authority_requested_at, exchanged, now);
   const latestAuthority = authority.current;
-  const authorityState = attempt.exchanged_at || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status) ? context.deposit?.receipt ? "Exchanged · Deposit received" : "Exchanged · Deposit confirmation outstanding" : latestAuthority ? authorityStatus(latestAuthority, now) : attempt.authority_requested_at ? "Authority requested" : "Authority not requested";
+  const authorityState = attempt.exchanged_at || ["exchanged", "completion_pending", "completed"].includes(attempt.workflow_status) ? "Exchanged" : latestAuthority ? authorityStatus(latestAuthority, now) : attempt.authority_requested_at ? "Authority requested" : "Authority not requested";
   const canIssue = canPerformSalesAction(role, "approve_exchange");
   const conveyancer = canPerformSalesAction(role, "record_exchange");
   const reservationApproved = ["approved", "reservation_approved", "awaiting_commercial_approval", "ready_for_exchange", "exchanged", "completion_pending", "completed"].includes(attempt.workflow_status);
@@ -199,7 +199,7 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
         {conveyancer && <div className="mt-3 grid gap-3"><label className="field-label">Actual exchange date<input className="field max-w-md" type="date" value={exchangeDate} max={new Date().toISOString().slice(0, 10)} onChange={(event) => setExchangeDate(event.target.value)} /></label>
           <button className="primary w-fit" disabled={busy || !exchangeDate || authorityState !== "Authority issued"} onClick={() => void run({ action: "confirm_exchange", date: exchangeDate }, "Exchange confirmed.")}>Confirm exchange</button></div>}
       </>}</li>
-      <ExchangeDepositReceipt key={saleId} deposit={context.deposit} exchanged={exchanged} editable={canPerformSalesAction(role, "confirm_exchange_deposit")} busy={busy} run={run} />
+      <li className="py-4 text-sm"><p>Exchange deposit: {context.deposit?.receipt ? `Received £${Number(context.deposit.receipt.received_amount).toLocaleString("en-GB", { minimumFractionDigits: 2 })} on ${shortDate(context.deposit.receipt.received_date)}.` : "Receipt confirmation outstanding."}</p><button type="button" className="mt-2 font-semibold underline" onClick={onManageDeposits}>Manage deposits</button></li>
     </ol> : <ol className="mt-5 divide-y divide-[#d9ded6]" aria-label="Completion tasks">
       <li className="py-5"><h4 className="font-bold">1. Request authority to serve notice</h4><p className="mt-1 text-sm">A sales agent or conveyancer can request developer authority. The developer can also give authority directly.</p>
         {attempt.completion_authority_requested_at ? <p className="mt-2 text-sm">Requested by {actorLabel("authority_notice_requested", attempt.completion_authority_requested_by)} · {legalDateTime(attempt.completion_authority_requested_at)}</p>

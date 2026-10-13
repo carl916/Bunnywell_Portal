@@ -41,7 +41,7 @@ export function salesWorkCategory(item: WorkItem): SalesCategory {
   if (item.kind.startsWith("notice_")) return "notice";
   if (/^(missing_|replace_|review_)/.test(item.kind)) return "documents";
   if (item.kind === "legal_completion") return "completion";
-  if (item.kind === "deposit_receipt") return "deposit";
+  if (item.kind === "deposit_receipt" || item.kind.startsWith("further_deposit_")) return "deposit";
   if (item.kind.startsWith("fee_")) return feeWorkCategory(item.kind.replace(/^fee_(exchange|completion)_/, ""));
   return "record-checks";
 }

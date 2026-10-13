@@ -15,17 +15,17 @@ function fixture({count, failure, changing=false}={}) {
     }
   };}};
 }
-test('compact guidance uses three bounded batches, not one request per sale', async()=>{
+test('compact guidance uses four bounded batches, not one request per sale', async()=>{
   const client=fixture();const result=await loadSalesGuidanceFacts(client,Array.from({length:18},(_,i)=>`sale-${i}`));
-  assert.equal(client.calls.length,3);assert.equal(result.authorities.length,18);
+  assert.equal(client.calls.length,4);assert.equal(result.authorities.length,18);
   for(const call of client.calls){assert.equal(call.options.count,'exact');assert.equal(call.key,'sale_attempt_id');assert.equal(call.ids.length,18);assert.ok(!call.columns.includes('*'));}
   assert.ok(Number.isFinite(Date.parse(result.asOf)));
 });
 test('long result sets paginate and input IDs are bounded',async()=>{
   const client=fixture({count:301});await loadSalesGuidanceFacts(client,['sale']);
-  assert.equal(client.calls.length,6);assert.deepEqual(client.calls.at(-1).range,[250,499]);
+  assert.equal(client.calls.length,8);assert.deepEqual(client.calls.at(-1).range,[250,499]);
   const many=fixture();await loadSalesGuidanceFacts(many,Array.from({length:301},(_,i)=>String(i)));
-  assert.equal(many.calls.length,9);assert.ok(many.calls.every(c=>c.ids.length<=150));
+  assert.equal(many.calls.length,12);assert.ok(many.calls.every(c=>c.ids.length<=150));
 });
 test('guidance preserves access denial and rejects changing or excessive populations',async()=>{
   await assert.rejects(loadSalesGuidanceFacts(fixture({failure:'sale_legal_emails'}),['sale']),e=>e.code==='42501');

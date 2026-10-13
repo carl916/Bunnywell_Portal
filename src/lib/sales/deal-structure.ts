@@ -1,4 +1,6 @@
+import { timingDescription, timingError, type FurtherDepositTiming } from "./further-deposit.ts";
 export type DepositStructureInput = {
+  furtherDepositTiming?: FurtherDepositTiming | null;
   exchangeDepositPercent?: number | null;
   secondDepositEnabled?: boolean | null;
   secondDepositPercent?: number | null;
@@ -6,6 +8,7 @@ export type DepositStructureInput = {
 };
 
 export type DepositStructure = {
+  furtherDepositTiming: FurtherDepositTiming | null;
   exchangeDepositPercent: number;
   secondDepositEnabled: boolean;
   secondDepositPercent: number;
@@ -29,7 +32,7 @@ export type PaymentScheduleDraftRow = {
 
 function boundedPercent(value?: number | null) {
   if (value === null || value === undefined || Number.isNaN(value)) return 0;
-  return Math.max(0, Math.min(100, Number(value)));
+  return Number(value);
 }
 
 export function describeReservationFeeHolder(holder?: string | null) {
@@ -46,22 +49,24 @@ export function buildDepositStructure(input: DepositStructureInput): DepositStru
   const exchangeDepositPercent = boundedPercent(input.exchangeDepositPercent ?? 10);
   const secondDepositEnabled = Boolean(input.secondDepositEnabled);
   const secondDepositPercent = secondDepositEnabled ? boundedPercent(input.secondDepositPercent ?? 0) : 0;
-  const secondDepositMonthsAfterExchange = secondDepositEnabled
-    ? Math.max(0, Math.floor(Number(input.secondDepositMonthsAfterExchange ?? 0)))
-    : null;
+  const secondDepositMonthsAfterExchange = secondDepositEnabled ? input.secondDepositMonthsAfterExchange ?? null : null;
+  const furtherDepositTiming = secondDepositEnabled ? input.furtherDepositTiming ?? null : null;
   const completionBalancePercent = Math.round((100 - exchangeDepositPercent - secondDepositPercent) * 10_000) / 10_000;
   const totalPercent = Math.round((exchangeDepositPercent + secondDepositPercent + completionBalancePercent) * 10_000) / 10_000;
 
   let error: string | null = null;
   if (completionBalancePercent < 0) {
-    error = "Deposit percentages exceed 100%. Reduce the exchange or second deposit.";
+    error = "Deposit percentages exceed 100%. Reduce the exchange or further deposit.";
   } else if (exchangeDepositPercent <= 0) {
     error = "Exchange deposit must be greater than 0%.";
   } else if (secondDepositEnabled && secondDepositPercent <= 0) {
-    error = "Enter a second deposit percentage, or turn the second deposit off.";
+    error = "Enter a further deposit percentage, or turn the further deposit off.";
   }
+  if (![exchangeDepositPercent, secondDepositPercent].every(value => Number.isFinite(value) && value >= 0 && value <= 100)) error = "Deposit percentages must be between 0% and 100%.";
+  if (!error && secondDepositEnabled && (furtherDepositTiming || secondDepositMonthsAfterExchange != null)) error = timingError(furtherDepositTiming, secondDepositMonthsAfterExchange);
 
   return {
+    furtherDepositTiming,
     exchangeDepositPercent,
     secondDepositEnabled,
     secondDepositPercent,
@@ -78,7 +83,7 @@ export function paymentScheduleSummary(input: DepositStructureInput) {
   const rows = [
     `${structure.exchangeDepositPercent}% on exchange`,
     structure.secondDepositEnabled
-      ? `${structure.secondDepositPercent}% ${structure.secondDepositMonthsAfterExchange ?? 0} months after exchange`
+      ? `${structure.secondDepositPercent}% further deposit: ${timingDescription(structure.furtherDepositTiming, structure.secondDepositMonthsAfterExchange)}`
       : null,
     `${structure.completionBalancePercent}% on completion`,
   ].filter(Boolean);
@@ -89,6 +94,7 @@ export function paymentScheduleSummary(input: DepositStructureInput) {
 export function buildPaymentScheduleRows(input: DepositStructureInput & { contractPrice?: number | null }): PaymentScheduleDraftRow[] {
   const structure = buildDepositStructure(input);
   const contractPrice = input.contractPrice ?? null;
+  const amount = (percent: number) => contractPrice === null ? null : Math.round(Math.round(contractPrice * 100) * Math.round(percent * 10_000) / 1_000_000) / 100;
   const rows: PaymentScheduleDraftRow[] = [
     {
       sequenceNo: 1,
@@ -98,7 +104,7 @@ export function buildPaymentScheduleRows(input: DepositStructureInput & { contra
       dueOffsetDays: 0,
       percentOfContractPrice: structure.exchangeDepositPercent,
       includesReservationFee: true,
-      expectedAmount: contractPrice === null ? null : contractPrice * (structure.exchangeDepositPercent / 100),
+      expectedAmount: amount(structure.exchangeDepositPercent),
     },
   ];
 
@@ -106,12 +112,12 @@ export function buildPaymentScheduleRows(input: DepositStructureInput & { contra
     rows.push({
       sequenceNo: rows.length + 1,
       paymentStage: "delayed_deposit",
-      label: `${structure.secondDepositPercent}% second deposit`,
+      label: `${structure.secondDepositPercent}% further deposit`,
       dueEvent: "manual_date",
-      dueOffsetDays: (structure.secondDepositMonthsAfterExchange ?? 0) * 31,
+      dueOffsetDays: null, // Calendar-month rules live in retained terms, never an approximation in days.
       percentOfContractPrice: structure.secondDepositPercent,
       includesReservationFee: false,
-      expectedAmount: contractPrice === null ? null : contractPrice * (structure.secondDepositPercent / 100),
+      expectedAmount: amount(structure.secondDepositPercent),
     });
   }
 
@@ -123,7 +129,7 @@ export function buildPaymentScheduleRows(input: DepositStructureInput & { contra
     dueOffsetDays: 0,
     percentOfContractPrice: structure.completionBalancePercent,
     includesReservationFee: false,
-    expectedAmount: contractPrice === null ? null : contractPrice * (structure.completionBalancePercent / 100),
+    expectedAmount: amount(structure.completionBalancePercent),
   });
 
   return rows;

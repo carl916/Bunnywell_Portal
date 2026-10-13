@@ -55,7 +55,7 @@ test("saving displayed 10 / 9.5 / 0.5 fees sends the exact decimal split to the 
   const { save, rpcCalls } = commercialSaveFixture();
   await save({ agentFeePercent: "10", exchangeAgentFeePercent: "9.5", completionAgentFeePercent: "0.5", contractPrice: "350500", developerContribution: "2000" });
   const saved = rpcCalls[0].payload;
-  assert.equal(rpcCalls[0].name, "save_unit_commercial_model_with_agent_fees");
+  assert.equal(rpcCalls[0].name, "save_unit_commercial_model_with_deposits");
   assert.equal(saved.p_agent_fee_percent, 10);
   assert.equal(saved.p_exchange_agent_fee_percent, 9.5);
   assert.equal(saved.p_completion_agent_fee_percent, 0.5);
@@ -150,7 +150,7 @@ test("commercial model API uses the transactional RPC and avoids reservation pro
   const body = functionBody(routeSource, "saveCommercialModel");
 
   assert.match(body, /prepare_unit_baseline_sale_record/);
-  assert.match(body, /\.rpc\("save_unit_commercial_model_with_agent_fees"/);
+  assert.match(body, /\.rpc\("save_unit_commercial_model_with_deposits"/);
   assert.match(body, /mark_sale_attempt_substantive/);
   assert.doesNotMatch(body, /insertEvent\(/);
   assert.doesNotMatch(body, /workflow_status:\s*"awaiting_commercial_approval"/);

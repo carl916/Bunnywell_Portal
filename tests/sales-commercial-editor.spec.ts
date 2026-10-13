@@ -29,7 +29,7 @@ async function editorFixture(page: Page) {
       return query;
     },
     rpc: async (name: string, payload: Record<string, unknown>) => {
-      if (name === "save_unit_commercial_model_with_agent_fees") {
+      if (name === "save_unit_commercial_model_with_deposits") {
         rpcPayloads.push(payload);
         for (const [key, value] of Object.entries(payload)) {
           if (key.startsWith("p_") && !["p_unit_id", "p_requester_id", "p_payment_schedule"].includes(key)) Object.assign(terms, { [key.slice(2)]: value });
@@ -57,6 +57,24 @@ async function editorFixture(page: Page) {
   await expect(page.getByTestId("commercial-model-editor")).toBeVisible();
   return { ...f, terms, payloads, rpcPayloads };
 }
+
+test("fixed UK further-deposit settings save with the existing fee split and persist after reload", async ({ page }) => {
+  const f = await editorFixture(page);
+  await page.getByRole("button", { name: "Edit deal setup", exact: true }).click();
+  await page.getByRole("combobox", { name: "Timing basis", exact: true }).selectOption("fixed");
+  await page.getByLabel("Deadline date", { exact: true }).fill("2027-04-01");
+  await page.getByLabel("Deadline time — UK (Europe/London)", { exact: true }).fill("17:00");
+  await page.getByRole("button", { name: "Save commercial model", exact: true }).click();
+  await expect(page.getByTestId("commercial-model-editor")).toHaveCount(0);
+  expect(f.rpcPayloads[0]).toMatchObject({ p_further_deposit_timing:{basis:"fixed",date:"2027-04-01",time:"17:00"},
+    p_second_deposit_percent:5,p_completion_balance_percent:85,p_exchange_agent_fee_percent:9.5,p_completion_agent_fee_percent:0.5 });
+  await page.reload();
+  await page.getByRole("tab", { name: /^Commercial/ }).click();
+  await page.getByRole("button", { name: "Edit commercial model", exact: true }).click();
+  await page.getByRole("button", { name: "Edit deal setup", exact: true }).click();
+  await expect(page.getByLabel("Deadline date", { exact: true })).toHaveValue("2027-04-01");
+  await expect(page.getByLabel("Deadline time — UK (Europe/London)", { exact: true })).toHaveValue("17:00");
+});
 
 test("valid saved fees allow unrelated changes, live previews and a save through server validation", async ({ page }) => {
   const f = await editorFixture(page);
