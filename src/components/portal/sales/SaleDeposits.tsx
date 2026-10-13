@@ -45,11 +45,11 @@ export function SaleDeposits({ saleId, refreshKey, onChanged, onNotice }: { sale
     } catch (e) { if (alive.current) setFailure(e instanceof Error ? e.message : "Receipt could not be saved."); return false; }
     finally { inFlight.current = false; if (alive.current) setBusy(false); }
   }
-  return <section id="sale-deposits" role="tabpanel" aria-labelledby="financials-deposits" className="min-w-0 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 sm:p-6">
-    <h3 className="text-xl font-bold text-[#0F3D2E]">Deposits</h3>
-    <p className="mt-1 text-sm text-[#617169]">Buyer deposits are tracked against the retained sale terms. Receipt records do not change legal progression or agent fees.</p>
+  return <section id="sale-deposits" role="tabpanel" aria-labelledby="financials-deposits" tabIndex={0} className="min-w-0 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#D6A23A] sm:p-6">
+    <p className="text-sm text-[#617169]">Buyer deposits are tracked against the retained sale terms. Receipt records do not change legal progression or agent fees.</p>
     {failure && <p role="alert" className="my-3 text-sm text-red-800">{failure} <button className="underline" onClick={() => void load().catch(e => setFailure(e.message))}>Refresh deposits</button></p>}
-    {!context ? <p className="py-6" role="status">Loading deposits…</p> : <>
+    {/* Keep a tab switch from clamping page scroll while receipt data loads. */}
+    {!context ? <p className="min-h-dvh py-6" role="status">Loading deposits…</p> : <>
       <ExchangeDepositReceipt deposit={context.exchange} exchanged={context.exchanged} editable={context.canRecord && context.active} busy={busy} run={run} />
       <FurtherDepositCard context={context} now={now} busy={busy} run={run} />
     </>}

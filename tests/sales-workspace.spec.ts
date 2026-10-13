@@ -44,9 +44,9 @@ test("compact actions keep ordering, complete labels, URLs and expansion across 
     if (id) await expect(page.locator(`[id="${id}"]`)).toBeVisible();
   }
   await page.getByRole("tab", { name: /^Financials/ }).click();
-  await page.getByRole("button", { name: "Deposits", exact: true }).click();
+  await page.getByRole("tab", { name: "Deposits", exact: true }).click();
   await expect(page.locator("#sale-deposits")).toBeVisible();
-  await page.getByRole("button", { name: "Agent fees", exact: true }).click();
+  await page.getByRole("tab", { name: "Agent fees", exact: true }).click();
   await expect(page.locator("#agent-fees")).toBeVisible();
 });
 

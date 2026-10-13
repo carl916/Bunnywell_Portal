@@ -141,7 +141,7 @@ test("sale file workspace tabs expose selection and keyboard navigation", () => 
   assert.match(workspaceTabsSource, /event\.key === "Home"/);
   assert.match(workspaceTabsSource, /event\.key === "End"/);
   assert.match(workflowSource, /aria-labelledby="sale-file-tab-progression"/);
-  assert.match(workflowSource, /aria-labelledby="sale-file-tab-financials"/);
+  assert.match(workflowSource, /aria-labelledby="sale-file-tab-financials financials-agent_fees"/);
   assert.match(workflowSource, /aria-labelledby="sale-file-tab-commercial"/);
 });
 
