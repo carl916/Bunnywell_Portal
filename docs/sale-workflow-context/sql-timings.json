@@ -1,0 +1,445 @@
+{
+  "measuredAt": "2026-10-12T20:09:44.691Z",
+  "environment": "Shared staging, PostgreSQL 17.6; read-only SELECT/EXPLAIN only; same postgres definer execution context with authenticated admin JWT claims",
+  "scope": {
+    "requestedSaleIds": 127
+  },
+  "samples": [
+    {
+      "pair": 1,
+      "variant": "baseline",
+      "executionMs": 521.024,
+      "planningMs": 1.116,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 1,
+      "variant": "optimized",
+      "executionMs": 160.03,
+      "planningMs": 1.287,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 2,
+      "variant": "optimized",
+      "executionMs": 165.989,
+      "planningMs": 1.304,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 2,
+      "variant": "baseline",
+      "executionMs": 608.787,
+      "planningMs": 1.341,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 3,
+      "variant": "baseline",
+      "executionMs": 627.411,
+      "planningMs": 1.457,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 3,
+      "variant": "optimized",
+      "executionMs": 163.444,
+      "planningMs": 1.367,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 4,
+      "variant": "optimized",
+      "executionMs": 163.753,
+      "planningMs": 1.644,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 4,
+      "variant": "baseline",
+      "executionMs": 610.891,
+      "planningMs": 1.399,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 5,
+      "variant": "baseline",
+      "executionMs": 462.018,
+      "planningMs": 1.062,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 5,
+      "variant": "optimized",
+      "executionMs": 165.593,
+      "planningMs": 1.33,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 6,
+      "variant": "optimized",
+      "executionMs": 160.337,
+      "planningMs": 1.311,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 6,
+      "variant": "baseline",
+      "executionMs": 478.652,
+      "planningMs": 1.09,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 7,
+      "variant": "baseline",
+      "executionMs": 464.514,
+      "planningMs": 1.083,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 7,
+      "variant": "optimized",
+      "executionMs": 163.343,
+      "planningMs": 1.335,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 8,
+      "variant": "optimized",
+      "executionMs": 189.295,
+      "planningMs": 1.569,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 8,
+      "variant": "baseline",
+      "executionMs": 469.379,
+      "planningMs": 1.065,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 9,
+      "variant": "baseline",
+      "executionMs": 479.085,
+      "planningMs": 1.054,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 9,
+      "variant": "optimized",
+      "executionMs": 164.164,
+      "planningMs": 1.365,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 10,
+      "variant": "optimized",
+      "executionMs": 160.722,
+      "planningMs": 1.379,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 10,
+      "variant": "baseline",
+      "executionMs": 460.361,
+      "planningMs": 1.075,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 11,
+      "variant": "baseline",
+      "executionMs": 475.301,
+      "planningMs": 1.047,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 11,
+      "variant": "optimized",
+      "executionMs": 178.455,
+      "planningMs": 1.427,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 12,
+      "variant": "optimized",
+      "executionMs": 163.594,
+      "planningMs": 1.29,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 12,
+      "variant": "baseline",
+      "executionMs": 508.81,
+      "planningMs": 1.165,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 13,
+      "variant": "baseline",
+      "executionMs": 464.833,
+      "planningMs": 1.102,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 13,
+      "variant": "optimized",
+      "executionMs": 161.203,
+      "planningMs": 1.356,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 14,
+      "variant": "optimized",
+      "executionMs": 159.68,
+      "planningMs": 1.273,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 14,
+      "variant": "baseline",
+      "executionMs": 463.55,
+      "planningMs": 1.096,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 15,
+      "variant": "baseline",
+      "executionMs": 459.846,
+      "planningMs": 1.037,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 15,
+      "variant": "optimized",
+      "executionMs": 193.419,
+      "planningMs": 1.515,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 16,
+      "variant": "optimized",
+      "executionMs": 213.657,
+      "planningMs": 1.699,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 16,
+      "variant": "baseline",
+      "executionMs": 472.427,
+      "planningMs": 1.241,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 17,
+      "variant": "baseline",
+      "executionMs": 483.302,
+      "planningMs": 1.075,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 17,
+      "variant": "optimized",
+      "executionMs": 161.357,
+      "planningMs": 1.418,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 18,
+      "variant": "optimized",
+      "executionMs": 174.219,
+      "planningMs": 1.393,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 18,
+      "variant": "baseline",
+      "executionMs": 507.614,
+      "planningMs": 1.085,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 19,
+      "variant": "baseline",
+      "executionMs": 455.778,
+      "planningMs": 1.061,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 19,
+      "variant": "optimized",
+      "executionMs": 174.38,
+      "planningMs": 1.369,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 20,
+      "variant": "optimized",
+      "executionMs": 162.762,
+      "planningMs": 1.377,
+      "sharedHits": 3340,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    },
+    {
+      "pair": 20,
+      "variant": "baseline",
+      "executionMs": 562.246,
+      "planningMs": 1.184,
+      "sharedHits": 7251,
+      "sharedReads": 0,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "n": 20,
+      "median": 476.9765,
+      "min": 455.778,
+      "max": 627.411
+    },
+    "optimized": {
+      "n": 20,
+      "median": 163.6735,
+      "min": 159.68,
+      "max": 213.657
+    }
+  },
+  "functionCounts": {
+    "baseline": [
+      {
+        "funcname": "can_access_sale_attempt",
+        "calls": 588
+      },
+      {
+        "funcname": "sale_event_projection",
+        "calls": 1176
+      }
+    ],
+    "optimized": [
+      {
+        "funcname": "can_access_sale_attempt",
+        "calls": 38
+      },
+      {
+        "funcname": "sale_event_projection",
+        "calls": 588
+      }
+    ]
+  }
+}
