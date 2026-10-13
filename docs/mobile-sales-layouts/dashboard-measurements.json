@@ -1,0 +1,35 @@
+{
+  "measurements": [
+    {
+      "width": 320,
+      "stageRows": 1,
+      "dateLinks": 8
+    },
+    {
+      "width": 360,
+      "stageRows": 1,
+      "dateLinks": 8
+    },
+    {
+      "width": 390,
+      "stageRows": 1,
+      "dateLinks": 8
+    },
+    {
+      "width": 430,
+      "stageRows": 1,
+      "dateLinks": 8
+    },
+    {
+      "width": 768,
+      "stageRows": 1,
+      "dateLinks": 8
+    },
+    {
+      "width": 1440,
+      "stageRows": 1,
+      "dateLinks": 8
+    }
+  ],
+  "reads": 2
+}

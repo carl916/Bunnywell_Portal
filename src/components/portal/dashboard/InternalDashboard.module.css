@@ -100,3 +100,31 @@
   .additional li { align-items: flex-start; flex-wrap: wrap; gap: 0 .5rem; }
 }
 @media (max-width: 360px) { .attentionTable tbody tr:nth-child(-n+2) { height: 9.25rem; } }
+
+/* One responsive record tree retains the same date semantics and destinations. */
+@media (max-width: 767px) {
+  .dashboard .position, .dashboard .dates { padding-inline: .5rem; }
+  .pipelineScroll { overflow: visible; }
+  .pipeline { min-width: 0; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(3.1rem, var(--pipeline-count-width))), 1fr)); gap: .6rem 0; padding: .65rem 0; }
+  .pipeline > div { padding-inline: .1rem; text-align: center; }
+  .pipeline > div + div { border: 0; }
+  .pipeline > div + div::before { display: none; }
+  .pipeline dt { white-space: normal; font-size: .75rem; line-height: 1.25; min-height: 2.5em; hyphens: manual; }
+  .pipeline dd { white-space: nowrap; overflow-wrap: normal; }
+  .pipeline .muted { white-space: normal; overflow-wrap: anywhere; }
+  .groupHeading a { min-height: 44px; }
+  .dateScroll { overflow: visible; border: 0; border-radius: 0; }
+  .datesTable, .datesTable tbody { display: block; min-width: 0; }
+  .datesTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .datesTable tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .35rem .65rem; padding: .75rem 0; border-top: 1px solid #e3e9e4; }
+  .datesTable td { display: block; min-width: 0; height: auto; padding: 0; border: 0; }
+  .dateIdentity { grid-column: 1; grid-row: 1; }
+  .dateAction { grid-column: 2; grid-row: 1; max-width: 8rem; }
+  .dateIssue, .dateValue { grid-column: 1 / -1; }
+  .dateValue { color: #425b4d; }
+  .dateValue small { display: inline; margin-left: .4rem; }
+  .dateAction svg { flex-shrink: 0; }
+  .dateContent { min-height: 0; }
+  .dateSkeletonRow { height: auto; min-height: 9rem; }
+  .remaining { overflow-wrap: anywhere; }
+}

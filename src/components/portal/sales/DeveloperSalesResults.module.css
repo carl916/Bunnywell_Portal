@@ -24,14 +24,37 @@
 .warning { color: #924300; font-weight: 550; }
 .error { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem; background: #fff5eb; color: #6d390e; margin-bottom: 1rem; border-radius: .5rem; }
 .empty { padding: 2rem 1rem; text-align: center; color: #607066; }
-.scrollHint { display: none; }
+.mobileWarning { display: none; }
 .skeleton { display: block; width: 85%; height: 1.15rem; margin: .6rem 0; background: #e7ede8; border-radius: .3rem; animation: pulse 1.6s ease-in-out infinite; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @keyframes pulse { 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 @media (max-width: 640px) {
-  .scrollHint { display: block; font-size: .75rem; color: #607066; margin: 0 0 .6rem; }
+
   .tableScroll td { padding: .8rem; }
   .header { align-items: start; }
   .error { flex-direction: column; align-items: start; }
+}
+
+/* Reflow the existing rows; no duplicate mobile links, IDs or fetching. */
+@media (max-width: 767px) {
+  .tableScroll { overflow: visible; border: 0; border-radius: 0; }
+  .tableScroll table, .tableScroll tbody { display: block; min-width: 0; }
+  .tableScroll colgroup { display: none; }
+  .tableScroll thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .tableScroll tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: .5rem .65rem; padding: .9rem 0; border-top: 1px solid #e3e9e4; }
+  .tableScroll td { display: block; min-width: 0; padding: 0; border: 0; }
+  .identity { grid-column: 1; grid-row: 1; }
+  .primaryAction { grid-column: 2; grid-row: 1; max-width: 9rem; }
+  .position, .next, .keyDate { grid-column: 1 / -1; }
+  .tableScroll .position { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .6rem; }
+  .position small { margin-top: 0; }
+  .unit, .stage, .review { white-space: normal; overflow-wrap: anywhere; }
+  .unit, .comments { min-height: 44px; display: inline-flex; align-items: center; }
+  .identity small { margin-top: 0; }
+  .review { width: 100%; text-align: center; }
+  .keyDate small { display: inline; margin-left: .4rem; }
+  .next .mobileWarning { display: block; color: #924300; margin-top: .3rem; }
+  .results nav button { min-height: 44px; }
+  .results { scroll-margin-bottom: calc(7rem + env(safe-area-inset-bottom, 0px)); }
 }

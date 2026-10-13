@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { markUnitOpenIntent } from "@/lib/audit/unit-open";
 import { datesToReview, moduleDestination, type AttentionCount } from "@/lib/dashboard/overview";
@@ -30,6 +30,9 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
 }) {
   const overview = snapshot?.overview;
   const loading = !snapshot && !error;
+  // Size the mobile grid for whole counts; large counts / enlarged text reflow.
+  const pipelineCountWidth = Math.max(0, ...(overview?.sales ?? []).map(stage => String(stage.value ?? "").length)) * .85;
+  const pipelineLabel = (label: string) => ({ Reserved: "Re\u00adserved", Exchanged: "Ex\u00adchanged", Completed: "Com\u00adpleted" })[label] ?? label;
   const failures = snapshot?.sources.filter(source => source.state === "unavailable") ?? [];
   const dates = snapshot ? datesToReview(snapshot) : [];
   const buildings = new Map(snapshot?.buildings.map(building => [building.id, building.name]));
@@ -48,15 +51,15 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
   };
   const dateRows = (items: WorkItem[]) => items.map(item => {
     const href = item.destination ? destinationUrl(item.destination, buildingId) : null;
-    return <tr key={item.id}>
-      <td><strong>{item.reference}</strong><small>{buildings.get(item.buildingId) ?? "Building unavailable"}</small></td>
-      <td>{item.action}<small>{isWorkObservation(item) ? "Recorded contractual date" : item.deadline?.basis === "Fixed-term review date" ? "Review date" : item.deadline ? "Actionable deadline" : item.urgent ? "Urgent resident defect" : isUnallocatedWork(item) ? "Responsible team unallocated" : item.responsibility.allocation === "unavailable" ? "Appointment unavailable" : "Undated exception"}</small></td>
-      <td>{item.deadline ? <>{formatWorkDate(item.deadline.at, item.deadline.precision)}<small>{isWorkObservation(item) && deadlineState(item.deadline, Date.parse(snapshot!.asOf)) === "overdue" ? "Passed date" : item.deadline.basis}</small></> : <span className={styles.muted}>No deadline recorded</span>}</td>
-      <td>{href ? <a className={styles.open} href={href} aria-label={`Open ${item.reference}: ${item.action}`} onClick={event => navigate(event, href, item.unitId)}>Open<ArrowUpRight size={14} aria-hidden /></a> : <span className={styles.muted}>Authorised colleague</span>}</td>
+    return <tr key={item.id} role="row">
+      <td role="cell" className={styles.dateIdentity}><strong>{item.reference}</strong><small>{buildings.get(item.buildingId) ?? "Building unavailable"}</small></td>
+      <td role="cell" className={styles.dateIssue}>{item.action}<small>{isWorkObservation(item) ? "Recorded contractual date" : item.deadline?.basis === "Fixed-term review date" ? "Review date" : item.deadline ? "Actionable deadline" : item.urgent ? "Urgent resident defect" : isUnallocatedWork(item) ? "Responsible team unallocated" : item.responsibility.allocation === "unavailable" ? "Appointment unavailable" : "Undated exception"}</small></td>
+      <td role="cell" className={styles.dateValue}>{item.deadline ? <>{formatWorkDate(item.deadline.at, item.deadline.precision)}<small>{isWorkObservation(item) && deadlineState(item.deadline, Date.parse(snapshot!.asOf)) === "overdue" ? "Passed date" : item.deadline.basis}</small></> : <span className={styles.muted}>No deadline recorded</span>}</td>
+      <td role="cell" className={styles.dateAction}>{href ? <a className={styles.open} href={href} aria-label={`Open ${item.reference}: ${item.action}`} onClick={event => navigate(event, href, item.unitId)}>Open<ArrowUpRight size={14} aria-hidden /></a> : <span className={styles.muted}>Authorised colleague</span>}</td>
     </tr>;
   });
   const datesTable = (items: WorkItem[], label: string) => <div className={styles.dateScroll} tabIndex={0} role="region" aria-label={label}>
-    <table className={styles.datesTable}><thead><tr><th scope="col">Unit / building</th><th scope="col">Issue</th><th scope="col">Recorded date</th><th scope="col">Open</th></tr></thead><tbody>{loading ? Array.from({ length: 2 }, (_, index) => <tr key={index} aria-hidden="true" className={styles.dateSkeletonRow}>
+    <table className={styles.datesTable} role="table"><thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Unit / building</th><th role="columnheader" scope="col">Issue</th><th role="columnheader" scope="col">Recorded date</th><th role="columnheader" scope="col">Open</th></tr></thead><tbody role="rowgroup">{loading ? Array.from({ length: 2 }, (_, index) => <tr key={index} aria-hidden="true" className={styles.dateSkeletonRow}>
       {Array.from({ length: 3 }, (_, cell) => <td key={cell}><DashboardSkeleton /><small><DashboardSkeleton variant="secondary" /></small></td>)}
       <td><DashboardSkeleton variant="action" /></td>
     </tr>) : dateRows(items)}</tbody></table>
@@ -75,8 +78,8 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
       <h2 id="dashboard-position">{buildingId ? "Building position" : "Portfolio position"}</h2>
       <div className={styles.positions}>
         <div><div className={styles.groupHeading}><h3>Sales</h3>{general("sales", "Open Sales")}</div>
-          <div className={styles.pipelineScroll} role="region" aria-label="Sales pipeline" tabIndex={0}>
-            <dl className={styles.pipeline}>{(overview?.sales ?? ["For sale", "Reserved", "Exchanged", "Completed", "Handed over"].map(label => ({ key: label, label, value: null }))).map(stage => <div key={stage.key}><dt>{stage.label}</dt><dd>{stage.value ?? emptyValue}</dd></div>)}</dl>
+          <div className={styles.pipelineScroll} role="region" aria-label="Sales pipeline">
+            <dl className={styles.pipeline} style={{ "--pipeline-count-width": `${pipelineCountWidth}rem` } as CSSProperties}>{(overview?.sales ?? ["For sale", "Reserved", "Exchanged", "Completed", "Handed over"].map(label => ({ key: label, label, value: null }))).map(stage => <div key={stage.key}><dt>{pipelineLabel(stage.label)}</dt><dd>{stage.value ?? emptyValue}</dd></div>)}</dl>
           </div>
           <p className={styles.caption}>Units on the sales pipeline.</p>
         </div>

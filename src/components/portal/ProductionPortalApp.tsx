@@ -4698,7 +4698,7 @@ type AccessListRow = {
   email: string;
   status: "active" | "deactivated" | "pending" | "approved" | "rejected";
   roleLabel: string;
-  phone: string;
+  organisation: string;
   allocation: string;
   createdAt: string | null;
   lastActiveAt: string | null;
@@ -4787,7 +4787,7 @@ function UserDirectory({
         email: profile.email,
         status,
         roleLabel: profile.role === "resident" && profile.resident_type ? statusLabel(profile.resident_type) : statusLabel(profile.role),
-        phone: profile.phone || "",
+        organisation: organisations.find((organisation) => organisation.id === profile.organisation_id)?.name ?? "",
         allocation: allocationLabel(profile),
         createdAt: profile.created_at ?? null,
         lastActiveAt: profile.last_active_at ?? null,
@@ -4806,7 +4806,7 @@ function UserDirectory({
       email: request.email,
       status: request.status,
       roleLabel: statusLabel(request.resident_type),
-      phone: request.phone,
+      organisation: "",
       allocation: requestUnitsLabel(request),
       createdAt: request.created_at,
       lastActiveAt: null,
@@ -4896,9 +4896,8 @@ function UserDirectory({
               </div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Phone</span><span className="min-w-0 break-words text-right font-medium">{row.phone || "None"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Organisation</span><span className="min-w-0 break-words text-right font-medium">{row.organisation || "—"}</span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Created</span><span className="min-w-0 text-right font-medium">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</span></div>
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last active</span><span className="min-w-0 text-right font-medium">{lastActiveLabel(row)}</span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
@@ -4940,13 +4939,12 @@ function UserDirectory({
       <div className="hidden min-w-0 xl:block">
         <table className="w-full table-fixed border-separate border-spacing-0 text-sm [overflow-wrap:anywhere]">
           <colgroup>
-            <col className="w-[19%]" />
+            <col className="w-[20%]" />
             <col className="w-[9%]" />
-            <col className="w-[12%]" />
-            <col className="w-[11%]" />
+            <col className="w-[14%]" />
+            <col className="w-[16%]" />
             <col className="w-[22%]" />
-            <col className="w-[10%]" />
-            <col className="w-[11%]" />
+            <col className="w-[13%]" />
             <col className="w-[6%]" />
           </colgroup>
           <thead>
@@ -4954,9 +4952,8 @@ function UserDirectory({
               <th className="border-b border-[#d9ded6] px-3 py-2">Person</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Status</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Role or resident type</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Phone</th>
+              <th className="border-b border-[#d9ded6] px-3 py-2">Organisation</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Allocation</th>
-              <th className="border-b border-[#d9ded6] px-3 py-2">Created</th>
               <th className="border-b border-[#d9ded6] px-3 py-2">Last active</th>
               <th className="border-b border-[#d9ded6] px-3 py-2 text-right"><span className="sr-only">Actions</span></th>
             </tr>
@@ -4977,11 +4974,10 @@ function UserDirectory({
                       <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.roleLabel}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.phone || <span className="text-xs text-[#9aa59f]">None</span>}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.organisation || <span className="text-xs text-[#9aa59f]">—</span>}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <p>{row.allocation}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.createdAt ? formatDate(row.createdAt) : "Unknown"}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{lastActiveLabel(row)}</td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
@@ -4998,7 +4994,7 @@ function UserDirectory({
                   </tr>
                   {isOpen && row.profile && (
                     <tr>
-                      <td colSpan={8} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                      <td colSpan={7} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
                         <UserEditPanel
                           profile={row.profile}
                           buildings={buildings}
@@ -5019,7 +5015,7 @@ function UserDirectory({
                   )}
                   {isOpen && row.request && (
                     <tr>
-                      <td colSpan={8} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
+                      <td colSpan={7} className="border-b border-[#d9ded6] bg-[#fff8ec] p-3">
                         {requestPanel(row.request)}
                       </td>
                     </tr>
