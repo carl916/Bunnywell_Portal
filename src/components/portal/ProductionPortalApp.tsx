@@ -31,6 +31,7 @@ import { GbpInput } from "@/components/portal/sales/GbpInput";
 import { SalesWorkspace } from "@/components/portal/sales/SalesWorkspace";
 import { type ActivePanelRequest, useActivePanel } from "@/hooks/useActivePanel";
 import { usePortalBuildingContext } from "@/hooks/usePortalBuildingContext";
+import { useMobileToolbars } from "@/hooks/useMobileToolbars";
 import { buildBuildingSaleDefaultsPayload } from "@/lib/sales/building-defaults";
 import { validateAgentFeeStructure } from "@/lib/sales/agent-fees";
 import { classifyDefaultDealSetupCascade, defaultDealSetupCascadeSummary } from "@/lib/sales/default-cascade";
@@ -1712,7 +1713,7 @@ function Shell({
   onSignOut?: () => Promise<void>;
   children?: React.ReactNode;
 }) {
-  const [moreOpen, setMoreOpen] = useState(false);
+  const { headerRef, compactRef, bottomNavRef, menuRef, moreOpen, openMenu, closeMenu, focusControl } = useMobileToolbars(Boolean(profile));
   const navItems = primaryNavItemsForTabs(tabs);
   const primaryItems = navItems.filter((item) => !["setup", "units"].includes(item.key)).slice(0, 4);
   const secondaryItems = navItems.filter((item) => !primaryItems.includes(item));
@@ -1731,26 +1732,33 @@ function Shell({
 
   function chooseTab(nextTab: Tab) {
     setTab(nextTab);
-    setMoreOpen(false);
+    closeMenu();
   }
 
   async function handleSignOut() {
-    setMoreOpen(false);
+    closeMenu();
     await onSignOut?.();
   }
 
   async function handleRefresh() {
     await onRefresh?.();
-    setMoreOpen(false);
+    closeMenu();
   }
 
   return (
     <main data-portal-screen={profile ? tab : undefined} className={`app-shell pb-24 md:pb-0 ${profile ? "portal-workspace" : ""}`}>
-      <header className="app-header">
+      <header ref={headerRef} className="app-header">
         <EnvironmentBanner />
+        {profile && <div ref={compactRef} className="mobile-compact-brand">
+          <img src="/bunnywell-logo-icon.jpg" alt="Bunnywell Homes" className="mobile-compact-logo" />
+          <div className="mobile-compact-context">
+            <p className="mobile-compact-building">{selectedBuildingName}</p>
+            <EnvironmentBanner compact />
+          </div>
+        </div>}
         <div className="portal-header-content mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="portal-full-brand flex min-w-0 items-center gap-3">
               <img src="/bunnywell-logo-icon.jpg" alt="Bunnywell Homes" className="h-11 w-auto shrink-0 object-contain sm:h-12" />
               <div>
                 <p className="text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-[#D6A23A] sm:text-xs">Bunnywell</p>
@@ -1813,7 +1821,7 @@ function Shell({
               )}
             </div>
             {hasMobileMenu && (
-              <div className="md:hidden"><button className="secondary min-h-10 px-3" onClick={() => setMoreOpen(true)} aria-label="Open menu">
+              <div className="mobile-menu-trigger md:hidden"><button className="secondary min-h-10 px-3" onPointerDown={focusControl} onClick={openMenu} aria-label="Open menu" aria-haspopup="dialog" aria-expanded={moreOpen} aria-controls="portal-mobile-menu">
                 <Menu size={18} aria-hidden />
               </button></div>
             )}
@@ -1848,12 +1856,16 @@ function Shell({
       )}
       <div className="portal-content mx-auto max-w-7xl px-4 py-5 sm:px-6 md:py-7 lg:px-8">{children}</div>
       {tabs.length > 0 && (
-        <nav className="mobile-bottom-nav md:hidden" aria-label="Primary mobile navigation">
+        <nav ref={bottomNavRef} className="mobile-bottom-nav md:hidden" aria-label="Primary mobile navigation">
           {mobileNavItems.map((item) => (
             <button
               key={item.isMore ? "more" : item.tab}
               className={`mobile-nav-item ${(!item.isMore && item.activeTabs?.includes(tab)) || (item.isMore && (moreOpen || secondaryItems.some((link) => link.activeTabs.includes(tab)))) ? "mobile-nav-item-active" : ""}`}
-              onClick={() => item.isMore ? setMoreOpen(true) : item.tab && chooseTab(item.tab)}
+              onClick={(event) => item.isMore ? openMenu(event) : item.tab && chooseTab(item.tab)}
+              onPointerDown={focusControl}
+              aria-haspopup={item.isMore ? "dialog" : undefined}
+              aria-expanded={item.isMore ? moreOpen : undefined}
+              aria-controls={item.isMore ? "portal-mobile-menu" : undefined}
               type="button"
             >
               {item.icon}
@@ -1863,7 +1875,7 @@ function Shell({
         </nav>
       )}
       {hasMobileMenu && moreOpen && (
-        <div className="mobile-menu-backdrop" onClick={() => setMoreOpen(false)}>
+        <dialog ref={menuRef} id="portal-mobile-menu" className="mobile-menu-backdrop" aria-label="Portal menu" onCancel={(event) => { event.preventDefault(); closeMenu(); }} onClose={closeMenu} onClick={(event) => { if (event.target === event.currentTarget) closeMenu(); }}>
           <aside className="mobile-menu-panel" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 border-b border-[#E2DED3] pb-3">
               <div className="min-w-0">
@@ -1883,7 +1895,7 @@ function Shell({
                   </p>
                 )}
               </div>
-              <button className="secondary icon-button" onClick={() => setMoreOpen(false)} aria-label="Close menu" title="Close menu">
+              <button className="secondary icon-button" onClick={closeMenu} aria-label="Close menu" title="Close menu">
                 <X size={17} strokeWidth={2.5} aria-hidden />
               </button>
             </div>
@@ -1901,7 +1913,7 @@ function Shell({
                     value={buildingContextId}
                     onChange={(event) => {
                       onBuildingContextChange?.(event.target.value);
-                      setMoreOpen(false);
+                      closeMenu();
                     }}
                     aria-label="Current building"
                   >
@@ -1928,7 +1940,7 @@ function Shell({
               )}
             </div>
           </aside>
-        </div>
+        </dialog>
       )}
     </main>
   );
