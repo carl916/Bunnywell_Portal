@@ -1,3 +1,9 @@
+.saleToolbar { padding-block: 12px; }
+.saleToolbarControls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.saleToolbarFields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; flex: 1 1 360px; max-width: 620px; margin-left: auto; }
+.saleToolbarFields label, .saleToolbarFields input, .saleToolbarFields select { min-width: 0; width: 100%; }
+@media(max-width:600px) { .saleToolbarFields { flex-basis: 100%; } }
+
 .financialOverview {
   container-name: financial-overview;
   container-type: inline-size;

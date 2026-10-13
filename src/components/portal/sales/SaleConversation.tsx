@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefCallback } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, FileText, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { activityPresentation, COMMENT_LIMIT, discussionDraftKey, discussionRpc, mentionLink, mergeComments, personRole,
@@ -99,40 +99,22 @@ export function SaleMentionsInbox() {
 
 export function UnreadBadge({ count, label = "unread comments" }: { count: number; label?: string }) { return count > 0 ? <span className={styles.badge} aria-label={`${count} ${label}`}>{count}</span> : null; }
 
-// Intent survives workspace switches and resizing. Automatic desktop visibility
-// never grants permission to open a modal or to move focus into Comments.
+// Only explicit intent (including a discussion deep link) opens the drawer.
+// Keep it mounted so drafts, tabs and reading positions survive closing.
 export function useSaleConversationLayout() {
-  const [intent, setIntent] = useState<"default" | "open" | "closed">("default");
-  const [docked, setDocked] = useState<boolean | null>(null);
-  const containerRef = useCallback<RefCallback<HTMLDivElement>>((element) => {
-    if (!element) return;
-    const css = getComputedStyle(element);
-    const dimension = (name: string) => Number.parseFloat(css.getPropertyValue(name));
-    const minimum = dimension("--conversation-main-min") + dimension("--conversation-rail-min") + dimension("--conversation-gap");
-    const restoreMargin = dimension("--conversation-restore-margin");
-    let previous: boolean | null = null;
-    const observer = new ResizeObserver(([entry]) => {
-      // Measure the full, inline-contained layout, never the shrinking content
-      // column. CSS owns the dimensions; JS owns only the hysteresis decision.
-      const next = entry.contentRect.width >= minimum + (previous === false ? restoreMargin : 0);
-      if (next !== previous) { previous = next; setDocked(next); }
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return { containerRef, docked: docked === true, intent, setIntent,
-    open: docked !== null && (intent === "open" || (intent === "default" && docked)) };
+  const [intent, setIntent] = useState<"open" | "closed">("closed");
+  return { open: intent === "open", setIntent };
 }
 
-export function SaleConversationLayout({ children, saleId, unitId, userId, containerRef, docked, open, onClose, unread, onStage, targetComment, stageLinks = true }: {
-  children: ReactNode; saleId?: string; unitId: string; userId: string; containerRef: RefCallback<HTMLDivElement>; docked: boolean; open: boolean; onClose: () => void;
+export function SaleConversationLayout({ children, saleId, unitId, userId, open, onClose, unread, onStage, targetComment, stageLinks = true }: {
+  children: ReactNode; saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void;
   unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean;
 }) {
   const [started, setStarted] = useState<{ unit: string; id: string } | null>(null);
   const identity = saleId ?? (started?.unit === unitId ? started.id : undefined);
-  return <div ref={containerRef} className={styles.layout} data-docked={open && docked} data-presentation={open ? docked ? "inline" : "overlay" : "collapsed"}>
+  return <div className={styles.layout} data-presentation={open ? "overlay" : "collapsed"}>
     <div className={styles.workspace}>{children}</div>
-    <SaleConversation key={`${userId}:${identity ?? unitId}`} saleId={identity} unitId={unitId} userId={userId} open={open} modal={!docked}
+    <SaleConversation key={`${userId}:${unitId}:${identity ?? ""}`} saleId={identity} unitId={unitId} userId={userId} open={open}
       onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment}
       onStarted={(id) => setStarted({ unit: unitId, id })} stageLinks={stageLinks} />
   </div>;
@@ -144,8 +126,8 @@ function PlainText({ body }: { body: string }) {
     ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a> : part)}</>;
 }
 
-function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread, onStage, targetComment, onStarted, stageLinks }: {
-  saleId?: string; unitId: string; userId: string; open: boolean; modal: boolean; onClose: () => void; unread: number;
+function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onStage, targetComment, onStarted, stageLinks }: {
+  saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void; unread: number;
   onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean;
 }) {
   const panel = useRef<HTMLElement>(null);
@@ -202,13 +184,19 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
-    if (!open || modal || !panel.current) return;
+    if (!open || !panel.current || !window.visualViewport) return;
     const element = panel.current;
-    const measure = () => element.style.setProperty("--conversation-top", `${Math.max(100, element.getBoundingClientRect().top)}px`);
-    const frame = requestAnimationFrame(measure);
-    window.addEventListener("scroll", measure, { passive: true }); window.addEventListener("resize", measure);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", measure); window.removeEventListener("resize", measure); };
-  }, [open, modal]);
+    const viewport = window.visualViewport;
+    // Mobile keyboards may shrink only the visual viewport, leaving 100dvh
+    // unchanged. Keep the composer and Send button in the visible sheet.
+    const measure = () => {
+      element.style.setProperty("--conversation-height", `${viewport.height}px`);
+      element.style.setProperty("--conversation-top", `${viewport.offsetTop}px`);
+    };
+    measure();
+    viewport.addEventListener("resize", measure); viewport.addEventListener("scroll", measure);
+    return () => { viewport.removeEventListener("resize", measure); viewport.removeEventListener("scroll", measure); };
+  }, [open]);
   useEffect(() => {
     if (saleId) try { sessionStorage.setItem(discussionDraftKey(userId, saleId), JSON.stringify(draft)); } catch { /* state still preserves drafts within this sale */ }
   }, [draft, saleId, userId]);
@@ -259,7 +247,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
 
   // Keep mounted DOM (and independent scroll positions) through tab / mode changes.
   useEffect(() => {
-    if (!open || !modal || !panel.current) return;
+    if (!open || !panel.current) return;
     const element = panel.current;
     const opener = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
@@ -272,7 +260,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
       }
       ancestor = ancestor.parentElement;
     }
-    element.querySelector<HTMLButtonElement>("button")?.focus();
+    element.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
     function keys(event: KeyboardEvent) {
       if (event.key === "Escape") { event.preventDefault(); closeRef.current(); }
       if (event.key !== "Tab") return;
@@ -287,7 +275,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
       if (opener?.isConnected && opener.getClientRects().length > 0) opener.focus({ preventScroll: true });
       else document.querySelector<HTMLButtonElement>('[aria-controls="sale-conversation"]')?.focus({ preventScroll: true });
     };
-  }, [open, modal]);
+  }, [open]);
 
   // Recheck access while visible, fetch arrivals and refresh the currently read
   // page for edits. No page reload and no scrolling away from older messages.
@@ -437,8 +425,8 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
   }
 
   return <>
-    {open && modal && <div data-conversation-backdrop className={styles.backdrop} onClick={onClose} />}
-    <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal={modal} role={modal ? "dialog" : "complementary"} aria-modal={modal && open ? true : undefined} aria-label="Sale comments and activity">
+    {open && <div data-conversation-backdrop className={styles.backdrop} onClick={onClose} />}
+    <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal="true" role="dialog" aria-modal={open ? true : undefined} aria-label="Sale comments and activity">
       <header className={styles.header}>
         <div className={styles.heading}><h4>{tab === "comments" ? "Comments" : "Activity"}</h4><button type="button" onClick={onClose} aria-label="Close comments panel"><X size={18} /></button></div>
         <p className={styles.audience}>Shared with developers and all sales agents and conveyancers who have building access.</p>
@@ -483,7 +471,7 @@ function SaleConversation({ saleId, unitId, userId, open, modal, onClose, unread
             <p className={styles.meta}>Recorded <time dateTime={event.created_at}>{time(event.created_at)}</time>{item.stage && ` · ${personRole(item.stage)}`}</p>
             {item.details.map((detail, i) => <p key={i} className={styles.body}>{detail}</p>)}
             <div className={styles.actions}>{event.version_id ? <button className={styles.link} onClick={() => viewDocument(event.version_id!)}>View document version</button> : typeof event.metadata.fileName === "string" && <span>Historical file link unavailable</span>}
-              {item.stage && stageLinks && <button className={styles.link} onClick={() => { onStage(item.stage!); if (modal) onClose(); }}>View {item.stage}</button>}</div>
+              {item.stage && stageLinks && <button className={styles.link} onClick={() => { onStage(item.stage!); onClose(); }}>View {item.stage}</button>}</div>
           </div></article>
         </div>; })}
         {moreActivity && <button className={styles.load} disabled={busy} onClick={() => loadActivity(activity.at(-1))}>Load older activity</button>}

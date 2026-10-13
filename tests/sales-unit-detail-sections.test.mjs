@@ -122,7 +122,7 @@ test("sale file workspaces use a prominent three-column underline tab rail", () 
 });
 
 test("sale file summary uses compact content-width metadata instead of thirds", () => {
-  const summary = workflowSource.slice(workflowSource.indexOf('<p className="text-xs font-semibold uppercase tracking-[0.18em]'), workflowSource.indexOf("<SaleFileWorkspaceTabs"));
+  const summary = workflowSource.slice(workflowSource.indexOf('<UnitOpenObserver unitId={selectedUnit.id}'), workflowSource.indexOf("<SaleFileWorkspaceTabs"));
   assert.match(summary, /<SaleMetadataStrip items=/);
   assert.match(workflowSource, /function SaleMetadataStrip/);
   assert.match(workflowSource, /flex flex-wrap items-start gap-x-5/);

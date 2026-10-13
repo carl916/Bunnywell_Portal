@@ -1,22 +1,15 @@
 .layout {
-  /* 3 x 264px cards + 2 x 16px gaps + 42px Commercial padding/borders.
-     The rail can tighten to 320px; restoring it needs another 40px of room. */
-  --conversation-main-min: 866px;
-  --conversation-rail-min: 320px;
-  --conversation-gap: 12px;
-  --conversation-restore-margin: 40px;
-  display: grid; grid-template-columns: minmax(0,1fr); align-items: start;
-  min-width: 0; width: 100%; position: relative; container-type: inline-size;
+  min-width: 0; width: 100%;
 }
-.layout[data-docked=true] { grid-template-columns: minmax(0,1fr) clamp(var(--conversation-rail-min),24%,360px); gap: var(--conversation-gap); }
 .workspace { min-width: 0; }
-.panel { background: #fff; color: #34413a; border-left: 1px solid #d9ded6; display: flex; flex-direction: column; min-width: 0; height: min(820px, calc(100dvh - var(--conversation-top, 100px) - 16px)); position: sticky; top: 100px; overflow-wrap: anywhere; font-size: 13px; }
+.panel { background: #fff; color: #34413a; border-left: 1px solid #d9ded6; display: flex; flex-direction: column; min-width: 0; position: fixed; top: var(--conversation-top, 0px); right: 0; width: 420px; max-width: 100%; height: var(--conversation-height, 100dvh); overflow-y: auto; overscroll-behavior: contain; z-index: 91; box-shadow: -8px 0 30px #102e2020; overflow-wrap: anywhere; font-size: 13px; animation: drawer-in 160ms ease-out; }
 .panel[hidden], .feed[hidden] { display: none; }
-.panel[data-modal=true] { position: fixed; inset: 0 0 0 auto; width: 420px; max-width: 100%; height: 100dvh; z-index: 91; box-shadow: -8px 0 30px #102e2020; }
 .backdrop { position: fixed; inset: 0; background: #172b2359; z-index: 90; }
 .header { padding: 16px 16px 10px; flex-shrink: 0; border-bottom: 1px solid #e8ece6; }
 .heading { display: flex; align-items: center; gap: 10px; }
 .heading h4 { font-size: 16px; font-weight: 650; color: #0f3d2e; flex: 1; }
+.heading button { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 4px; }
+.heading button:hover { background: #f5f8f2; }
 .audience { color: #617169; font-size: 12px; line-height: 1.5; margin: 8px 0 12px; }
 .tabs { display: flex; gap: 18px; }
 .tabs button { padding: 7px 0; border-bottom: 2px solid transparent; font-weight: 600; }
@@ -64,4 +57,6 @@
 .mentions button { border: 1px solid #d9ded6; padding: 3px 6px; border-radius: 3px; }
 .history { border-left: 2px solid #d9ded6; margin: 8px 0; padding: 0 8px; }
 .panel button:focus-visible,.panel a:focus-visible,.panel textarea:focus-visible,.panel select:focus-visible { outline: 2px solid #d6a23a; outline-offset: 2px; }
-@media(max-width:600px) { .panel[data-modal=true] { width: 100%; border: 0; } .composer { padding-bottom: max(12px,env(safe-area-inset-bottom)); } }
+@keyframes drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@media(prefers-reduced-motion:reduce) { .panel { animation: none; } }
+@media(max-width:600px) { .panel { width: 100%; border: 0; } .composer { padding-bottom: max(12px,env(safe-area-inset-bottom)); } .composer textarea { font-size: 16px; } }
