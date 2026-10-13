@@ -1,5 +1,6 @@
 "use client";
 import { SaleDeposits } from "./SaleDeposits";
+import { FinancialsTabs } from "./FinancialsTabs";
 import { financialSubview } from "@/lib/sales/financial-navigation";
 import { FurtherDepositTimingFields } from "./FurtherDepositTimingFields";
 import { timingDescription, type FurtherDepositTiming } from "@/lib/sales/further-deposit";
@@ -3324,19 +3325,13 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "financials" && <div id="sale-financials" className="border-x border-[#d9ded6] bg-white px-4 pt-4 sm:px-6">
-            <div role="group" aria-label="Financials view" className="inline-flex max-w-full gap-1 rounded-lg bg-[#eef1eb] p-1">
-              {(["deposits", "agent_fees"] as const).map(view => <button key={view} id={"financials-" + view} type="button" aria-pressed={depositView === view} onClick={() => changeDepositView(view)} className={"rounded-md px-4 py-2 text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D6A23A] " + (depositView === view ? "bg-[#0F3D2E] text-white shadow-sm" : "text-[#52645b] hover:bg-white")}>{view === "deposits" ? "Deposits" : "Agent fees"}</button>)}
-            </div>
+            <FinancialsTabs activeView={depositView} onChange={changeDepositView} />
           </div>}
-          {activeUnitSection === "financials" && depositView === "deposits" && (activeAttempt ? <SaleDeposits key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} onNotice={onNotice} onChanged={async (sale, action) => { await refreshLegalSale(sale, action); }} /> : <p className="border bg-white p-5 text-sm">Deposit terms can be previewed in Commercial. No purchaser collection is required for an unreserved unit.</p>)}
+          {activeUnitSection === "financials" && depositView === "deposits" && (activeAttempt ? <SaleDeposits key={activeAttempt.id} saleId={activeAttempt.id} refreshKey={salesRefreshKey} onNotice={onNotice} onChanged={async (sale, action) => { await refreshLegalSale(sale, action); }} /> : <p id="sale-deposits" role="tabpanel" aria-labelledby="financials-deposits" tabIndex={0} className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 text-sm text-[#617169] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#D6A23A] sm:p-6">Deposit terms can be previewed in Commercial. No purchaser collection is required for an unreserved unit.</p>)}
           {activeUnitSection === "financials" && depositView === "agent_fees" && activeAttempt && reservationApproved && (
-            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="min-w-0 scroll-mt-4 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white px-4 py-6 sm:px-6 sm:py-7">
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials financials-agent_fees" tabIndex={0} className="min-w-0 scroll-mt-4 rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#D6A23A] sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e2ded3] pb-5">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#617169]">Sale workspace</p>
-                  <h3 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Agent fees</h3>
-                  <p className="mt-2 text-sm text-[#617169]">Sales-agent invoicing and payments are tracked independently from the legal sale lifecycle.</p>
-                </div>
+                <p className="text-sm text-[#617169]">Sales-agent invoicing and payments are tracked independently from the legal sale lifecycle.</p>
                 <div className="flex flex-wrap gap-2 text-xs font-bold">
                   <span className="rounded-full border border-[#d9ded6] bg-[#f2f4f0] px-3 py-1 text-[#617169]">Exchange: {exchangeAgentFeeStatus}</span>
                   <span className="rounded-full border border-[#d9ded6] bg-[#f2f4f0] px-3 py-1 text-[#617169]">Completion: {completionAgentFeeStatus}</span>
@@ -3690,7 +3685,7 @@ export function SalesReservationWorkflow({
           )}
 
           {activeUnitSection === "financials" && depositView === "agent_fees" && (!activeAttempt || !reservationApproved) && (
-            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials" className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-5 text-sm text-[#617169]">
+            <section id="agent-fees" role="tabpanel" aria-labelledby="sale-file-tab-financials financials-agent_fees" tabIndex={0} className="rounded-b-bw-panel border border-t-0 border-[#d9ded6] bg-white p-4 text-sm text-[#617169] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#D6A23A] sm:p-6">
               Agent fees become available after the reservation is approved.
             </section>
           )}

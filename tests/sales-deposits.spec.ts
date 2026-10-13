@@ -91,8 +91,8 @@ test("Financials receipts use real disposable SQL: early partial/full, failure, 
     await card.getByLabel("Reason for correction").fill("Synthetic ledger correction");
     await card.getByRole("button", { name: "Save", exact: true }).click();
     await expect(card).toContainText("£1,000.00");await expect(card).toContainText("Superseded");
-    await page.getByRole("button", { name: "Agent fees", exact: true }).click();
-    await expect(page.locator("#agent-fees").getByRole("heading", { name: "Agent fees", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Agent fees", exact: true }).click();
+    await expect(page.locator("#agent-fees").getByRole("heading", { name: "Agent fee summary", exact: true })).toBeVisible();
     await expect(card).toHaveCount(0);
     await page.goBack(); await expect(card).toContainText("Part received");
     const legacy = new URL(page.url());legacy.searchParams.delete("financialView");legacy.searchParams.set("section", "progression");legacy.hash = "exchange-deposit-task";
