@@ -505,7 +505,7 @@ function SaleMetadataStrip({ items }: { items: Array<{ label: string; value: Rea
     <dl className="mt-3 flex flex-wrap items-start gap-x-5 gap-y-2.5 border-t border-[#eef0eb] pt-3">
       {items.map((item, index) => (
         <div key={item.label} className={`min-w-0 sm:pr-5 ${index > 0 ? "sm:border-l sm:border-[#e2ded3] sm:pl-5" : ""}`}>
-          <dd className="numeric-value whitespace-pre-line text-[15px] font-semibold leading-snug text-[#0F3D2E] sm:text-base">{item.value || "-"}</dd>
+          <dd className="numeric-value whitespace-pre-line text-[15px] font-semibold leading-snug text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-base">{item.value || "-"}</dd>
           <dt className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-[#728078]">{item.label}</dt>
         </div>
       ))}
@@ -935,7 +935,7 @@ export function SalesReservationWorkflow({
   ];
   const [attempts, setAttempts] = useState<SaleAttempt[]>([]);
   const unreadComments = useSaleUnread(attempts.map((attempt) => attempt.id));
-  const { containerRef: conversationContainerRef, docked: conversationDocked, open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
+  const { open: conversationOpen, setIntent: setConversationIntent } = useSaleConversationLayout();
   const [conversationTarget, setConversationTarget] = useState<{ unit: string; sale?: string; comment?: string } | null>(null);
   const [terms, setTerms] = useState<SaleTerms[]>([]);
   const [buildingSaleDefaults, setBuildingSaleDefaults] = useState<BuildingSaleDefault[]>([]);
@@ -1538,6 +1538,12 @@ export function SalesReservationWorkflow({
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     params.set("screen", "sales");
+    // A deliberate unit change starts a different file. Do not carry the old
+    // attempt/document/conversation into it. Explicit incoming links and
+    // workspace switches within the same unit retain their identifiers.
+    if (next.unit !== undefined && next.unit !== params.get("salesUnitId")) {
+      for (const key of ["workSale", "workVersion", "conversation", "comment", "workActivity"]) params.delete(key);
+    }
     if (next.unit === null) params.delete("salesUnitId");
     if (next.unit) params.set("salesUnitId", next.unit);
     if (next.filter === null) params.delete("salesFilter");
@@ -2711,14 +2717,14 @@ export function SalesReservationWorkflow({
   }
 
   return (
-    <div data-sale-file className="grid min-w-0 grid-cols-1 gap-5">
-      <section className="panel">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div data-sale-file className="grid min-w-0 grid-cols-1 gap-3">
+      <section className={`panel ${styles.saleToolbar}`} aria-label="Sales toolbar">
+        <div className={styles.saleToolbarControls}>
           <button className="secondary w-fit" onClick={backToSalesOverview}>
             &lt; {fromFees ? "Back to Agent Fees" : "Back to sales overview"}
           </button>
           <SaleMentionsInbox />
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[520px]">
+          <div className={styles.saleToolbarFields}>
             <label className="field-label">
               Search sales
               <input
@@ -2746,23 +2752,18 @@ export function SalesReservationWorkflow({
         </div>
       </section>
 
-      {internalOverview && new URLSearchParams(overview.search).get("workReturn") === "sales" && selectedSaleUnitId && <SaleReviewNavigation
-        actions={visibleSalesWork(developerRows?.find(row=>row.unitId===selectedSaleUnitId) ?? {work:[]}, overview.filters)}
-        search={overview.search} disabled={Boolean(salesError)} onOpen={overview.open} />}
-
       {selectedUnit && (
         <section className="panel min-w-0">
           <UnitOpenObserver unitId={selectedUnit.id} />
           {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workSale") && new URLSearchParams(window.location.search).get("workSale") !== activeAttempt?.id && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The sale attempt has changed since this worklist link was created. This is the current accessible sale file; review its latest position before acting.</p>}
           {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workVersion") && !versions.some(version => version.id === new URLSearchParams(window.location.search).get("workVersion") && version.is_current && !version.redacted_at) && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The linked document version is no longer current. Review the current document below.</p>}
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected sale file</p>
-              <h3 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Unit {selectedUnit.unit_number}</h3>
+            <div className="min-w-0 [overflow-wrap:anywhere]">
+              <h3 className="text-2xl font-bold text-[#0F3D2E]">Unit {selectedUnit.unit_number}</h3>
               <p className="text-sm text-[#617169]">{selectedBuilding?.name ?? "Building"} / {selectedUnit.floor ?? "No floor"}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button className="secondary" aria-controls="sale-conversation" aria-expanded={conversationOpen} onClick={() => setConversationIntent("open")}>Comments <UnreadBadge count={unreadComments[selectedConversationId ?? ""] ?? 0} /></button>
+              <button className="secondary" aria-haspopup="dialog" aria-controls="sale-conversation" aria-expanded={conversationOpen} onClick={() => setConversationIntent("open")}>Comments <UnreadBadge count={unreadComments[selectedConversationId ?? ""] ?? 0} /></button>
               <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${saleStatusTone(selectedUnit.sale_status).badge}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${saleStatusTone(selectedUnit.sale_status).dot}`} aria-hidden="true" />
                 {saleStatusLabel(selectedUnit.sale_status)}
@@ -2778,10 +2779,15 @@ export function SalesReservationWorkflow({
             <p className="mt-2 text-xs text-[#617169]">{saleUsesProtectedSnapshot ? "This sale uses the deal setup agreed at reservation. Building defaults may have changed since." : "This unit has commercial terms that differ from the building defaults. Review the retained override in Commercial before reservation."}</p>
           )}
 
+          {internalOverview && new URLSearchParams(overview.search).get("workReturn") === "sales" && selectedSaleUnitId && <SaleReviewNavigation
+            key={selectedSaleUnitId}
+            actions={visibleSalesWork(developerRows?.find(row=>row.unitId===selectedSaleUnitId) ?? {work:[]}, overview.filters)}
+            search={overview.search} disabled={Boolean(salesError)} onOpen={overview.open} />}
+
           <SaleConversationLayout userId={user.id} unitId={selectedUnit.id}
             saleId={selectedConversationId} stageLinks={selectedConversationId === activeAttempt?.id}
             targetComment={conversationTarget?.unit === selectedUnit.id ? conversationTarget.comment : undefined}
-            containerRef={conversationContainerRef} docked={conversationDocked} open={conversationOpen} onClose={() => setConversationIntent("closed")}
+            open={conversationOpen} onClose={() => setConversationIntent("closed")}
             unread={unreadComments[conversationTarget?.unit === selectedUnit.id && conversationTarget.sale ? conversationTarget.sale : activeAttempt?.id ?? ""] ?? 0}
             onStage={(stage) => {
               if (conversationTarget?.sale && conversationTarget.sale !== activeAttempt?.id) return;

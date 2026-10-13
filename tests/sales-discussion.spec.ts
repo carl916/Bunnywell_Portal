@@ -43,15 +43,16 @@ test('continuous comments omit stage controls and payloads across desktop and mo
     for (let i=0;i<stages.length;i++) await expect(feed.getByText(`Earlier update ${i}`,{exact:true})).toHaveCount(1);
     await expect(feed.getByText(/· (Reservation|Exchange|Completion|Handover)$/)).toHaveCount(0);
     for (const stage of ['Exchange','Completion','Reservation']) {
+      await page.keyboard.press('Escape');
       await page.getByRole('button',{name:new RegExp(`^${stage}\\b`)}).first().click();
+      await open(page);
       await expect(composer(page)).toHaveValue('Restored update');
       await expect(feed.locator('article')).toHaveCount(6);
     }
     for (const width of [1920,390]) {
       await page.setViewportSize({width,height:width===390?844:1080});
-      if (width===390) await expect(panel(page)).toBeHidden();
       await open(page);
-      await expect(panel(page)).toHaveAttribute('data-modal',String(width===390));
+      await expect(panel(page)).toHaveAttribute('data-modal','true');
       await expect(panel(page).getByText('Stage context',{exact:true})).toHaveCount(0);
       await expect(panel(page).getByText('Whole sale',{exact:true})).toHaveCount(0);
       await expect(panel(page).getByRole('combobox')).toHaveCount(0);
@@ -102,23 +103,27 @@ test('a replacement sale on the same unit has a separate thread and earlier comm
     await expect(panel(page).getByText('Original buyer conversation',{exact:true})).toBeVisible();
     await expect(panel(page).getByText('Replacement buyer conversation',{exact:true})).toHaveCount(0);
     await expect(composer(page)).toHaveValue('Draft for original buyer');
+    await page.keyboard.press('Escape');
     await page.getByRole('button',{name:'Open current sale comments',exact:true}).click();
+    await open(page);
     await expect(panel(page).getByText('Replacement buyer conversation',{exact:true})).toBeVisible();
     await expect(panel(page).getByText('Original buyer conversation',{exact:true})).toHaveCount(0);
   } finally { await f.sql.db.close(); }
 });
 
-test('docking, drawer fallback, mobile, draft and unsaved commercial values survive presentation changes', async ({ page }) => {
+test('overlay drawer preserves drafts and unsaved commercial values across all widths', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   const f = await fixture(page);
   try {
     await f.seedComment('The solicitor has received the signed reservation form.\nPlease keep updates here.');
     f.rows.unit_sale_terms = [{ id: 'terms', sale_attempt_id: f.attempt.id, is_current: true, status: 'draft', contract_price: 340500, list_price_at_offer: 340500, exchange_agent_fee_percent: 9.5, completion_agent_fee_percent: 0.5, agent_fee_percent: 10, vat_rate: 20 }];
     await f.reload(); await open(page);
-    await expect(panel(page)).toHaveAttribute('data-modal', 'false');
+    await expect(panel(page)).toHaveAttribute('data-modal', 'true');
     await expect(panel(page).getByRole('button', { name: 'Send', exact: true })).toBeInViewport();
     await composer(page).fill('Draft remains on this transaction');
-    await page.getByRole('tab', { name: /^Financials/ }).click(); await expect(composer(page)).toHaveValue('Draft remains on this transaction');
+    await page.keyboard.press('Escape');
+    await page.getByRole('tab', { name: /^Financials/ }).click(); await open(page); await expect(composer(page)).toHaveValue('Draft remains on this transaction');
+    await page.keyboard.press('Escape');
     await page.getByRole('tab', { name: /^Commercial/ }).click();
     await page.getByRole('button', { name: 'Edit commercial model', exact: true }).click();
     await page.getByLabel('Proposed contract price', { exact: true }).fill('350500');
@@ -126,21 +131,22 @@ test('docking, drawer fallback, mobile, draft and unsaved commercial values surv
     const rail = page.getByRole('complementary', { name: 'Commercial preview' });
     const editorBox = (await editor.boundingBox())!, railBox = (await rail.boundingBox())!;
     expect(railBox.width / editorBox.width).toBeGreaterThan(0.25); expect(railBox.width / editorBox.width).toBeLessThan(0.4);
-    await page.screenshot({ path: 'artifacts/sale-discussion-commercial-docked.png', fullPage: true });
+    await open(page);
+    await page.screenshot({ path: 'test-results/sale-discussion-commercial-overlay.png', fullPage: true });
     await page.setViewportSize({ width: 1366, height: 1000 });
-    await expect(panel(page)).toHaveAttribute('data-modal', 'false');
+    await expect(panel(page)).toHaveAttribute('data-modal', 'true');
     await page.setViewportSize({ width: 1200, height: 1000 });
-    await expect(panel(page)).toBeHidden();
-    await expect(page.locator('[data-conversation-backdrop]')).toHaveCount(0);
+    await expect(panel(page)).toBeVisible();
+    await expect(page.locator('[data-conversation-backdrop]')).toHaveCount(1);
     await expect(page.getByLabel('Proposed contract price', { exact: true })).toHaveValue('350,500');
     await open(page); await expect(composer(page)).toHaveValue('Draft remains on this transaction');
     await expect(panel(page)).toHaveAttribute('data-modal', 'true');
-    await page.screenshot({ path: 'artifacts/sale-discussion-commercial-drawer.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/sale-discussion-commercial-drawer.png', fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(panel(page)).toHaveAttribute('role', 'dialog');
     expect((await panel(page).boundingBox())!.width).toBe(390);
     await expect(composer(page)).toHaveValue('Draft remains on this transaction');
-    await page.screenshot({ path: 'artifacts/sale-discussion-mobile.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/sale-discussion-mobile.png', fullPage: true });
     await page.keyboard.press('Escape'); await open(page); await expect(composer(page)).toHaveValue('Draft remains on this transaction');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   } finally { await f.sql.db.close(); }
@@ -160,7 +166,7 @@ test('activity keeps earlier pages and scroll, identifies document subjects and 
     await f.reload(); await open(page); await panel(page).getByRole('tab',{name:'Activity',exact:true}).click();
     await expect(panel(page).getByText('Completion statement approved',{exact:true})).toBeVisible();
     await expect(panel(page).getByText('Statement of account approved',{exact:true})).toBeVisible();
-    await page.screenshot({path:'artifacts/sale-discussion-activity.png',fullPage:true});
+    await page.screenshot({path:'test-results/sale-discussion-activity.png',fullPage:true});
     const count=await panel(page).locator('#conversation-activity article').count();
     await panel(page).getByRole('button',{name:'Load older activity'}).click();
     await expect(panel(page).locator('#conversation-activity article')).toHaveCount(69);
@@ -254,15 +260,20 @@ test('overview indicator and comment deep link open the correct sale and retain 
     await f.reload(`&conversation=${f.sql.ids.sale}&comment=${id}`);
     await expect(panel(page).getByText('Deep-link context from the assigned agent', { exact: true })).toBeInViewport();
     await composer(page).fill('Stage-independent draft');
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: /^Exchange\b/ }).first().click();
+    await open(page);
     await expect(composer(page)).toHaveValue('Stage-independent draft');
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: /^Completion\b/ }).first().click();
     await page.getByRole('button', { name: /^Reservation\b/ }).first().click();
+    await open(page);
     await expect(composer(page)).toHaveValue('Stage-independent draft');
-    await page.screenshot({ path: 'artifacts/sale-discussion-after.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/sale-discussion-after.png', fullPage: true });
+    await page.keyboard.press('Escape');
     await page.getByRole('button', { name: /Back to sales overview/ }).click();
     await f.seedComment('Another unread update'); await page.reload();
-    await page.getByRole('button', { name: /Open \d+ unread comments for Unit 101/ }).click();
+    await page.getByRole('link', { name: /\d+ unread comments/ }).click();
     await expect(panel(page)).toBeVisible();
     await expect(composer(page)).toHaveValue('Stage-independent draft');
   } finally { await f.sql.db.close(); }

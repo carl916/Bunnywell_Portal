@@ -69,7 +69,7 @@ test("cancelling a reservation attempt is kept in the Reservation step and enfor
   const reservationWorkspaceStart = workflowSource.indexOf('id="sales-stage-reservation"');
   const reservationWorkspaceEnd = workflowSource.indexOf("</StageWorkspace>", reservationWorkspaceStart);
   const reservationWorkspace = workflowSource.slice(reservationWorkspaceStart, reservationWorkspaceEnd);
-  const saleFileHeaderStart = workflowSource.indexOf("Selected sale file");
+  const saleFileHeaderStart = workflowSource.indexOf('<UnitOpenObserver unitId={selectedUnit.id}');
   const saleFileHeaderEnd = workflowSource.indexOf("<SaleFileWorkspaceTabs", saleFileHeaderStart);
   const saleFileHeader = workflowSource.slice(saleFileHeaderStart, saleFileHeaderEnd);
 

@@ -1,0 +1,13 @@
+.summary { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8ece6; min-width: 0; }
+.heading { color: #0f3d2e; font-size: 14px; font-weight: 650; }
+.heading span { margin-left: 4px; color: #617169; font-weight: 400; }
+.list { margin-top: 4px; }
+.list li + li { border-top: 1px solid #eef0eb; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; padding: 8px 4px; color: #0f3d2e; font-size: 14px; border-radius: 3px; }
+.text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.text small { color: #617169; font-size: 12px; }
+.row svg { flex-shrink: 0; color: #617169; }
+a.row:hover { background: #f5f8f2; }
+.row[aria-disabled=true] { color: #617169; }
+.toggle { min-height: 40px; padding: 4px; color: #52645b; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.row:focus-visible, .toggle:focus-visible { outline: 2px solid #0f3d2e; outline-offset: 2px; }

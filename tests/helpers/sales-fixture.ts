@@ -38,6 +38,19 @@ export async function salesFixture(page: Page, initialPath?: string) {
     const url = new URL(route.request().url());
     if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1);
+      if (name === 'sales_deposit_context') {
+        const saleId = route.request().postDataJSON().p_sale;
+        const sale = rows.unit_sale_attempts.find(row => row.id === saleId);
+        await respond(route, {
+          exchange: { source: rows.sale_exchange_deposit_sources?.find(row => row.sale_attempt_id === saleId) ?? null,
+            receipt: rows.sale_exchange_deposit_receipts?.find(row => row.sale_attempt_id === saleId) ?? null, preview_amount: 25000, percent: 10 },
+          further: { id: 'fixture-further-deposit', sale_attempt_id: saleId, required: false, expected_amount: null, received_amount: 0,
+            percent: null, timing: null, months_after_exchange: null, exchanged_at: sale?.exchanged_at ?? null, pc_date: null, deadline: null, terms_version: 1 },
+          exchanged: Boolean(sale?.exchanged_at), completed: Boolean(sale?.completed_at), active: true,
+          canRecord: profile.role === 'conveyancer', canAmendDeadline: profile.role === 'developer', receipts: [], deadlines: [],
+        });
+        return;
+      }
       const json = name === 'sale_workflow_context' || name === 'sale_activity_page' ? rows.unit_sale_workflow_events
         : name === 'sale_comment_page' ? { comments: [], hasBefore: false, hasAfter: false }
         : name === 'sale_comment_unread' ? {} : name === 'sale_actor_names' ? rows.sale_actor_names ?? [] : [];
