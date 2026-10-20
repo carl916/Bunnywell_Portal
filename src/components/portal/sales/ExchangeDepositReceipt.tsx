@@ -4,6 +4,7 @@ import { useState } from "react";
 import { emailDate, emailMoney } from "@/lib/sales/legal-email";
 import { legalDateTime } from "@/lib/sales/legal-workflow";
 import { isCalendarDate } from "@/lib/sales/completion-notice";
+import { DepositBeforeExchange } from "./DepositBeforeExchange";
 
 export type ExchangeDepositContext = {
   percent?: number | null;
@@ -30,7 +31,7 @@ export function ExchangeDepositReceipt({ deposit, exchanged, editable, busy, run
 
   return <section className="py-5" id="exchange-deposit-task">
     <h4 className="font-bold">Exchange deposit</h4>
-    {!exchanged ? <div className="mt-2 text-sm text-[#617169]"><p>Preview — expected {deposit?.percent != null ? `(${deposit.percent}%) ` : ""}{emailMoney(deposit?.preview_amount)} on legal exchange.</p><p className="mt-1">Receipt recording becomes available after legal exchange. This preview does not create a collection task.</p></div> : <>
+    {!exchanged ? <DepositBeforeExchange percent={deposit?.percent} amount={deposit?.preview_amount} timing="Due on legal exchange." /> : <>
       <p className="mt-2 text-sm font-semibold text-[#0F3D2E]">{receipt ? "Deposit received" : "Deposit confirmation outstanding"}</p>
       {source && amount !== null && amount !== undefined ? <>
         <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#f5f7f3] p-4">
