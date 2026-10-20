@@ -154,8 +154,8 @@ test("dashboard skips operational media/history and snag drill-through selects i
   expect(paths.some(path => /snag_photos|snag_events|handover_photos|unit_sale_document_versions/.test(path))).toBe(false);
   await page.getByRole("link", { name: /Open .*Triage resident defect/ }).first().click();
   await expect(page.getByRole("heading", { name: "Synthetic snag", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Back to organisation work" })).toBeVisible();
-  await page.getByRole("link", { name: "Back to organisation work" }).click();
+  await expect(page.getByRole("link", { name: "Back to organisation work" })).toHaveCount(0);
+  await page.getByRole("navigation", { name: "Primary navigation" }).getByRole("button", { name: "Dashboard", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
 });
 

@@ -4,7 +4,6 @@ import { timingError, timingDescription, type FurtherDepositTiming } from "@/lib
 
 
 import { OrganisationWorklist } from "./dashboard/OrganisationWorklist";
-import { WorkReturnLink } from "./dashboard/WorkReturnLink";
 import { currentInformationSupplied, needsTrade } from "@/lib/dashboard/snags";
 import { readComplete } from "@/lib/dashboard/pagination";
 import { legalRefreshScope, replaceRowsById } from "@/lib/sales/action-refresh";
@@ -1510,7 +1509,6 @@ export function ProductionPortalApp() {
       onRefresh={refreshPortal}
       onSignOut={signOut}
     >
-      <WorkReturnLink screen={activeTab} />
       {activeTab === "dashboard" && contextReady && (
         <OrganisationWorklist key={`${profile.id}:${profile.role}:${profile.organisation_id}:${buildingContextId}`} identity={`${profile.id}:${profile.role}:${profile.organisation_id ?? ""}`} buildingId={buildingContextId} scopeLabel={scopedBuildings.find(building => building.id === buildingContextId)?.name} />
       )}
@@ -4017,7 +4015,7 @@ function BuildingSalesSetup({
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: {buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : "Not set"}</dd></div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{agentFeePercent ? `${agentFeePercent}% total` : "Not set"}</dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : "Not set"}</dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Deposits</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange / {depositStructure.completionBalancePercent}% completion</dd><dd className="mt-0.5 text-xs text-[#617169]">Further deposit: {secondDepositEnabled ? `${secondDepositPercent || "0"}% · ${timingDescription(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths))}` : "None"}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Buyer payment schedule</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange{depositStructure.secondDepositEnabled ? ` / ${depositStructure.secondDepositPercent}% further deposit` : ""} / {depositStructure.completionBalancePercent}% completion</dd>{depositStructure.secondDepositEnabled && <dd className="mt-0.5 text-xs text-[#617169]">Further deposit due: {timingDescription(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths))}</dd>}</div>
         </dl>
       </section>
     );

@@ -112,5 +112,5 @@ export function classifyDefaultDealSetupCascade(input: {
 export function defaultDealSetupCascadeSummary(input: DefaultCascadeClassification) {
   const forSaleUnitLabel = input.eligibleUnitIds.length === 1 ? "unit" : "units";
   const draftLabel = input.draftReservationsSkipped === 1 ? "reservation draft" : "reservation drafts";
-  return `Updated ${input.eligibleUnitIds.length} For Sale ${forSaleUnitLabel}. ${input.draftReservationsSkipped} ${draftLabel} left unchanged. ${input.reservedSkipped} Reserved, ${input.exchangedSkipped} Exchanged and ${input.completedSkipped} Completed units were not changed.`;
+  return `Defaults available to ${input.eligibleUnitIds.length} For Sale ${forSaleUnitLabel}; inherited terms follow these defaults. ${input.draftReservationsSkipped} ${draftLabel} left unchanged. ${input.reservedSkipped} Reserved, ${input.exchangedSkipped} Exchanged and ${input.completedSkipped} Completed units were not changed.`;
 }

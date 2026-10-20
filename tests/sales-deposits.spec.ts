@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { legalFixture } from "./helpers/legal-ui-fixture";
 import { salesFixture } from "./helpers/sales-fixture";
 import { furtherDepositDatabase } from "./helpers/further-deposit-database.mjs";
+import { readFileSync } from "node:fs";
 
 test("building fixed default saves and persists through the shared configuration surface", async ({ page }, testInfo) => {
   const f=await salesFixture(page);
@@ -26,8 +27,53 @@ test("building fixed default saves and persists through the shared configuration
   await expect(section.getByRole("button",{name:"Save changes",exact:true})).toHaveCount(0);
   expect(writes.find(w=>w.table==="building_sale_defaults")?.body).toMatchObject({second_deposit_percent:5,further_deposit_timing:{basis:"fixed",date:"2027-04-01",time:"17:00"}});
   expect(writes.filter(w=>w.table==="unit_sale_terms")).toHaveLength(0);
-  await page.reload();await expect(section).toContainText("17:00 UK time");await expect(section).toContainText("85% completion");
+  await page.reload();await expect(section).toContainText("17:00 UK time");
+  await expect(section.locator("dd").filter({ hasText: "10% exchange" })).toHaveText("10% exchange / 5% further deposit / 85% completion");
+  await page.goto(`/?screen=setup_buildings&building=${f.unit.building_id}&workReturn=dashboard`);
+  await expect(page.getByRole("link", { name: "Back to organisation work" })).toHaveCount(0);
   await section.screenshot({path:testInfo.outputPath("building-defaults.png")});
+});
+
+test("repaired empty baseline shows the saved deposit structure across Progression, Commercial and Financials", async ({ page }, testInfo) => {
+  const database = await furtherDepositDatabase({ initialiseTerms: false });
+  try {
+    await database.owner();
+    await database.db.exec("alter table unit_sale_terms add column status text default 'draft'; alter table unit_sale_payment_schedule add column status text default 'pending'");
+    await database.db.query("update units set sale_status='for_sale' where id=$1", [database.ids.unit]);
+    await database.db.query("update unit_sale_attempts set workflow_status='draft',is_system_baseline=true,buyer_name=null,buyer_person_name=null,buyer_company_name=null where id=$1", [database.ids.sale]);
+    await database.db.query("update unit_sale_terms set contract_price=201000,exchange_deposit_percent=null,completion_balance_percent=null where sale_attempt_id=$1", [database.ids.sale]);
+    await database.db.query("insert into building_sale_defaults(building_id,exchange_deposit_percent,second_deposit_enabled,second_deposit_percent,further_deposit_timing) values($1,10,true,5,$2)", [database.ids.building, { basis: "fixed", date: "2027-04-01", time: "17:00" }]);
+    await database.db.exec(readFileSync("supabase/migrations/20261020145955_repair_inherited_sale_deposits.sql", "utf8"));
+    const terms = (await database.db.query<Record<string, unknown>>("select * from unit_sale_terms where sale_attempt_id=$1", [database.ids.sale])).rows[0];
+    const defaults = (await database.db.query<Record<string, unknown>>("select * from building_sale_defaults where building_id=$1", [database.ids.building])).rows[0];
+    const f = await salesFixture(page);
+    Object.assign(f.attempt, { buyer_name: null, buyer_person_name: null, buyer_email: null, buyer_phone: null, buyer_solicitor_name: null, reservation_date: null, is_system_baseline: true });
+    // PostgREST returns numeric columns as JSON numbers; PGlite returns strings.
+    const numericTerms = Object.fromEntries(Object.entries(terms).map(([key, value]) => [key,
+      typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : value]));
+    f.rows.unit_sale_terms = [{ ...numericTerms, sale_attempt_id: f.attempt.id }];
+    f.rows.building_sale_defaults = [{ ...defaults, building_id: f.unit.building_id }];
+    await page.route("**/rest/v1/rpc/sales_deposit_context", async route => route.fulfill({ json: await database.context("developer") }));
+    await f.reloadStage("Reservation");
+    const termsCard = page.locator("div").filter({ has: page.getByRole("heading", { name: "Commercial terms", exact: true }) }).last();
+    await expect(termsCard).toContainText("5% · 2027-04-01 at 17:00 UK time");
+    await expect(termsCard).toContainText("85%");
+    await page.getByRole("tab", { name: /^Commercial/ }).click();
+    const buyer = page.locator("div").filter({ has: page.getByRole("heading", { name: "Buyer", exact: true }) }).last();
+    await expect(buyer).toContainText("Further deposit (5%)");
+    await expect(buyer).toContainText("£10,050");
+    await expect(buyer).toContainText("2027-04-01 at 17:00 UK time");
+    await expect(buyer).toContainText("Completion balance (85%)");
+    await expect(buyer).toContainText("£170,850");
+    await page.getByRole("tab", { name: /^Financials/ }).click();
+    await expect(page.locator("#exchange-deposit-task")).toContainText("£20,100");
+    await expect(page.locator("#further-deposit")).toContainText("£10,050");
+    await expect(page.locator("#further-deposit")).toContainText("1 April 2027 at 17:00 UK time");
+    await expect(page.locator("#further-deposit").getByRole("button", { name: "Record receipt", exact: true })).toHaveCount(0);
+    await page.locator("#sale-deposits").screenshot({ path: testInfo.outputPath("inherited-deposits.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  } finally { await database.db.close(); }
 });
 
 test("Financials receipts use real disposable SQL: early partial/full, failure, corrections, links and mobile", async ({ page }, testInfo) => {
