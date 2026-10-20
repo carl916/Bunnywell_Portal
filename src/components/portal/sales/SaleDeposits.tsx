@@ -1,11 +1,12 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { furtherDepositState, londonDateTime, type FurtherDepositFact } from "@/lib/sales/further-deposit";
+import { furtherDepositState, londonDateTime, timingDescription, type FurtherDepositFact } from "@/lib/sales/further-deposit";
 import { emailDate, emailMoney } from "@/lib/sales/legal-email";
 import { legalDateTime } from "@/lib/sales/legal-workflow";
 import { runAndRefresh, settleRefreshes } from "@/lib/sales/action-refresh";
 import { ExchangeDepositReceipt, type ExchangeDepositContext } from "./ExchangeDepositReceipt";
+import { DepositBeforeExchange } from "./DepositBeforeExchange";
 
 type Receipt = { id: string; amount: number; received_date: string; received_time: string | null; note: string | null; voided: boolean; supersedes_id: string | null; revision: number; reason: string | null; recorded_by_name: string; recorded_at: string };
 export type DepositsContext = { exchange: ExchangeDepositContext; further: FurtherDepositFact; exchanged: boolean; completed: boolean; active: boolean; canRecord: boolean; canAmendDeadline: boolean; receipts: Receipt[]; deadlines: { id: string; date: string; time: string | null; reason: string; recorded_by_name: string; recorded_at: string }[] };
@@ -74,16 +75,23 @@ export function FurtherDepositCard({ context, now, busy, run }: { context: Depos
     setReason(""); setNote(receipt?.note ?? ""); setExcess(false); renewRequest();
   }
   return <section id="further-deposit" className="min-w-0 border-t border-[#d9ded6] py-5">
-    <h4 className="text-lg font-bold">Further deposit</h4>
-    {!fact.required ? <p className="mt-2 text-sm text-[#617169]">No further deposit required.</p> : <>
-      <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold"><span className="rounded-full bg-[#eef3ed] px-3 py-1">{state.payment}</span>{state.outstanding !== 0 && <span className={`rounded-full px-3 py-1 ${state.timing === "Overdue" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{context.exchanged ? state.timing : "Preview — before exchange"}</span>}</div>
+    <h4 className="font-bold">Further deposit</h4>
+    {!fact.required ? <p className="mt-2 text-sm text-[#617169]">No further deposit required.</p> : !context.exchanged ? <DepositBeforeExchange
+      percent={fact.percent}
+      amount={fact.expected_amount}
+      timing={state.date
+        ? `${state.forecast ? "Estimated due date:" : "Due"} ${emailDate(state.date)}${state.time ? ` at ${state.time} UK time` : " (date only)"}.`
+        : timingDescription(fact.timing, fact.months_after_exchange)}
+      note={state.forecast ? "The due date is estimated from target practical completion and needs contractual confirmation." : undefined}
+    /> : <>
+      <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold"><span className="rounded-full bg-[#eef3ed] px-3 py-1">{state.payment}</span>{state.outstanding !== 0 && <span className={`rounded-full px-3 py-1 ${state.timing === "Overdue" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{state.timing}</span>}</div>
       <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
         <div><dt className="text-[#617169]">Expected{fact.percent != null ? ` (${fact.percent}%)` : ""}</dt><dd className="font-bold">{emailMoney(fact.expected_amount)}</dd></div>
         <div><dt className="text-[#617169]">Amount received</dt><dd className="font-bold">{emailMoney(fact.received_amount)}</dd></div>
         <div><dt className="text-[#617169]">Outstanding balance</dt><dd className="font-bold">{emailMoney(state.outstanding)}</dd></div>
         <div><dt className="text-[#617169]">{state.forecast ? "Estimated date" : "Deadline"}</dt><dd className="font-semibold">{state.date ? `${emailDate(state.date)}${state.time ? ` at ${state.time} UK time` : " (date only)"}` : "Needs confirmation"}</dd></div>
       </dl>
-      <p className="mt-3 text-xs text-[#617169]">{state.explanation} · Commercial version {fact.terms_version ?? "unavailable"}. {context.exchanged ? "Agreed sale price and percentage retained at exchange." : "Preview only; no live collection task before legal exchange."}</p>
+      <p className="mt-3 text-xs text-[#617169]">{state.explanation} · Commercial version {fact.terms_version ?? "unavailable"}. Agreed sale price and percentage retained at exchange.</p>
       {state.beforeExchange && <p className="mt-3 text-sm text-amber-900">Needs confirmation: this deadline falls before the recorded exchange date. Review the contract; the date has not been moved.</p>}
       {state.forecast && <p className="mt-2 text-sm text-amber-900">PC-derived forecast only. The developer must confirm the contractual deadline; changes to PC can move this estimate.</p>}
       {state.excess > 0 && <p role="status" className="mt-3 text-sm text-amber-900">Overpayment review exception: {emailMoney(state.excess)} excess recorded.</p>}

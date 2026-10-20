@@ -66,10 +66,17 @@ test("repaired empty baseline shows the saved deposit structure across Progressi
     await expect(buyer).toContainText("Completion balance (85%)");
     await expect(buyer).toContainText("£170,850");
     await page.getByRole("tab", { name: /^Financials/ }).click();
-    await expect(page.locator("#exchange-deposit-task")).toContainText("£20,100");
-    await expect(page.locator("#further-deposit")).toContainText("£10,050");
-    await expect(page.locator("#further-deposit")).toContainText("1 April 2027 at 17:00 UK time");
-    await expect(page.locator("#further-deposit").getByRole("button", { name: "Record receipt", exact: true })).toHaveCount(0);
+    const exchange = page.locator("#exchange-deposit-task");
+    const further = page.locator("#further-deposit");
+    await expect(exchange).toContainText("Expected (10%): £20,100.00. Due on legal exchange.");
+    await expect(further).toContainText("Expected (5%): £10,050.00. Due 1 April 2027 at 17:00 UK time.");
+    for (const deposit of [exchange, further]) {
+      await expect(deposit).toContainText("Receipt recording becomes available after legal exchange.");
+      await expect(deposit).not.toContainText(/Not received|Preview|Outstanding balance|Amount received|Commercial version/);
+      await expect(deposit.getByRole("button")).toHaveCount(0);
+    }
+    expect(await further.getByRole("heading").evaluate(el => getComputedStyle(el).fontSize))
+      .toBe(await exchange.getByRole("heading").evaluate(el => getComputedStyle(el).fontSize));
     await page.locator("#sale-deposits").screenshot({ path: testInfo.outputPath("inherited-deposits.png") });
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
