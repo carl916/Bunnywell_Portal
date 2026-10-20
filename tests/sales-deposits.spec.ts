@@ -3,6 +3,38 @@ import { legalFixture } from "./helpers/legal-ui-fixture";
 import { salesFixture } from "./helpers/sales-fixture";
 import { furtherDepositDatabase } from "./helpers/further-deposit-database.mjs";
 import { readFileSync } from "node:fs";
+import { agentFeeInheritanceDatabase } from "./helpers/agent-fee-inheritance-database.mjs";
+
+test("repaired baseline fees appear consistently in Commercial and the deal editor", async ({ page }, testInfo) => {
+  const database = await agentFeeInheritanceDatabase();
+  try {
+    const sale = await database.baseline();
+    await database.repair();
+    const terms = await database.terms(sale);
+    const defaults = (await database.db.query<Record<string, unknown>>("select * from building_sale_defaults where building_id=$1", [database.ids.building])).rows[0];
+    const f = await salesFixture(page);
+    f.rows.unit_sale_terms = [{ ...terms, sale_attempt_id: f.attempt.id, contract_price: 211000,
+      agent_fee_percent: Number(terms.agent_fee_percent),
+      exchange_agent_fee_percent: Number(terms.exchange_agent_fee_percent),
+      completion_agent_fee_percent: Number(terms.completion_agent_fee_percent) }];
+    f.rows.building_sale_defaults = [{ ...defaults, building_id: f.unit.building_id,
+      default_agent_fee_percent: 10, default_exchange_agent_fee_percent: 9.5, default_completion_agent_fee_percent: 0.5 }];
+    await f.reloadStage("Reservation");
+    await page.getByRole("tab", { name: /^Commercial/ }).click();
+    const agent = page.locator("div").filter({ has: page.getByRole("heading", { name: "Agent", exact: true }) }).last();
+    await expect(agent).toContainText("£21,100");
+    await expect(agent.getByText("Exchange tranche", { exact: true }).locator("..")).toContainText("9.5%");
+    await expect(agent.getByText("Completion tranche", { exact: true }).locator("..")).toContainText("0.5%");
+    await agent.screenshot({ path: testInfo.outputPath("inherited-agent-fees.png") });
+    await page.getByRole("button", { name: "Edit commercial model", exact: true }).click();
+    await expect(page.getByTestId("commercial-model-editor")).not.toContainText("Open Edit deal setup to correct the fee split");
+    await page.getByRole("button", { name: "Edit deal setup", exact: true }).click();
+    await expect(page.getByLabel("Total agent fee %", { exact: true })).toHaveValue("10");
+    await expect(page.getByLabel("Exchange fee %", { exact: true })).toHaveValue("9.5");
+    await expect(page.getByLabel("Completion fee %", { exact: true })).toHaveValue("0.5");
+    await expect(page.getByTestId("agent-fee-validation")).toContainText("9.5% + 0.5% = 10%");
+  } finally { await database.db.close(); }
+});
 
 test("building fixed default saves and persists through the shared configuration surface", async ({ page }, testInfo) => {
   const f=await salesFixture(page);
