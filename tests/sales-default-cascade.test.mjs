@@ -80,6 +80,6 @@ test("default cascade summary includes updated and protected counts", () => {
       exchangedSkipped: 4,
       completedSkipped: 5,
     }),
-    "Updated 2 For Sale units. 1 reservation draft left unchanged. 3 Reserved, 4 Exchanged and 5 Completed units were not changed.",
+    "Defaults available to 2 For Sale units; inherited terms follow these defaults. 1 reservation draft left unchanged. 3 Reserved, 4 Exchanged and 5 Completed units were not changed.",
   );
 });
