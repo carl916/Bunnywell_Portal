@@ -1522,10 +1522,10 @@ export function SalesReservationWorkflow({
 
   function nextActionForUnit(unit: Unit) {
     const attempt = activeAttemptByUnit.get(unit.id);
-    if (!attempt) return "Submit reservation";
-    if (["rejected", "reservation_query_raised"].includes(attempt.workflow_status)) return "Resolve rejected reservation";
+    if (!attempt) return "—";
+    if (["rejected", "reservation_rejected", "reservation_query_raised"].includes(attempt.workflow_status)) return "Correct and resubmit reservation";
     if (["awaiting_approval", "reservation_submitted"].includes(attempt.workflow_status)) return "Awaiting developer approval";
-    if (unit.sale_status === "for_sale") return "Submit reservation";
+    if (attempt.workflow_status === "draft" || unit.sale_status === "for_sale") return "—";
     if (unit.sale_status === "reserved") {
       if (!attempt.commercial_approved_at && attempt.workflow_status !== "ready_for_exchange") return "Commercial approval";
       return "Record exchange";

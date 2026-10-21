@@ -42,7 +42,7 @@ export function deriveInternalOverview(input: DashboardInput, snapshot: Dashboar
   const salesUnallocated: AttentionCount = { value: ready("sales", "legal", "fees", "appointments")
     ? rows.filter(row => row.work.some(isUnallocatedWork)).length : null, unit: "unit rows", href: salesOverviewDestination(scope, "unallocated") };
   const attention: AttentionRow[] = [
-    { key: "sales", label: "Sales", href: salesOverviewDestination(scope), ours: salesCount("ours"), others: salesCount("others"), unallocated: salesUnallocated, note: "Unit rows; includes draft reservations and post-completion exceptions." },
+    { key: "sales", label: "Sales", href: salesOverviewDestination(scope), ours: salesCount("ours"), others: salesCount("others"), unallocated: salesUnallocated, note: "Unit rows with workflow actions or post-completion exceptions." },
     { key: "fees", label: "Agent Fees", href: feeViewDestination(scope, "all"),
       ours: count(feeItems, "ours", "sale attempts", ready("fees")), others: count(feeItems, "others", "sale attempts", ready("fees")),
       unallocated: unallocated(feeItems, "sale attempts", ready("fees")),

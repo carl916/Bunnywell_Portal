@@ -89,7 +89,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
     const exchanged = Boolean(sale.exchanged_at || completed);
     const approved = Boolean(sale.reservation_approved_at || ["approved", "reservation_approved", "ready_for_exchange", "awaiting_commercial_approval", "exchanged", "completion_pending", "completed"].includes(sale.workflow_status));
     if (available("sales") && !completed) {
-      if (sale.workflow_status === "draft") task("reservation_prepare", "Complete draft reservation", agent, sale.created_at, "Reservation draft created", "submit_reservation", "sales-stage-reservation");
+      // Drafts are resumable sale files, not workflow hand-offs or overdue work.
       if (["reservation_submitted", "awaiting_approval"].includes(sale.workflow_status)) task("reservation_review", "Review submitted reservation", developer, sale.reservation_submitted_at, "Reservation submitted", "approve_reservation", "sales-stage-reservation");
       if (["reservation_rejected", "reservation_query_raised", "rejected"].includes(sale.workflow_status)) task("reservation_correct", "Correct and resubmit reservation", agent, sale.reservation_rejected_at, "Reservation returned", "submit_reservation", "sales-stage-reservation", {
         context: sale.reservation_rejection_reason ? { id: `${sale.id}:return`, text: sale.reservation_rejection_reason, at: sale.reservation_rejected_at ?? "", account: contextFor(events.find(e => /reservation_(rejected|query_raised)/.test(e.event_type)))?.account ?? null } : contextFor(),
@@ -102,7 +102,7 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
         if (authority.pending) task("authority_request", authority.renewal ? "Review request to renew exchange authority" : "Review request for exchange authority", developer, authority.requestDate, "Current authority request", "approve_exchange", "sales-stage-exchange");
         if (current && !current.replaced_by && !current.revoked_at && (!current.expires_at || Date.parse(current.expires_at) > now)) {
           if (authority.issued) task("exchange_progress", "Progress exchange and record it when legally completed", conveyancer, current.issued_at, "Current exchange authority issued", "record_exchange", "sales-stage-exchange", {
-            cycleId: current.id, deadline: current.expires_at ? { at: current.expires_at, precision: "instant", basis: "Exchange authority expires (London time)" } : null,
+            cycleId: current.id, deadline: current.expires_at ? { at: current.expires_at, precision: "instant", basis: "Exchange authority expires" } : null,
           });
         } else if (authority.canRequest) task("authority_follow_up", current ? "Request renewed exchange authority" : "Request exchange authority when ready", conveyancer, current?.revoked_at ?? current?.expires_at ?? sale.commercial_approved_at, current ? "Current authority invalidated" : "Commercial approval", "request_exchange_approval", "sales-stage-exchange", { cycleId: current?.id ?? null });
       }

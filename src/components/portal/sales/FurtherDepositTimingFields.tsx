@@ -14,7 +14,7 @@ export function FurtherDepositTimingFields({ value, months, onChange, onMonths, 
     </select></label>
     {basis === "fixed" ? <div className="grid gap-3 sm:grid-cols-2">
       <label className="field-label">Deadline date<input type="date" className="field" required value={value?.date ?? ""} onChange={e => onChange({ ...value!, date: e.target.value, instant: null })} /></label>
-      <label className="field-label">Deadline time — UK (Europe/London)<input type="time" className="field" required value={value?.time ?? ""} onChange={e => onChange({ ...value!, time: e.target.value, instant: null })} /></label>
+      <label className="field-label">Deadline time — UK<input type="time" className="field" required value={value?.time ?? ""} onChange={e => onChange({ ...value!, time: e.target.value, instant: null })} /></label>
     </div> : <label className="field-label">Calendar months<input className="field" type="number" min="0" max="1200" step="1" required value={offset} onChange={e => {
       if (basis === "after_exchange") onMonths(e.target.value);
       onChange({ basis, months: e.target.value === "" ? null : Number(e.target.value) });

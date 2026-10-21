@@ -57,19 +57,15 @@ test("internal summary opens the canonical Sales responsibility view and refresh
   await expect(page.getByText("1 sale requiring your team’s attention", { exact: true })).toBeVisible();
 });
 
-test("outside-pipeline drafts show their record and the unsupported destination limitation", async ({ page }) => {
+test("outside-pipeline drafts do not create outstanding work", async ({ page }) => {
   const f = await workFixture(page);
   f.input.units[0].sale_status = "not_released";
-  f.input.sales[0].workflow_status = "draft";
-  f.input.sales[0].exchanged_at = null;
-  await page.setViewportSize({ width: 1440, height: 960 });
+  Object.assign(f.input.sales[0], { workflow_status: "draft", exchanged_at: null, reservation_approved_at: null, commercial_approved_at: null });
+  f.input.documents = []; f.input.snags = [];
   await page.goto("/?screen=dashboard&building=all");
   const attention = page.getByRole("region", { name: "Work needing attention", exact: true });
-  await expect(attention.getByText(/Workflow Test House · Unit 2\. Outside the Sales register\. Draft-work navigation is unavailable\./)).toBeVisible();
-  await expect(attention.getByRole("link", { name: "Open unit", exact: true })).toHaveCount(0);
-  await expect(attention.getByText("Review with an authorised colleague", { exact: true })).toBeVisible();
-  await mkdir("docs/dashboard-stage2b/screenshots", { recursive: true });
-  await page.screenshot({ path: "docs/dashboard-stage2b/screenshots/dashboard-outside-pipeline.png", fullPage: true });
+  await expect(attention).toBeVisible();
+  await expect(attention.getByText("Sales work outside the current pipeline", { exact: true })).toHaveCount(0);
 });
 
 test("phone, tablet, desktop and narrow reflow retain readable controls with synthetic screenshots", async ({ page }) => {
@@ -103,8 +99,10 @@ test("sales-agent worklist remains on the Sales landing and direct task links se
   await page.goto("/?screen=sales&building=all");
   const work = page.getByRole("region", { name: "Sales organisation worklist" });
   await expect(work).toHaveCount(1);
+  await work.locator("summary").filter({ hasText: /^Team work/ }).click();
   await work.getByRole("button", { name: /^Waiting on others/ }).click();
   await expect(page.getByRole("button", { name: "Dashboard", exact: true })).toHaveCount(0);
+  await work.locator("#work-deadlines > summary").click();
   await work.getByRole("link", { name: "Review saved contractual completion date", exact: true }).first().click();
   await expect(work).toHaveCount(0);
   await expect(page.getByRole("list", { name: "Completion tasks", exact: true })).toBeVisible();
@@ -122,6 +120,89 @@ test("full record counts remain compact without worklist pagination", async ({ p
   await expect(page.getByText("23 snag records", { exact: true })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Worklist pages" })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Work needing attention" }).getByRole("row")).toHaveCount(5);
+});
+
+test("agent landing keeps unsold drafts neutral and team work compact across desktop and mobile", async ({ page }) => {
+  const f = await workFixture(page, "sales_agent");
+  f.input.documents = []; f.input.snags = [];
+  f.input.buildings[0].sales_agent_organisation_id = "legal-org";
+  Object.assign(f.attempt, { reservation_approved_at: null, commercial_approved_at: null, exchanged_at: null, completion_arrangements_confirmed_at: null, contractual_completion_date: null });
+  f.rows.units = Array.from({ length: 64 }, (_, i) => ({ ...f.unit, id: `unit-${i}`, unit_number: String(i + 1), sale_status: "for_sale" }));
+  f.rows.unit_sale_attempts = f.rows.units.map((unit, i) => ({ ...f.attempt, id: `sale-${i}`, unit_id: unit.id, workflow_status: i === 0 ? "awaiting_approval" : "draft", sales_agent_organisation_id: "legal-org", reservation_submitted_at: i === 0 ? "2026-10-07T10:00:00Z" : null }));
+  f.input.units = f.rows.units as unknown as DashboardInput["units"];
+  f.input.sales = f.rows.unit_sale_attempts as unknown as DashboardInput["sales"];
+  const work = page.getByRole("region", { name: "Sales organisation worklist" });
+  const summary = work.locator("summary").filter({ hasText: /^Team work/ });
+  await mkdir("test-results/sales-team-work", { recursive: true });
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 960 });
+    await page.goto(`/?screen=sales&building=${f.unit.building_id}`);
+    await expect(summary).toContainText("0 actions · 1 waiting on others");
+    await expect(summary.locator("..")).not.toHaveAttribute("open");
+    await expect(work.getByRole("button", { name: /^Our actions/ })).toBeHidden();
+    await expect(work.locator("summary").filter({ hasText: /^Recent business activity/ })).toHaveText("Recent business activity · last 7 days");
+    expect((await work.boundingBox())!.height).toBeLessThan(180);
+    await expect(page.getByRole("heading", { name: "Sales pipeline", exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (width !== 320) await page.screenshot({ path: `test-results/sales-team-work/agent-${width}.png`, fullPage: true });
+    await summary.focus(); await page.keyboard.press("Enter");
+    await expect(work.getByRole("button", { name: /^Our actions/ })).toContainText("0");
+    await work.getByRole("button", { name: /^Waiting on others/ }).click();
+    const submitted = work.getByRole("link", { name: "Review submitted reservation", exact: true });
+    await expect(submitted).toBeVisible();
+    await expect(submitted).toHaveAttribute("href", /salesUnitId=unit-0.*workSale=sale-0/);
+    await expect(work.locator("#work-deadlines")).not.toHaveAttribute("open");
+    await work.locator("#work-deadlines > summary").click();
+    await expect(work.getByRole("button", { name: "Show next 30 days" })).toBeVisible();
+    await expect(work).not.toContainText("London");
+    await summary.click();
+    await page.evaluate(() => window.dispatchEvent(new Event("portal-work-changed")));
+    await expect(summary.locator("..")).not.toHaveAttribute("open");
+  }
+  await page.setViewportSize({ width: 1440, height: 960 });
+  // Results use the same neutral state on desktop and mobile; open remains available.
+  await expect(page.getByRole("cell", { name: "Submit reservation", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("cell", { name: "Awaiting developer approval", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "—", exact: true }).first()).toBeVisible();
+  f.rows.unit_sale_attempts[0].workflow_status = "rejected";
+  f.rows.unit_sale_attempts[0].reservation_rejected_at = "2026-10-07T11:00:00Z";
+  await page.reload();
+  await expect(summary).toContainText("1 action · 0 waiting on others");
+  await expect(page.getByRole("cell", { name: "Correct and resubmit reservation", exact: true })).toBeVisible();
+  await summary.click();
+  await work.getByRole("link", { name: "Correct and resubmit reservation", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Save draft", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Resubmit reservation", exact: true })).toBeVisible();
+});
+
+test("agent team work retains pagination, filters and a compact empty state", async ({ page }) => {
+  const f = await workFixture(page, "sales_agent");
+  f.input.documents = []; f.input.snags = [];
+  f.input.buildings[0].sales_agent_organisation_id = "legal-org";
+  Object.assign(f.attempt, { reservation_approved_at: null, commercial_approved_at: null, exchanged_at: null, completion_arrangements_confirmed_at: null, contractual_completion_date: null });
+  f.input.units = Array.from({ length: 23 }, (_, i) => ({ ...f.input.units[0], id: `unit-${i}`, unit_number: String(i + 1), sale_status: "for_sale" }));
+  f.input.sales = f.input.units.map((unit, i) => ({ ...f.attempt, id: `sale-${i}`, unit_id: unit.id, workflow_status: "rejected", sales_agent_organisation_id: "legal-org", reservation_rejected_at: "2026-10-07T10:00:00Z" })) as unknown as DashboardInput["sales"];
+  await page.goto("/?screen=sales&building=all");
+  const work = page.getByRole("region", { name: "Sales organisation worklist" });
+  const summary = work.locator("summary").filter({ hasText: /^Team work/ });
+  await expect(summary).toContainText("23 actions · 0 waiting on others");
+  expect((await work.boundingBox())!.height).toBeLessThan(180);
+  await summary.click();
+  const pages = work.getByRole("navigation", { name: "Worklist pages" });
+  await expect(pages).toContainText("1–10 of 23");
+  await pages.getByRole("button", { name: "Next" }).click();
+  await expect(pages).toContainText("11–20 of 23");
+  await work.getByRole("button", { name: /^Waiting on others/ }).click();
+  await expect(summary).toContainText("23 actions · 0 waiting on others");
+  await work.getByRole("button", { name: "Sales", exact: true }).click();
+  await work.getByRole("button", { name: "Reset filters" }).click();
+  await expect(pages).toContainText("1–10 of 23");
+  f.input.sales.forEach(sale => { sale.workflow_status = "draft"; });
+  await summary.click();
+  await page.evaluate(() => window.dispatchEvent(new Event("portal-work-changed")));
+  await expect(summary).toContainText("0 actions · 0 waiting on others");
+  await expect(summary.locator("..")).not.toHaveAttribute("open");
+  expect((await work.boundingBox())!.height).toBeLessThan(180);
 });
 
 test("visible work polls once per minute, pauses hidden or inactive, and clears a revoked snapshot", async ({ page }) => {
