@@ -24,6 +24,9 @@ test("authorised agent creates a draft, resumes, uploads, submits, corrects a re
   const snapshot = () => deriveSalesRegister(fixture({ viewer: f.profile, buildings: f.rows.buildings, units: f.rows.units, sales: f.rows.unit_sale_attempts, organisations: f.rows.organisations }));
   await page.reload();
   await expect(page.getByLabel("Personal buyer name")).toBeVisible();
+  await page.getByRole("button", { name: /Back to sales overview/ }).click();
+  await expect(page.getByRole("row").filter({ has: page.getByRole("cell", { name: "Unit 101", exact: true }) }).getByRole("cell", { name: "—", exact: true })).toBeVisible();
+  await page.getByRole("cell", { name: "Unit 101", exact: true }).click();
   await expect(page.getByRole("button", { name: "Submit reservation", exact: true })).toBeDisabled();
   await page.getByLabel("Personal buyer name").fill("Synthetic New Buyer");
   const requests: string[] = []; page.on("request", request => requests.push(new URL(request.url()).pathname));
@@ -31,9 +34,10 @@ test("authorised agent creates a draft, resumes, uploads, submits, corrects a re
   await expect(page.getByText(/Reservation draft saved for Unit/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save draft", exact: true })).toBeEnabled();
   const draft = f.rows.unit_sale_attempts.find(row => row.is_active)!;
-  expect(draft.workflow_status).toBe("draft"); expect(snapshot().rows[0].actions[0].party.label).toBe("Synthetic Agency");
+  expect(draft.workflow_status).toBe("draft"); expect(snapshot().rows[0].actions).toHaveLength(0);
   expect(requests.some(path => /snags|tenancies|building_sale_defaults/.test(path))).toBe(false);
   await page.getByRole("button", { name: /Back to sales overview/ }).click();
+  await expect(page.getByRole("row").filter({ has: page.getByRole("cell", { name: "Unit 101", exact: true }) }).getByRole("cell", { name: "—", exact: true })).toBeVisible();
   await page.getByRole("cell", { name: "Unit 101", exact: true }).click();
   await page.reload();
   await expect(page.getByLabel("Personal buyer name")).toHaveValue("Synthetic New Buyer");

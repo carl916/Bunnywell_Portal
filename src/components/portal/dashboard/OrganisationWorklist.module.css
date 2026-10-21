@@ -48,5 +48,20 @@ a.workLink:hover { text-decoration: underline; }
 .summaries small { font-size: .7rem; font-weight: 400; }
 .summaries p { font-size: .7rem; color: #617169; margin-top: .2rem; }
 .root :is(a,button,summary):focus-visible { outline: 3px solid #bc901f; outline-offset: 3px; border-radius: 3px; }
+.teamWork { border: 1px solid #d9ded6; border-radius: .7rem; background: white; }
+.compactRoot { padding-bottom: 0; }
+.compactRoot .activity { margin-top: .5rem; padding: .35rem 1rem; }
+.compactRoot .activity > summary { font-size: .8rem; }
+.root .teamSummary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; list-style: none; color: #0f3d2e; }
+.teamSummary::-webkit-details-marker { display: none; }
+.teamSummary > span { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem; }
+.teamSummary strong { font-size: .9rem; }
+.teamSummary span span { font-size: .8rem; font-weight: 400; color: #617169; }
+.teamSummary svg { flex: 0 0 auto; }
+.teamWork[open] > .teamSummary svg { transform: rotate(180deg); }
+.teamContent { border-top: 1px solid #e6eae4; padding: 1rem; }
+.compactHeader { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: .75rem; font-size: .75rem; color: #617169; }
+.main.compactMain { grid-template-columns: minmax(0,1fr); }
+.compactMain .aside { padding: .4rem 1rem; }
 @media(min-width:1100px) { .main { grid-template-columns: minmax(0, 2.5fr) minmax(230px,1fr); } }
 @media(max-width:480px) { .refresh { justify-items: start; } .header h2 { font-size: 1.3rem; } .tabs button { font-size: .8rem; padding: .8rem .4rem; } .row { padding: .9rem; } }

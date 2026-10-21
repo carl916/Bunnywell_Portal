@@ -9,6 +9,44 @@ const {readComplete}=loadTypescriptModule('src/lib/dashboard/read.ts');
 const kinds=input=>deriveDashboard(input).items.map(item=>item.kind);
 const docs=()=>[document('completion_statement'),document('draft_statement_of_account')];
 
+test('unsold inventory and saved drafts are resumable records, not team work, at any age',()=>{
+  const units=Array.from({length:64},(_,i)=>({...unit,id:`unit-${i}`,unit_number:String(i+1),sale_status:'for_sale'}));
+  const sales=units.map((u,i)=>({id:`sale-${i}`,unit_id:u.id,building_id:building.id,is_active:true,workflow_status:'draft',sales_agent_organisation_id:'agent-org',created_at:'2020-01-01T12:00:00Z'}));
+  // Include an intentionally saved, populated draft as well as empty/imported drafts.
+  sales[1].buyer_name='Synthetic buyer';
+  const f=fixture({units,sales,viewer:{id:'agent',role:'sales_agent',organisation_id:'agent-org'}});
+  const original=structuredClone(f.sales);
+  assert.deepEqual(deriveDashboard(f).items,[]);
+  assert.deepEqual(deriveDashboard({...f,sales:[]}).items,[]);
+  assert.deepEqual(f.sales,original);
+  Object.assign(sales[0],{workflow_status:'awaiting_approval',reservation_submitted_at:'2026-10-07T10:00:00Z'});
+  for(const role of ['sales_agent','developer','admin','conveyancer']) {
+    const result=deriveDashboard({...f,viewer:{id:role,role,organisation_id:role==='sales_agent'?'agent-org':role==='conveyancer'?'legal-org':'dev-org'}});
+    assert.equal(result.items.length,1);
+    assert.equal(result.items[0].kind,'reservation_review');
+    assert.equal(filterWork(result,'ours','all').records,['developer','admin'].includes(role)?1:0);
+    assert.equal(filterWork(result,'others','all').records,['developer','admin'].includes(role)?0:1);
+    assert.equal(result.items[0].destination.saleId,'sale-0');
+  }
+});
+
+test('returned reservations remain agent actions until resubmitted, then return to developer review',()=>{
+  for(const status of ['rejected','reservation_rejected','reservation_query_raised']) {
+    const f=fixture({units:[{...unit,sale_status:'for_sale'}],sales:[{id:sale.id,unit_id:unit.id,building_id:building.id,is_active:true,workflow_status:status,sales_agent_organisation_id:'agent-org',reservation_rejected_at:'2026-10-06T10:00:00Z',reservation_rejection_reason:'Correct the submitted details'}],viewer:{id:'agent',role:'sales_agent',organisation_id:'agent-org'}});
+    const returned=deriveDashboard(f);
+    assert.equal(filterWork(returned,'ours','all').records,1);
+    assert.equal(returned.items[0].kind,'reservation_correct');
+    assert.equal(returned.items[0].canAct,true);
+    assert.equal(returned.items[0].context.text,'Correct the submitted details');
+    f.sales[0].workflow_status='reservation_submitted';
+    f.sales[0].reservation_submitted_at='2026-10-07T11:00:00Z';
+    const submitted=deriveDashboard(f);
+    assert.equal(filterWork(submitted,'ours','all').records,0);
+    assert.equal(filterWork(submitted,'others','all').records,1);
+    assert.equal(submitted.items[0].kind,'reservation_review');
+  }
+});
+
 test('equivalent organisation accounts and repeated shared-account sessions see identical business work',()=>{
   const f=fixture({documents:docs(),viewer:{id:'one',role:'conveyancer',organisation_id:'legal-org'}});
   const first=deriveDashboard(f);f.viewer.id='two';const second=deriveDashboard(f);
