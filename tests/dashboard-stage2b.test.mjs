@@ -27,10 +27,10 @@ test('building appointments own blank and conflicting attempts; people are actor
   for (const role of ['sales_agent', 'conveyancer']) {
     const organisation_id = role === 'sales_agent' ? 'agent-org' : 'legal-org';
     const f = fixture({ viewer: { id: 'amy', role, organisation_id }, sales: [{ ...sale,
-      workflow_status: role === 'sales_agent' ? 'draft' : sale.workflow_status,
+      workflow_status: role === 'sales_agent' ? 'rejected' : sale.workflow_status,
       exchanged_at: role === 'sales_agent' ? null : sale.exchanged_at,
       sales_agent_organisation_id: null, conveyancer_organisation_id: null }] });
-    const kind = role === 'sales_agent' ? 'reservation_prepare' : 'missing_completion_statement';
+    const kind = role === 'sales_agent' ? 'reservation_correct' : 'missing_completion_statement';
     const owned = deriveDashboard(f).items.find(item => item.kind === kind);
     assert.equal(owned.responsibility.organisationId, organisation_id);
     assert.equal(owned.ours, true); assert.equal(owned.canAct, true);
@@ -63,9 +63,9 @@ test('missing appointments are Unallocated; missing reads are unavailable; unres
 test('All buildings resolves each appointment independently and preserves internal approval responsibility', () => {
   const second = { ...building, id: 'b2', sales_agent_organisation_id: 'agent2', conveyancer_organisation_id: 'legal2' };
   const f = fixture({ buildings: [building, second], units: [unit, { ...unit, id: 'u2', building_id: 'b2' }],
-    sales: [{ ...sale, workflow_status: 'draft', exchanged_at: null }, { ...sale, id: 's2', unit_id: 'u2', building_id: 'b2', workflow_status: 'draft', exchanged_at: null }],
+    sales: [{ ...sale, workflow_status: 'rejected', exchanged_at: null }, { ...sale, id: 's2', unit_id: 'u2', building_id: 'b2', workflow_status: 'rejected', exchanged_at: null }],
     viewer: { id: 'amy', role: 'sales_agent', organisation_id: 'agent-org' } });
-  const actions = deriveDashboard(f).items.filter(i => i.kind === 'reservation_prepare');
+  const actions = deriveDashboard(f).items.filter(i => i.kind === 'reservation_correct');
   assert.deepEqual(actions.map(i => [i.buildingId, i.responsibility.organisationId, i.ours]), [[building.id, 'agent-org', true], ['b2', 'agent2', false]]);
   f.sales[0].workflow_status = 'reservation_submitted';
   const approval = deriveDashboard(f).items.find(i => i.kind === 'reservation_review');
@@ -86,16 +86,11 @@ test('full fee portfolio counts distinct eligible historical attempts without ex
   assert.equal(new Set(result.snapshot.items.filter(i => i.kind.startsWith('fee_') && matchesWorkTeam(i, 'ours')).map(i => i.recordKey)).size, 2);
 });
 
-test('outside-pipeline draft work remains separate without linking to the hidden Units screen', () => {
-  const f = fixture({ units: [{ ...unit, sale_status: 'not_released' }], sales: [{ ...sale, workflow_status: 'draft', exchanged_at: null }] });
+test('outside-pipeline drafts do not become additional outstanding work', () => {
+  const f = fixture({ units: [{ ...unit, sale_status: 'not_released' }], sales: [{ ...sale, workflow_status: 'draft', exchanged_at: null, reservation_approved_at: null, commercial_approved_at: null }] });
   const result = overview(f);
   assert.equal(result.sales.reduce((sum, stage) => sum + stage.value, 0), 0);
-  const draft = result.additional.find(item => item.key.startsWith('sales-outside-pipeline:'));
-  assert.equal(draft.count, 1);
-  assert.equal(draft.href, undefined);
-  assert.ok(draft.detail.includes(building.name));
-  assert.ok(draft.detail.includes(unit.unit_number));
-  assert.match(draft.detail, /navigation is unavailable/);
+  assert.equal(result.additional.some(item => item.key.startsWith('sales-outside-pipeline:')), false);
 });
 
 test('canonical payment actions exclude nonpositive balances and retain partial, voided and reservation-credit rules', () => {

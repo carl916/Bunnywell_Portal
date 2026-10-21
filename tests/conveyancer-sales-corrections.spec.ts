@@ -14,6 +14,7 @@ test("authorised agent creates a draft, resumes, uploads, submits, corrects a re
   f.profile.role = "sales_agent"; f.profile.organisation_id = "agent-org" as never;
   f.rows.unit_sale_attempts = [{ ...f.attempt, id: "historic", is_active: false, workflow_status: "fallen_through", buyer_name: "Historic buyer", attempt_number: 1 }];
   f.rows.buildings[0].sales_agent_organisation_id = "agent-org";
+  f.rows.buildings[0].conveyancer_organisation_id = null;
   f.rows.organisations = [{ id: "agent-org", name: "Synthetic Agency", type: "sales_agent" }];
   const backend = reservationRouteFixture(f.rows, f.profile);
   await page.route("**/api/sales/reservations", async route => {
@@ -24,6 +25,9 @@ test("authorised agent creates a draft, resumes, uploads, submits, corrects a re
   const snapshot = () => deriveSalesRegister(fixture({ viewer: f.profile, buildings: f.rows.buildings, units: f.rows.units, sales: f.rows.unit_sale_attempts, organisations: f.rows.organisations }));
   await page.reload();
   await expect(page.getByLabel("Personal buyer name")).toBeVisible();
+  await page.getByRole("button", { name: /Back to sales overview/ }).click();
+  await expect(page.getByRole("row").filter({ has: page.getByRole("cell", { name: "Unit 101", exact: true }) }).getByRole("cell", { name: "—", exact: true })).toBeVisible();
+  await page.getByRole("cell", { name: "Unit 101", exact: true }).click();
   await expect(page.getByRole("button", { name: "Submit reservation", exact: true })).toBeDisabled();
   await page.getByLabel("Personal buyer name").fill("Synthetic New Buyer");
   const requests: string[] = []; page.on("request", request => requests.push(new URL(request.url()).pathname));
@@ -31,9 +35,10 @@ test("authorised agent creates a draft, resumes, uploads, submits, corrects a re
   await expect(page.getByText(/Reservation draft saved for Unit/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save draft", exact: true })).toBeEnabled();
   const draft = f.rows.unit_sale_attempts.find(row => row.is_active)!;
-  expect(draft.workflow_status).toBe("draft"); expect(snapshot().rows[0].actions[0].party.label).toBe("Synthetic Agency");
+  expect(draft.workflow_status).toBe("draft"); expect(snapshot().rows[0].actions).toHaveLength(0);
   expect(requests.some(path => /snags|tenancies|building_sale_defaults/.test(path))).toBe(false);
   await page.getByRole("button", { name: /Back to sales overview/ }).click();
+  await expect(page.getByRole("row").filter({ has: page.getByRole("cell", { name: "Unit 101", exact: true }) }).getByRole("cell", { name: "—", exact: true })).toBeVisible();
   await page.getByRole("cell", { name: "Unit 101", exact: true }).click();
   await page.reload();
   await expect(page.getByLabel("Personal buyer name")).toHaveValue("Synthetic New Buyer");
@@ -76,6 +81,7 @@ test("building seller conveyancer, single return control and read-only reservati
   f.profile.role = "conveyancer"; f.profile.organisation_id = "legal-org" as never;
   f.rows.buildings[0].conveyancer_organisation_id = "legal-org";
   f.rows.buildings[0].sales_agent_organisation_id = "agent-org";
+  f.rows.buildings[0].conveyancer_organisation_id = null;
   f.rows.organisations = [{ id: "legal-org", name: "Synthetic Seller Legal", type: "conveyancer" }, { id: "agent-org", name: "Synthetic Agency", type: "sales_agent" }];
   Object.assign(f.attempt, { conveyancer_organisation_id: null, workflow_status: "approved", reservation_approved_at: "2026-08-01", commercial_approved_at: "2026-08-01", buyer_solicitor_name: "Unrelated Buyer Solicitors" });
   f.unit.sale_status = "reserved";

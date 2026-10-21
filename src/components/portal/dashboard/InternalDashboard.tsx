@@ -70,7 +70,7 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
       <div><h1>Dashboard</h1><p>{snapshot?.scope.label ?? scopeLabel ?? (buildingId ? "Selected building" : "All accessible buildings")} · {snapshot?.scope.team ?? "Developer team"}</p></div>
       <div className={styles.tools}><button type="button" className="secondary" onClick={refresh} disabled={refreshing}><RefreshCw size={15} aria-hidden />{refreshing ? "Refreshing…" : "Refresh work"}</button><SaleMentionsInbox /></div>
     </header>
-    <div className={styles.status} role="status">{snapshot ? `${error ? "Last known snapshot" : "Refreshed"} ${formatWorkDate(snapshot.asOf)} · London` : error ? "Dashboard unavailable" : <><span className={salesStyles.srOnly}>Loading dashboard…</span><DashboardSkeleton variant="status" /></>}</div>
+    <div className={styles.status} role="status">{snapshot ? `${error ? "Last known snapshot" : "Refreshed"} ${formatWorkDate(snapshot.asOf)}` : error ? "Dashboard unavailable" : <><span className={salesStyles.srOnly}>Loading dashboard…</span><DashboardSkeleton variant="status" /></>}</div>
     {error && <div className={styles.warning} role="alert">{error} {snapshot && "Displayed work may be stale."}</div>}
     {failures.length > 0 && <p className={styles.warning} role="status">Unavailable: {failures.map(source => source.label).join(", ")}. Refresh to retry; affected counts are not shown as zero.</p>}
 
@@ -118,7 +118,7 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
     </section>
 
     <details className={`panel ${styles.activity}`} aria-busy={loading}><summary>Recent sales activity · Last 7 days</summary>
-      <p className={styles.caption}>Up to 7 entries from the last 7 London calendar days. Latest milestone per sale and event type; open a sale for its full history.</p>
+      <p className={styles.caption}>Up to 7 entries from the last 7 days. Latest milestone per sale and event type; open a sale for its full history.</p>
       {!snapshot ? loading ? <ul aria-hidden="true">{Array.from({ length: 2 }, (_, index) => <li key={index}><DashboardSkeleton /><small><DashboardSkeleton variant="secondary" /></small></li>)}</ul> : <p className={styles.muted}>Recent activity unavailable.</p> : snapshot.sources.some(source => source.key === "history" && source.state !== "ready") ? <p className={styles.muted}>Recent activity unavailable.</p> : snapshot.activity.length ? <ul>{snapshot.activity.map(event => {
         const href = destinationUrl(event.destination, buildingId);
         return <li key={event.id}><a href={href} onClick={click => navigate(click, href, event.destination.unitId)}>{[event.buildingName, event.reference].filter(Boolean).join(" · ")}{(event.buildingName || event.reference) && " — "}{event.text}</a><small>{event.account ?? "Account not recorded"} · {formatWorkDate(event.at)}</small></li>;
