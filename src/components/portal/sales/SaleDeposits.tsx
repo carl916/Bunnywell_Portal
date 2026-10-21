@@ -21,7 +21,10 @@ export function SaleDeposits({ saleId, refreshKey, onChanged, onNotice }: { sale
     const current = ++sequence.current;
     const result = await createSupabaseBrowserClient().rpc("sales_deposit_context", { p_sale: saleId });
     if (result.error) throw new Error(result.error.message);
-    if (alive.current && sequence.current === current) setContext(result.data as DepositsContext);
+    if (alive.current && sequence.current === current) {
+      setContext(result.data as DepositsContext);
+      setFailure("");
+    }
   }, [saleId]);
   useEffect(() => { void load().catch(e => setFailure(e.message)); }, [load, refreshKey]);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
@@ -50,7 +53,7 @@ export function SaleDeposits({ saleId, refreshKey, onChanged, onNotice }: { sale
     <p className="text-sm text-[#617169]">Buyer deposits are tracked against the retained sale terms. Receipt records do not change legal progression or agent fees.</p>
     {failure && <p role="alert" className="my-3 text-sm text-red-800">{failure} <button className="underline" onClick={() => void load().catch(e => setFailure(e.message))}>Refresh deposits</button></p>}
     {/* Keep a tab switch from clamping page scroll while receipt data loads. */}
-    {!context ? <p className="min-h-dvh py-6" role="status">Loading deposits…</p> : <>
+    {!context ? (!failure && <p className="min-h-dvh py-6" role="status">Loading deposits…</p>) : <>
       <ExchangeDepositReceipt deposit={context.exchange} exchanged={context.exchanged} editable={context.canRecord && context.active} busy={busy} run={run} />
       <FurtherDepositCard context={context} now={now} busy={busy} run={run} />
     </>}
