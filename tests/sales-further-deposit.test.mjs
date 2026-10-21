@@ -156,3 +156,56 @@ test('new fixed settings require time; relative timing validation and original e
   assert.equal((await f.context()).receipts.length,0,'Documents and completion never invent receipts');
   await f.depositAction('record_further_receipt',await f.payload());assert.equal((await f.context()).further.received_amount,10000);
 });
+
+test('authorised roles share deposit terms before approval without changing the sale or receipt permissions', async t => {
+  const f = await fixture(t);
+  await f.owner();
+  await f.db.query('update profiles set organisation_id=$1 where id=$2', [f.agentOrg, f.ids.agent]);
+  await f.db.query('update unit_sale_terms set contract_price=211500 where sale_attempt_id=$1', [f.ids.sale]);
+  for (const status of ['draft', 'awaiting_approval', 'rejected', 'approved']) {
+    await f.owner();
+    await f.db.query('update unit_sale_attempts set workflow_status=$1 where id=$2', [status, f.ids.sale]);
+    const before = (await f.db.query('select to_jsonb(a) row from unit_sale_attempts a where id=$1', [f.ids.sale])).rows;
+    const developer = await f.context('developer');
+    for (const user of ['agent', 'solicitor']) {
+      await f.as(user);
+      const c = await f.rpc('sales_deposit_context', { p_sale: f.ids.sale });
+      assert.deepEqual(c.exchange, developer.exchange);
+      assert.deepEqual(c.further, developer.further);
+      assert.deepEqual(c.receipts, developer.receipts);
+      assert.deepEqual(c.deadlines, developer.deadlines);
+      assert.equal(c.exchange.preview_amount, 21150);
+      assert.equal(c.further.expected_amount, 10575);
+      assert.equal(c.exchanged, false);
+      assert.equal(c.canRecord, user === 'solicitor');
+      assert.equal(c.canAmendDeadline, false);
+    }
+    await f.owner();
+    assert.deepEqual((await f.db.query('select to_jsonb(a) row from unit_sale_attempts a where id=$1', [f.ids.sale])).rows, before);
+    assert.equal((await f.db.query('select count(*)::int count from sale_exchange_deposit_sources where sale_attempt_id=$1', [f.ids.sale])).rows[0].count, 0);
+  }
+  await f.owner();
+  await f.db.query("update profiles set role='admin' where id=$1", [f.ids.developer]);
+  const admin = await f.context('developer');
+  assert.equal(admin.exchange.preview_amount, 21150);
+  assert.equal(admin.canRecord, false);
+  await assert.rejects(f.depositAction('record_further_receipt', {}, 'agent'), /conveyancer/);
+  await assert.rejects(f.depositAction('record_further_receipt', {}, 'solicitor'), /Record legal exchange/);
+});
+
+test('pre-approval deposit reads retain authentication, building scope, active-account and actor checks', async t => {
+  const f = await fixture(t);
+  await f.owner();
+  await f.db.query("update unit_sale_attempts set workflow_status='draft' where id=$1", [f.ids.sale]);
+  await f.db.query('delete from user_building_access where user_id=$1', [f.ids.outsider]);
+  await f.db.query('update profiles set active=false where id=$1', [f.ids.revoked]);
+  for (const user of ['outsider', 'revoked']) {
+    await f.as(user);
+    await assert.rejects(f.rpc('sales_deposit_context', { p_sale: f.ids.sale }), /access denied/);
+  }
+  await f.as('agent');
+  await assert.rejects(f.rpc('sales_deposit_context', { p_sale: f.ids.sale, p_actor: f.ids.developer }), /Actor access denied/);
+  await f.owner();
+  await f.db.exec('set role anon');
+  await assert.rejects(f.rpc('sales_deposit_context', { p_sale: f.ids.sale }), /permission denied/);
+});

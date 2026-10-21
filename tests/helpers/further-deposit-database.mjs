@@ -18,6 +18,7 @@ export async function furtherDepositDatabase({ beforeMigration, initialiseTerms 
   await beforeMigration?.(f);
   await f.owner();
   await f.db.exec(readFileSync(migration,'utf8'));
+  await f.db.exec(readFileSync('supabase/migrations/20261021134342_share_deposit_terms_before_reservation_approval.sql','utf8'));
   await f.db.query('update profiles set organisation_id=$1 where id=$2',[f.solicitorOrg,f.ids.solicitor]);
   if (initialiseTerms) await f.db.query("update unit_sale_terms set contract_price=300000,second_deposit_enabled=true,second_deposit_percent=5,completion_balance_percent=85,further_deposit_timing=$2 where sale_attempt_id=$1",[f.ids.sale,{basis:'fixed',date:'2027-04-01',time:'17:00'}]);
   async function exchange() { const email=await f.sent(await f.prepare()); await f.action('solicitor','confirm_exchange',{date:new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London'}).format(new Date())});return email; }
