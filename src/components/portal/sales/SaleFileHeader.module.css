@@ -1,0 +1,29 @@
+.header {
+  position: sticky;
+  top: var(--portal-mobile-header, 0px);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px 16px;
+  min-height: 64px;
+  margin: -20px -20px 0;
+  padding: 8px 20px;
+  border-bottom: 1px solid #d9ded6;
+  border-radius: var(--bw-radius-panel, 0.875rem) var(--bw-radius-panel, 0.875rem) 0 0;
+  background: #fff;
+  box-shadow: 0 3px 8px #0f3d2e08;
+}
+.identity { min-width: 0; overflow-wrap: anywhere; }
+.identity h3 { margin: 0; font-size: 18px; line-height: 24px; font-weight: 750; color: #0f3d2e; }
+.identity p { margin: 0; font-size: 12px; line-height: 16px; color: #617169; }
+.status { display: flex; align-items: center; min-width: 0; }
+.comments { min-height: 44px; font-size: 13px; }
+@media (max-width: 767px) {
+  .header { margin: -16px -16px 0; padding-inline: 16px; gap: 8px; }
+}
+@media (max-width: 540px) {
+  .header { grid-template-columns: minmax(0, 1fr) auto; }
+  .comments { grid-column: 1 / -1; justify-self: stretch; justify-content: center; }
+  .status { max-width: 140px; }
+}

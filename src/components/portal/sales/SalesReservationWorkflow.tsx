@@ -1,4 +1,5 @@
 "use client";
+import { SaleFileHeader } from "./SaleFileHeader";
 import { SaleDeposits } from "./SaleDeposits";
 import { FinancialsTabs } from "./FinancialsTabs";
 import { financialSubview } from "@/lib/sales/financial-navigation";
@@ -1033,6 +1034,7 @@ export function SalesReservationWorkflow({
   const paymentVoidReasonInputRef = useRef<HTMLInputElement | null>(null);
   const { panelRef: paymentVoidPanelRef, requestActivePanel: requestPaymentVoidPanel } = useActivePanel<HTMLDivElement>();
   const [hasReadSalesUrl, setHasReadSalesUrl] = useState(false);
+  const revealedSaleLocationRef = useRef<string | null>(null);
 
   const role = profile?.role ?? "user";
   const canSubmitReservation = canPerformSalesAction(role, "submit_reservation");
@@ -1649,7 +1651,7 @@ export function SalesReservationWorkflow({
       setSelectedSaleUnitId(urlUnitId);
       if (urlUnit) {
         const hash = window.location.hash;
-        const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(urlUnit);
+        const stage = hash.includes("reservation") ? "reservation" : hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(urlUnit);
         setActiveWorkflowStage(stage);
         if (params.has("workReturn")) manuallySelectedWorkflowStageRef.current = stage;
       }
@@ -1674,14 +1676,16 @@ export function SalesReservationWorkflow({
   }, [buildings, canViewAgentFeesPortfolio, hasReadSalesUrl, setConversationIntent, units, workflowStageForUnit]);
 
   useEffect(() => {
-    if (!selectedSaleUnitId || isLoading || !window.location.search.includes("workReturn=")) return;
+    if (!selectedSaleUnitId || isLoading || !hasReadSalesUrl) return;
+    const location = window.location.href;
+    if (revealedSaleLocationRef.current === location) return;
     const id = decodeURIComponent(window.location.hash.slice(1));
-    if (!id || !/^(sales-stage-|sales-matching-actions|agent-fees|exchange-deposit-task|further-deposit|sale-deposits|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
+    if (!id || !/^(sales-stage-|sales-matching-actions|unit-sale-commercial|agent-fees|exchange-deposit-task|further-deposit|sale-deposits|notice-authority-step|completion-|exchange-fee)/.test(id)) return;
     const reveal = () => {
       const element = document.getElementById(id);
       if (!element) return false;
-      element.style.scrollMarginTop = "9rem";
       element.scrollIntoView({ block: "start" });
+      revealedSaleLocationRef.current = location;
       return true;
     };
     if (reveal()) return;
@@ -1689,7 +1693,7 @@ export function SalesReservationWorkflow({
     observer.observe(document.body, { childList: true, subtree: true });
     const timer = window.setTimeout(() => observer.disconnect(), 10_000);
     return () => { observer.disconnect(); clearTimeout(timer); };
-  }, [selectedSaleUnitId, isLoading, activeWorkflowStage, activeUnitSection, overview.location]);
+  }, [selectedSaleUnitId, isLoading, hasReadSalesUrl, activeWorkflowStage, activeUnitSection, overview.location]);
 
   useEffect(() => {
     if (!pendingAgentFeesScrollRef.current || !activeAttempt || activeUnitSection !== "financials") return;
@@ -1718,7 +1722,7 @@ export function SalesReservationWorkflow({
         setUnitId(unit.id); setSelectedSaleUnitId(unit.id);
         if (internalOverview && params.get("conversation")) { setConversationTarget({ unit: unit.id, sale: params.get("conversation")! }); setConversationIntent("open"); }
         const hash = window.location.hash;
-        const stage = hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(unit);
+        const stage = hash.includes("reservation") ? "reservation" : hash.includes("completion") || hash.includes("notice") ? "completion" : hash.includes("exchange") ? "exchange" : workflowStageForUnit(unit);
         manuallySelectedWorkflowStageRef.current = stage;
         setActiveWorkflowStage(stage);
       } else if (!requested) {
@@ -2755,22 +2759,16 @@ export function SalesReservationWorkflow({
 
       {selectedUnit && (
         <section className="panel min-w-0">
+          <SaleFileHeader unitNumber={selectedUnit.unit_number} buildingName={selectedBuilding?.name ?? "Building"}
+            conversationOpen={conversationOpen} unread={unreadComments[selectedConversationId ?? ""] ?? 0}
+            onOpenConversation={() => setConversationIntent("open")}
+            status={<span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${saleStatusTone(selectedUnit.sale_status).badge}`}>
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${saleStatusTone(selectedUnit.sale_status).dot}`} aria-hidden="true" />
+              {saleStatusLabel(selectedUnit.sale_status)}
+            </span>} />
           <UnitOpenObserver unitId={selectedUnit.id} />
           {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workSale") && new URLSearchParams(window.location.search).get("workSale") !== activeAttempt?.id && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The sale attempt has changed since this worklist link was created. This is the current accessible sale file; review its latest position before acting.</p>}
           {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("workVersion") && !versions.some(version => version.id === new URLSearchParams(window.location.search).get("workVersion") && version.is_current && !version.redacted_at) && <p role="status" className="mb-3 rounded-md bg-[#fff8ec] p-3 text-sm">The linked document version is no longer current. Review the current document below.</p>}
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 [overflow-wrap:anywhere]">
-              <h3 className="text-2xl font-bold text-[#0F3D2E]">Unit {selectedUnit.unit_number}</h3>
-              <p className="text-sm text-[#617169]">{selectedBuilding?.name ?? "Building"} / {selectedUnit.floor ?? "No floor"}</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button className="secondary" aria-haspopup="dialog" aria-controls="sale-conversation" aria-expanded={conversationOpen} onClick={() => setConversationIntent("open")}>Comments <UnreadBadge count={unreadComments[selectedConversationId ?? ""] ?? 0} /></button>
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${saleStatusTone(selectedUnit.sale_status).badge}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${saleStatusTone(selectedUnit.sale_status).dot}`} aria-hidden="true" />
-                {saleStatusLabel(selectedUnit.sale_status)}
-              </span>
-            </div>
-          </div>
           <SaleMetadataStrip items={[
             { label: "Contract price", value: money(selectedContractValue) },
             { label: "Buyer", value: buyerDisplay(activeAttempt) },
@@ -2786,6 +2784,7 @@ export function SalesReservationWorkflow({
             search={overview.search} disabled={Boolean(salesError)} onOpen={overview.open} />}
 
           <SaleConversationLayout userId={user.id} unitId={selectedUnit.id}
+            unitLabel={`Unit ${selectedUnit.unit_number}`} buildingName={selectedBuilding?.name ?? "Building"}
             saleId={selectedConversationId} stageLinks={selectedConversationId === activeAttempt?.id}
             targetComment={conversationTarget?.unit === selectedUnit.id ? conversationTarget.comment : undefined}
             open={conversationOpen} onClose={() => setConversationIntent("closed")}

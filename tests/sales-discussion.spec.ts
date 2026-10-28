@@ -23,7 +23,11 @@ async function fixture(page: Page) {
 }
 const panel = (page: Page) => page.locator('#sale-conversation');
 const composer = (page: Page) => page.getByRole('textbox', { name: 'Write an update', exact: true });
-const open = async (page: Page) => { if (!(await panel(page).isVisible())) await page.getByRole('button', { name: /^Comments/ }).first().click(); await expect(composer(page)).toBeVisible(); };
+const open = async (page: Page) => {
+  if (!(await panel(page).isVisible())) await page.getByRole('button', { name: /^Comments/ }).first().click();
+  await expect(composer(page)).toBeVisible();
+  await panel(page).evaluate(async node => { await Promise.all(node.getAnimations().map(animation => animation.finished)); });
+};
 
 test('continuous comments omit stage controls and payloads across desktop and mobile', async ({ page }, testInfo) => {
   await page.setViewportSize({ width:1920,height:1080 });

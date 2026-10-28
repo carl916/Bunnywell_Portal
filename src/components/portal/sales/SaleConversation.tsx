@@ -1,17 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, FileText, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { activityPresentation, COMMENT_LIMIT, discussionDraftKey, discussionRpc, mentionLink, mergeComments, personRole,
   type CommentPage, type MentionNotification, type Revision, type SaleActivity, type SaleComment, type SalePerson } from "@/lib/sales/discussion";
 import styles from "./SaleConversation.module.css";
+import { buildActivityTimeline } from "@/lib/sales/activity-timeline";
 
 const time = (value: string) => new Date(value).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 const day = (value: string) => new Date(value).toLocaleDateString("en-GB", { dateStyle: "long" });
 const refreshUnread = () => window.dispatchEvent(new Event("sale-discussion-changed"));
 type Draft = { body: string; mentions: SalePerson[]; parent: SaleComment | null; clientId: string };
 const emptyDraft = (): Draft => ({ body: "", mentions: [], parent: null, clientId: crypto.randomUUID() });
+
+function SupportingActivity({ event, onDocument }: { event: SaleActivity; onDocument: (id: string) => void }) {
+  const item = activityPresentation(event);
+  return <div className={styles.supportingActivity}>
+    <p className={styles.author}>{event.event_type === "legal_email_prepared" ? event.summary : item.title}</p>
+    <p className={styles.meta}>{[event.actor_name ?? "Recorded user", event.actor_organisation, personRole(event.actor_role)].filter(Boolean).join(" · ")}</p>
+    <p className={styles.meta}><time dateTime={event.created_at}>{time(event.created_at)}</time></p>
+    {item.details.map((detail, index) => <p key={index} className={styles.body}>{detail}</p>)}
+    {event.version_id ? <button className={`${styles.link} ${styles.meta}`} onClick={() => onDocument(event.version_id!)}>View document version</button>
+      : typeof event.metadata.fileName === "string" && <p className={styles.meta}>Historical file link unavailable</p>}
+  </div>;
+}
 
 export function useSaleUnread(saleIds: string[]) {
   const key = [...saleIds].sort().join(",");
@@ -106,16 +119,16 @@ export function useSaleConversationLayout() {
   return { open: intent === "open", setIntent };
 }
 
-export function SaleConversationLayout({ children, saleId, unitId, userId, open, onClose, unread, onStage, targetComment, stageLinks = true }: {
+export function SaleConversationLayout({ children, saleId, unitId, userId, open, onClose, unread, onStage, targetComment, unitLabel, buildingName, stageLinks = true }: {
   children: ReactNode; saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void;
-  unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean;
+  unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean; unitLabel?: string; buildingName?: string;
 }) {
   const [started, setStarted] = useState<{ unit: string; id: string } | null>(null);
   const identity = saleId ?? (started?.unit === unitId ? started.id : undefined);
   return <div className={styles.layout} data-presentation={open ? "overlay" : "collapsed"}>
     <div className={styles.workspace}>{children}</div>
     <SaleConversation key={`${userId}:${unitId}:${identity ?? ""}`} saleId={identity} unitId={unitId} userId={userId} open={open}
-      onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment}
+      onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment} unitLabel={unitLabel} buildingName={buildingName}
       onStarted={(id) => setStarted({ unit: unitId, id })} stageLinks={stageLinks} />
   </div>;
 }
@@ -126,9 +139,9 @@ function PlainText({ body }: { body: string }) {
     ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a> : part)}</>;
 }
 
-function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onStage, targetComment, onStarted, stageLinks }: {
+function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onStage, targetComment, onStarted, stageLinks, unitLabel, buildingName }: {
   saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void; unread: number;
-  onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean;
+  onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean; unitLabel?: string; buildingName?: string;
 }) {
   const panel = useRef<HTMLElement>(null);
   const feed = useRef<HTMLDivElement>(null);
@@ -167,6 +180,7 @@ function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onSta
   const [hasBefore, setHasBefore] = useState(false);
   const [hasAfter, setHasAfter] = useState(false);
   const [activity, setActivity] = useState<SaleActivity[]>([]);
+  const activityTimeline = useMemo(() => buildActivityTimeline(activity), [activity]);
   const [moreActivity, setMoreActivity] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -429,6 +443,7 @@ function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onSta
     <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal="true" role="dialog" aria-modal={open ? true : undefined} aria-label="Sale comments and activity">
       <header className={styles.header}>
         <div className={styles.heading}><h4>{tab === "comments" ? "Comments" : "Activity"}</h4><button type="button" onClick={onClose} aria-label="Close comments panel"><X size={18} /></button></div>
+        {unitLabel && <p className={styles.unitIdentity}><strong>{unitLabel}</strong>{buildingName && <span>{buildingName}</span>}</p>}
         <p className={styles.audience}>Shared with developers and all sales agents and conveyancers who have building access.</p>
         <div className={styles.tabs} role="tablist" aria-label="Conversation views">
           {(["comments", "activity"] as const).map((view, index) => <button key={view} id={`conversation-tab-${view}`} type="button" role="tab" aria-selected={tab === view} aria-controls={`conversation-${view}`} tabIndex={tab === view ? 0 : -1} onClick={() => setTab(view)}
@@ -464,16 +479,25 @@ function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onSta
       </div>
       <div ref={activityFeed} className={styles.feed} hidden={tab !== "activity"} role="tabpanel" id="conversation-activity" aria-labelledby="conversation-tab-activity">
         {!activityLoaded && saleId && !error ? <p className={styles.empty} role="status">Loading activity…</p> : activity.length === 0 && <p className={styles.empty}>No workflow activity recorded.</p>}
-        {activity.map((event, index) => { const item = activityPresentation(event); return <div key={event.id}>
-          {(index === 0 || day(activity[index - 1].created_at) !== day(event.created_at)) && <div className={styles.date}>{day(event.created_at)}</div>}
-          <article className={styles.message}><span className="pt-1 text-[#617169]" aria-hidden>{item.kind === "document" ? <FileText size={17} /> : <CheckCircle2 size={17} />}</span><div>
-            <p className={styles.author}>{item.title}</p><p className={styles.meta}>{[event.actor_name ?? (event.actor_role ? "Recorded participant" : "Recorded user"), event.actor_organisation, personRole(event.actor_role)].filter(Boolean).join(" · ")}</p>
+        {activityTimeline.items.map(({ event, supporting, title }, index) => { const item = activityPresentation(event); return <div key={event.id}>
+          {(index === 0 || day(activityTimeline.items[index - 1].event.created_at) !== day(event.created_at)) && <div className={styles.date}>{day(event.created_at)}</div>}
+          <article className={styles.message} data-activity-id={event.id}><span className="pt-1 text-[#617169]" aria-hidden>{item.kind === "document" ? <FileText size={17} /> : <CheckCircle2 size={17} />}</span><div>
+            <p className={styles.author}>{title ?? item.title}</p><p className={styles.meta}>{[event.actor_name ?? (event.actor_role ? "Recorded participant" : "Recorded user"), event.actor_organisation, personRole(event.actor_role)].filter(Boolean).join(" · ")}</p>
             <p className={styles.meta}>Recorded <time dateTime={event.created_at}>{time(event.created_at)}</time>{item.stage && ` · ${personRole(item.stage)}`}</p>
-            {item.details.map((detail, i) => <p key={i} className={styles.body}>{detail}</p>)}
+            {(item.details.length > 0 || supporting.length > 0) && <details className={styles.activityDetails}>
+              <summary>Details</summary>
+              {item.details.map((detail, i) => <p key={i} className={styles.body}>{detail}</p>)}
+              {supporting.map(record => <SupportingActivity key={record.id} event={record} onDocument={viewDocument} />)}
+            </details>}
             <div className={styles.actions}>{event.version_id ? <button className={styles.link} onClick={() => viewDocument(event.version_id!)}>View document version</button> : typeof event.metadata.fileName === "string" && <span>Historical file link unavailable</span>}
               {item.stage && stageLinks && <button className={styles.link} onClick={() => { onStage(item.stage!); onClose(); }}>View {item.stage}</button>}</div>
           </div></article>
         </div>; })}
+        {activityTimeline.recordUpdates.length > 0 && <details className={styles.recordHistory}>
+          <summary>Record history ({activityTimeline.recordUpdates.length})</summary>
+          <p className={styles.meta}>Additional saved changes. Related changes are included in each activity’s details.</p>
+          {activityTimeline.recordUpdates.map(event => <SupportingActivity key={event.id} event={event} onDocument={viewDocument} />)}
+        </details>}
         {moreActivity && <button className={styles.load} disabled={busy} onClick={() => loadActivity(activity.at(-1))}>Load older activity</button>}
       </div>
       {newMessages && tab === "comments" && <button className={styles.newMessages} onClick={() => { feed.current?.scrollTo({ top: feed.current.scrollHeight, behavior: "smooth" }); setNewMessages(false); }}>New messages ↓</button>}
