@@ -106,16 +106,16 @@ export function useSaleConversationLayout() {
   return { open: intent === "open", setIntent };
 }
 
-export function SaleConversationLayout({ children, saleId, unitId, userId, open, onClose, unread, onStage, targetComment, stageLinks = true }: {
+export function SaleConversationLayout({ children, saleId, unitId, userId, open, onClose, unread, onStage, targetComment, unitLabel, buildingName, stageLinks = true }: {
   children: ReactNode; saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void;
-  unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean;
+  unread: number; onStage: (stage: string) => void; targetComment?: string; stageLinks?: boolean; unitLabel?: string; buildingName?: string;
 }) {
   const [started, setStarted] = useState<{ unit: string; id: string } | null>(null);
   const identity = saleId ?? (started?.unit === unitId ? started.id : undefined);
   return <div className={styles.layout} data-presentation={open ? "overlay" : "collapsed"}>
     <div className={styles.workspace}>{children}</div>
     <SaleConversation key={`${userId}:${unitId}:${identity ?? ""}`} saleId={identity} unitId={unitId} userId={userId} open={open}
-      onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment}
+      onClose={onClose} unread={unread} onStage={onStage} targetComment={targetComment} unitLabel={unitLabel} buildingName={buildingName}
       onStarted={(id) => setStarted({ unit: unitId, id })} stageLinks={stageLinks} />
   </div>;
 }
@@ -126,9 +126,9 @@ function PlainText({ body }: { body: string }) {
     ? <a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a> : part)}</>;
 }
 
-function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onStage, targetComment, onStarted, stageLinks }: {
+function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onStage, targetComment, onStarted, stageLinks, unitLabel, buildingName }: {
   saleId?: string; unitId: string; userId: string; open: boolean; onClose: () => void; unread: number;
-  onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean;
+  onStage: (stage: string) => void; targetComment?: string; onStarted: (id: string) => void; stageLinks: boolean; unitLabel?: string; buildingName?: string;
 }) {
   const panel = useRef<HTMLElement>(null);
   const feed = useRef<HTMLDivElement>(null);
@@ -429,6 +429,7 @@ function SaleConversation({ saleId, unitId, userId, open, onClose, unread, onSta
     <aside ref={panel} id="sale-conversation" className={styles.panel} hidden={!open} data-modal="true" role="dialog" aria-modal={open ? true : undefined} aria-label="Sale comments and activity">
       <header className={styles.header}>
         <div className={styles.heading}><h4>{tab === "comments" ? "Comments" : "Activity"}</h4><button type="button" onClick={onClose} aria-label="Close comments panel"><X size={18} /></button></div>
+        {unitLabel && <p className={styles.unitIdentity}><strong>{unitLabel}</strong>{buildingName && <span>{buildingName}</span>}</p>}
         <p className={styles.audience}>Shared with developers and all sales agents and conveyancers who have building access.</p>
         <div className={styles.tabs} role="tablist" aria-label="Conversation views">
           {(["comments", "activity"] as const).map((view, index) => <button key={view} id={`conversation-tab-${view}`} type="button" role="tab" aria-selected={tab === view} aria-controls={`conversation-${view}`} tabIndex={tab === view ? 0 : -1} onClick={() => setTab(view)}

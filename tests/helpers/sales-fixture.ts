@@ -78,7 +78,7 @@ export async function salesFixture(page: Page, initialPath?: string) {
   await page.route("**/api/**", (route) => route.fulfill({ json: {} }));
   const completionPackage = {approved:false,approval:null as null | {statement_version_id:string;account_version_id:string;approved_by_name:string;approved_at:string}};
   await page.route("**/api/sales/legal?*", (route) => route.fulfill({ json: {
-    snapshot: { sale_id: attemptId, building: { id: buildingId, name: "Workflow Test House", seller_name: "Fixture Seller Ltd", completion_information: null }, plot: "101", buyer: attempt.buyer_name,
+    snapshot: { sale_id: attemptId, building: { id: buildingId, name: rows.buildings[0].name, seller_name: "Fixture Seller Ltd", completion_information: null }, plot: unit.unit_number, buyer: attempt.buyer_name,
       terms: rows.unit_sale_terms?.[0] ?? {}, schedule: [], conveyancer: null, sales_agent: null, approver: { id: profile.id, name: profile.full_name } },
     attempt, completionPackage, emails: rows.sale_legal_emails ?? [],
     documents: rows.unit_sale_documents.map(document => ({ ...document, unit_sale_document_versions: rows.unit_sale_document_versions.filter(version => version.document_id === document.id) })),

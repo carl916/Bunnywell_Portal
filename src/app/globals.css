@@ -322,6 +322,14 @@ textarea.field {
   backdrop-filter: blur(14px);
 }
 
+/* Desktop chrome scrolls away; mobile publishes its current toolbar height.
+   Measure the sale identity row so anchors and focused fields also clear it
+   when text wraps, the viewport changes, or the user increases text size. */
+html:has([data-sale-file] [data-sale-file-header]) {
+  scroll-padding-top: calc(var(--portal-mobile-header, 0px) + var(--sale-file-header-height, 64px) + 12px);
+}
+[data-sale-file] [id] { scroll-margin-top: 0; }
+
 .mobile-compact-brand { display: none; }
 
 .account-pill {
