@@ -14,6 +14,7 @@ export type MentionNotification = { id: string; sale_attempt_id: string; comment
 export type SaleActivity = {
   id: string; sale_attempt_id: string; event_type: string; summary: string; created_at: string;
   actor_name: string | null; actor_role: string | null; actor_organisation: string | null;
+  created_by_user_id?: string | null;
   metadata: Record<string, unknown>; version_id: string | null;
 };
 
@@ -39,8 +40,9 @@ export function activityPresentation(event: SaleActivity) {
   const meta = event.metadata ?? {};
   const subject = meta.documentType === "completion_statement" ? "Completion statement" : meta.documentType === "statement_of_account" ? "Statement of account" : null;
   const outcome = type.endsWith("approved") ? "approved" : /rejected|query_raised/.test(type) ? "rejected" : type.endsWith("replaced") ? "replaced" : type.endsWith("uploaded") ? "uploaded" : null;
-  const title = meta.packageWorkflow ? event.summary : subject && outcome ? `${subject} ${outcome}` : type === "completion_recorded" ? "Sale completed" : type === "exchange_recorded" ? "Exchange recorded" : event.summary;
-  const stage = /completion|statement_of_account/.test(type) ? "completion" : /exchange|authority/.test(type) ? "exchange" : /reservation/.test(type) ? "reservation" : null;
+  const title = type === "legal_email_prepared" ? (meta.kind === "authority" ? "Authority to exchange awaiting delivery" : meta.kind === "notice_authority" ? "Authority to serve notice awaiting delivery" : "Completion instruction awaiting delivery")
+    : meta.packageWorkflow ? event.summary : subject && outcome ? `${subject} ${outcome}` : type === "completion_recorded" ? "Sale completed" : type === "exchange_recorded" ? "Exchange recorded" : event.summary;
+  const stage = /completion|statement_of_account|authority_notice/.test(type) || meta.kind === "notice_authority" || meta.kind === "completion_instruction" ? "completion" : /exchange|authority/.test(type) || meta.kind === "authority" ? "exchange" : /reservation/.test(type) ? "reservation" : null;
   const details: string[] = [];
   if (Array.isArray(meta.documents)) for (const document of meta.documents) if (typeof document?.fileName === "string") details.push(document.fileName);
   if (typeof meta.fileName === "string") details.push(meta.fileName + (typeof meta.versionNumber === "number" ? ` · Version ${meta.versionNumber}` : ""));
