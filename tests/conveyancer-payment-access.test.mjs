@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
-const migration='supabase/migrations/20261105140744_conveyancer_agent_fee_payment_access.sql';
+const migration='supabase/migrations/20261105140943_conveyancer_agent_fee_payment_access.sql';
 const id=n=>'f5110000-0000-4000-8000-'+String(n).padStart(12,'0');
 test('payment migration executes with authenticated and service-role identities',async t=>{
  const db=new PGlite();
