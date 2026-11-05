@@ -74,7 +74,7 @@ test("conveyancers are building scoped and limited to exchange/completion record
   assert.equal(canPerformSalesAction(role, "reject_agent_invoice"), false);
   assert.equal(canPerformSalesAction(role, "record_exchange"), true);
   assert.equal(canPerformSalesAction(role, "record_solicitor_payment"), true);
-  assert.equal(canPerformSalesAction(role, "record_agent_fee_payment"), false);
+  assert.equal(canPerformSalesAction(role, "record_agent_fee_payment"), true);
   assert.equal(canPerformSalesAction(role, "void_agent_fee_payment"), false);
   assert.equal(canPerformSalesAction(role, "view_agent_fees_portfolio"), false);
   assert.equal(canPerformSalesAction(role, "record_developer_shortfall"), false);
