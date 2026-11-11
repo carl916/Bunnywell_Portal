@@ -1407,7 +1407,7 @@ async function rejectAgentInvoice(adminClient: SupabaseClient, requester: Reques
 
 async function recordAgentFeePayment(adminClient: SupabaseClient, requester: Requester, payload: ReservationPayload) {
   if (!canPerformSalesAction(requester.role, "record_agent_fee_payment")) {
-    throw new Error("Only developers or admins can record agent fee payments.");
+    throw new Error("Only developers, admins or conveyancers can record agent fee payments.");
   }
   const invoiceId = normaliseText(payload.invoiceId);
   const amount = normaliseMoney(payload.paymentAmount);

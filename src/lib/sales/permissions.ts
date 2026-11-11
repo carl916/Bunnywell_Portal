@@ -101,7 +101,8 @@ export function canPerformSalesAction(role: SalesAccessRole, action: SalesStageA
   if (action === "manage_building_defaults") return canManageBuildingSaleDefaults(role);
   if (action === "manage_commercial_terms") return canManageCommercialTerms(role);
   if (action === "view_forecasting") return canViewSalesForecasting(role);
-  if (action === "record_agent_fee_payment" || action === "void_agent_fee_payment" || action === "view_agent_fees_portfolio") return isSalesInternalRole(role);
+  if (action === "record_agent_fee_payment") return isSalesInternalRole(role) || normalisedRole === "conveyancer";
+  if (action === "void_agent_fee_payment" || action === "view_agent_fees_portfolio") return isSalesInternalRole(role);
 
   if (action === "submit_reservation" || action === "submit_agent_invoice") {
     return isSalesInternalRole(role) || normalisedRole === "sales_agent";
