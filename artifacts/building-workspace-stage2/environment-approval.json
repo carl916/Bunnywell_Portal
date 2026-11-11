@@ -1,0 +1,46 @@
+{
+  "date": "2026-11-05",
+  "status": "approved",
+  "authority": "Explicit user approval in this chat",
+  "projectId": "bunnywell-workspace-stage2",
+  "appOrigin": "http://127.0.0.1:3031",
+  "apiOrigin": "http://127.0.0.1:54321",
+  "mailCaptureOrigin": "http://127.0.0.1:54324",
+  "baselineCommit": "0a1ee76a18c17c4466b1031efe52b22e9959abe3",
+  "schemaManifest": "../building-contracts-stage1/schema-baseline.json",
+  "seedProposal": "../building-contracts-stage1/stage2-seed-proposal.json",
+  "permittedSetup": [
+    "Prepare local runtime.",
+    "Recreate recorded schema in a new empty isolated local database.",
+    "Create proposed fictional records and test accounts without invitations.",
+    "Make controlled test-access changes."
+  ],
+  "requiredBeforeCreatingData": [
+    "Verify isolation and external outbound blocking.",
+    "Confirm no unrelated local database is overwritten."
+  ],
+  "integrationTarget": "Accepted building selection, dashboard and worklist into the full-page read-only Completion workspace.",
+  "constraints": [
+    "No staging or production access.",
+    "No real business data.",
+    "No paid cloud environment.",
+    "Preserve permissions and workflow rules.",
+    "Business actions disabled.",
+    "No merge or deploy."
+  ],
+  "execution": {
+    "completedAt": "2026-11-06T14:40:58.254Z",
+    "databaseCreated": true,
+    "migrationsReplayed": 70,
+    "initialSchemaReplayed": true,
+    "accountsCreated": 10,
+    "recordsCreated": true,
+    "connectedScope": "Building selection, sales dashboard/worklist, full-page Completion milestones and document metadata",
+    "businessActionsEnabled": false,
+    "remoteBusinessEnvironmentsContacted": false
+  },
+  "blocker": null,
+  "approvalStillRequired": false,
+  "resolvedPrerequisiteBlocker": "Microsoft WSL 2.7.14 installation failed with 0x80073d28: administrator privileges required. No local Docker runtime is installed.",
+  "prerequisiteBlockerResolvedBy": "Local Docker setup and validation completed on 6 November 2026; see scripts/building-workspace-local/README.md"
+}

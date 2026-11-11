@@ -1,0 +1,46 @@
+[
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\BuildingScreens.tsx",
+    "SHA256": "4866A51908CE5FEB2875F9B23DDAF32EC0653A0CBA24E708CC6CF066BD96881E"
+  },
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\FixtureDataState.tsx",
+    "SHA256": "2488BE586E82DA2BC9424197B03F4181AB22001B4114EB4935684803E22A6E73"
+  },
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\PrototypeUI.tsx",
+    "SHA256": "B50EC16287D304316EA633A52C42A57423DF88A6DFFCAB6E485F0D5C6ED9464B"
+  },
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\SalesWorkspacePrototype.tsx",
+    "SHA256": "4ED45A4FE8BFA8F512168FA9D93A169959304DD26C8907497954182AB4BCC838"
+  },
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\Workspace.module.css",
+    "SHA256": "5501E960CCA95C2DC3B1CC93AA07F6DBCBBB3376062EF8B1C7558D84CE22CC43"
+  },
+  {
+    "Path": "src\\components\\experiments\\sales-workspace\\Workspaces.tsx",
+    "SHA256": "C3EB12C8985B2AA49525CB82C1C977EFC27B1AEAE6B1FC3BDBB4E4BB1ACDD78F"
+  },
+  {
+    "Path": "src\\lib\\experiments\\sales-workspace\\model.ts",
+    "SHA256": "4661C94B3F1BDF3078F69CD036293ED3CE50787567D1B1806137880F5A007031"
+  },
+  {
+    "Path": "src\\lib\\experiments\\sales-workspace\\presentation.ts",
+    "SHA256": "BBBC0D8868C590C2264761A99E56AE25AAB2A204ACDAC2A5BFC4DB38BB066433"
+  },
+  {
+    "Path": "src\\app\\dev\\sales-workspace\\page.tsx",
+    "SHA256": "5C69BFDCC6CDD22F288D8CA489FAA1D13D8B1468E5BA7266D47AC46BF9350615"
+  },
+  {
+    "Path": "tests\\building-workspace-prototype.spec.ts",
+    "SHA256": "AADE6FF4D7D399ADB5ACC86A5F94B5F7D850A28A345C01BCD314143F1CE049AA"
+  },
+  {
+    "Path": "tests\\sales-workspace-prototype.spec.ts",
+    "SHA256": "B544AF3A2D6CF5D22A9C939A85431627423B9BF661C05D37710C2BE41F7B8C6C"
+  }
+]

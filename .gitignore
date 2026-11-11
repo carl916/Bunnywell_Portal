@@ -53,3 +53,8 @@ node_modules/
 
 # Sensitive rental source workbooks must remain outside Git.
 **/*Rent_Arrears_Import*.xlsx
+
+# Local workspace review outputs (source and selected manifests are committed separately).
+/output/pdf/
+/tmp/
+/artifacts/checkpoint-*/

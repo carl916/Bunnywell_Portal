@@ -1,0 +1,5 @@
+# Preserve generated evidence locally; track only authored source and selected manifests.
+*
+!.gitignore
+!accepted-ui-baseline.json
+!environment-approval.json

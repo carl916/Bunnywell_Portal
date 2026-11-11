@@ -1,0 +1,748 @@
+{
+  "status": "PROPOSED ONLY; not an executable database seed; no accounts or records created",
+  "projectId": "bunnywell-workspace-stage2",
+  "appOrigin": "http://127.0.0.1:3031",
+  "apiOrigin": "http://127.0.0.1:54321",
+  "mailCaptureOrigin": "http://127.0.0.1:54324",
+  "baselineCommit": "0a1ee76a18c17c4466b1031efe52b22e9959abe3",
+  "idPolicy": "Proposed synthetic UUIDs only; not identifiers of existing remote records.",
+  "accounts": [
+    {
+      "alias": "developer",
+      "proposedEmail": "bw-stage2-developer@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000901",
+      "role": "developer",
+      "organisationId": "b1700000-0000-4000-8000-000000000501",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "developer-single",
+      "proposedEmail": "bw-stage2-developer-single@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000902",
+      "role": "developer",
+      "organisationId": "b1700000-0000-4000-8000-000000000501",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "alias": "admin",
+      "proposedEmail": "bw-stage2-admin@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000903",
+      "role": "admin",
+      "organisationId": "b1700000-0000-4000-8000-000000000501",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "agent",
+      "proposedEmail": "bw-stage2-agent@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000904",
+      "role": "sales_agent",
+      "organisationId": "b1700000-0000-4000-8000-000000000502",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "agent-colleague",
+      "proposedEmail": "bw-stage2-agent-colleague@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000905",
+      "role": "sales_agent",
+      "organisationId": "b1700000-0000-4000-8000-000000000502",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "agent-other",
+      "proposedEmail": "bw-stage2-agent-other@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000906",
+      "role": "sales_agent",
+      "organisationId": "b1700000-0000-4000-8000-000000000503",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "conveyancer",
+      "proposedEmail": "bw-stage2-conveyancer@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000907",
+      "role": "conveyancer",
+      "organisationId": "b1700000-0000-4000-8000-000000000504",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001",
+        "b1700000-0000-4000-8000-000000000002"
+      ]
+    },
+    {
+      "alias": "inactive",
+      "proposedEmail": "bw-stage2-inactive@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000908",
+      "role": "developer",
+      "organisationId": "b1700000-0000-4000-8000-000000000501",
+      "accessRevision": "offline-v1",
+      "active": false,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "alias": "restricted",
+      "proposedEmail": "bw-stage2-restricted@example.invalid",
+      "identity": "b1700000-0000-4000-8000-000000000909",
+      "role": "contractor",
+      "organisationId": "b1700000-0000-4000-8000-000000000505",
+      "accessRevision": "offline-v1",
+      "active": true,
+      "buildingIds": [
+        "b1700000-0000-4000-8000-000000000001"
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "id": "b1700000-0000-4000-8000-000000000001",
+      "name": "Willow Court",
+      "address": "Garden Lane, St Albans"
+    },
+    {
+      "id": "b1700000-0000-4000-8000-000000000002",
+      "name": "Orchard House",
+      "address": "Orchard Road, Harpenden"
+    },
+    {
+      "id": "b1700000-0000-4000-8000-000000000003",
+      "name": "Cedar Place",
+      "address": "Cedar Avenue, Welwyn"
+    }
+  ],
+  "scopedFacts": [
+    {
+      "building": {
+        "id": "b1700000-0000-4000-8000-000000000001",
+        "name": "Willow Court",
+        "address": "Garden Lane, St Albans"
+      },
+      "proposedFacts": {
+        "viewer": {
+          "id": "b1700000-0000-4000-8000-000000000901",
+          "role": "developer",
+          "organisation_id": "b1700000-0000-4000-8000-000000000501"
+        },
+        "now": 1793707200000,
+        "buildingId": "b1700000-0000-4000-8000-000000000001",
+        "buildings": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000001",
+            "name": "Willow Court",
+            "address": "Garden Lane, St Albans",
+            "status": "active",
+            "sales_agent_organisation_id": "b1700000-0000-4000-8000-000000000502",
+            "conveyancer_organisation_id": "b1700000-0000-4000-8000-000000000504"
+          }
+        ],
+        "units": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000100",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_number": "G11",
+            "floor": "Ground",
+            "sale_status": "exchanged",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000101",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_number": "LG11",
+            "floor": "Lower Ground",
+            "sale_status": "for_sale",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000102",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_number": "301",
+            "floor": "Third",
+            "sale_status": "for_sale",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000103",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_number": "G2",
+            "floor": "Ground",
+            "sale_status": "reserved",
+            "rental_portfolio_status": "not_in_portfolio"
+          }
+        ],
+        "sales": [
+          {
+            "id": "b1700000-0000-4000-8000-000000001100",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_id": "b1700000-0000-4000-8000-000000000100",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "exchanged",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": "2026-10-07T12:00:00Z",
+            "reservation_submitted_at": null,
+            "commercial_approved_at": "2026-10-08T12:00:00Z",
+            "exchanged_at": "2026-10-20",
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": "2026-10-25T12:00:00Z",
+            "completion_authority_given_at": "2026-10-24T12:00:00Z",
+            "completion_notice_issued_at": "2026-10-25",
+            "contractual_completion_date": "2026-11-03",
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001101",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_id": "b1700000-0000-4000-8000-000000000101",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "awaiting_approval",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": null,
+            "reservation_submitted_at": "2026-10-06T12:00:00Z",
+            "commercial_approved_at": null,
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001102",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_id": "b1700000-0000-4000-8000-000000000102",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "draft",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": null,
+            "reservation_submitted_at": null,
+            "commercial_approved_at": null,
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001103",
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "unit_id": "b1700000-0000-4000-8000-000000000103",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "ready_for_exchange",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": "2026-10-07T12:00:00Z",
+            "reservation_submitted_at": null,
+            "commercial_approved_at": "2026-10-08T12:00:00Z",
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          }
+        ],
+        "documents": [
+          {
+            "id": "b1700000-0000-4000-8000-000000002100",
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "document_type": "completion_statement",
+            "status": "query_raised",
+            "approved_version_id": null,
+            "approved_at": null,
+            "updated_at": "2026-11-02T10:00:00Z",
+            "updated_by_user_id": "b1700000-0000-4000-8000-000000009999",
+            "query_note": "Correct the service-charge apportionment.",
+            "unit_sale_document_versions": [
+              {
+                "id": "b1700000-0000-4000-8000-000000003100",
+                "is_current": true,
+                "redacted_at": null,
+                "uploaded_at": "2026-11-01T12:00:00Z"
+              }
+            ]
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000002101",
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "document_type": "draft_statement_of_account",
+            "status": "uploaded",
+            "approved_version_id": null,
+            "approved_at": null,
+            "updated_at": "2026-11-02T10:00:00Z",
+            "updated_by_user_id": "b1700000-0000-4000-8000-000000009999",
+            "query_note": null,
+            "unit_sale_document_versions": [
+              {
+                "id": "b1700000-0000-4000-8000-000000003101",
+                "is_current": true,
+                "redacted_at": null,
+                "uploaded_at": "2026-11-01T12:00:00Z"
+              }
+            ]
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000002102",
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "document_type": "completion_correspondence",
+            "status": "uploaded",
+            "approved_version_id": null,
+            "approved_at": null,
+            "updated_at": "2026-11-02T10:00:00Z",
+            "updated_by_user_id": "b1700000-0000-4000-8000-000000009999",
+            "query_note": null,
+            "unit_sale_document_versions": [
+              {
+                "id": "b1700000-0000-4000-8000-000000003102",
+                "is_current": true,
+                "redacted_at": null,
+                "uploaded_at": "2026-11-01T12:00:00Z"
+              }
+            ]
+          }
+        ],
+        "floors": [
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "name": "Lower Ground",
+            "sort_order": 0
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "name": "Ground",
+            "sort_order": 1
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "name": "First",
+            "sort_order": 2
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "name": "Second",
+            "sort_order": 3
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000001",
+            "name": "Third",
+            "sort_order": 4
+          }
+        ],
+        "organisations": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000502",
+            "name": "Willow Sales Team"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000503",
+            "name": "Orchard Sales Team"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000504",
+            "name": "Brook Legal Team"
+          }
+        ],
+        "buildingOrganisations": [],
+        "authorities": [],
+        "saleEvents": [],
+        "deposits": [
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "source_id": "b1700000-0000-4000-8000-000000004100",
+            "expected_amount": 42500,
+            "received_amount": 42500
+          }
+        ],
+        "depositSources": [
+          {
+            "id": "b1700000-0000-4000-8000-000000004100",
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "source_kind": "cash",
+            "expected_amount": 42500
+          }
+        ],
+        "furtherDeposits": [],
+        "invoices": [],
+        "payments": [],
+        "terms": [
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001100",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001101",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001102",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001103",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          }
+        ],
+        "snags": [],
+        "handovers": [],
+        "tenancies": [],
+        "arrears": [],
+        "rentalImports": [],
+        "accessRequests": [],
+        "sources": [
+          {
+            "key": "sales",
+            "label": "sales",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          },
+          {
+            "key": "legal",
+            "label": "legal",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          },
+          {
+            "key": "fees",
+            "label": "fees",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          }
+        ]
+      },
+      "buyerLabels": {
+        "b1700000-0000-4000-8000-000000001100": "Taylor Reed",
+        "b1700000-0000-4000-8000-000000001101": "Jordan Finch",
+        "b1700000-0000-4000-8000-000000001102": "Avery Moss",
+        "b1700000-0000-4000-8000-000000001103": "Jamie Brooks"
+      }
+    },
+    {
+      "building": {
+        "id": "b1700000-0000-4000-8000-000000000002",
+        "name": "Orchard House",
+        "address": "Orchard Road, Harpenden"
+      },
+      "proposedFacts": {
+        "viewer": {
+          "id": "b1700000-0000-4000-8000-000000000901",
+          "role": "developer",
+          "organisation_id": "b1700000-0000-4000-8000-000000000501"
+        },
+        "now": 1793707200000,
+        "buildingId": "b1700000-0000-4000-8000-000000000002",
+        "buildings": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000002",
+            "name": "Orchard House",
+            "address": "Orchard Road, Harpenden",
+            "status": "active",
+            "sales_agent_organisation_id": "b1700000-0000-4000-8000-000000000503",
+            "conveyancer_organisation_id": "b1700000-0000-4000-8000-000000000504"
+          }
+        ],
+        "units": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000200",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_number": "G11",
+            "floor": "Ground",
+            "sale_status": "reserved",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000201",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_number": "LG11",
+            "floor": "Lower Ground",
+            "sale_status": "completed",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000202",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_number": "301",
+            "floor": "Third",
+            "sale_status": "for_sale",
+            "rental_portfolio_status": "not_in_portfolio"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000203",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_number": "G2",
+            "floor": "Ground",
+            "sale_status": "for_sale",
+            "rental_portfolio_status": "not_in_portfolio"
+          }
+        ],
+        "sales": [
+          {
+            "id": "b1700000-0000-4000-8000-000000001200",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_id": "b1700000-0000-4000-8000-000000000200",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "ready_for_exchange",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": "2026-10-07T12:00:00Z",
+            "reservation_submitted_at": null,
+            "commercial_approved_at": "2026-10-08T12:00:00Z",
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001201",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_id": "b1700000-0000-4000-8000-000000000201",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "completed",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": "2026-10-07T12:00:00Z",
+            "reservation_submitted_at": null,
+            "commercial_approved_at": "2026-10-08T12:00:00Z",
+            "exchanged_at": "2026-10-20",
+            "legal_completed_at": "2026-11-02T10:30:00Z",
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001202",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_id": "b1700000-0000-4000-8000-000000000202",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "draft",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": null,
+            "reservation_submitted_at": null,
+            "commercial_approved_at": null,
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000001203",
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "unit_id": "b1700000-0000-4000-8000-000000000203",
+            "is_active": true,
+            "redacted_at": null,
+            "workflow_status": "awaiting_approval",
+            "sales_agent_organisation_id": null,
+            "conveyancer_organisation_id": null,
+            "reservation_approved_at": null,
+            "reservation_submitted_at": "2026-10-06T12:00:00Z",
+            "commercial_approved_at": null,
+            "exchanged_at": null,
+            "legal_completed_at": null,
+            "completion_arrangements_confirmed_at": null,
+            "completion_authority_given_at": null,
+            "completion_notice_issued_at": null,
+            "contractual_completion_date": null,
+            "created_at": "2026-10-01T12:00:00Z"
+          }
+        ],
+        "documents": [],
+        "floors": [
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "name": "Lower Ground",
+            "sort_order": 0
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "name": "Ground",
+            "sort_order": 1
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "name": "First",
+            "sort_order": 2
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "name": "Second",
+            "sort_order": 3
+          },
+          {
+            "building_id": "b1700000-0000-4000-8000-000000000002",
+            "name": "Third",
+            "sort_order": 4
+          }
+        ],
+        "organisations": [
+          {
+            "id": "b1700000-0000-4000-8000-000000000502",
+            "name": "Willow Sales Team"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000503",
+            "name": "Orchard Sales Team"
+          },
+          {
+            "id": "b1700000-0000-4000-8000-000000000504",
+            "name": "Brook Legal Team"
+          }
+        ],
+        "buildingOrganisations": [],
+        "authorities": [],
+        "saleEvents": [],
+        "deposits": [],
+        "depositSources": [],
+        "furtherDeposits": [],
+        "invoices": [],
+        "payments": [],
+        "terms": [
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001200",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001201",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001202",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          },
+          {
+            "sale_attempt_id": "b1700000-0000-4000-8000-000000001203",
+            "is_current": true,
+            "version_number": 1,
+            "contract_price": 425000,
+            "exchange_agent_fee_percent": 1.5,
+            "completion_agent_fee_percent": 0,
+            "vat_rate": 20
+          }
+        ],
+        "snags": [],
+        "handovers": [],
+        "tenancies": [],
+        "arrears": [],
+        "rentalImports": [],
+        "accessRequests": [],
+        "sources": [
+          {
+            "key": "sales",
+            "label": "sales",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          },
+          {
+            "key": "legal",
+            "label": "legal",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          },
+          {
+            "key": "fees",
+            "label": "fees",
+            "state": "ready",
+            "asOf": "2026-11-03T12:00:00.000Z"
+          }
+        ]
+      },
+      "buyerLabels": {
+        "b1700000-0000-4000-8000-000000001200": "Harper Stone",
+        "b1700000-0000-4000-8000-000000001201": "Morgan West",
+        "b1700000-0000-4000-8000-000000001202": "Riley Lake",
+        "b1700000-0000-4000-8000-000000001203": "Casey Green"
+      }
+    }
+  ],
+  "extraControlledCases": [
+    "Remove appointment then restore it",
+    "Revoke a test user's building access then restore it",
+    "Deny the inaccessible third building",
+    "Inject incomplete sources and transport errors locally",
+    "Add a separate superseded attempt to verify exact-attempt denial; no legacy opening until approved"
+  ],
+  "outbound": "Install deny-egress and local-only SMTP capture before setup. No remote credentials, delivery keys, external webhooks, cron deliveries or copied production data."
+}

@@ -1,0 +1,289 @@
+{
+  "baselineCommit": "0a1ee76a18c17c4466b1031efe52b22e9959abe3",
+  "migrationCount": 70,
+  "latest": "20261021134342_share_deposit_terms_before_reservation_approval.sql",
+  "manifestSha256": "5e8093e36ed99aa266abbf58802e7c007494227f90d9189be538b0d7765a2deb",
+  "replayExecuted": false,
+  "migrations": [
+    {
+      "name": "20260606_production_schema.sql",
+      "sha256": "0fb052a7e72767425810ae69db63743f5a5954b7de260dc27d9d9ac127f62978"
+    },
+    {
+      "name": "20260606a_enum_values.sql",
+      "sha256": "81e255e5f7fe419e11184d79c075b15de7ae2dc28903b9c5aa1c4f8d01300354"
+    },
+    {
+      "name": "20260606b_unit_types_private_amenity.sql",
+      "sha256": "cd3dd4ff7d0f872b7359014c047bd28f2d6baddd2506c7c2a0f61146112da4cf"
+    },
+    {
+      "name": "20260606c_building_floors.sql",
+      "sha256": "dcbda20c9c10c5bb18c983aefb91512ed8f68e985bbf4e725817958041e19a23"
+    },
+    {
+      "name": "20260607_normalise_pending_snags.sql",
+      "sha256": "bc247db0b30f06b332d37ef48f7c79fa77b0147651ce943a60056aca49d63833"
+    },
+    {
+      "name": "20260607_organisation_type_constraint.sql",
+      "sha256": "933be896cc75c45c853767a29b3f888222b5bfe9c936d58d2bf034b9d97e42d3"
+    },
+    {
+      "name": "20260607_security_hardening.sql",
+      "sha256": "719a234772c1de1507ded77f748e3c33e908e84e527bfc5420819f8b716e89ba"
+    },
+    {
+      "name": "20260607b_building_based_contractor_access.sql",
+      "sha256": "bb4774d6f87c308e7c790e5347cef5247d9c03bf09784807b4702e42613ec88f"
+    },
+    {
+      "name": "20260611_organisation_building_contractor_access.sql",
+      "sha256": "fa202b35dbe132885291e52a934f50153592b4809b993721f337e27652dd3fe0"
+    },
+    {
+      "name": "20260612_audit_events.sql",
+      "sha256": "ee725951011742f3756710298fc722f97c19199367cf881008e16887c22394d5"
+    },
+    {
+      "name": "20260612a_role_resident_type_values.sql",
+      "sha256": "19e72f980f47d58be299bf46e4358c15dc383ee5221fea0ae0933905c318f982"
+    },
+    {
+      "name": "20260612b_role_terminology_migration.sql",
+      "sha256": "381e4cfa6fbfc79dafa1c0ca3f487b4ef014b6629ca63bdd017fb024c457ca6f"
+    },
+    {
+      "name": "20260612c_building_unit_resident_fields.sql",
+      "sha256": "e0b41dd77b1f5c93c297eda7188b9b89366778423e6f2ead7d64682c38156e8d"
+    },
+    {
+      "name": "20260614_handover_workflow.sql",
+      "sha256": "38f9fd550df4c959f0a1aa372119546f68257044fdf47d1b8b7247af1af3eddd"
+    },
+    {
+      "name": "20260617_handover_status_protection.sql",
+      "sha256": "86f5d3391178d233073997c767337010b224d331b10f3e1bd34c0623afed860d"
+    },
+    {
+      "name": "20260617_resident_defect_insert_policy.sql",
+      "sha256": "c91e491df9fd99423995a656b40f3d0e39126cc7cf9045cdd6a91fb7b99089e6"
+    },
+    {
+      "name": "20260626_resident_access_requests.sql",
+      "sha256": "8e0d1bfc87f06a2bd781c535b7f3c9583545a57fabb26357945a8e0f1aa6a8c7"
+    },
+    {
+      "name": "20260626_user_status_access.sql",
+      "sha256": "fd07000bd3be47862d4051b8f2433567e6fce717935fee9c0a04c1bd4bf7d66c"
+    },
+    {
+      "name": "20260628_building_access_request_flag.sql",
+      "sha256": "c41efd8d41ac99fd031797f7592d19917e3eb3a0bb640efbde9f1f1b93e5ee03"
+    },
+    {
+      "name": "20260628_building_lifecycle_dlp.sql",
+      "sha256": "9ec69affc3dceb8144bd473f20802435ca267bb16ec3044be952e943e3de0d79"
+    },
+    {
+      "name": "20260628_pc_confirmed_lifecycle.sql",
+      "sha256": "4f209c70fc6b29eb9a55fd1dd1e097deadae5485825052420b81f0d4b4227266"
+    },
+    {
+      "name": "20260628_route_permission_rls_split.sql",
+      "sha256": "babdfafcc860291742982286972fe87aeb91cf20d871e19e211b6a64548db4be"
+    },
+    {
+      "name": "20260701_seed_default_trades.sql",
+      "sha256": "2f97ce5b63dd807401d20c1495fe22774182168b01d806605b969dc45d8a9a6b"
+    },
+    {
+      "name": "20260702_digest_runs.sql",
+      "sha256": "56d0622a4ba42e8214f50e5162ef7829c0240fc2fc061d96603a821fe1236542"
+    },
+    {
+      "name": "20260703_building_responsible_organisations.sql",
+      "sha256": "22c1eda80e7e0b4424faa8e7984f0c2ffd1a7b843feacad5164235af8775e3ac"
+    },
+    {
+      "name": "20260708_snag_reports.sql",
+      "sha256": "8f9a86c9256d3127788bff8e139b227b8e42216ba6aa565d0185d73fd3891b34"
+    },
+    {
+      "name": "20260709_developer_rep_snag_insert_policy.sql",
+      "sha256": "40b6ed0784444917ba59f51425dacd9750d9710a4ba4e4f66328cf0e216ea280"
+    },
+    {
+      "name": "20260710_building_profile_visibility.sql",
+      "sha256": "6afaa14289b7e087ab9b64d0bee6865df15d9cbe6a4807bffc96a1f34fa80b03"
+    },
+    {
+      "name": "20260722_sales_deal_structure_defaults.sql",
+      "sha256": "71f85959abc965975087ac575bad83b61e805cf951ea16d3bedda1edcce8b359"
+    },
+    {
+      "name": "20260722_sales_forecasting_core.sql",
+      "sha256": "6b07afa71b35b01a37f6788fd4ee4036341bb08dda571730eb27e365878f60da"
+    },
+    {
+      "name": "20260722_sales_pipeline_core_schema.sql",
+      "sha256": "269b33158d899a55afdef695f609968f89db9083bee7613b28c1906471d03196"
+    },
+    {
+      "name": "20260723_sales_stage_timestamp_and_commercial_model_rpc.sql",
+      "sha256": "2213798d8ef70663db7690882a470c3821828455278ae5b21d08195958c9008f"
+    },
+    {
+      "name": "20260723b_fix_commercial_model_rpc_ambiguity.sql",
+      "sha256": "f2fded82c884e6db3dc1a6459ff4084813563f54e5e6f8427e68f7f6e7dd4800"
+    },
+    {
+      "name": "20260725_sales_buyer_incentives_and_identity.sql",
+      "sha256": "38b1983ecba7a1fa5b19ac713f6f77c34174dab72a05b9b195e096219b2eca03"
+    },
+    {
+      "name": "20260804_reservation_approval_workflow.sql",
+      "sha256": "a56437330e60f98aa03371607cf8ef713c0f307cdfa869b43523039c6a27d5b3"
+    },
+    {
+      "name": "20260804_snag_media_variants.sql",
+      "sha256": "7f293dfe914eb5463cf6c2c535a34c0a37c1186de3f56dcf49a1795dc8ad3fbc"
+    },
+    {
+      "name": "20260825_agent_fees_workspace.sql",
+      "sha256": "34337d4be36239494ddb182c01fda473e49f2f6db75d3947e92a523671049e0b"
+    },
+    {
+      "name": "20260825b_agent_fee_payment_corrections.sql",
+      "sha256": "71a20a5a7cc61ea98125fa35d964a8c0b48c4c85ad69d645044bb983d0fee17a"
+    },
+    {
+      "name": "20260825c_agent_fee_portfolio.sql",
+      "sha256": "9e07f06a14589e7cc38dfa7101ecc51df9e4d966255be344d4748615e1c41725"
+    },
+    {
+      "name": "20260825d_agent_fee_payment_recorder_identity.sql",
+      "sha256": "e64ed43f3623c4f8c2396b545e2f7ea5db8a1a9dc54b88b209a2dc632f2747bb"
+    },
+    {
+      "name": "20260828_commercial_unit_allocation.sql",
+      "sha256": "291931c006ae8db1f7091a9995ca130786a2fcecd871cfc2f2cad3cb9abc2841"
+    },
+    {
+      "name": "20260829_unit_allocation_pristine_drafts.sql",
+      "sha256": "d177fc61281af6c8f8f6c4f68d1451ac503467a8a360a2666a159fd41eef3bea"
+    },
+    {
+      "name": "20260830_unit_allocation_runtime_refinement.sql",
+      "sha256": "dec0825a9a107486f6338a9cac9ff146b02171a1033fc5c08bcf5d19a93daf5f"
+    },
+    {
+      "name": "20260830b_reservation_actor_identity_backfill.sql",
+      "sha256": "e34ecc207fdf63632fd5422d0cc7b101ca598ac80afb1d9f82c79e5bd3c192eb"
+    },
+    {
+      "name": "20260830c_return_pre_exchange_unit_for_sale.sql",
+      "sha256": "4e01dab144c667caa66b15cd20a2ef8f840d0676af4cedeeb994ec659b06ff8e"
+    },
+    {
+      "name": "20260831_rentals_tenancies.sql",
+      "sha256": "890ad0406abdfd85ee07ab000d025d366fb21671063690b973c29ec34d346ad7"
+    },
+    {
+      "name": "20260831b_audit_log_structure.sql",
+      "sha256": "21f163718ce1429f547277c465fc97a4e82b49ee0ad687382c8f4a0724b6fafb"
+    },
+    {
+      "name": "20260901_rental_arrears_risk.sql",
+      "sha256": "5d764df5fa7a56f96bea36b65b07a857e7f8ef0bba718887594792e5a7da515c"
+    },
+    {
+      "name": "20260902_rental_arrears_tenancy_attribution.sql",
+      "sha256": "5d2a605ccc6a6bbabfeba39120b4663adf0ebf52df0c8041a72a2dc282ef6ffc"
+    },
+    {
+      "name": "20260903_user_last_active.sql",
+      "sha256": "945df9c4dbc3af19fc544de3e4e2dc37d10ae859aacfe8d5e382031802e4fa42"
+    },
+    {
+      "name": "20260906_rental_table_privileges.sql",
+      "sha256": "e1f21cdfa6e89ce3374d8614615ab4bfa834b139bd132e775763082b51f4aa7f"
+    },
+    {
+      "name": "20260907_sale_discussions.sql",
+      "sha256": "646316dd8b950f39e53276c1a298617efdc3986e2e1efb9c46a2b9a115fc0ff5"
+    },
+    {
+      "name": "20260907b_sale_activity_projection.sql",
+      "sha256": "5bf986817d9593833e409806a8be967b0d3dd994e8bac5825afe01fe8f8bf1bd"
+    },
+    {
+      "name": "20260908_sale_discussion_building_agents.sql",
+      "sha256": "04e27c369f1f4947bb6ff5cc9513a82e0fa1d0b94fdfcc624c4af36f41e1ea93"
+    },
+    {
+      "name": "20260908b_sale_actor_names.sql",
+      "sha256": "6b4b9f82367f72df14cb5c70ce036b606d916b88dacdc44b1203791cd092dbd6"
+    },
+    {
+      "name": "20260922194750_completion_direct_upload.sql",
+      "sha256": "62983c9e6cb63441e61182df2b2460b2bb38a5ade81024aa2693298ce1615848"
+    },
+    {
+      "name": "20260922_sales_legal_workflow.sql",
+      "sha256": "f2dbd9207206079771fb3d1383a3e6b11694227364fd4ad1b5317b257df1918e"
+    },
+    {
+      "name": "20260922b_completion_notice_authority.sql",
+      "sha256": "37d6274103597e276c56a9ca3ed047f14484c306211cb0ffc4b8911167a5d27e"
+    },
+    {
+      "name": "20260922c_legal_email_presentation.sql",
+      "sha256": "b50748b915a2e38b00bbfaeb7a47cbcabc60ce0b3416e62ba170525ba8f31e74"
+    },
+    {
+      "name": "20260922d_exchange_deposit_receipts.sql",
+      "sha256": "a694b68a9d154b055ed7c6a213e92eed216b973918fb5e8ead994c3414521dbb"
+    },
+    {
+      "name": "20260922e_authority_renewal_requests.sql",
+      "sha256": "3db4b49c60ac2282ad90f65c7797651672c2e855c4c4332cdc7ce4507f10fb79"
+    },
+    {
+      "name": "20260922f_completion_document_package.sql",
+      "sha256": "41abd906d7d67f0c55aaa8736ce1e88ae741de5e6ac8db296e6e5650202033c3"
+    },
+    {
+      "name": "20261006134823_reliable_audit_increment.sql",
+      "sha256": "d3020e438d644193abafe85ef2bf2a2486e9b998932ad4d0efd79ee4afbf8f8f"
+    },
+    {
+      "name": "20261006135625_preserve_legacy_audit_actors.sql",
+      "sha256": "0caa7b722e83aefd1d0c33e0f56f7647184c035c1ea0e624a31d33ce9fb60cc5"
+    },
+    {
+      "name": "20261007133421_completion_document_review.sql",
+      "sha256": "e943eb77be509845b67581926c01e7d8df17ead7cee0b2c8277bedfa9a93c49e"
+    },
+    {
+      "name": "20261012200050_sale_workflow_context_materialized.sql",
+      "sha256": "d104532b69165472cec61ca0dbbc25ae980021b4e0404717686ca4fb2487d9db"
+    },
+    {
+      "name": "20261013141431_further_deposit_configuration_and_receipts.sql",
+      "sha256": "15341236e638a359f3a0c088b1dbe8e9d88abb2139387c3c8a85c5990ccf77e8"
+    },
+    {
+      "name": "20261020145955_repair_inherited_sale_deposits.sql",
+      "sha256": "8ef9f92cacdbc7dfcddb6c9f2cacc392fd113134f51e13694c0ad7a4f3719b6e"
+    },
+    {
+      "name": "20261020160052_initialise_baseline_agent_fee_split.sql",
+      "sha256": "e601e56e8eeeae48d0a09af701c99a65e9d2a77b2a41cc8b21bff9534ca1a94f"
+    },
+    {
+      "name": "20261021134342_share_deposit_terms_before_reservation_approval.sql",
+      "sha256": "f25863eb87ebaad28c56cf61c7032ca50e8e87fafb2d0aeb5d9a1dcbc32f06ef"
+    }
+  ]
+}

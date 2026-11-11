@@ -1,0 +1,24 @@
+import {chromium} from "playwright";
+import {readFileSync,writeFileSync} from "node:fs";
+const credentials=JSON.parse(readFileSync("local-runtime/test-access.json","utf8"));
+const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1366,height:768}});
+const errors=[];page.on("pageerror",e=>errors.push(e.message));
+const bad=[];page.on("response",r=>{if(r.status()>=400&&!r.url().includes("favicon"))bad.push({status:r.status(),path:new URL(r.url()).pathname})});
+await page.goto("http://127.0.0.1:3031/dev/building-workspace");
+await page.getByLabel("Email",{exact:true}).fill(credentials.accounts.find(a=>a.alias==="developer").email);
+await page.getByLabel("Password",{exact:true}).fill(credentials.password);
+await page.getByRole("button",{name:"Sign in",exact:true}).click();
+await page.getByRole("button",{name:"Open Willow Court",exact:true}).waitFor({timeout:60000});
+await page.getByRole("button",{name:"Open Willow Court",exact:true}).click();
+await page.getByRole("heading",{name:"Your building at a glance",exact:true}).waitFor({timeout:60000});
+console.log((await page.locator("main").innerText()).slice(0,3000));console.log(JSON.stringify({errors,bad}));
+await page.screenshot({path:"artifacts/building-workspace-stage2/dashboard-1366.png"});
+await page.getByRole("button",{name:"Open sales worklist",exact:true}).click();
+await page.getByRole("table",{name:"Building sales"}).waitFor();
+await page.getByRole("link",{name:"G11 Taylor Reed",exact:false}).click();
+await page.getByRole("heading",{name:"Awaiting revised statement",exact:true}).waitFor({timeout:60000});
+await page.screenshot({path:"artifacts/building-workspace-stage2/completion-1366.png"});
+console.log((await page.locator("main").innerText()).slice(0,2800));
+writeFileSync("artifacts/building-workspace-stage2/smoke.json",JSON.stringify({errors,bad},null,2));
+await browser.close();
+
