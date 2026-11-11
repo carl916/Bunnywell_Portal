@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-11T21:23:57.647Z",
+  "at": "2026-11-11T21:48:04.457Z",
   "environment": "bunnywell-backend-foundation",
   "authenticatedSessions": true,
   "results": [
@@ -89,6 +89,14 @@
     },
     {
       "name": "contractor cannot read another building report",
+      "passed": true
+    },
+    {
+      "name": "photo modification remains internal; resident and agent denied",
+      "passed": true
+    },
+    {
+      "name": "photo deletion denies unrelated roles and retains authorised maintenance",
       "passed": true
     },
     {

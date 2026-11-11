@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-11T22:02:50.432Z",
+  "method": "Real Auth getUser-verified actors followed by existing service-role RPC boundary; not a browser business action",
+  "results": [
+    {
+      "name": "developer verified actor through service boundary allowed",
+      "passed": true
+    },
+    {
+      "name": "admin verified actor through service boundary allowed",
+      "passed": true
+    },
+    {
+      "name": "conveyancer verified actor through service boundary denied",
+      "passed": true
+    },
+    {
+      "name": "agent verified actor through service boundary denied",
+      "passed": true
+    },
+    {
+      "name": "inactive verified actor through service boundary denied",
+      "passed": true
+    }
+  ]
+}
