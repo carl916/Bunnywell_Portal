@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-11T22:11:44.069Z",
+  "checks": [
+    {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0
+    },
+    {
+      "command": "npx eslint (10 changed TypeScript/TSX/config files)",
+      "exitCode": 0
+    },
+    {
+      "command": "npx eslint src/lib/workspace/projections.ts (after final completeness adjustment)",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "preserved": {
+    "prototype": "1df4bac80588491bc3fba47966c9854fb33b4c10",
+    "completion": "89b81ab21241b06aa49d2cf939f183dd4ae782df",
+    "bothWorkingTreesClean": true,
+    "paymentMigrationAndPermissionsUnchanged": true
+  }
+}

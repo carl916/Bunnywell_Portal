@@ -1,0 +1,70 @@
+{
+  "at": "2026-11-11T22:08:30.553Z",
+  "method": "Genuine Auth sessions and live local read endpoints",
+  "results": [
+    {
+      "name": "developer exact full counts, actions and ordered paged population match legacy",
+      "passed": true
+    },
+    {
+      "name": "developer filtered counts cover every matching row, not just page",
+      "passed": true
+    },
+    {
+      "name": "developer exact record and discussion reject mismatched building/unit/sale",
+      "passed": true
+    },
+    {
+      "name": "conveyancer exact full counts, actions and ordered paged population match legacy",
+      "passed": true
+    },
+    {
+      "name": "conveyancer filtered counts cover every matching row, not just page",
+      "passed": true
+    },
+    {
+      "name": "conveyancer exact record and discussion reject mismatched building/unit/sale",
+      "passed": true
+    },
+    {
+      "name": "agent exact full counts, actions and ordered paged population match legacy",
+      "passed": true
+    },
+    {
+      "name": "agent filtered counts cover every matching row, not just page",
+      "passed": true
+    },
+    {
+      "name": "agent exact record and discussion reject mismatched building/unit/sale",
+      "passed": true
+    },
+    {
+      "name": "agent-single exact full counts, actions and ordered paged population match legacy",
+      "passed": true
+    },
+    {
+      "name": "agent-single filtered counts cover every matching row, not just page",
+      "passed": true
+    },
+    {
+      "name": "agent-single exact record and discussion reject mismatched building/unit/sale",
+      "passed": true
+    },
+    {
+      "name": "single-building agent denied outside its appointment at endpoint and RLS",
+      "passed": true
+    },
+    {
+      "name": "contractor can use allowed dashboard but not sales or Setup",
+      "passed": true
+    },
+    {
+      "name": "inactive genuine session cannot open any workspace",
+      "passed": true
+    },
+    {
+      "name": "unauthenticated endpoint denied",
+      "passed": true
+    }
+  ]
+}

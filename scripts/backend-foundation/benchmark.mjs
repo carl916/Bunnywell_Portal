@@ -1,0 +1,23 @@
+// Historical pre-validation harness. Use benchmark-paired.mjs for current, reproducible comparisons.
+import fs from 'node:fs';import {chromium} from '@playwright/test';
+const phase=process.argv[2]||'before',origin='http://127.0.0.1:55321',root='http://127.0.0.1:3035';
+const cfg=JSON.parse(fs.readFileSync('backend-local/status.json','utf8').replace(/^\uFEFF/,'')),creds=JSON.parse(fs.readFileSync('backend-local/test-access.json'));
+if(cfg.API_URL!==origin)throw Error('Wrong environment');
+const building='b1700000-0000-4000-8000-000000000001';
+const log=()=>fs.existsSync('tmp/backend-foundation/reads.ndjson')?fs.readFileSync('tmp/backend-foundation/reads.ndjson','utf8').trim().split('\n').filter(Boolean):[];
+const report={phase,at:new Date().toISOString(),environment:'isolated local; Next dev; loopback; 400 additional units in selected building; 300 in other building; 1400 synthetic snags',measurements:[],browser:[]};
+for(const role of ['developer','conveyancer','agent']){
+ const account=creds.accounts.find(a=>a.alias===role);const r=await fetch(origin+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:cfg.ANON_KEY,'content-type':'application/json'},body:JSON.stringify({email:account.email,password:creds.password})});if(!r.ok)throw Error('Sign-in '+role);const session=await r.json();
+ const headers={authorization:'Bearer '+session.access_token};
+ async function read(kind,values={}){const r=await fetch(root+'/workspace/read?'+new URLSearchParams({kind,building,...values}),{headers,signal:AbortSignal.timeout(120000)});const body=await r.text();if(!r.ok)throw Error(kind+' '+r.status+' '+body);return{data:JSON.parse(body),bytes:Buffer.byteLength(body)};}
+ const workspace=await read('workspace');const row=workspace.data.rows.find(r=>r.saleId&&r.stage==='exchanged');if(!row)throw Error('No exact sale');const record={unit:row.unitId,sale:row.saleId};
+ const cases={dashboard:()=>read(phase==='before'?'workspace':'summary'),worklist:()=>read(phase==='before'?'workspace':'worklist'),sale:async()=>{const responses=[await read(phase==='before'?'workspace':'record',record),await read('completion',record),await read('comments',record)];return{bytes:responses.reduce((n,r)=>n+r.bytes,0),data:{}};}};
+ for(const [kind,run]of Object.entries(cases)){await run();for(let i=0;i<3;i++){const mark=log().length,at=performance.now();const result=await run();const elapsedMs=Math.round(performance.now()-at);await new Promise(r=>setTimeout(r,100));const trace=log().slice(mark).map(JSON.parse);report.measurements.push({role,kind,iteration:i,elapsedMs,browserResponseBytes:result.bytes,backendRequests:trace.length,backendDecodedBytes:trace.reduce((n,r)=>n+r.bytes,0),failedRequests:trace.filter(r=>r.status>=400).length});}console.log(role,kind,report.measurements.slice(-3));fs.writeFileSync('artifacts/backend-foundation/performance-'+phase+'.json',JSON.stringify(report,null,2));}
+ if(role==='developer'){
+ const browser=await chromium.launch();const context=await browser.newContext({viewport:{width:1366,height:768}});const page=await context.newPage();page.setDefaultTimeout(120000);
+ if(phase==='before')await context.addInitScript(a=>sessionStorage.setItem('bunnywell-staging-workspace-auth',JSON.stringify(a)),session);
+ else {await page.goto(root+'/workspace');await page.getByLabel('Email',{exact:true}).fill(account.email);await page.getByLabel('Password',{exact:true}).fill(creds.password);await page.getByRole('button',{name:'Sign in',exact:true}).click();await page.getByRole('heading',{name:'Choose your building'}).waitFor();}
+ for(let i=0;i<3;i++)for(const [view,heading]of [['dashboard','Your building at a glance'],['worklist','Sales worklist'],['sale','']]){const at=performance.now();await page.goto(root+'/workspace?'+new URLSearchParams({building,view,...(view==='sale'?{...record,section:'completion'}:{})}));if(view==='sale')await page.locator('#sale-context-panel').waitFor();else await page.getByRole('heading',{name:heading,exact:true}).waitFor();await page.locator('[role=status]').count();const usableMs=Math.round(performance.now()-at);const resources=await page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.name.includes('/workspace/read')).map(e=>({kind:new URL(e.name).searchParams.get('kind'),transferBytes:e.transferSize,decodedBytes:e.decodedBodySize})));report.browser.push({iteration:i,view,usableMs,resources});fs.writeFileSync('artifacts/backend-foundation/performance-'+phase+'.json',JSON.stringify(report,null,2));}await browser.close();
+ }
+}
+console.log('Saved comparable local '+phase+' measurements.');

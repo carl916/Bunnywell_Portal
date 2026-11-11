@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-11T21:59:55.293Z",
+  "method": "Genuine developer Auth session, real local endpoint reads and before/after PostgreSQL hashes of every public application table; Auth session writes excluded",
+  "results": [
+    {
+      "name": "Lazy selector resolves explicit ownership FK and retains configured floor/natural unit order",
+      "passed": true,
+      "options": 407
+    },
+    {
+      "name": "Dashboard, list, exact record, Completion, comments, activity and selector reads leave every public application table unchanged",
+      "passed": true,
+      "tables": 61
+    }
+  ]
+}

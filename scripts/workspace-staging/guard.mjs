@@ -1,13 +1,13 @@
 
 import fs from "node:fs";
-const origin="https://vxkpvdtrldwwqiddoyof.supabase.co";
+const origin=process.env.NEXT_PUBLIC_WORKSPACE_FOUNDATION==="1"?"http://127.0.0.1:55321":"https://vxkpvdtrldwwqiddoyof.supabase.co";
 const tables=new Set("profiles buildings building_floors building_organisations organisations units unit_sale_attempts unit_sale_terms unit_sale_documents unit_sale_invoices unit_sale_invoice_payments sale_legal_emails sale_exchange_deposit_receipts sale_exchange_deposit_sources sale_further_deposit_facts user_unit_access user_building_access snags areas snag_photos snag_events building_sale_defaults trades unit_types audit_events".split(" "));
 export function allowed(url,method="GET"){
  const u=new URL(url);
  if(u.origin!==origin)return false;
  if(u.pathname==="/auth/v1/user")return method==="GET";
  const rpc=u.pathname.match(/^\/rest\/v1\/rpc\/([^/]+)$/);
- if(rpc)return ["sale_comment_page","sale_activity_page"].includes(rpc[1])&&["POST","GET"].includes(method);
+ if(rpc)return ["sale_comment_page","sale_activity_page",...(process.env.NEXT_PUBLIC_WORKSPACE_FOUNDATION==="1"?["workspace_access_context","workspace_building_facts"]:[])].includes(rpc[1])&&["POST","GET"].includes(method);
  const table=u.pathname.match(/^\/rest\/v1\/([^/]+)$/);
  return Boolean(table&&tables.has(table[1])&&method==="GET");
 }

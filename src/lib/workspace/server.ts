@@ -1,5 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import { stagingOrigin, moduleAllowed } from "./staging";
+import { portalAccessKey } from "@/lib/portal-access-snapshot";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { stagingOrigin, moduleAllowed, foundationLocal } from "./staging";
 import { rows, related } from "./reads";
 import { loadDashboardInput, dashboardAccessKey } from "@/lib/dashboard/read";
 import { deriveDashboard } from "@/lib/dashboard/model";
@@ -11,11 +12,16 @@ import type { WorkViewer, WorkSale, DashboardInput } from "@/lib/dashboard/types
 import type { Building, Unit, Area, BuildingFloor, BuildingOrganisation, Organisation, ProductionSnag, SnagEvent, SnagPhoto } from "@/lib/data/production";
 import type { PortalSnapshot, SnagList, SnagDetail, BuildingDetail, SetupData } from "./types";
 export class ReadError extends Error { constructor(message:string,public status=403){super(message);} }
+async function accessContext(client:SupabaseClient,id:string){
+ const r=await client.rpc('workspace_access_context');if(r.error||r.data?.profile?.id!==id||!r.data.profile.active||!moduleAllowed(r.data.profile.role,'dashboard'))throw new ReadError('Workspace access unavailable.');
+ return {profile:r.data.profile as WorkViewer & {active:boolean},revision:portalAccessKey(r.data.profile,r.data.units,r.data.buildings,r.data.links)};
+}
 export async function viewer(request:Request) {
  const token=request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new ReadError("Sign in to the staging workspace.",401);
  const client=createClient(stagingOrigin,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});
  const auth=await client.auth.getUser(token);if(auth.error||!auth.data.user)throw new ReadError("Session expired. Sign in again.",401);
+ if(foundationLocal){const context=await accessContext(client,auth.data.user.id);return{client,...context,token};}
  const p=await client.from("profiles").select("id,role,organisation_id,active").eq("id",auth.data.user.id).single();
  if(p.error||!p.data?.active||!moduleAllowed(p.data.role,"dashboard"))throw new ReadError("This account cannot open the workspace.");
  const profile=p.data as WorkViewer & {active:boolean};
@@ -23,7 +29,7 @@ export async function viewer(request:Request) {
  return{client,profile,revision,token};
 }
 export type Viewer = Awaited<ReturnType<typeof viewer>>;
-export async function check(v:Viewer){const p=await v.client.from("profiles").select("id,role,organisation_id,active").eq("id",v.profile.id).single();if(p.error||JSON.stringify(p.data)!==JSON.stringify(v.profile)||await dashboardAccessKey(v.client,v.profile)!==v.revision)throw new ReadError("Access changed. Sign in again.");}
+export async function check(v:Viewer){if(foundationLocal){const fresh=await accessContext(v.client,v.profile.id);if(fresh.revision!==v.revision)throw new ReadError("Access changed. Sign in again.");return;}const p=await v.client.from("profiles").select("id,role,organisation_id,active").eq("id",v.profile.id).single();if(p.error||JSON.stringify(p.data)!==JSON.stringify(v.profile)||await dashboardAccessKey(v.client,v.profile)!==v.revision)throw new ReadError("Access changed. Sign in again.");}
 export async function catalog(v:Viewer):Promise<Catalog>{
  const buildings=await rows<Building>(v.client,"buildings","id,name,address_line_1,town");
  const access:Access={identity:v.profile.id,role:v.profile.role,organisationId:v.profile.organisation_id,active:true,buildingIds:buildings.map(b=>b.id),accessRevision:v.revision};
@@ -57,7 +63,9 @@ export async function completion(v:Viewer,scope:{buildingId:string;unitId:string
  return{sale:sales[0],documents};
 }
 export async function discussion(v:Viewer,p:URLSearchParams){
- const scope={buildingId:p.get("building")||"",unitId:p.get("unit")||"",saleId:p.get("sale")||""};await completion(v,scope);
+ const scope={buildingId:p.get("building")||"",unitId:p.get("unit")||"",saleId:p.get("sale")||""};
+ if(!validId(scope.buildingId)||!validId(scope.unitId)||!validId(scope.saleId)||!moduleAllowed(v.profile.role,"sales"))throw new ReadError("Invalid sale scope.");
+ const exact=await rows<{id:string}>(v.client,"unit_sale_attempts","id",q=>q.eq("id",scope.saleId).eq("unit_id",scope.unitId).eq("building_id",scope.buildingId).is("redacted_at",null));if(exact.length!==1)throw new ReadError("Exact sale unavailable.");
  const kind=p.get("kind");const args:Record<string,unknown>={p_sale:scope.saleId};
  if(kind==="comments"){args.p_unit=scope.unitId;for(const [q,key]of [["before","p_before"],["after","p_after"]])if(p.has(q)){const n=Number(p.get(q));if(!Number.isSafeInteger(n)||n<0)throw new ReadError("Invalid cursor.",400);args[key]=n;}if(p.has("target")){if(!validId(p.get("target")!))throw new ReadError("Invalid comment.",400);args.p_target=p.get("target");}}
  else if(kind==="activity"){if(p.has("beforeId")){if(!validId(p.get("beforeId")!)||!Number.isFinite(Date.parse(p.get("beforeTime")||"")))throw new ReadError("Invalid cursor.",400);args.p_before_id=p.get("beforeId");args.p_before_time=p.get("beforeTime");}}

@@ -1,0 +1,512 @@
+{
+  "phase": "before",
+  "at": "2026-11-11T21:27:05.942Z",
+  "environment": "isolated local; Next dev; loopback; 400 additional units in selected building; 300 in other building; 1400 synthetic snags",
+  "measurements": [
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "iteration": 0,
+      "elapsedMs": 1123,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "iteration": 1,
+      "elapsedMs": 1220,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "iteration": 2,
+      "elapsedMs": 1096,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "iteration": 0,
+      "elapsedMs": 1053,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "iteration": 1,
+      "elapsedMs": 1262,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "iteration": 2,
+      "elapsedMs": 1114,
+      "browserResponseBytes": 2857273,
+      "backendRequests": 51,
+      "backendDecodedBytes": 1140842,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "iteration": 0,
+      "elapsedMs": 1442,
+      "browserResponseBytes": 2858198,
+      "backendRequests": 76,
+      "backendDecodedBytes": 1146827,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "iteration": 1,
+      "elapsedMs": 1509,
+      "browserResponseBytes": 2858198,
+      "backendRequests": 76,
+      "backendDecodedBytes": 1146827,
+      "failedRequests": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "iteration": 2,
+      "elapsedMs": 1433,
+      "browserResponseBytes": 2858198,
+      "backendRequests": 76,
+      "backendDecodedBytes": 1146827,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "iteration": 0,
+      "elapsedMs": 783,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "iteration": 1,
+      "elapsedMs": 762,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "iteration": 2,
+      "elapsedMs": 900,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "iteration": 0,
+      "elapsedMs": 916,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "iteration": 1,
+      "elapsedMs": 944,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "iteration": 2,
+      "elapsedMs": 816,
+      "browserResponseBytes": 348316,
+      "backendRequests": 35,
+      "backendDecodedBytes": 604988,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "iteration": 0,
+      "elapsedMs": 1037,
+      "browserResponseBytes": 349241,
+      "backendRequests": 60,
+      "backendDecodedBytes": 610759,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "iteration": 1,
+      "elapsedMs": 1045,
+      "browserResponseBytes": 349241,
+      "backendRequests": 60,
+      "backendDecodedBytes": 610759,
+      "failedRequests": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "iteration": 2,
+      "elapsedMs": 1054,
+      "browserResponseBytes": 349241,
+      "backendRequests": 60,
+      "backendDecodedBytes": 610759,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "iteration": 0,
+      "elapsedMs": 931,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "iteration": 1,
+      "elapsedMs": 883,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "iteration": 2,
+      "elapsedMs": 919,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "iteration": 0,
+      "elapsedMs": 955,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "iteration": 1,
+      "elapsedMs": 926,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "iteration": 2,
+      "elapsedMs": 1182,
+      "browserResponseBytes": 609998,
+      "backendRequests": 47,
+      "backendDecodedBytes": 798090,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "iteration": 0,
+      "elapsedMs": 1140,
+      "browserResponseBytes": 610923,
+      "backendRequests": 72,
+      "backendDecodedBytes": 803807,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "iteration": 1,
+      "elapsedMs": 1275,
+      "browserResponseBytes": 610923,
+      "backendRequests": 72,
+      "backendDecodedBytes": 803807,
+      "failedRequests": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "iteration": 2,
+      "elapsedMs": 1224,
+      "browserResponseBytes": 610923,
+      "backendRequests": 72,
+      "backendDecodedBytes": 803807,
+      "failedRequests": 0
+    }
+  ],
+  "browser": [
+    {
+      "iteration": 0,
+      "view": "dashboard",
+      "usableMs": 4818,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 0,
+      "view": "worklist",
+      "usableMs": 1964,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 0,
+      "view": "sale",
+      "usableMs": 1876,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        }
+      ]
+    },
+    {
+      "iteration": 1,
+      "view": "dashboard",
+      "usableMs": 1870,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 1,
+      "view": "worklist",
+      "usableMs": 1922,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 1,
+      "view": "sale",
+      "usableMs": 1897,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "view": "dashboard",
+      "usableMs": 2400,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "view": "worklist",
+      "usableMs": 2425,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "view": "sale",
+      "usableMs": 1826,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 1120,
+          "decodedBytes": 820
+        },
+        {
+          "kind": "workspace",
+          "transferBytes": 2857573,
+          "decodedBytes": 2857273
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 1175,
+          "decodedBytes": 875
+        }
+      ]
+    }
+  ]
+}

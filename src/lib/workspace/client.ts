@@ -1,3 +1,4 @@
+import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import type {reader,Config,Session,Catalog,Completion} from "@/lib/experiments/building-integration/reader";
 import {stagingOrigin,stagingProject} from "./staging";
 import type {Scope} from "@/lib/experiments/building-contracts/contracts";
@@ -14,8 +15,10 @@ export async function stagingConfig():Promise<Config>{
 }
 export async function stagingAuth(c:Config,path:"token?grant_type=password"|"user"|"logout",token?:string,body?:{email:string;password:string}){
  if(c.apiOrigin!==stagingOrigin)throw Error("Unexpected project.");
- const r=await fetch(stagingOrigin+"/auth/v1/"+path,{method:path==="user"?"GET":"POST",headers:{apikey:c.anonKey,Authorization:"Bearer "+(token||c.anonKey),"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined,redirect:"error",cache:"no-store"});
- if(!r.ok)throw Error("Sign-in or session unavailable. Use your existing staging account.");return r.status===204?null:r.json();
+ const client=createSupabaseBrowserClient();
+ if(path==="token?grant_type=password"){const r=await client.auth.signInWithPassword(body!);if(r.error||!r.data.session)throw Error("Sign-in failed. Check your account details.");return r.data.session;}
+ if(path==="user"){const r=await client.auth.getUser();if(r.error)throw r.error;return r.data.user;}
+ const r=await client.auth.signOut();if(r.error){await client.auth.signOut({scope:"local"});throw r.error;}return null;
 }
 export function stagingReader(c:Config,session:Session):ReturnType<typeof reader>{
  const scopeValues=(s:RecordScope)=>({building:s.buildingId,unit:s.unitId,sale:s.saleId});

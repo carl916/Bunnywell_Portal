@@ -1,0 +1,151 @@
+{
+  "at": "2026-11-11T21:34:46.050Z",
+  "environment": "bunnywell-backend-foundation",
+  "conditions": "Same larger synthetic dataset, 3 warm PostgreSQL execution plans per role/case; authenticated claims + SET LOCAL ROLE. Browser/REST role sessions tested separately.",
+  "stages": [
+    {
+      "stage": "before",
+      "role": "developer",
+      "samples": [
+        {
+          "executionMs": 242.861,
+          "planningMs": 0.007,
+          "sharedHit": 28491,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 203.431,
+          "planningMs": 0.006,
+          "sharedHit": 24353,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 202.629,
+          "planningMs": 0.006,
+          "sharedHit": 24353,
+          "sharedRead": 0
+        }
+      ]
+    },
+    {
+      "stage": "before",
+      "role": "conveyancer",
+      "samples": [
+        {
+          "executionMs": 174.38,
+          "planningMs": 0.003,
+          "sharedHit": 25954,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 147.032,
+          "planningMs": 0.006,
+          "sharedHit": 21923,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 147.897,
+          "planningMs": 0.007,
+          "sharedHit": 21923,
+          "sharedRead": 0
+        }
+      ]
+    },
+    {
+      "stage": "constant-permission-helpers",
+      "role": "developer",
+      "samples": [
+        {
+          "executionMs": 237.125,
+          "planningMs": 0.003,
+          "sharedHit": 28488,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 207.409,
+          "planningMs": 0.006,
+          "sharedHit": 24346,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 211.464,
+          "planningMs": 0.006,
+          "sharedHit": 24346,
+          "sharedRead": 0
+        }
+      ]
+    },
+    {
+      "stage": "constant-permission-helpers",
+      "role": "conveyancer",
+      "samples": [
+        {
+          "executionMs": 178.464,
+          "planningMs": 0.006,
+          "sharedHit": 25947,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 156.331,
+          "planningMs": 0.006,
+          "sharedHit": 21916,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 152.404,
+          "planningMs": 0.006,
+          "sharedHit": 21916,
+          "sharedRead": 0
+        }
+      ]
+    },
+    {
+      "stage": "permission-helpers-and-candidate-indexes",
+      "role": "developer",
+      "samples": [
+        {
+          "executionMs": 226.757,
+          "planningMs": 0.003,
+          "sharedHit": 28537,
+          "sharedRead": 9
+        },
+        {
+          "executionMs": 249.958,
+          "planningMs": 0.008,
+          "sharedHit": 24357,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 212.61,
+          "planningMs": 0.006,
+          "sharedHit": 24357,
+          "sharedRead": 0
+        }
+      ]
+    },
+    {
+      "stage": "permission-helpers-and-candidate-indexes",
+      "role": "conveyancer",
+      "samples": [
+        {
+          "executionMs": 197.304,
+          "planningMs": 0.004,
+          "sharedHit": 26013,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 150.107,
+          "planningMs": 0.006,
+          "sharedHit": 21931,
+          "sharedRead": 0
+        },
+        {
+          "executionMs": 148.313,
+          "planningMs": 0.006,
+          "sharedHit": 21931,
+          "sharedRead": 0
+        }
+      ]
+    }
+  ]
+}

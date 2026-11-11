@@ -1,0 +1,104 @@
+{
+  "at": "2026-11-11T21:50:29.391Z",
+  "method": "Existing route invoked in-process, genuine Auth session and real local database reads; deliberate access revocation between facts and response",
+  "results": [
+    {
+      "name": "Access revoked after facts returned is rejected before response",
+      "passed": true
+    },
+    {
+      "name": "Fresh request revalidates restored access without a cache",
+      "passed": true
+    },
+    {
+      "name": "Workspace business writes remain disabled",
+      "passed": true
+    },
+    {
+      "name": "Route functions deny production even with local flags set",
+      "passed": true
+    }
+  ],
+  "traffic": [
+    {
+      "path": "/auth/v1/token",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/buildings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_building_facts",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/buildings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_building_facts",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/auth/v1/user",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/buildings",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_building_facts",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/rpc/workspace_access_context",
+      "method": "POST",
+      "status": 200
+    }
+  ]
+}

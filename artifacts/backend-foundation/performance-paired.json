@@ -1,0 +1,1710 @@
+{
+  "at": "2026-11-11T21:55:46.783Z",
+  "conditions": "Paired retained legacy reader versus optimized reader on the SAME frozen synthetic database and application commit. Shared authenticated lifecycle/access context in both. Next dev webpack, loopback, 1366x768, three warm samples, no concurrent test writes. Browser legacy requests use real HTTP URL override to the retained workspace endpoint, not fabricated responses. Bytes are decoded response bodies unless explicitly transferBytes. No production latency claim.",
+  "api": [
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 1120,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 588,
+      "responseBytes": 7100,
+      "backendRequests": 5,
+      "backendDecodedBytes": 1098733,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 551,
+      "responseBytes": 7100,
+      "backendRequests": 5,
+      "backendDecodedBytes": 1098733,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1460,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1325,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 655,
+      "responseBytes": 7100,
+      "backendRequests": 5,
+      "backendDecodedBytes": 1098733,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 1102,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 547,
+      "responseBytes": 52532,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735756,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 524,
+      "responseBytes": 52532,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735756,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1330,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1178,
+      "responseBytes": 2870914,
+      "backendRequests": 46,
+      "backendDecodedBytes": 1152936,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 527,
+      "responseBytes": 52532,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735756,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 1327,
+      "responseBytes": 2872812,
+      "backendRequests": 57,
+      "backendDecodedBytes": 1159453,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 409,
+      "responseBytes": 5552,
+      "backendRequests": 16,
+      "backendDecodedBytes": 13602,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 361,
+      "responseBytes": 5552,
+      "backendRequests": 16,
+      "backendDecodedBytes": 13602,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1360,
+      "responseBytes": 2872812,
+      "backendRequests": 57,
+      "backendDecodedBytes": 1159453,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1466,
+      "responseBytes": 2872812,
+      "backendRequests": 57,
+      "backendDecodedBytes": 1159453,
+      "failures": 0
+    },
+    {
+      "role": "developer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 408,
+      "responseBytes": 5552,
+      "backendRequests": 16,
+      "backendDecodedBytes": 13602,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 800,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 460,
+      "responseBytes": 3802,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 460,
+      "responseBytes": 3802,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 915,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 870,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 526,
+      "responseBytes": 3802,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 885,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 530,
+      "responseBytes": 25887,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 485,
+      "responseBytes": 25887,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 879,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 855,
+      "responseBytes": 357225,
+      "backendRequests": 29,
+      "backendDecodedBytes": 611926,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 451,
+      "responseBytes": 25887,
+      "backendRequests": 5,
+      "backendDecodedBytes": 620893,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 960,
+      "responseBytes": 359123,
+      "backendRequests": 40,
+      "backendDecodedBytes": 617505,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 419,
+      "responseBytes": 4925,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12405,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 400,
+      "responseBytes": 4925,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12405,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1086,
+      "responseBytes": 359123,
+      "backendRequests": 40,
+      "backendDecodedBytes": 617505,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1046,
+      "responseBytes": 359123,
+      "backendRequests": 40,
+      "backendDecodedBytes": 617505,
+      "failures": 0
+    },
+    {
+      "role": "conveyancer",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 385,
+      "responseBytes": 4925,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12405,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 938,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 555,
+      "responseBytes": 6396,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 444,
+      "responseBytes": 6396,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1081,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1056,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "dashboard",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 544,
+      "responseBytes": 6396,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 886,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 556,
+      "responseBytes": 50721,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 422,
+      "responseBytes": 50721,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1060,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1034,
+      "responseBytes": 622639,
+      "backendRequests": 42,
+      "backendDecodedBytes": 808901,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "worklist",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 516,
+      "responseBytes": 50721,
+      "backendRequests": 5,
+      "backendDecodedBytes": 735744,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 0,
+      "elapsedMs": 1152,
+      "responseBytes": 624537,
+      "backendRequests": 53,
+      "backendDecodedBytes": 814426,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 0,
+      "elapsedMs": 453,
+      "responseBytes": 5559,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12598,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 1,
+      "elapsedMs": 393,
+      "responseBytes": 5559,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12598,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 1,
+      "elapsedMs": 1284,
+      "responseBytes": 624537,
+      "backendRequests": 53,
+      "backendDecodedBytes": 814426,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "legacy",
+      "iteration": 2,
+      "elapsedMs": 1343,
+      "responseBytes": 624537,
+      "backendRequests": 53,
+      "backendDecodedBytes": 814426,
+      "failures": 0
+    },
+    {
+      "role": "agent",
+      "kind": "sale",
+      "phase": "optimized",
+      "iteration": 2,
+      "elapsedMs": 417,
+      "responseBytes": 5559,
+      "backendRequests": 16,
+      "backendDecodedBytes": 12598,
+      "failures": 0
+    }
+  ],
+  "browser": [
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1713,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 1452,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 7400,
+          "decodedBytes": 7100
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1349,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 7400,
+          "decodedBytes": 7100
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 1923,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 1862,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 1434,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 7400,
+          "decodedBytes": 7100
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1692,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 1406,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 52832,
+          "decodedBytes": 52532
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1350,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 52832,
+          "decodedBytes": 52532
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 1889,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 1864,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 1408,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 52832,
+          "decodedBytes": 52532
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1689,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 1417,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3954,
+          "decodedBytes": 3654
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1374,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3954,
+          "decodedBytes": 3654
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 2419,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 2433,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 2871214,
+          "decodedBytes": 2870914
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 894,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 2092,
+          "decodedBytes": 1792
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3954,
+          "decodedBytes": 3654
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1697,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 1469,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 4102,
+          "decodedBytes": 3802
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1364,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 4102,
+          "decodedBytes": 3802
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 1909,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 1888,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 1415,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "summary",
+          "transferBytes": 4102,
+          "decodedBytes": 3802
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1678,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 1447,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 26187,
+          "decodedBytes": 25887
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1367,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 26187,
+          "decodedBytes": 25887
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 1881,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 1883,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 1414,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "worklist",
+          "transferBytes": 26187,
+          "decodedBytes": 25887
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 0,
+      "usableMs": 1693,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 0,
+      "usableMs": 913,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3327,
+          "decodedBytes": 3027
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 1,
+      "usableMs": 1359,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3327,
+          "decodedBytes": 3027
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 1,
+      "usableMs": 1937,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "legacy",
+      "iteration": 2,
+      "usableMs": 1936,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 357525,
+          "decodedBytes": 357225
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "phase": "optimized",
+      "iteration": 2,
+      "usableMs": 1411,
+      "resources": [
+        {
+          "kind": "config",
+          "transferBytes": 599,
+          "decodedBytes": 299
+        },
+        {
+          "kind": "catalog",
+          "transferBytes": 985,
+          "decodedBytes": 685
+        },
+        {
+          "kind": "record",
+          "transferBytes": 3327,
+          "decodedBytes": 3027
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 0,
+          "decodedBytes": 0
+        },
+        {
+          "kind": "completion",
+          "transferBytes": 2148,
+          "decodedBytes": 1848
+        },
+        {
+          "kind": "comments",
+          "transferBytes": 350,
+          "decodedBytes": 50
+        }
+      ]
+    }
+  ],
+  "population": {
+    "units": 407,
+    "rows": 407
+  }
+}

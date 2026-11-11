@@ -1,0 +1,31 @@
+{
+  "at": "2026-11-11T21:59:31.407Z",
+  "method": "Offline Node/PGlite/source checks, not authenticated service evidence",
+  "files": [
+    "tests/building-contracts-stage1.test.mjs",
+    "tests/workspace-staging.test.mjs",
+    "tests/portal-load-lifecycle.test.mjs",
+    "tests/organisation-dashboard.test.mjs",
+    "tests/dashboard-stage1.test.mjs",
+    "tests/dashboard-stage2b.test.mjs",
+    "tests/fee-portfolio-loading.test.mjs",
+    "tests/fee-portfolio-access.test.mjs",
+    "tests/fee-workspace.test.mjs",
+    "tests/sales-completion-direct-upload.test.mjs",
+    "tests/sales-completion-package.test.mjs",
+    "tests/sales-completion-workflow.test.mjs",
+    "tests/conveyancer-payment-access.test.mjs",
+    "tests/sales-reservation-redaction.test.mjs"
+  ],
+  "exitCode": 0,
+  "summary": [
+    "ℹ tests 167",
+    "ℹ suites 0",
+    "ℹ pass 167",
+    "ℹ fail 0",
+    "ℹ cancelled 0",
+    "ℹ skipped 0",
+    "ℹ todo 0",
+    "ℹ duration_ms 19215.4729"
+  ]
+}

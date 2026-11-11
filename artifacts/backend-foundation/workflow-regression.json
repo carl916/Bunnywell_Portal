@@ -1,0 +1,79 @@
+{
+  "at": "2026-11-11T22:06:30.887Z",
+  "environment": "bunnywell-backend-foundation",
+  "method": "Genuine Auth sessions; existing HTTP route invoked in-process with real Auth/Postgres/Storage, not a browser workflow",
+  "results": [
+    {
+      "name": "conveyancer concurrent identical retry records one payment",
+      "passed": true
+    },
+    {
+      "name": "developer can record remaining partial payment",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cross-building denied",
+      "passed": true
+    },
+    {
+      "name": "forged actor denied",
+      "passed": true
+    },
+    {
+      "name": "agent denied",
+      "passed": true
+    },
+    {
+      "name": "inactive denied",
+      "passed": true
+    },
+    {
+      "name": "overpayment denied",
+      "passed": true
+    },
+    {
+      "name": "developer cannot upload on conveyancer-only path",
+      "passed": true
+    },
+    {
+      "name": "conveyancer uploads private statement and retry is idempotent",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot approve own uploaded document",
+      "passed": true
+    },
+    {
+      "name": "developer query persists and repeated query creates one event",
+      "passed": true
+    },
+    {
+      "name": "persisted query changes role-appropriate work actions",
+      "passed": true
+    },
+    {
+      "name": "conveyancer replacement preserves previous version and prevents stale approval",
+      "passed": true
+    },
+    {
+      "name": "developer approves current statement; retry adds no duplicate event",
+      "passed": true
+    },
+    {
+      "name": "both document approvals update existing sale progression",
+      "passed": true
+    },
+    {
+      "name": "approved package removes document review/query actions from new reads",
+      "passed": true
+    },
+    {
+      "name": "comment client reference is retry-safe with real role session",
+      "passed": true
+    },
+    {
+      "name": "exact-record read reflects approved documents and persisted payment state",
+      "passed": true
+    }
+  ]
+}

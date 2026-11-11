@@ -1,0 +1,58 @@
+{
+  "at": "2026-11-11T21:53:12.463Z",
+  "method": "Chromium, genuine local SDK session refresh and network request inspection",
+  "results": [
+    {
+      "name": "Established SDK refreshes expired stored session through genuine Auth and restores workspace",
+      "passed": true
+    },
+    {
+      "name": "Direct sale entry requests exact record plus relevant panels; no building worklist or other-building details preloaded",
+      "passed": true,
+      "kinds": [
+        {
+          "kind": "config",
+          "building": null,
+          "unit": null,
+          "sale": null
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "unit": null,
+          "sale": null
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "unit": "b1700000-0000-4000-8000-000000000100",
+          "sale": "b1700000-0000-4000-8000-000000001100"
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "unit": "b1700000-0000-4000-8000-000000000100",
+          "sale": "b1700000-0000-4000-8000-000000001100"
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "unit": "b1700000-0000-4000-8000-000000000100",
+          "sale": "b1700000-0000-4000-8000-000000001100"
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "unit": "b1700000-0000-4000-8000-000000000100",
+          "sale": "b1700000-0000-4000-8000-000000001100"
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "unit": "b1700000-0000-4000-8000-000000000100",
+          "sale": "b1700000-0000-4000-8000-000000001100"
+        }
+      ]
+    }
+  ]
+}

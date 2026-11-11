@@ -1,4 +1,5 @@
-import { stagingEnabled, stagingOrigin } from "@/lib/workspace/staging";
+import { stagingEnabled, stagingOrigin, stagingProject, foundationLocal } from "@/lib/workspace/staging";
+import {projected,unitOptions} from "@/lib/workspace/projections";
 import * as read from "@/lib/workspace/server";
 export const dynamic="force-dynamic";
 const json=(body:unknown,status=200)=>Response.json(body,{status,headers:{"Cache-Control":"private, no-store","Vary":"Authorization"}});
@@ -6,10 +7,12 @@ export async function GET(request:Request){
  if(!stagingEnabled())return json({error:"Unavailable"},404);
  try{
  const p=new URL(request.url).searchParams,kind=p.get("kind");
- if(kind==="config")return json({projectId:"vxkpvdtrldwwqiddoyof",apiOrigin:stagingOrigin,appOrigin:new URL(request.url).origin,anonKey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,readOnly:true});
+ if(kind==="config")return json({projectId:stagingProject,apiOrigin:stagingOrigin,appOrigin:new URL(request.url).origin,anonKey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,readOnly:true});
  const v=await read.viewer(request);const id=p.get("building")||"";
  let result:unknown;
  if(kind==="catalog")result=await read.catalog(v);
+ else if(foundationLocal&&["summary","worklist","record"].includes(kind||""))result=await projected(v,id,kind as "summary"|"worklist"|"record",p);
+ else if(foundationLocal&&kind==="unit-options")result=await unitOptions(v,id);
  else if(kind==="workspace")result=await read.workspace(v,id);
  else if(kind==="completion")result=await read.completion(v,{buildingId:id,unitId:p.get("unit")||"",saleId:p.get("sale")||""});
  else if(["comments","activity","document"].includes(kind||""))result=await read.discussion(v,p);

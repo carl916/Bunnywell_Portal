@@ -1,0 +1,23 @@
+{
+  "at": "2026-11-11T21:59:07.124Z",
+  "buildExitCode": 0,
+  "method": "Actual Next production build and local next start on temporary port 3038; isolated output directory",
+  "results": [
+    {
+      "route": "/workspace",
+      "status": 404
+    },
+    {
+      "route": "/workspace/read?kind=config",
+      "status": 404
+    },
+    {
+      "route": "/dev/sales-workspace",
+      "status": 404
+    },
+    {
+      "route": "/dev/building-workspace-contracts",
+      "status": 404
+    }
+  ]
+}

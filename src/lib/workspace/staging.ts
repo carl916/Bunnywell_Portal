@@ -1,5 +1,6 @@
-export const stagingProject = "vxkpvdtrldwwqiddoyof";
-export const stagingOrigin = "https://" + stagingProject + ".supabase.co";
+export const foundationLocal = process.env.NEXT_PUBLIC_WORKSPACE_FOUNDATION === "1";
+export const stagingProject = foundationLocal ? "bunnywell-backend-foundation" : "vxkpvdtrldwwqiddoyof";
+export const stagingOrigin = foundationLocal ? "http://127.0.0.1:55321" : "https://" + stagingProject + ".supabase.co";
 export const stagingPath = "/workspace";
 export function stagingEnabled(env: Record<string,string|undefined> = process.env) {
  return env.NODE_ENV === "development" && env.WORKSPACE_STAGING_READS === "1" &&
