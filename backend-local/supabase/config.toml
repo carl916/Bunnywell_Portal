@@ -1,0 +1,40 @@
+project_id = "bunnywell-backend-foundation"
+[api]
+enabled = true
+port = 55321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+[db]
+port = 55322
+shadow_port = 55320
+major_version = 17
+[db.migrations]
+enabled = false
+[db.seed]
+enabled = false
+[studio]
+enabled = false
+[realtime]
+enabled = false
+[local_smtp]
+enabled = true
+port = 55324
+[storage]
+enabled = true
+file_size_limit = "15MiB"
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3035"
+additional_redirect_urls = []
+jwt_expiry = 1800
+enable_signup = false
+[auth.email]
+enabled = true
+enable_confirmations = true
+[analytics]
+enabled = false
+[edge_runtime]
+enabled = false
+
+

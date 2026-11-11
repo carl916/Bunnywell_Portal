@@ -4447,7 +4447,7 @@ function DeveloperSnagging({
     const savedDraft = { ...draft, responsibleOrganisationId: resolvedResponsibleOrganisationId };
     const supabase = createSupabaseBrowserClient();
     try {
-      const mediaUploads = await uploadSnagMedia({ imageDataUrl: savedDraft.photoDataUrl, videoFile: savedDraft.videoFile }, "snags");
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: savedDraft.photoDataUrl, videoFile: savedDraft.videoFile }, `snags/${snagBuildingId}/${snagUnitId ?? "communal"}`);
       const { data, error } = await supabase.from("snags").insert({
         building_id: snagBuildingId,
         unit_id: snagUnitId,
@@ -6650,7 +6650,7 @@ function ContractorActions({ user, snag, onNotice, reload, uploadSnagMedia }: { 
     setIsSaving("resolve");
     try {
       const mediaUploads = hasResolveMedia
-        ? await uploadSnagMedia({ imageDataUrl: resolutionPhoto, videoFile: resolutionVideoFile }, "resolutions")
+        ? await uploadSnagMedia({ imageDataUrl: resolutionPhoto, videoFile: resolutionVideoFile }, `resolutions/${snag.id}`)
         : [];
       await saveSnagStatusChange({
         user,
@@ -7035,7 +7035,7 @@ function LeaseholderDefects({
     const supabase = createSupabaseBrowserClient();
     setIsSubmittingDefect(true);
     try {
-      const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, "defects");
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, `defects/${selectedUnit.building_id}/${selectedUnit.id}`);
       const { data, error } = await supabase.from("snags").insert({
         building_id: selectedUnit.building_id,
         unit_id: selectedUnit.id,
@@ -9756,7 +9756,7 @@ function SnagDetailPage({
 
   async function addPhoto() {
     if (!photo && !videoFile) return;
-    const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, "snag-updates");
+    const mediaUploads = await uploadSnagMedia({ imageDataUrl: photo, videoFile }, `snag-updates/${snag.id}`);
     const supabase = createSupabaseBrowserClient();
     const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(snag.id, upload, "resolution_photo", user.id));
     const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
@@ -9785,7 +9785,7 @@ function SnagDetailPage({
     if (statusError) { onNotice(statusError.message); return; }
     let photoErrorMessage = "";
     if (rejectPhoto) {
-      const mediaUploads = await uploadSnagMedia({ imageDataUrl: rejectPhoto }, "rejections");
+      const mediaUploads = await uploadSnagMedia({ imageDataUrl: rejectPhoto }, `rejections/${snag.id}`);
       const mediaRows = mediaUploads.map((upload) => snagMediaInsertPayload(snag.id, upload, "annotated", user.id));
       const { error: photoError } = await supabase.from("snag_photos").insert(mediaRows);
       photoErrorMessage = photoError?.message ?? "";

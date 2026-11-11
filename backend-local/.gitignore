@@ -1,0 +1,6 @@
+*
+!.gitignore
+!ingress.cjs
+!supabase/
+supabase/*
+!supabase/config.toml

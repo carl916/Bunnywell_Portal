@@ -1,0 +1,115 @@
+{
+  "at": "2026-11-11T21:23:57.647Z",
+  "environment": "bunnywell-backend-foundation",
+  "authenticatedSessions": true,
+  "results": [
+    {
+      "name": "developer can upload a scoped developer snag photo",
+      "passed": true
+    },
+    {
+      "name": "representative can upload a scoped developer snag photo",
+      "passed": true
+    },
+    {
+      "name": "representative cross-building upload denied",
+      "passed": true
+    },
+    {
+      "name": "resident own-unit upload permitted",
+      "passed": true
+    },
+    {
+      "name": "resident other-unit upload denied",
+      "passed": true
+    },
+    {
+      "name": "agent unrelated upload denied",
+      "passed": true
+    },
+    {
+      "name": "inactive unrelated upload denied",
+      "passed": true
+    },
+    {
+      "name": "conveyancer unrelated upload denied",
+      "passed": true
+    },
+    {
+      "name": "anonymous unrelated upload denied",
+      "passed": true
+    },
+    {
+      "name": "unscoped legacy upload denied",
+      "passed": true
+    },
+    {
+      "name": "sensitive handover path rejected by public snag bucket",
+      "passed": true
+    },
+    {
+      "name": "existing public photo reading retained",
+      "passed": true
+    },
+    {
+      "name": "resident correct room insert succeeds",
+      "passed": true
+    },
+    {
+      "name": "resident wrong building room denied",
+      "passed": true
+    },
+    {
+      "name": "resident communal room denied",
+      "passed": true
+    },
+    {
+      "name": "developer private report allowed",
+      "passed": true
+    },
+    {
+      "name": "representative private report allowed",
+      "passed": true
+    },
+    {
+      "name": "resident private report denied",
+      "passed": true
+    },
+    {
+      "name": "agent private report denied",
+      "passed": true
+    },
+    {
+      "name": "restricted private report allowed",
+      "passed": true
+    },
+    {
+      "name": "inactive private report denied",
+      "passed": true
+    },
+    {
+      "name": "contractor cannot read another building report",
+      "passed": true
+    },
+    {
+      "name": "anonymous direct commercial RPC denied",
+      "passed": true
+    },
+    {
+      "name": "resident direct commercial RPC denied",
+      "passed": true
+    },
+    {
+      "name": "conveyancer direct commercial RPC denied",
+      "passed": true
+    },
+    {
+      "name": "developer direct commercial RPC denied",
+      "passed": true
+    },
+    {
+      "name": "all commercial overloads lack anon/auth EXECUTE",
+      "passed": true
+    }
+  ]
+}
