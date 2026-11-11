@@ -20,7 +20,7 @@ export const accounts:Record<string,Access>={
 };
 export function account(alias:string) {
   const found=accounts[alias];
-  if(!found||!found.active||!roles.includes(found.role as Catalog["scope"]["role"]))throw new ContractError("Account unavailable for Sales.");
+  if(!found||!found.active||!(roles as readonly string[]).includes(found.role))throw new ContractError("Account unavailable for Sales.");
   return structuredClone(found);
 }
 export function catalog(alias:string):Catalog {

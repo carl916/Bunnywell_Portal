@@ -11,9 +11,9 @@ import type { SaleActivity } from "@/lib/sales/discussion";
 import { Badge, Notice, date, label } from "./TaskWorkspace";
 import s from "../sales-workspace/Workspace.module.css";
 
-export default function CompletionDocument({ api, scope, document, type, title, identity, canUpload, canReview, onSaved }: {
+export default function CompletionDocument({ api, scope, document, type, title, identity, canUpload, canReview, onSaved, fileViewing=true }: {
   api: ReturnType<typeof reader>; scope: RecordScope; document?: Document; type: CompletionDocumentType;
-  title: string; identity: string; canUpload: boolean; canReview: boolean; onSaved: (message: string) => void;
+  title: string; identity: string; canUpload: boolean; canReview: boolean; fileViewing?: boolean; onSaved: (message: string) => void;
 }) {
   const current = currentCompletionVersion(document), approved = completionDocumentApproved(document);
   const [file, setFile] = useState<File | null>(null), [query, setQuery] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export default function CompletionDocument({ api, scope, document, type, title, 
     {approved && <p className={s.meta}>Approved {date(document?.approved_at)} · This version is locked.</p>}
     {error && <div role="alert"><Notice>{error}</Notice><button className={s.button} onClick={() => onSaved("Reloaded the current document state.")}>Reload current state</button></div>}
     <div className={s.actions}>
-      {current && <button className={s.button} onClick={() => void view(current.id)}>View document</button>}
+      {current && <button className={s.button} disabled={!fileViewing} title={!fileViewing?"File viewing is not yet connected":undefined} onClick={() => void view(current.id)}>View document</button>}
       {canReview && current && !approved && <><button className={s.primary} disabled={busy} onClick={() => { setConfirm(true); setQuery(null); }}>Approve document</button><button className={s.button} disabled={busy} onClick={() => { setQuery(""); setConfirm(false); }}>Raise query</button></>}
     </div>
     {confirm && current && <div className={s.notice}><p>Approve {title.toLowerCase()}, version {current.version_number}, for <strong>{identity}</strong>?</p><div className={s.actions}><button className={s.primary} disabled={busy} onClick={() => void run(() => api.workflow.action(scope, { action: "approve_completion_document", documentType: type, versionId: current.id }), title + " approved. Worklists refreshed.")}>Confirm approval</button><button className={s.button} disabled={busy} onClick={() => setConfirm(false)}>Cancel approval</button></div></div>}
@@ -81,7 +81,7 @@ export default function CompletionDocument({ api, scope, document, type, title, 
     }}><summary>Recorded document versions</summary>
       {[...document.unit_sale_document_versions].filter(v => !v.redacted_at).sort((a, b) => b.version_number - a.version_number).map(v => <article key={v.id}>
         <p><strong>{v.is_current ? "Current" : "Previous"} · version {v.version_number}</strong> · {date(v.uploaded_at)} · {v.file_name}</p>
-        <button className={s.button} onClick={() => void view(v.id)}>View version {v.version_number}</button>
+        <button className={s.button} disabled={!fileViewing} title={!fileViewing?"File viewing is not yet connected":undefined} onClick={() => void view(v.id)}>View version {v.version_number}</button>
         {completionVersionEvents((events || []).map(e => ({ ...e, created_by_user_id: e.created_by_user_id ?? null })), v.id).map(event => <p className={s.meta} key={event.id}>{event.actor_name || "Recorded actor"} · {date(event.created_at)} · {label(event.event_type)}{event.metadata?.queryNote && " · " + event.metadata.queryNote}</p>)}
       </article>)}
       {events?.length === 51 && <p className={s.meta}>Earlier review events are available in Activity using Load older activity.</p>}

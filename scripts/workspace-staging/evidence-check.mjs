@@ -1,0 +1,7 @@
+
+import fs from "node:fs";import {chromium} from "@playwright/test";import assert from "node:assert/strict";
+const auth=JSON.parse(fs.readFileSync("tmp/workspace-staging/test-auth.json")),snags=JSON.parse(fs.readFileSync("tmp/workspace-staging/snags.json"));const r=snags.rows.find(r=>r.title==="Door doesn't close fully");
+const browser=await chromium.launch();const p=await browser.newPage({viewport:{width:1366,height:768}});await p.addInitScript(a=>sessionStorage.setItem("bunnywell-staging-workspace-auth",JSON.stringify(a)),auth);
+await p.goto("http://127.0.0.1:3033/workspace?"+new URLSearchParams({view:"snag",building:snags.buildingId,snag:r.id}));await p.getByRole("heading",{name:"Snag at a glance"}).waitFor();await p.locator("main img").first().waitFor();await p.waitForFunction(()=>[...document.querySelectorAll("main img")].every(i=>i.complete&&i.naturalWidth>1));
+const images=await p.locator("main img").count();await p.screenshot({path:"tmp/workspace-staging/snag-evidence-laptop.png"});await p.getByRole("button",{name:"Activity",exact:true}).click();console.log("Real staging snag images loaded:",images,"Activity entries:",await p.locator("#sale-context-panel article").count());await p.screenshot({path:"tmp/workspace-staging/snag-activity-laptop.png"});
+await p.setViewportSize({width:390,height:844});await p.screenshot({path:"tmp/workspace-staging/snag-mobile.png"});assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await browser.close();

@@ -44,7 +44,7 @@ export function reader(config:Config,session:Session){
   const user=await auth(config,"user",session.access_token);
   if(user.id!==session.user.id)throw Error("Session identity changed.");
   const [p]=await read<{id:string;role:string;organisation_id:string|null;active:boolean;updated_at:string}>("profiles","id,role,organisation_id,active,updated_at",{id:"eq."+user.id},signal);
-  if(!p?.active||!canOpenSalesPipeline(p.role)||!roles.includes(p.role as Scope["role"]))throw Error("This account does not have access to Sales.");
+  if(!p?.active||!canOpenSalesPipeline(p.role)||!(roles as readonly string[]).includes(p.role))throw Error("This account does not have access to Sales.");
   const b=await read<{id:string;name:string;address_line_1:string;town:string}>("buildings","id,name,address_line_1,town",{},signal);
   const buildings=b.map(v=>({id:v.id,name:v.name,address:[v.address_line_1,v.town].filter(Boolean).join(", ")}));
   return{access:{identity:p.id,role:p.role,organisationId:p.organisation_id,active:true,buildingIds:b.map(v=>v.id),accessRevision:JSON.stringify([p.updated_at,p.role,p.organisation_id,b.map(v=>v.id).sort()])},buildings};

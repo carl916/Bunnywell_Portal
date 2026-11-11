@@ -5,7 +5,7 @@ export const contractVersion = "building-workspace.v1" as const;
 export const offlinePath = "/dev/building-workspace-contracts";
 export const roles = ["admin", "developer", "sales_agent", "conveyancer"] as const;
 export type Role = typeof roles[number];
-export type Scope = { identity: string; role: Role; organisationId: string | null; accessRevision: string; buildingId: string };
+export type Scope = { identity: string; role: Role | "developer_representative" | "contractor"; organisationId: string | null; accessRevision: string; buildingId: string };
 export type Building = { id: string; name: string; address: string };
 export type Catalog = { contract: typeof contractVersion; scope: Omit<Scope, "buildingId">; buildings: Building[]; fixtureOnly: true };
 export type Queue = "ours" | "others" | "unallocated";
@@ -23,6 +23,7 @@ export type Preview = {
 export type SaleRow = {
   unitId: string; unitNumber: string; buildingId: string; buildingName: string; floor: string;
   saleId: string | null; buyerLabel: string; stage: string; actions: Action[];
+  historical?: boolean;
   primaryActionId: string | null; warning: string | null; preview: Preview;
 };
 export type Counts = {

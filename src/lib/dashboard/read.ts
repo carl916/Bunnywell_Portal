@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DashboardInput, WorkViewer } from "./types";
 import { canOpenSalesPipeline, isSalesInternalRole } from "../sales/permissions";
+import { readBuildingFees } from "../workspace/reads";
 import { readAgentFeePortfolio } from "../sales/fee-portfolio-data";
 import { portalAccessKey } from "../portal-access-snapshot";
 
@@ -31,8 +32,10 @@ type ReadQuery = PromiseLike<Page<unknown>> & {
   limit(count: number, options?: { referencedTable?: string }): ReadQuery;
 };
 
-export async function loadDashboardInput(client: SupabaseClient, viewer: WorkViewer, buildingId: string, now = Date.now(), mode: "dashboard" | "sales-register" = "dashboard"): Promise<DashboardInput> {
+export async function loadDashboardInput(client: SupabaseClient, viewer: WorkViewer, buildingId: string, now = Date.now(), mode: "dashboard" | "sales-register" | "workspace" | "workspace-snags" = "dashboard"): Promise<DashboardInput> {
   const register = mode === "sales-register";
+  const workspace = mode.startsWith("workspace"), snagsOnly = mode === "workspace-snags";
+  if (workspace && !buildingId) throw new DashboardAccessError("One building is required.");
   const rows = async <T,>(table: string, columns: string, filter?: (query: ReadQuery) => ReadQuery): Promise<T[]> => {
     return readComplete<T>(async (from, to) => {
       // The builder is reconstructed per page so filters/order/range cannot bleed between modules.
@@ -42,7 +45,7 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
     });
   };
   // All table reads use the caller's JWT and existing RLS. No service-role portfolio scan.
-  const buildings = await rows<DashboardInput["buildings"][number]>("buildings", "id,name,status,pc_date,pc_confirmed,practical_completion_date,conveyancer_organisation_id,sales_agent_organisation_id");
+  const buildings = await rows<DashboardInput["buildings"][number]>("buildings", "id,name,status,pc_date,pc_confirmed,practical_completion_date,conveyancer_organisation_id,sales_agent_organisation_id", workspace ? q => q.eq("id", buildingId) : undefined);
   if (buildingId && !buildings.some(b => b.id === buildingId)) throw new DashboardAccessError("This building is unavailable or outside your access.");
   const scopedBuildings = buildings.filter(b => !buildingId || b.id === buildingId);
   const ids = scopedBuildings.map(b => b.id);
@@ -65,20 +68,20 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
     Object.assign(input, { units, floors, organisations, buildingOrganisations: relationships });
   }
   await Promise.all([
-    source("sales", "Sales progression", canOpenSalesPipeline(viewer.role), async () => {
+    source("sales", "Sales progression", !snagsOnly && canOpenSalesPipeline(viewer.role), async () => {
       input.sales = await rows("unit_sale_attempts", "id,building_id,unit_id,is_active,workflow_status,sales_agent_organisation_id,conveyancer_organisation_id,reservation_submitted_at,reservation_rejected_at,reservation_rejection_reason,reservation_approved_at,commercial_approved_at,exchanged_at,completed_at,legal_completed_at,redacted_at,authority_requested_at,completion_authority_requested_at,completion_authority_given_at,completion_arrangements_confirmed_at,completion_legacy_stage,completion_notice_issued_at,contractual_completion_date,created_at", q => q.in("building_id", ids).eq("is_active", true).is("redacted_at", null));
     }),
     source("snags", "Snags and resident defects", operational, async () => {
       input.snags = await rows("snags", "id,building_id,unit_id,source_type,title,status,trade_id,assigned_to_organisation_id,assigned_to_user_id,priority_code,sla_due_date,created_at,closed_at,snag_events(id,snag_id,event_type,old_value,new_value,comment,created_by_user_id,created_at)", q => q.in("building_id", ids).in("source_type", ["developer_snag", "leaseholder_defect"]).not("status", "in", "(closed,resolved)").in("snag_events.event_type", ["status_change", "triage"]).order("created_at", { referencedTable: "snag_events", ascending: false }).order("id", { referencedTable: "snag_events", ascending: false }).limit(1, { referencedTable: "snag_events" }));
     }),
-    source("handovers", "Handover eligibility", !register && (internal || viewer.role === "developer_representative"), async () => {
+    source("handovers", "Handover eligibility", !workspace && !register && (internal || viewer.role === "developer_representative"), async () => {
       const unitIds = input.units.filter(u => u.sale_status === "completed").map(u => u.id);
       input.handovers = await byIds("handovers", "id,unit_id", "unit_id", unitIds);
     }),
-    source("rentals", "Rental position", internal, async () => {
+    source("rentals", "Rental position", !workspace && internal, async () => {
       input.tenancies = await rows("unit_tenancies", "id,building_id,unit_id,tenancy_start_date,fixed_term_end_date,tenancy_end_date,created_at", q => q.in("building_id", ids));
     }),
-    source("access", "Pending resident access", !register && viewer.role === "admin", async () => {
+    source("access", "Pending resident access", !workspace && !register && viewer.role === "admin", async () => {
       input.accessRequests = await rows("resident_access_requests", "id,created_at,requested_units", q => q.eq("status", "pending"));
     }),
   ]);
@@ -92,7 +95,7 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
   }
   const salesIds = input.sales.map(s => s.id);
   await Promise.all([
-    source("legal", "Authorities and completion documents", canOpenSalesPipeline(viewer.role), async () => {
+    source("legal", "Authorities and completion documents", !snagsOnly && canOpenSalesPipeline(viewer.role), async () => {
       if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");
       const [documents, authorities, deposits, depositSources, furtherDeposits] = await Promise.all([
         byIds<DashboardInput["documents"][number]>("unit_sale_documents", "id,sale_attempt_id,document_type,status,query_note,approved_version_id,approved_at,updated_at,updated_by_user_id,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,is_current,redacted_at,uploaded_at)", "sale_attempt_id", salesIds, q => q.is("redacted_at", null).is("superseded_at", null).in("document_type", ["completion_statement", "draft_statement_of_account", "completion_correspondence"]).eq("unit_sale_document_versions.is_current", true).is("unit_sale_document_versions.redacted_at", null)),
@@ -103,7 +106,7 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
       ]);
       Object.assign(input, { documents, authorities, deposits, depositSources, furtherDeposits });
     }),
-    source("history", "Recent sales business activity", !register && canOpenSalesPipeline(viewer.role), async () => {
+    source("history", "Recent sales business activity", !workspace && !register && canOpenSalesPipeline(viewer.role), async () => {
       if (input.sources.find(s => s.key === "sales")?.state !== "ready") throw new Error("Sales source unavailable.");
       const events: DashboardInput["saleEvents"] = [];
       const actors: NonNullable<DashboardInput["saleActors"]> = [];
@@ -116,12 +119,17 @@ export async function loadDashboardInput(client: SupabaseClient, viewer: WorkVie
       }
       input.saleEvents = events; input.saleActors = actors;
     }),
-    source("fees", "Agent invoice position", internal, async () => {
+    source("fees", "Agent invoice position", !snagsOnly && (internal || workspace && viewer.role === "sales_agent"), async () => {
       // The canonical full portfolio RPC replaces the three active-only reads.
       // Reuse all accessible building metadata: the RPC is portfolio scoped.
-      input.feePortfolio = await readAgentFeePortfolio(client, viewer.id, buildings, input.organisations, buildingId);
+      if (workspace) {
+        const facts = await readBuildingFees(client, input);
+        const current = new Map(input.sales.map(s => [s.id,s]));
+        input.sales = facts.sales.map(s => current.get(s.id) || s);
+        input.terms=facts.terms; input.invoices=facts.invoices; input.payments=facts.payments; input.feePortfolio=facts.portfolio;
+      } else input.feePortfolio = await readAgentFeePortfolio(client, viewer.id, buildings, input.organisations, buildingId);
     }),
-    source("rent_risk", "Reported rental arrears", internal, async () => {
+    source("rent_risk", "Reported rental arrears", !workspace && internal, async () => {
       if (input.sources.find(s => s.key === "rentals")?.state !== "ready") throw new Error("Rental source unavailable.");
       const [arrears, rentalImports] = await Promise.all([
         byIds<DashboardInput["arrears"][number]>("rental_arrears_episodes", "id,tenancy_id,first_reported_at,last_reported_at,cleared_at,initial_reported_amount,maximum_reported_amount,latest_reported_amount,status,intervention_level,owner_action_required,resolution_basis,management_summary", "tenancy_id", input.tenancies.map(t => t.id), q => q.eq("attribution_status", "matched")),

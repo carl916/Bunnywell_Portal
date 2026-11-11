@@ -12,9 +12,9 @@ import { contractVersion, ContractError, roles, validId, type Scope, type Buildi
 
 export type Access = { identity: string; role: string; organisationId: string | null; accessRevision: string; active: boolean; buildingIds: string[] };
 // Access is supplied by a trusted adapter, never accepted as authentication from a browser.
-// Stage 1 supplies named offline identities; Stage 2 uses the approved local authenticated adapter. No remote adapter exists.
-export function scopeFor(access: Access, buildingId: string): Scope {
-  if (!access.active || !roles.includes(access.role as Scope["role"]) || !validId(buildingId) || !access.buildingIds.includes(buildingId)) throw new ContractError("Building unavailable for this account.");
+// Offline, local synthetic and staging adapters supply trusted access snapshots.
+export function scopeFor(access: Access, buildingId: string, operational = false): Scope {
+  if (!access.active || (!(roles as readonly string[]).includes(access.role) && !(operational && ["developer_representative","contractor"].includes(access.role))) || !validId(buildingId) || !access.buildingIds.includes(buildingId)) throw new ContractError("Building unavailable for this account.");
   return { identity:access.identity,role:access.role as Scope["role"],organisationId:access.organisationId,accessRevision:access.accessRevision,buildingId };
 }
 export function summarise(rows: SaleRow[], complete: boolean): Counts {
@@ -37,7 +37,7 @@ function wording(item: WorkItem) {
   if (item.kind.startsWith("fee_")) return item.kind.includes("awaiting_approval") ? "Awaiting agent invoice review" : item.kind.includes("paid") ? "Awaiting fee payment update" : "Awaiting "+(item.kind.includes("completion")?"completion":"exchange")+" agent invoice";
   return item.action;
 }
-export function projectWorkspace(access: Access, building: Building, input: DashboardInput, buyers: Record<string,string>, fixtureOnly = true): Workspace {
+export function projectWorkspace(access: Access, building: Building, input: DashboardInput, buyers: Record<string,string>, fixtureOnly = true, includeHistoricalFees = false): Workspace {
   const scope=scopeFor(access,building.id);
   if (input.buildingId!==building.id || input.viewer.id!==scope.identity || input.viewer.role!==scope.role || input.viewer.organisation_id!==scope.organisationId ||
       input.buildings.length!==1 || input.buildings[0].id!==building.id || input.units.some(u=>u.building_id!==building.id) || input.sales.some(s=>s.building_id!==building.id))
@@ -55,7 +55,7 @@ export function projectWorkspace(access: Access, building: Building, input: Dash
   const sources=dashboard.sources.filter(s=>["sales","legal","appointments","fees"].includes(s.key)).map(s=>({key:s.key,state:s.key==="fees"&&!feeAllowed?"not_permitted" as const:s.state}));
   const required=["sales","legal","appointments",...(feeAllowed?["fees"]:[])];
   const complete=required.every(key=>sources.some(s=>s.key===key&&s.state==="ready"));
-  // Retain the current population and reconciliation behaviour; no historical fee-only attempts.
+  // Retain current-unit reconciliation; the staging adapter also includes historical fee obligations.
   const register=deriveSalesRegister(input,dashboard);
   let items=dashboard.items.filter(i=>i.module==="sales"&&!i.kind.startsWith("fee_")&&!isWorkObservation(i));
   // The existing portfolio RPC is deliberately not called. Offline scoped facts reuse its pure derivation.
@@ -111,9 +111,20 @@ export function projectWorkspace(access: Access, building: Building, input: Dash
       saleId:sale?.id??null,buyerLabel:sale?buyers[sale.id]??"Buyer details unavailable":"",stage:unit.sale_status,actions,primaryActionId:actions[0]?.id??null,
       warning:[current.warning,!complete?"Actions unavailable: required data is incomplete.":null].filter(Boolean).join(" ")||null,preview};
   });
+
+  if (includeHistoricalFees && complete) for (const sale of input.sales.filter(s => !s.is_active && !s.redacted_at)) {
+    const selected=items.filter(i=>i.recordKey==="sale:"+sale.id && i.kind.startsWith("fee_"));
+    const unit=input.units.find(u=>u.id===sale.unit_id); if(!unit||!selected.length)continue;
+    const actions:Action[]=selected.map(i=>({id:i.id,kind:i.kind,title:wording(i),party:i.responsibility,queue:matchesWorkTeam(i,"ours")?"ours":matchesWorkTeam(i,"others")?"others":"unallocated",existingCapability:i.canAct,businessEnabled:false,countingUnit:i.countingUnit,deadline:i.deadline,urgent:i.urgent,destination:{buildingId:building.id,unitId:unit.id,saleId:sale.id,section:"financials",anchor:i.destination?.anchor||""}}));
+    rows.push({unitId:unit.id,unitNumber:unit.unit_number,buildingId:building.id,buildingName:building.name,floor:unit.floor||"",saleId:sale.id,buyerLabel:buyers[sale.id]||"Buyer not recorded",stage:unit.sale_status,historical:true,actions,primaryActionId:actions[0].id,warning:"Historical sale attempt · outstanding agent fees",preview:{heading:"Historical agent fees",state:sale.workflow_status,responsibleTeam:actions[0].party.label,mode:"read-only",onBehalf:null}});
+  }
+  if(includeHistoricalFees){const rank=new Map(ordered.map((u,i)=>[u.id,i]));rows.sort((a,b)=>(rank.get(a.unitId)??Infinity)-(rank.get(b.unitId)??Infinity)||Number(Boolean(a.historical))-Number(Boolean(b.historical))||(a.saleId||"").localeCompare(b.saleId||""));}
+  const counts=summarise(rows,complete&&reconciliationComplete);
+  // Stage counts describe current unit positions, not historical invoice rows.
+  if(includeHistoricalFees){const activeCounts=summarise(rows.filter(r=>!r.historical),true);counts.units=activeCounts.units;counts.stages=activeCounts.stages;}
   return {contract:contractVersion,scope,building:{id:building.id,name:building.name,address:building.address},asOf:new Date(input.now).toISOString(),fixtureOnly,
     population:feeAllowed?"Current-sale legal, reservation and permitted fee actions":"Current-sale legal and reservation actions; fees outside this role contract",
-    sources,counts:summarise(rows,complete&&reconciliationComplete),rows};
+    sources,counts,rows};
 }
 
 
