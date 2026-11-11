@@ -1,3 +1,4 @@
+import { completionClient } from "./completion-client";
 import {approvedLocalEnvironment,createLocalReadTransport,assertLocalEnvironment} from "./local-environment";
 import {projectWorkspace,scopeFor,type Access} from "../building-contracts/projection";
 import {roles,type Building,type Scope,type Workspace} from "../building-contracts/contracts";
@@ -102,7 +103,7 @@ export function reader(config:Config,session:Session){
   const check=await catalog(signal);if(check.access.accessRevision!==scope.accessRevision)throw Error("Access changed during loading.");
   return{sale,documents};
  }
- return{read,catalog,load,completion};
+ return{read,catalog,load,completion,workflow:completionClient(session.access_token,config.anonKey)};
 }
 
 

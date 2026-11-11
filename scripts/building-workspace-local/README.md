@@ -1,72 +1,89 @@
-# Local connected workspace — Stage 2
+# Local connected workspace — Completion review
 
 Review: http://127.0.0.1:3031/dev/building-workspace
 
-**Branch:** codex/building-workspace-contracts  
-**Worktree:** C:/Users/carlg/.codex/worktrees/building-workspace-contracts/Bunnywell_Portal  
-**Baseline:** 0a1ee76a18c17c4466b1031efe52b22e9959abe3
+**Branch:** codex/building-workspace-contracts
+**Worktree:** C:/Users/carlg/.codex/worktrees/building-workspace-contracts/Bunnywell_Portal
+**Read-only checkpoint:** 088a40b551f4735c59542a29baa6136c76af17b0
+**Current delivery:** authenticated local integration with the separately approved Completion document-review writes, using the isolated synthetic bunnywell-workspace-stage2 backend.
 
-This is an authenticated, read-only integration against the approved isolated local bunnywell-workspace-stage2 database. It uses the accepted full-page design, not the simplified contracts demonstration. The original /dev/sales-workspace prototype remains unchanged in its own worktree; all 12 recorded source/asset hashes match.
+This uses the accepted full-page interface, not the /dev/building-workspace-contracts technical demonstration. The accepted /dev/sales-workspace prototype remains unchanged on experiment/sales-workspace-redesign at 1df4bac80588491bc3fba47966c9854fb33b4c10. All 12 recorded design source/asset hashes still match both copies.
 
-## Launch and sign in
+## Start and sign in
 
-From this worktree, run **./scripts/building-workspace-local/start.ps1** with Docker Desktop's Linux engine running. It preserves existing data, never reseeds, starts hidden UI/gateway processes and checks readiness before reporting success.
+With Docker Desktop's Linux engine running:
 
-- Developer: bw-stage2-developer@example.invalid
-- Conveyancer: bw-stage2-conveyancer@example.invalid
-- Single-building agent: bw-stage2-agent-single@example.invalid
+~~~powershell
+Set-Location 'C:\Users\carlg\.codex\worktrees\building-workspace-contracts\Bunnywell_Portal'
+./scripts/building-workspace-local/start.ps1
+~~~
 
-The password and all ten synthetic accounts are in the Git-ignored **local-runtime/test-access.json**. Sessions expire after 30 minutes; sign out and sign back in when necessary.
+The launcher verifies local isolation, preserves the existing database and starts hidden UI/gateway processes. It never replays the schema or reseeds. Use port **3031**, not the internal UI port 3032. Do not run a plain npm dev command for this connected delivery: the launcher sets the exact local environment and server guard.
 
-Open **Willow Court → Sales → G11 → Completion**. The developer sees “Awaiting revised statement”; the conveyancer sees “Resolve the query”. Orchard House has different buyers and statuses for G11, LG11 and 301.
+- Conveyancer: **bw-stage2-conveyancer@example.invalid**
+- Developer: **bw-stage2-developer@example.invalid**
+- Shared synthetic test password: Git-ignored **local-runtime/test-access.json**, property **password**.
 
-## Connected scope and boundaries
+Sessions last 30 minutes; sign out and back in when necessary. Different browser tabs have separate session/building context. Test credentials and local runtime keys are not committed.
 
-Connected: authenticated profile/access checks; building selection; building-specific dashboard counts and organisation/team responsibility; searched and filtered worklist with all outstanding actions; exact building/unit/sale identity; full-page Completion milestones, dates, document status, query text and version metadata.
+## Try the complete document review
 
-The logo theme, compact identity and completion overview, wide task area, laptop spacing and permanent desktop Comments & Activity column are retained. Narrow layouts keep discussion in normal page flow.
+Choose **Willow Court → Sales → CR01 → Completion**. CR01 was left empty for manual review; completed automated-test records have names beginning with T. The original G11 fixtures are preserved.
 
-**Not connected:** Comments, Activity, document contents, email bodies/delivery history and other detailed workspaces. These say they are unavailable rather than displaying fictional content alongside backend records. The three seeded documents contain metadata only. Business actions remain disabled; authentication creates normal local sessions separately from business reads.
+Sample files are in **artifacts/building-workspace-stage2/completion-review/review-files/**:
 
-The existing sale-file handoff stays disabled and is never opened or prefetched. Any future link must use the same approved environment and exact building, unit and sale attempt. Existing opening paths can write unit-open activity, initialise sale state or expire legal authority; those paths are outside the new surfaces' read-only guarantee. The local unit-open event table remained empty.
+1. Sign in as conveyancer. In Completion statement, choose **completion-v1.pdf**, then **Upload document**.
+2. Sign out; sign in as developer. Open the same CR01 sale, view the document and **Raise query**, entering a reason.
+3. Sign out; sign in as conveyancer. The heading is **Resolve the query**. Upload **completion-v2.pdf** in the queried statement's card.
+4. Sign out; sign in as developer. **Approve document**, then confirm the building, unit and version.
+5. Optionally upload/review **statement-of-account.pdf** in the separate Statement of account card. Both approvals are independent.
 
-## Setup and remaining schema gap
+Comments can be added by both roles. Activity and version history show persisted actions and actors. Expand **Recorded document versions** to see the original version/query and open either version. Approved documents stay locked under existing rules.
 
-Replayed the repository initial schema and all 70 recorded migration files without changing those files. Replay needed dependency ordering for same-date files and local enum prerequisites for the existing sales_agent/conveyancer roles omitted by the bootstrap. Reconcile that gap before a later environment integration; no remote schema parity is claimed. The empty Forum House placeholder created by the old bootstrap was replaced by the approved fictional buildings.
+Successful document mutations refresh the current building's worklist/dashboard snapshot. Another already-open session needs a page/workspace refresh to see another user's changes; there is no new realtime subscription. Comments reload on view/navigation/reload; there are no read-receipt or mention writes.
 
-Setup used existing transaction-local legal/commercial/package contexts to insert synthetic snapshots, preserving triggers and permissions. The result contains 3 buildings, 8 units/current sales, 1 superseded test attempt, 3 document metadata records and 10 test accounts. Controlled access revocation was restored.
+This completes document review, **not legal completion**: Confirm legal completion remains disabled. The existing transaction moves the sale to completion_pending when both documents are approved.
 
-Existing developer/admin rules allow all-building access. They were preserved; the single-building case uses agent-single rather than pretending developer-single has restricted permissions. The separate staging payment hotfix has not been automatically merged into this pinned read-only branch.
+For repeat automated cycles, the setup below creates a new fictional test record without unlocking or overwriting existing sales:
 
-## Isolation
+~~~powershell
+node scripts/building-workspace-local/prepare-completion-review.mjs --test
+node scripts/building-workspace-local/completion-journey.mjs
+node scripts/building-workspace-local/completion-additional-checks.mjs
+node scripts/building-workspace-local/completion-navigation-checks.mjs
+~~~
 
-Data services use only the dedicated internal Docker network. The credential-free fixed ingress relay publishes loopback ports and has its external default route removed. Browser CSP and the explicit read transport block external origins, business mutations, RPCs and legacy routes. The gateway also excludes the Next image proxy. Auth uses local mail capture; public signup is disabled and no messages were generated. Unneeded services such as Edge runtime and analytics are disabled. No outbound cron jobs are installed.
+The setup without --test creates CR01 only if absent and generates the sample PDFs. It never resets CR01. Setup validates isolation before creating a private bucket or synthetic record.
 
-Private runtime keys and test credentials are Git-ignored. No remote business environment was contacted, no paid environment was created, and no unrelated database was overwritten.
+## Connected and unavailable
 
-## Newly executed validation
+Connected:
+- Authenticated profile/access, building selection, scoped dashboard counts and sales worklist.
+- Exact building/unit/sale-attempt full-page Completion, milestones, dates and current/previous document metadata.
+- Completion statement and statement-of-account PDF uploads/replacements, private viewing, queries and approvals.
+- Plain comments and paginated role-safe Activity, using existing discussion permissions and actor attribution.
 
-- **38 offline contract/boundary tests passed.**
-- **28 authenticated journey checks passed:** explicit/single-building entry, floor ordering, multiple actions/counts, G11/LG11/301 duplicates, direct links, refresh, history, separate tabs, filter restoration, delayed response switching, role headings, inactive/restricted denial, RLS denial and controlled access revocation.
-- **10 additional checks passed:** scoped direct loads, incomplete-source counts, whole-workspace errors, superseded attempt denial, keyboard focus, mobile scroll restoration and change-building access, zoom-equivalent layout, mail capture and no legacy opening side effects.
-- TypeScript, focused ESLint and a local production build passed. All three experiment routes returned **404 in production**, even with the local flag enabled.
-- Checked 1366×768, 390×844, 1024×768 and 1920×1080. A 683×384 CSS viewport at 2× device scale tested the effective layout at 200% laptop zoom; this is **not a native browser-zoom test**.
-- Tested restart with services already running and UI startup from a stopped state. No data was reset.
+Explicitly unavailable:
+- Email bodies/delivery history, correspondence file UI and the other detailed sale workspaces.
+- Legal completion recording, authority/notice sending, payments, other business actions, mention notifications, read receipts, comment edits/replies/assignments.
+- The existing sale-file handoff, which is not opened or prefetched. Legacy opening paths can write state.
 
-Previous Stage 1 results remain in artifacts/building-contracts-stage1 and artifacts/building-workspace-stage2/previous-validation-2026-11-05.json. They are not counted as authenticated integration proof. These are synthetic read/navigation checks, not payment, approval, upload, sending or other real workflow integration tests.
+No sample buyer, comment or document is substituted into a connected record. Earlier G11 document fixtures have metadata only; unavailable file bodies are reported clearly.
 
-## Performance and evidence
+## Business logic and isolation
 
-Four synthetic units in the selected building, warm local development server:
+The development-only adapter delegates to the existing legal POST, upload preparation/finalisation helpers, sales_legal_action and sales_completion_upload_session functions. Comment writes and timeline reads use existing sale_comment_write, sale_comment_page and sale_activity_page functions; private file links use the existing document signer and discussion access checks. Existing transaction validation, roles, locks, stale-version checks and workflow/activity writes remain authoritative.
 
-- Dashboard required 19 data/auth requests; its worklist reused the scoped snapshot with zero additional requests.
-- Three direct worklist reloads took approximately **291–293 ms**, with **22 data/auth requests**, **14,266 response-body bytes** and about **16,507 header bytes** each.
-- A fresh browser-cache authenticated worklist took **383 ms** with **50 total page/asset/data/auth requests** and **1,031,183 transferred bytes including headers**. Development assets are unoptimised; WebSocket frames are excluded.
-- Normal entry fetched no detailed records from other buildings. No speculative prefetching was introduced.
+No production endpoint, migration, RLS policy, authentication rule or workflow definition changed. The shared resumable-upload client gained an optional local transport; its default production transport and existing regression tests are retained.
 
-These figures are local development evidence, not production-size, remote-latency or scalability benchmarks.
+Only the named local project and loopback API are permitted. Data services remain on the dedicated internal Docker network, with a credential-free ingress relay whose external default route is removed. Browser CSP, the gateway allowlist, a server fetch guard and exact environment checks restrict the connected UI. Auth uses local mail capture; public signup and outbound integrations remain disabled. No remote business environment was contacted.
 
-Evidence is in **artifacts/building-workspace-stage2**: validation.json, journey-tests.json, additional-checks.json, cold-page-performance.json, schema-replay.json, isolation.json, browser-isolation.json and production-route-check.json. Review images include dashboard-1366.png, worklist-1366.png, completion-1366.png, worklist-390.png, completion-390.png, completion-tablet.png and completion-wide.png.
+Existing read-only setup replayed the initial schema and 70 recorded migrations, including local enum prerequisites omitted by the bootstrap. This delivery reuses that database; it adds no schema migration. It creates the missing private sale-documents bucket with the existing PDF/10 MiB settings and new fictional review records. The earlier schema-baseline gap and remote parity assessment remain outstanding for the later review.
 
-Staging, production, production-facing endpoints and the original redesign worktree were not changed by this integration. Nothing was merged, pushed or deployed. Remaining work is separately authorised panel/file integration and, later, business actions plus realistic-scale/environment validation.
+## Validation
 
+See **docs/workspace-checkpoints/2026-11-11-completion-review.md** for the current tests, performance evidence and limits. Current results are under **artifacts/building-workspace-stage2/completion-review/**. These are real authenticated workflow tests against synthetic local data, not fixture-only UI simulations or staging/production tests.
+
+The earlier read-only checkpoint and 6 November results remain recorded in **docs/workspace-checkpoints/2026-11-11.md** and the original Stage 2 artifacts. Those historical test totals are not counted as newly executed results.
+
+Next sequence: wider Dashboard, Sales, Snags, Buildings and Setup structure, then the comprehensive database/API review. Reuse the capability/location, data-loading and information-architecture groundwork listed in the earlier checkpoint. No broad visual redesign, merge, push or deployment.

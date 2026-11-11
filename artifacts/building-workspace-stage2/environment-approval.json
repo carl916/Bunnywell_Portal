@@ -42,5 +42,21 @@
   "blocker": null,
   "approvalStillRequired": false,
   "resolvedPrerequisiteBlocker": "Microsoft WSL 2.7.14 installation failed with 0x80073d28: administrator privileges required. No local Docker runtime is installed.",
-  "prerequisiteBlockerResolvedBy": "Local Docker setup and validation completed on 6 November 2026; see scripts/building-workspace-local/README.md"
+  "prerequisiteBlockerResolvedBy": "Local Docker setup and validation completed on 6 November 2026; see scripts/building-workspace-local/README.md",
+  "scopeExtensions": [
+    {
+      "date": "2026-11-11",
+      "authority": "Explicit user approval in this chat",
+      "scope": "Completion document uploads, queries, replacements, approvals, plain comments and associated activity writes within the existing isolated local synthetic environment only.",
+      "permittedSetup": "New fictional test records and the existing private document bucket settings; no schema migration or modification of earlier fixtures.",
+      "preserve": "Existing business logic, validation, organisation/team responsibility, permissions and accepted UI.",
+      "excluded": [
+        "Other business actions",
+        "Outbound integrations and notifications",
+        "Staging or production access",
+        "Merge, push or deployment"
+      ],
+      "report": "../../docs/workspace-checkpoints/2026-11-11-completion-review.md"
+    }
+  ]
 }
