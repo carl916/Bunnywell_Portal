@@ -1,0 +1,1058 @@
+{
+  "date": "2026-11-11",
+  "branch": "codex/wider-workspace-integration",
+  "commit": "0320768cc7a00266941176f88e46df64c28805ce",
+  "project": "vxkpvdtrldwwqiddoyof",
+  "environment": "Bunnywell Portal Staging",
+  "route": "http://127.0.0.1:3033/workspace",
+  "scope": "Read-only review; no application or database changes",
+  "catalogCounts": {
+    "enums": 25,
+    "views": 1,
+    "grants": 602,
+    "tables": 63,
+    "buckets": 4,
+    "columns": 818,
+    "indexes": 170,
+    "policies": 101,
+    "triggers": 73,
+    "functions": 145,
+    "constraints": 418
+  },
+  "drift": {
+    "enums": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "views": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "grants": {
+      "stagingOnly": [
+        "public.rental_arrears_episodes.anon.REFERENCES",
+        "public.rental_arrears_episodes.anon.SELECT",
+        "public.rental_arrears_episodes.anon.TRIGGER",
+        "public.rental_arrears_episodes.anon.TRUNCATE",
+        "public.rental_arrears_episodes.authenticated.REFERENCES",
+        "public.rental_arrears_episodes.authenticated.TRIGGER",
+        "public.rental_arrears_episodes.authenticated.TRUNCATE",
+        "public.rental_arrears_events.anon.REFERENCES",
+        "public.rental_arrears_events.anon.SELECT",
+        "public.rental_arrears_events.anon.TRIGGER",
+        "public.rental_arrears_events.anon.TRUNCATE",
+        "public.rental_arrears_events.authenticated.REFERENCES",
+        "public.rental_arrears_events.authenticated.TRIGGER",
+        "public.rental_arrears_events.authenticated.TRUNCATE",
+        "public.rental_import_runs.anon.REFERENCES",
+        "public.rental_import_runs.anon.SELECT",
+        "public.rental_import_runs.anon.TRIGGER",
+        "public.rental_import_runs.anon.TRUNCATE",
+        "public.rental_import_runs.authenticated.REFERENCES",
+        "public.rental_import_runs.authenticated.TRIGGER",
+        "public.rental_import_runs.authenticated.TRUNCATE",
+        "public.unit_tenancies.anon.REFERENCES",
+        "public.unit_tenancies.anon.SELECT",
+        "public.unit_tenancies.anon.TRIGGER",
+        "public.unit_tenancies.anon.TRUNCATE",
+        "public.unit_tenancies.authenticated.REFERENCES",
+        "public.unit_tenancies.authenticated.TRIGGER",
+        "public.unit_tenancies.authenticated.TRUNCATE"
+      ],
+      "localOnly": [],
+      "different": []
+    },
+    "tables": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "buckets": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "columns": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "indexes": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "policies": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "triggers": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    },
+    "functions": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": [
+        "public.record_unit_sale_invoice_payment.p_invoice_id uuid, p_payer_type text, p_amount numeric, p_payment_date date, p_note text, p_client_reference uuid, p_requester_id uuid",
+        "public.return_pre_exchange_unit_for_sale.p_sale_attempt_id uuid, p_actor_user_id uuid, p_reason text, p_source text",
+        "public.sale_attempt_has_meaningful_activity_before_discussions.p_sale_attempt_id uuid",
+        "public.sale_event_projection_before_deposit.e unit_sale_workflow_events",
+        "public.sale_event_projection_before_notice.e unit_sale_workflow_events",
+        "public.sale_event_projection_before_package.e unit_sale_workflow_events",
+        "public.sales_contact_audit.",
+        "public.sales_contact_guard.",
+        "public.sales_legal_unit_guard.",
+        "public.sales_legal_write_guard.",
+        "public.sales_notice_state_guard.",
+        "public.sales_notice_version_guard."
+      ]
+    },
+    "constraints": {
+      "stagingOnly": [],
+      "localOnly": [],
+      "different": []
+    }
+  },
+  "population": {
+    "building": "Forum House",
+    "worklistRows": 62,
+    "snags": 196
+  },
+  "api": [
+    {
+      "kind": "catalog",
+      "samplesMs": [
+        462,
+        516,
+        443,
+        422,
+        1244
+      ],
+      "medianMs": 462,
+      "minMs": 422,
+      "maxMs": 1244,
+      "backendRequests": 10,
+      "backendDecodedBytes": 3813,
+      "responseBytes": 806
+    },
+    {
+      "kind": "workspace",
+      "samplesMs": [
+        1266,
+        1298,
+        1265,
+        1247,
+        1249
+      ],
+      "medianMs": 1265,
+      "minMs": 1247,
+      "maxMs": 1298,
+      "backendRequests": 27,
+      "backendDecodedBytes": 240194,
+      "responseBytes": 227803
+    },
+    {
+      "kind": "snags",
+      "samplesMs": [
+        1194,
+        1184,
+        1190,
+        1211,
+        1315
+      ],
+      "medianMs": 1194,
+      "minMs": 1184,
+      "maxMs": 1315,
+      "backendRequests": 19,
+      "backendDecodedBytes": 230421,
+      "responseBytes": 201640
+    },
+    {
+      "kind": "building",
+      "samplesMs": [
+        957,
+        908,
+        950,
+        946,
+        991
+      ],
+      "medianMs": 950,
+      "minMs": 908,
+      "maxMs": 991,
+      "backendRequests": 18,
+      "backendDecodedBytes": 188092,
+      "responseBytes": 182731
+    },
+    {
+      "kind": "completion",
+      "samplesMs": [
+        673,
+        543,
+        560,
+        631,
+        566
+      ],
+      "medianMs": 566,
+      "minMs": 543,
+      "maxMs": 673,
+      "backendRequests": 12,
+      "backendDecodedBytes": 4708,
+      "responseBytes": 904
+    },
+    {
+      "kind": "comments",
+      "samplesMs": [
+        647,
+        673,
+        653,
+        618,
+        691
+      ],
+      "medianMs": 653,
+      "minMs": 618,
+      "maxMs": 691,
+      "backendRequests": 13,
+      "backendDecodedBytes": 4763,
+      "responseBytes": 50
+    },
+    {
+      "kind": "activity",
+      "samplesMs": [
+        660,
+        739,
+        639,
+        647,
+        619
+      ],
+      "medianMs": 647,
+      "minMs": 619,
+      "maxMs": 739,
+      "backendRequests": 13,
+      "backendDecodedBytes": 9338,
+      "responseBytes": 4386
+    },
+    {
+      "kind": "snag",
+      "samplesMs": [
+        693,
+        843,
+        799,
+        787,
+        728
+      ],
+      "medianMs": 787,
+      "minMs": 693,
+      "maxMs": 843,
+      "backendRequests": 18,
+      "backendDecodedBytes": 8539,
+      "responseBytes": 3921
+    },
+    {
+      "kind": "setup",
+      "samplesMs": [
+        398,
+        396,
+        425,
+        375,
+        505
+      ],
+      "medianMs": 398,
+      "minMs": 375,
+      "maxMs": 505,
+      "backendRequests": 10,
+      "backendDecodedBytes": 10879,
+      "responseBytes": 7294
+    }
+  ],
+  "browser": [
+    {
+      "dashboardMs": 1364,
+      "cachedWorklistMs": 63,
+      "freshWorklistMs": 2235,
+      "dashboardReads": [
+        {
+          "kind": "workspace",
+          "transferBytes": 228103,
+          "decodedBytes": 227803
+        }
+      ]
+    },
+    {
+      "dashboardMs": 1364,
+      "cachedWorklistMs": 55,
+      "freshWorklistMs": 2259,
+      "dashboardReads": [
+        {
+          "kind": "workspace",
+          "transferBytes": 228103,
+          "decodedBytes": 227803
+        }
+      ]
+    },
+    {
+      "dashboardMs": 1883,
+      "cachedWorklistMs": 48,
+      "freshWorklistMs": 2861,
+      "dashboardReads": [
+        {
+          "kind": "workspace",
+          "transferBytes": 228103,
+          "decodedBytes": 227803
+        }
+      ]
+    },
+    {
+      "dashboardMs": 1883,
+      "cachedWorklistMs": 61,
+      "freshWorklistMs": 2252,
+      "dashboardReads": [
+        {
+          "kind": "workspace",
+          "transferBytes": 228103,
+          "decodedBytes": 227803
+        }
+      ]
+    },
+    {
+      "dashboardMs": 1385,
+      "cachedWorklistMs": 64,
+      "freshWorklistMs": 2760,
+      "dashboardReads": [
+        {
+          "kind": "workspace",
+          "transferBytes": 228103,
+          "decodedBytes": 227803
+        }
+      ]
+    }
+  ],
+  "browserErrors": [],
+  "additional": {
+    "dashboardPayloadModel": {
+      "bytes": 9829,
+      "gzipEstimateBytes": 2091,
+      "oldBytes": 227803,
+      "note": "Offline size comparison retaining count fields and two sale/two snag attention rows; not implemented or timed."
+    },
+    "completionBrowser": [
+      {
+        "taskMs": 3248,
+        "discussionMs": 3252,
+        "reads": [
+          {
+            "kind": "config",
+            "ms": 7.600000001490116,
+            "transfer": 502,
+            "decoded": 202
+          },
+          {
+            "kind": "catalog",
+            "ms": 509.1000000014901,
+            "transfer": 1106,
+            "decoded": 806
+          },
+          {
+            "kind": "workspace",
+            "ms": 1266,
+            "transfer": 228103,
+            "decoded": 227803
+          },
+          {
+            "kind": "completion",
+            "ms": 5,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "comments",
+            "ms": 4.600000001490116,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "completion",
+            "ms": 832.5,
+            "transfer": 1204,
+            "decoded": 904
+          },
+          {
+            "kind": "comments",
+            "ms": 860.5,
+            "transfer": 350,
+            "decoded": 50
+          }
+        ]
+      },
+      {
+        "taskMs": 2718,
+        "discussionMs": 2720,
+        "reads": [
+          {
+            "kind": "config",
+            "ms": 8.5,
+            "transfer": 502,
+            "decoded": 202
+          },
+          {
+            "kind": "catalog",
+            "ms": 385.80000000447035,
+            "transfer": 1106,
+            "decoded": 806
+          },
+          {
+            "kind": "workspace",
+            "ms": 1167,
+            "transfer": 228103,
+            "decoded": 227803
+          },
+          {
+            "kind": "completion",
+            "ms": 4.299999997019768,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "comments",
+            "ms": 3.7999999970197678,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "completion",
+            "ms": 551.4000000059605,
+            "transfer": 1204,
+            "decoded": 904
+          },
+          {
+            "kind": "comments",
+            "ms": 642,
+            "transfer": 350,
+            "decoded": 50
+          }
+        ]
+      },
+      {
+        "taskMs": 2726,
+        "discussionMs": 2728,
+        "reads": [
+          {
+            "kind": "config",
+            "ms": 8.899999998509884,
+            "transfer": 502,
+            "decoded": 202
+          },
+          {
+            "kind": "catalog",
+            "ms": 422.20000000298023,
+            "transfer": 1106,
+            "decoded": 806
+          },
+          {
+            "kind": "workspace",
+            "ms": 1212.2000000029802,
+            "transfer": 228103,
+            "decoded": 227803
+          },
+          {
+            "kind": "completion",
+            "ms": 4.600000001490116,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "comments",
+            "ms": 4.100000001490116,
+            "transfer": 0,
+            "decoded": 0
+          },
+          {
+            "kind": "completion",
+            "ms": 614.5,
+            "transfer": 1204,
+            "decoded": 904
+          },
+          {
+            "kind": "comments",
+            "ms": 654.8000000044703,
+            "transfer": 350,
+            "decoded": 50
+          }
+        ]
+      }
+    ]
+  },
+  "payloadAlternatives": {
+    "current": {
+      "decodedBytes": 227803,
+      "gzipEstimateBytes": 15079
+    },
+    "summaryOnly": {
+      "decodedBytes": 1263,
+      "gzipEstimateBytes": 612
+    },
+    "worklistPage20": {
+      "decodedBytes": 45782,
+      "gzipEstimateBytes": 4219
+    },
+    "snagsPage20": {
+      "decodedBytes": 25474,
+      "gzipEstimateBytes": 2948
+    }
+  },
+  "requestBreakdown": [
+    {
+      "path": "/auth/v1/user",
+      "ms": 49,
+      "bytes": 999,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/profiles",
+      "ms": 63,
+      "bytes": 97,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/user_building_access",
+      "ms": 47,
+      "bytes": 2,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/building_organisations",
+      "ms": 56,
+      "bytes": 1061,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/user_unit_access",
+      "ms": 64,
+      "bytes": 2,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/buildings",
+      "ms": 66,
+      "bytes": 490,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/buildings",
+      "ms": 54,
+      "bytes": 293,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/building_organisations",
+      "ms": 70,
+      "bytes": 425,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/building_floors",
+      "ms": 79,
+      "bytes": 804,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/units",
+      "ms": 91,
+      "bytes": 15972,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/organisations",
+      "ms": 142,
+      "bytes": 507,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_attempts",
+      "ms": 104,
+      "bytes": 58244,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/snags",
+      "ms": 152,
+      "bytes": 29757,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/sale_exchange_deposit_receipts",
+      "ms": 83,
+      "bytes": 420,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/sale_exchange_deposit_sources",
+      "ms": 161,
+      "bytes": 5715,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_attempts",
+      "ms": 187,
+      "bytes": 13613,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/sale_legal_emails",
+      "ms": 196,
+      "bytes": 25454,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_documents",
+      "ms": 240,
+      "bytes": 47137,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_invoices",
+      "ms": 92,
+      "bytes": 2443,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/sale_further_deposit_facts",
+      "ms": 288,
+      "bytes": 10295,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_terms",
+      "ms": 127,
+      "bytes": 16570,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_invoice_payments",
+      "ms": 71,
+      "bytes": 1683,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/unit_sale_attempts",
+      "ms": 81,
+      "bytes": 7049,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/profiles",
+      "ms": 53,
+      "bytes": 97,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/user_unit_access",
+      "ms": 57,
+      "bytes": 2,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/building_organisations",
+      "ms": 57,
+      "bytes": 1061,
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/rest/v1/user_building_access",
+      "ms": 77,
+      "bytes": 2,
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "offlineTests": {
+    "passed": 72,
+    "failed": 0,
+    "skipped": 0,
+    "files": [
+      "building-contracts-stage1",
+      "workspace-staging",
+      "building-completion-boundary",
+      "sales-register-session",
+      "sales-permissions",
+      "conveyancer-payment-access"
+    ]
+  },
+  "plans": [
+    {
+      "kind": "terms",
+      "role": "owner",
+      "ms": 0.325,
+      "rows": 63,
+      "sharedHits": 19,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "owner",
+      "ms": 0.308,
+      "rows": 63,
+      "sharedHits": 19,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "owner",
+      "ms": 0.335,
+      "rows": 63,
+      "sharedHits": 19,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "admin",
+      "ms": 40.062,
+      "rows": 63,
+      "sharedHits": 1113,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "admin",
+      "ms": 40.094,
+      "rows": 63,
+      "sharedHits": 1113,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "admin",
+      "ms": 40.176,
+      "rows": 63,
+      "sharedHits": 1113,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "conveyancer",
+      "ms": 26.58,
+      "rows": 0,
+      "sharedHits": 996,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "conveyancer",
+      "ms": 29.596,
+      "rows": 0,
+      "sharedHits": 996,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "terms",
+      "role": "conveyancer",
+      "ms": 27.694,
+      "rows": 0,
+      "sharedHits": 996,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "owner",
+      "ms": 6.401,
+      "rows": 57,
+      "sharedHits": 1830,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "owner",
+      "ms": 6.521,
+      "rows": 57,
+      "sharedHits": 1830,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "owner",
+      "ms": 6.673,
+      "rows": 57,
+      "sharedHits": 1830,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "admin",
+      "ms": 40.068,
+      "rows": 57,
+      "sharedHits": 2481,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "admin",
+      "ms": 42.851,
+      "rows": 57,
+      "sharedHits": 2481,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "snags",
+      "role": "admin",
+      "ms": 42.465,
+      "rows": 57,
+      "sharedHits": 2481,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "owner",
+      "ms": 0.575,
+      "rows": 250,
+      "sharedHits": 777,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "owner",
+      "ms": 0.581,
+      "rows": 250,
+      "sharedHits": 777,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "owner",
+      "ms": 0.6,
+      "rows": 250,
+      "sharedHits": 777,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "admin",
+      "ms": 31.567,
+      "rows": 250,
+      "sharedHits": 1313,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "admin",
+      "ms": 31.57,
+      "rows": 250,
+      "sharedHits": 1313,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "areas",
+      "role": "admin",
+      "ms": 31.995,
+      "rows": 250,
+      "sharedHits": 1313,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "owner",
+      "ms": 0.185,
+      "rows": 63,
+      "sharedHits": 99,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "owner",
+      "ms": 0.178,
+      "rows": 63,
+      "sharedHits": 99,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "owner",
+      "ms": 0.173,
+      "rows": 63,
+      "sharedHits": 99,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "admin",
+      "ms": 17.761,
+      "rows": 63,
+      "sharedHits": 732,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "admin",
+      "ms": 18.218,
+      "rows": 63,
+      "sharedHits": 732,
+      "sharedReads": 0,
+      "tempWrites": 0
+    },
+    {
+      "kind": "currentSales",
+      "role": "admin",
+      "ms": 20.267,
+      "rows": 63,
+      "sharedHits": 732,
+      "sharedReads": 0,
+      "tempWrites": 0
+    }
+  ],
+  "alternativeQuery": {
+    "kind": "batched latest snag event",
+    "samples": [
+      {
+        "ms": 123.582,
+        "rows": 57
+      },
+      {
+        "ms": 120.415,
+        "rows": 57
+      },
+      {
+        "ms": 123.38,
+        "rows": 57
+      }
+    ],
+    "equivalence": {
+      "oldRows": 57,
+      "newRows": 57,
+      "mismatches": 0
+    },
+    "adopt": false
+  },
+  "integrity": {
+    "unknown_floors": 2,
+    "snag_area_mismatch": 0,
+    "payment_sale_mismatch": 0,
+    "area_building_mismatch": 0,
+    "sale_building_mismatch": 0,
+    "approved_version_mismatch": 0,
+    "invoice_document_mismatch": 0
+  },
+  "constraintViolations": {
+    "invalid_void": 0,
+    "missing_paid_at": 0,
+    "future_sale_reservations": 0,
+    "future_unit_reservations": 0,
+    "negative_or_zero_payment": 0
+  },
+  "stagingCounts": {
+    "areas": 1504,
+    "flats": 0,
+    "sales": 130,
+    "snags": 196,
+    "terms": 130,
+    "units": 215,
+    "photos": 201,
+    "reports": 0,
+    "versions": 184,
+    "snag_comments": 0
+  },
+  "bucketObjectCounts": [
+    {
+      "count": 75,
+      "bucket_id": "completion-uploads"
+    },
+    {
+      "count": 182,
+      "bucket_id": "sale-documents"
+    },
+    {
+      "count": 3,
+      "bucket_id": "snag-reports"
+    },
+    {
+      "count": 538,
+      "bucket_id": "snag-images"
+    }
+  ],
+  "storagePrefixes": [
+    {
+      "count": 332,
+      "prefix": "_derived",
+      "bucket_id": "snag-images"
+    },
+    {
+      "count": 201,
+      "prefix": "snags",
+      "bucket_id": "snag-images"
+    },
+    {
+      "count": 2,
+      "prefix": "videos",
+      "bucket_id": "snag-images"
+    },
+    {
+      "count": 2,
+      "prefix": "snag-updates",
+      "bucket_id": "snag-images"
+    },
+    {
+      "count": 1,
+      "prefix": "rejections",
+      "bucket_id": "snag-images"
+    }
+  ],
+  "notes": [
+    "New development/read-only baseline; not hosted production evidence",
+    "No business writes, migration replay, reset or production inspection",
+    "Auth sign-in may create ordinary session/audit records",
+    "An incorrect empty-comments test locator caused one excluded timeout; corrected rerun passed"
+  ]
+}
