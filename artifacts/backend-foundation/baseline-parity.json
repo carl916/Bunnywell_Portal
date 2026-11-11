@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-11T22:06:32.849Z",
+  "projects": [
+    "bunnywell-backend-foundation",
+    "bunnywell-backend-rehearsal-two"
+  ],
+  "creation": "Both projects were created new, without resetting an existing database. First application created transactionally before seed; second clean creation is recorded separately with zero users/buildings. This comparison is schema-only after synthetic testing.",
+  "sections": [
+    {
+      "section": "grants",
+      "firstCount": 922,
+      "secondCount": 922,
+      "equal": true,
+      "sha256": "a72701386171d9039a3ce47a115c325d4908ccd1275c8dd32c8cdf04bd7bc1cc"
+    },
+    {
+      "section": "columns",
+      "firstCount": 816,
+      "secondCount": 816,
+      "equal": true,
+      "sha256": "b9191f15211048a02928f2317655056875018e894a36dee7749e9aa4869ffc57"
+    },
+    {
+      "section": "indexes",
+      "firstCount": 174,
+      "secondCount": 174,
+      "equal": true,
+      "sha256": "bf0c3fec1f0191ad71f177d0ddbfd80b4a155a01154c97c476003d83f00fc950"
+    },
+    {
+      "section": "policies",
+      "firstCount": 101,
+      "secondCount": 101,
+      "equal": true,
+      "sha256": "3b4a7167eef7c7af5ec8f2769f371c2f06ee95700033401166b2f452b93a08e5"
+    },
+    {
+      "section": "functions",
+      "firstCount": 331,
+      "secondCount": 331,
+      "equal": true,
+      "sha256": "16de14c88b9de8f26077811251314d6f77e5dbc2ddf8e33b698472faf57f3fcb"
+    },
+    {
+      "section": "constraints",
+      "firstCount": 432,
+      "secondCount": 432,
+      "equal": true,
+      "sha256": "b9d274e92449d6ff09e0846cea3e811fb073a84c744cba8051d9bf9aa0ec081c"
+    }
+  ],
+  "archivedMigrationsVerified": 71,
+  "files": [
+    {
+      "file": "supabase/baseline/application.sql",
+      "sha256": "577c21aa7eb621cb9ed26338e1208d4488fa3881f95d43df5a4dd964f54bfd02"
+    },
+    {
+      "file": "supabase/baseline/ownership.sql",
+      "sha256": "844e9e71851553e50659bf059679e1b41c0b950d222791f1fb55aa1259c63f45"
+    },
+    {
+      "file": "supabase/baseline/imports.sql",
+      "sha256": "2547cbd2b33b05d507d700ec21d06451c4760c9e81e9396088bf881067a8512c"
+    },
+    {
+      "file": "supabase/baseline/workspace-reads.sql",
+      "sha256": "6d05a3683b58da9ad18e8c7a34b509526e664422047f70753fa6dc4b1d1c6d1f"
+    }
+  ]
+}

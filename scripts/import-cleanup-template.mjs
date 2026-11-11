@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 import process from "node:process";
+import fs from "node:fs";
 
 dotenv.config({ path: ".env.local", quiet: true });
 
@@ -58,8 +59,9 @@ async function main() {
   console.log(`Organisations: ${data.organisations.length}`);
   if (prodMode) console.log("Users: skipped in production-safe mode.");
   if (generatedPasswords.length) {
-    console.log("Generated user passwords:");
-    for (const item of generatedPasswords) console.log(`- ${item.email}: ${item.password}`);
+    const output = valueArg("--credentials-out");
+    if (output) { fs.writeFileSync(output, JSON.stringify(generatedPasswords, null, 2), { mode: 0o600, flag: "wx" }); console.log("New-account credentials saved privately."); }
+    else console.log("New accounts created; use the authorised password-recovery process. Passwords are not logged.");
   }
 }
 
@@ -309,7 +311,6 @@ async function importUnits(units, buildingByCode, unitTypeByName) {
       unit_type_id: unitType.id,
       size_sqm: numberOrNull(row.size_sqm),
       completion_date: dateOrNull(row.completion_date),
-      handover_date: null,
       parking_bays: intArrayOrNull(row.parking_bays),
       notes: clean(row.notes) || null,
     }, { onConflict: "building_id,unit_number" }).select("*").single();
@@ -520,7 +521,7 @@ async function upsertAuthUser(row) {
   const password = passwordForEmail(email);
   const payload = {
     email,
-    password,
+    ...(existing ? {} : { password }),
     email_confirm: true,
     user_metadata: { full_name: clean(row.name) || email },
   };

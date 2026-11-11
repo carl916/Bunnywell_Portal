@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-11T22:01:00.999Z",
+  "environment": "bunnywell-backend-foundation",
+  "method": "Two concurrent PostgreSQL transactions in disposable local DB; not an Auth/RLS test",
+  "results": [
+    {
+      "name": "Concurrent area move waits for new snag ownership and then fails; association stays valid",
+      "passed": true
+    }
+  ]
+}

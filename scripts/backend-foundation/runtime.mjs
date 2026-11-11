@@ -1,12 +1,13 @@
 import {spawnSync} from "node:child_process";
 import {readFileSync,writeFileSync,mkdirSync,existsSync} from "node:fs";
 import {createHash} from "node:crypto";
-const project="bunnywell-backend-foundation";
+export const project=process.env.FOUNDATION_REHEARSAL === "two" ? "bunnywell-backend-rehearsal-two" : "bunnywell-backend-foundation";
 const docker="C:/Users/carlg/AppData/Local/Programs/DockerDesktop/resources/bin/docker.exe";
 export function run(args,input){const r=spawnSync(docker,["--context","desktop-linux",...args],{input,encoding:"utf8",windowsHide:true,timeout:120000,maxBuffer:5e6});if(r.status!==0)throw Error((r.stderr||r.stdout||r.error?.message||"Docker failed").slice(-2500));return r.stdout;}
 export function sql(query){return run(["exec","-i","supabase_db_"+project,"psql","-X","-U","postgres","-d","postgres","-v","ON_ERROR_STOP=1","-At"],query);}
 const json=p=>JSON.parse(readFileSync(p,"utf8").replace(/^\uFEFF/,""));
 export function isolation(){
+ mkdirSync("tmp/backend-foundation",{recursive:true});
  const network=JSON.parse(run(["network","inspect",project+"-internal"]))[0];
  if(!network.Internal)throw Error("Network is not internal");
  const names=run(["ps","--filter","name="+project,"--format","{{.Names}}"]).trim().split(/\s+/).filter(Boolean);
@@ -26,7 +27,7 @@ export function isolation(){
  const env=Object.fromEntries(auth.Config.Env.map(s=>{const n=s.indexOf("=");return[s.slice(0,n),s.slice(n+1)]}));
  if(!env.GOTRUE_SMTP_HOST?.includes(project)||Object.entries(env).some(([k,v])=>k.startsWith("GOTRUE_HOOK_")&&v==="true"))throw Error("Auth delivery is not isolated");
  const report={checkedAt:new Date().toISOString(),project,internalNetwork:true,loopbackPorts:true,publicTcpBlocked:true,ingressExternalRouteRemoved:true,localSmtp:env.GOTRUE_SMTP_HOST,containers:names};
- writeFileSync("tmp/backend-foundation/isolation.json",JSON.stringify(report,null,2));
+ writeFileSync("tmp/backend-foundation/isolation-"+project+".json",JSON.stringify(report,null,2));
  return report;
 }
 if(process.argv.includes("--verify"))console.log(JSON.stringify(isolation(),null,2));

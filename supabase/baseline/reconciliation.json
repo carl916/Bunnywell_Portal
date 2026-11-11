@@ -1,0 +1,134 @@
+{
+  "reviewDate": "2026-11-11",
+  "reviewedStagingProject": "vxkpvdtrldwwqiddoyof",
+  "sourceIntegrationCommit": "0320768cc7a00266941176f88e46df64c28805ce",
+  "preservedLocalCompletionCommit": "89b81ab21241b06aa49d2cf939f183dd4ae782df",
+  "remoteSchemaReadDuringImplementation": false,
+  "catalogs": {
+    "staging": "914dd52cec9b55bb12db6afee11299fb14f7c5ca8897d35d697414cb49d87509",
+    "local": "ca2ff3f920e2588a6e90b12db98161659406b17200724bc5c2cefeeb4311cd5d"
+  },
+  "identicalReviewedSections": [
+    "tables",
+    "columns",
+    "enums",
+    "views",
+    "indexes",
+    "policies",
+    "triggers",
+    "constraints",
+    "buckets"
+  ],
+  "functionChoices": [
+    {
+      "signature": "public.record_unit_sale_invoice_payment.p_invoice_id uuid, p_payer_type text, p_amount numeric, p_payment_date date, p_note text, p_client_reference uuid, p_requester_id uuid",
+      "stagingDefinitionSha256": "c7b4964e0dd0795f58cffa587e7a8d6cd5034459b832240ad0582d6aac022cce",
+      "localDefinitionSha256": "f6af9fa995f0a3c5e3beb99c8005025600116d6a04a63fce5bdf53cc31913f2e",
+      "choice": "Reviewed staging definition"
+    },
+    {
+      "signature": "public.return_pre_exchange_unit_for_sale.p_sale_attempt_id uuid, p_actor_user_id uuid, p_reason text, p_source text",
+      "stagingDefinitionSha256": "bd8d945cd1be1c011b2465c552c73060bd88c8ebdcd201b7bd9bf11d0eb514a7",
+      "localDefinitionSha256": "335d152004efd2f06e47572c3c4b141705942a8ddd5b114362dbabd9f5722b18",
+      "choice": "Repository/local retention required by existing tests; staging conflict remains a business decision"
+    },
+    {
+      "signature": "public.sale_attempt_has_meaningful_activity_before_discussions.p_sale_attempt_id uuid",
+      "stagingDefinitionSha256": "4c214e249cfcfd0b34be7098d2aca0187abe9b0f846ed128b00b6efe243a4ff2",
+      "localDefinitionSha256": "f6d76851b758482b6ea43c8eec1d9497111e0ddbcdaf4e11636850f628034fa3",
+      "choice": "Reviewed staging definition"
+    },
+    {
+      "signature": "public.sale_event_projection_before_deposit.e unit_sale_workflow_events",
+      "stagingDefinitionSha256": "0365f3b537d17bf1a1115cd44e91368dc2549cb6e24f8b0a7413d671a173e2c8",
+      "localDefinitionSha256": "0365f3b537d17bf1a1115cd44e91368dc2549cb6e24f8b0a7413d671a173e2c8",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sale_event_projection_before_notice.e unit_sale_workflow_events",
+      "stagingDefinitionSha256": "af03740466dc7d9d3ec5f6dfc3e0784453a7ddc895e25ff6d7c21bdfb3cb8256",
+      "localDefinitionSha256": "af03740466dc7d9d3ec5f6dfc3e0784453a7ddc895e25ff6d7c21bdfb3cb8256",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sale_event_projection_before_package.e unit_sale_workflow_events",
+      "stagingDefinitionSha256": "30d35811875754982ab5cf0bb855f4ccf1c9f7bd9dde137846f20d3e0f797815",
+      "localDefinitionSha256": "30d35811875754982ab5cf0bb855f4ccf1c9f7bd9dde137846f20d3e0f797815",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sales_contact_audit.",
+      "stagingDefinitionSha256": "7bbf7ca42a7f392d6a8068c04dba768145b4520bbb42265eaca1e3303b08d2fb",
+      "localDefinitionSha256": "7bbf7ca42a7f392d6a8068c04dba768145b4520bbb42265eaca1e3303b08d2fb",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sales_contact_guard.",
+      "stagingDefinitionSha256": "de2edda6478295ef27564797c1bf5cd402b3c3714f4c2c0fb098786600da1777",
+      "localDefinitionSha256": "de2edda6478295ef27564797c1bf5cd402b3c3714f4c2c0fb098786600da1777",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sales_legal_unit_guard.",
+      "stagingDefinitionSha256": "43fc66c3c4f4210be7b6641dc56db0182bc9111857649bfd5ba1e9dbbadeae84",
+      "localDefinitionSha256": "43fc66c3c4f4210be7b6641dc56db0182bc9111857649bfd5ba1e9dbbadeae84",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL; add narrowly guarded historical-import path in imports.sql"
+    },
+    {
+      "signature": "public.sales_legal_write_guard.",
+      "stagingDefinitionSha256": "a301e4e13f3e74d562dc1b369fcade1d71cf807842ca4e67aef76aa71a9b236b",
+      "localDefinitionSha256": "a301e4e13f3e74d562dc1b369fcade1d71cf807842ca4e67aef76aa71a9b236b",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    },
+    {
+      "signature": "public.sales_notice_state_guard.",
+      "stagingDefinitionSha256": "640c2a77ec070d056fa5b28ee81ef1bee819fe4f71e62cd2085fc4cfcc4abbd3",
+      "localDefinitionSha256": "3598ad0f50c99308215063a1b56d00aed8be6466e7119243b4f5b57c47a713d8",
+      "choice": "Reviewed staging definition"
+    },
+    {
+      "signature": "public.sales_notice_version_guard.",
+      "stagingDefinitionSha256": "ba468354a51dc7712aaf2db510b13461245b70abac671b6ac3c838da81ca4342",
+      "localDefinitionSha256": "ba468354a51dc7712aaf2db510b13461245b70abac671b6ac3c838da81ca4342",
+      "choice": "Shared definition; adopt reviewed staging internal-helper ACL"
+    }
+  ],
+  "stagingOnlyGrantsNotAdopted": [
+    "public.rental_arrears_episodes.anon.REFERENCES",
+    "public.rental_arrears_episodes.anon.SELECT",
+    "public.rental_arrears_episodes.anon.TRIGGER",
+    "public.rental_arrears_episodes.anon.TRUNCATE",
+    "public.rental_arrears_episodes.authenticated.REFERENCES",
+    "public.rental_arrears_episodes.authenticated.TRIGGER",
+    "public.rental_arrears_episodes.authenticated.TRUNCATE",
+    "public.rental_arrears_events.anon.REFERENCES",
+    "public.rental_arrears_events.anon.SELECT",
+    "public.rental_arrears_events.anon.TRIGGER",
+    "public.rental_arrears_events.anon.TRUNCATE",
+    "public.rental_arrears_events.authenticated.REFERENCES",
+    "public.rental_arrears_events.authenticated.TRIGGER",
+    "public.rental_arrears_events.authenticated.TRUNCATE",
+    "public.rental_import_runs.anon.REFERENCES",
+    "public.rental_import_runs.anon.SELECT",
+    "public.rental_import_runs.anon.TRIGGER",
+    "public.rental_import_runs.anon.TRUNCATE",
+    "public.rental_import_runs.authenticated.REFERENCES",
+    "public.rental_import_runs.authenticated.TRIGGER",
+    "public.rental_import_runs.authenticated.TRUNCATE",
+    "public.unit_tenancies.anon.REFERENCES",
+    "public.unit_tenancies.anon.SELECT",
+    "public.unit_tenancies.anon.TRIGGER",
+    "public.unit_tenancies.anon.TRUNCATE",
+    "public.unit_tenancies.authenticated.REFERENCES",
+    "public.unit_tenancies.authenticated.TRIGGER",
+    "public.unit_tenancies.authenticated.TRUNCATE"
+  ],
+  "additions": [
+    "A1/A2 separately reviewable security patch",
+    "A4 ownership keys and nullable-location guards",
+    "Historical import lineage and guarded initializer",
+    "Invoker/RLS workspace access and building facts"
+  ],
+  "extensionPrerequisite": "btree_gist for existing rental exclusion constraint",
+  "originalHistory": "71 immutable migration files retained and hashed; not replayed"
+}

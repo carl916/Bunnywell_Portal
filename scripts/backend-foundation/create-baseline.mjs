@@ -1,0 +1,5 @@
+import fs from 'node:fs';import {sql,isolation,project} from './runtime.mjs';
+isolation();const files=['supabase/baseline/application.sql','supabase/security-patches/20261111211706_foundation_scoped_security.sql','supabase/baseline/ownership.sql','supabase/baseline/imports.sql','supabase/baseline/workspace-reads.sql'];
+const started=Date.now();for(const f of files){let source=fs.readFileSync(f,'utf8');console.log('Creating',f);sql(f.endsWith('application.sql')?'BEGIN;\n'+source+'\nCOMMIT;':source);}
+const result=sql("select json_build_object('tables',(select count(*) from pg_class where relnamespace='public'::regnamespace and relkind='r'),'functions',(select count(*) from pg_proc where pronamespace='public'::regnamespace),'unvalidatedConstraints',(select count(*) from pg_constraint where connamespace='public'::regnamespace and not convalidated),'users',(select count(*) from auth.users),'buildings',(select count(*) from buildings));").trim();
+fs.writeFileSync('artifacts/backend-foundation/clean-'+project+'.json',JSON.stringify({project,createdAt:new Date().toISOString(),elapsedMs:Date.now()-started,files,counts:JSON.parse(result)},null,2));console.log(result);

@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 Set-Location -LiteralPath $projectRoot
 $projectName = 'bunnywell-backend-foundation'
+New-Item -ItemType Directory -Force -Path 'tmp/backend-foundation','artifacts/backend-foundation' | Out-Null
 $dockerExe = 'C:\Users\carlg\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe'
 $env:PATH = (Split-Path $dockerExe) + ';' + $env:PATH
 $env:DOCKER_CONTEXT = 'desktop-linux'

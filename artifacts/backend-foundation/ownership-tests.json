@@ -1,0 +1,125 @@
+{
+  "at": "2026-11-11T22:01:16.865Z",
+  "environment": "bunnywell-backend-foundation",
+  "method": "PostgreSQL constraint transactions; rolled back; not role permission tests",
+  "results": [
+    {
+      "name": "sale cannot use another building unit",
+      "expected": false,
+      "result": {
+        "code": "23503",
+        "message": "insert or update on table \"unit_sale_attempts\" violates foreign key constraint \"sale_unit_building_owner\"",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "area cannot use another building unit",
+      "expected": false,
+      "result": {
+        "code": "23503",
+        "message": "insert or update on table \"areas\" violates foreign key constraint \"area_unit_building_owner\"",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "snag cannot link another unit room",
+      "expected": false,
+      "result": {
+        "code": "23514",
+        "message": "Snag area must belong to the same building and unit (or communal area)",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "communal snag with null unit is valid",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    },
+    {
+      "name": "legacy snag without modern location is retained",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    },
+    {
+      "name": "area cannot detach an existing snag",
+      "expected": false,
+      "result": {
+        "code": "23514",
+        "message": "Area move would detach existing snag ownership",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "invoice document must belong to same attempt",
+      "expected": false,
+      "result": {
+        "code": "23503",
+        "message": "insert or update on table \"unit_sale_invoices\" violates foreign key constraint \"invoice_document_attempt_owner\"",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "payment invoice must belong to same attempt",
+      "expected": false,
+      "result": {
+        "code": "23503",
+        "message": "insert or update on table \"unit_sale_invoice_payments\" violates foreign key constraint \"payment_invoice_attempt_owner\"",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "approval pointer cannot name another document version",
+      "expected": false,
+      "result": {
+        "code": "23503",
+        "message": "insert or update on table \"unit_sale_documents\" violates foreign key constraint \"approved_version_document_owner\"",
+        "accepted": false
+      },
+      "passed": true
+    },
+    {
+      "name": "historical same-document approval pointer is valid",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    },
+    {
+      "name": "historical invoice stays attached to its inactive attempt",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    },
+    {
+      "name": "deleting an approved version preserves existing SET NULL behaviour",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    },
+    {
+      "name": "historical document deletion preserves optional invoice attachment behaviour",
+      "expected": true,
+      "result": {
+        "accepted": true
+      },
+      "passed": true
+    }
+  ]
+}

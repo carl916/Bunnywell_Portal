@@ -1,0 +1,20 @@
+{
+  "at": "2026-11-11T21:33:57.762Z",
+  "environment": "bunnywell-backend-foundation",
+  "syntheticWorkbook": true,
+  "results": [
+    {
+      "check": "clean spreadsheet import, all historical statuses and identical rerun",
+      "passed": true,
+      "units": 8,
+      "rooms": 9,
+      "handovers": 1
+    },
+    {
+      "check": "interruption after three unit writes, recovery and rerun",
+      "passed": true,
+      "partialUnits": 3,
+      "recoveredUnits": 8
+    }
+  ]
+}

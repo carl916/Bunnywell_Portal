@@ -1,0 +1,19 @@
+{
+  "project": "bunnywell-backend-rehearsal-two",
+  "createdAt": "2026-11-11T21:34:05.727Z",
+  "elapsedMs": 19130,
+  "files": [
+    "supabase/baseline/application.sql",
+    "supabase/security-patches/20261111211706_foundation_scoped_security.sql",
+    "supabase/baseline/ownership.sql",
+    "supabase/baseline/imports.sql",
+    "supabase/baseline/workspace-reads.sql"
+  ],
+  "counts": {
+    "tables": 61,
+    "functions": 331,
+    "unvalidatedConstraints": 0,
+    "users": 0,
+    "buildings": 0
+  }
+}
