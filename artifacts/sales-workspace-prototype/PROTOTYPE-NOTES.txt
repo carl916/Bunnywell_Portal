@@ -1,0 +1,100 @@
+BUNNYWELL SALES WORKSPACE — LOCAL PROTOTYPE
+Baseline: 0a1ee76a18c17c4466b1031efe52b22e9959abe3 (staging)
+Branch: experiment/sales-workspace-redesign
+Worktree: C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal
+
+Launch in PowerShell:
+Set-Location 'C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal'
+$env:STAGING_WEB_VITALS='0'
+$env:SALES_PERF_LOCAL='0'
+npm run dev -- --hostname 127.0.0.1 --port 3027
+
+Open http://127.0.0.1:3027/dev/sales-workspace
+No Supabase environment file, credentials or sign-in is required for fictional fixtures.
+The connected portal and its authentication are not mounted or altered.
+The route returns 404 outside development, and also refuses to render the prototype if STAGING_WEB_VITALS=1.
+
+SCOPE
+Nine immutable scenarios, three role presentations, seven sale destinations.
+Completion: awaiting review, queried current document with superseded version, legally completed.
+Agent Fees: awaiting submission, invoice review with £200 discrepancy, approved invoice with credits and partial payment.
+Reservation: draft, awaiting developer approval, approved.
+Exchange, Handover, Deposits and Commercial Terms use compact summaries.
+
+Navigation, scenario/role selection, worklist search/filter/page return, browser history, unit switching, document previews, drawers and disclosures are local-only.
+Every business action is disabled. There is no workflow mutation handler or parallel workflow engine.
+Primary modules other than Sales open local explanatory previews, keeping the experiment away from the connected portal.
+
+FIXTURE CONSISTENCY
+All people, developments, units and document contents are fictional.
+Contract price £425,000. Reservation fee £2,000 held by sales agent.
+10% exchange deposit £42,500; no further deposit; purchase-price completion balance £382,500.
+Agent fee 2% total: exchange 1.5% and completion 0.5%; VAT 20%.
+Exchange net £6,375 + VAT £1,275 = gross £7,650.
+Reservation credit £2,000 + agent contribution credit £500 leave £5,150 cash payable.
+Recorded cash payment £3,000 leaves £2,150 outstanding.
+Completion net £2,125 + VAT £425 = gross £2,550; no exchange credits applied again.
+Review snapshot invoice £7,850 is £200 over expected gross; corrected approved invoice is £7,650.
+Dates: draft 5 Oct, submitted 6 Oct, approved 7 Oct, invoice review 9 Oct, corrected invoice approved 13 Oct,
+exchange/payment 16 Oct, notice authority 19 Oct, notice 20 Oct, completion due 3 Nov 2026.
+Completion statement v1 27 Oct, current v2 30 Oct; account v1 30 Oct.
+Query snapshot: statement v2 queried 2 Nov; account v1 approved 30 Oct.
+Completed snapshot: statement v2 approved 2 Nov; legal completion recorded 3 Nov at 10:30.
+Selecting an earlier scenario changes the viewed snapshot; it never changes stored data.
+Each worklist unit uses the same illustrative commercial terms and selected scenario.
+
+IMPLEMENTATION
+New route: src/app/dev/sales-workspace/page.tsx
+Display model and fixtures: src/lib/experiments/sales-workspace/model.ts
+Shell and navigation: src/components/experiments/sales-workspace/SalesWorkspacePrototype.tsx
+Task screens: src/components/experiments/sales-workspace/Workspaces.tsx
+Inert controls, dialogs and previews: src/components/experiments/sales-workspace/PrototypeUI.tsx
+Scoped presentation: src/components/experiments/sales-workspace/Workspace.module.css
+Browser checks: tests/sales-workspace-prototype.spec.ts, playwright.sales-prototype.config.ts
+Import audit: scripts/verify-sales-prototype.mjs
+
+Reused pure helpers: financial calculations/payment position, GBP formatting, permissions, exact-current-version document approvals,
+reservation task state, building/floor/natural unit ordering. Existing backend-connected components are not mounted.
+No modifications to tracked baseline files are required: existing sales, global styles, APIs, permissions and business logic stay unchanged.
+
+COMPARISON
+Direct sidebar destinations replace workspace tabs and large stage panels within the experiment.
+One sticky identity header separates sale status from the viewed section.
+Completion opens on the current documents; authority and notice history remain in a compact supporting checklist.
+Fee review places the invoice discrepancy and payment balance alongside the invoice; detailed arithmetic remains available.
+Reservation starts with buyer details and the sample form, with agreed terms nearby.
+Mobile uses a drawer and one working column rather than a stack of large stage selectors.
+
+VALIDATION
+See browser-tests.log, sales-tests.log, fee-tests.log, production-build.log, production-check.json and import-audit.json.
+Browser checks use fictional fixtures. They are NOT live workflow, Supabase, email, payment or authentication integration tests.
+Existing sales/fee regression tests use the repository's source/in-memory fixtures; no staging or production workflow actions were executed.
+The browser guard records every request and blocks/rejects any URL other than this route, Next.js assets and favicon,
+including all business-data GET requests. Per-test network JSON files retain the evidence.
+Screenshots: 1600x1000 desktop; 1366x768 initial viewport; 390x844 mobile; 820x1180 tablet.
+Full-page desktop/mobile captures are supplied as well. The Next.js diagnostic badge alone is hidden in deliverable screenshots.
+
+BASELINE EXCLUSIONS
+The original checkout was on staging and remains untouched.
+Its uncommitted SalesLegalWorkflow.tsx change adds an expired-authority explanation/aria-describedby to Confirm exchange.
+That warning is NOT included in this committed baseline.
+The modified docs/bunnywell-database-cleanup-template-v2.xlsx is also excluded.
+Existing untracked .codex-remote-attachments, .stage1-workspace, .stage2b-workspace, activity-timeline/UI-review artifacts,
+dashboard-stage2 documentation, recommendation-b-tail investigation, sale-workflow-context post-merge reports and two diagnostic scripts remain in the original checkout.
+No reset, clean, stash, unrelated commit, push, merge or deployment was performed.
+
+LIMITATIONS
+Document viewing is an accessible local HTML facsimile, not an integrated PDF viewer or download service.
+Forms and all upload/save/submit/approve/query/payment/send actions are inert by design.
+Role selection only previews the existing permission rules against fictional content; it does not change authentication.
+Supporting modules are local placeholders; only the seven sale destinations are represented.
+This prototype demonstrates UX and navigation, not production readiness or workflow integration.
+
+FINAL CHECK RESULTS
+13 Playwright browser tests passed (17.0 s), including all 9 scenarios at 4 viewports.
+308 existing sales tests and 103 existing fee tests passed; these suites overlap.
+TypeScript, focused ESLint, runtime import audit (12 source files) and production build passed.
+Four production URL variants returned HTTP 404 with no prototype content.
+All 13 browser network logs contain zero unexpected requests or browser errors.
+54 screenshots are indexed in index.html; verification.json records the evidence.
+Git diff against the baseline is empty for tracked files; all prototype files are new and uncommitted.

@@ -1,0 +1,118 @@
+BUNNYWELL — FOCUSED BUILDING-WORKSPACE REFINEMENT
+Reviewed: 4 November 2026. Fictional snapshot: 3 November 2026.
+Branch: experiment/sales-workspace-redesign
+Baseline: 0a1ee76a18c17c4466b1031efe52b22e9959abe3
+Worktree: C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal
+
+LAUNCH (PowerShell)
+Set-Location 'C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal'
+$env:STAGING_WEB_VITALS='0'
+$env:SALES_PERF_LOCAL='0'
+npm run dev -- --hostname 127.0.0.1 --port 3027
+
+Open http://127.0.0.1:3027/dev/sales-workspace
+The verification dev and production servers have been stopped.
+
+REVIEW MATERIALS
+index.html — 86 updated screenshots and evidence links.
+capability-checklist.html — existing capability to proposed location; explicit remaining gaps.
+data-loading-assessment.html — current source findings and proposed loading boundaries; no fetching implemented.
+verification.json — exact checks and limitations.
+previous-building-prototype-source.zip — experiment source preserved before this refinement.
+Earlier galleries and PDFs are unchanged and describe earlier iterations.
+
+WHAT CHANGED
+The building-first structure and detailed Completion, Agent Fees and Reservation layouts remain.
+Worklist rows now name the specific next action, responsible person/role and relevant deadline.
+These details remain visible on mobile, with a direct link to the relevant task.
+One set of stage chips provides the stage filter; the redundant status dropdown was removed.
+A separate Responsibility filter offers Our actions, Waiting on others and Recorded.
+Dashboard priority items distinguish our actions and waiting on others.
+Task headings change with the viewing role. In a completion query, the conveyancer sees
+Resolve the query; the developer sees Awaiting revised statement.
+The redundant Working in line under the identity bar was removed. Sidebar identity,
+compact building/unit bar and separate Change building / Back to worklist remain.
+Prototype-only Data control demonstrates ready/loading/empty/error/unavailable states.
+Loading is a five-second local timer. Changing building cancels the old timer and starts
+the new building's timer. No old rows, buyer identity or unit controls appear under the
+new building identity. Error retry is another local timer only.
+Worklist return preferences now include responsibility, keyed per role/access/building
+in tab-local sessionStorage v3. Old v2 preferences are left untouched.
+
+REVIEW JOURNEY
+1. Fresh multi-building homepage: explicitly choose Willow Court, then Sales.
+2. Review specific next actions and owners. Select Our actions, then Waiting on others.
+3. Search G11 and open Taylor Reed's Completion. Change View as to Conveyancer:
+   the heading becomes Resolve the query. Developer sees Awaiting revised statement.
+4. Change building to Orchard House: arrive at that building's worklist, not its G11.
+   Open G11 / Harper Stone and compare building, buyer and Reserved status.
+5. Return to Willow Court: its own search, stage, responsibility, page and scroll restore.
+6. Use Data = Loading. During the five-second delay change building. Identity changes
+   immediately, only a scoped skeleton appears, then that building's records load.
+7. Try Empty, Error (Retry sample load), and Unavailable (Choose another building).
+8. Review 390 x 844: first sale's action and owner remain visible. Change building remains
+   accessible outside the mobile menu. Compare the other captured viewport sizes.
+9. Use separate tabs and browser back/forward. Existing URLs retain their context on refresh.
+
+DIRECT LINKS
+Willow query, developer:
+http://127.0.0.1:3027/dev/sales-workspace?building=willow&unit=g11&section=completion
+Willow query, conveyancer:
+http://127.0.0.1:3027/dev/sales-workspace?building=willow&unit=g11&section=completion&role=conveyancer
+Orchard approved reservation:
+http://127.0.0.1:3027/dev/sales-workspace?building=orchard&unit=orchard-g11&section=reservation
+Simulated loading:
+http://127.0.0.1:3027/dev/sales-workspace?building=willow&view=sales&data=loading
+Single-building homepage:
+http://127.0.0.1:3027/dev/sales-workspace?profile=single
+Mismatched building/record, intentionally unavailable:
+http://127.0.0.1:3027/dev/sales-workspace?building=orchard&unit=g11
+
+DUPLICATE RECORDS ACTUALLY TESTED
+Willow Court / G11 / g11 / Taylor Reed / Exchanged, completion query
+Orchard House / G11 / orchard-g11 / Harper Stone / Reserved, approved reservation
+Willow Court / LG11 / willow-lg11 / Jordan Finch / For sale, reservation review
+Orchard House / LG11 / orchard-lg11 / Morgan West / Completed
+Willow Court / 301 / willow-301 / Avery Moss / Exchanged, partial fee payment
+Orchard House / 301 / orchard-301 / Riley Lake / For sale, reservation draft
+URLs resolve stable record identifiers, never a displayed unit label alone.
+
+VALIDATION ACTUALLY RUN THIS PASS
+npx playwright test --config playwright.sales-prototype.config.ts --timeout 30000
+33 passed. Includes all six duplicate records, explicit/single-building entry, invalid
+and inaccessible links, direct-link refresh, building switch, browser back/forward,
+two simultaneous tabs, scoped searches, per-building filters/page/scroll restoration,
+keyboard navigation, drawer focus and dismissal, role boundaries, 14 heading/role
+cases, disabled controls, mobile next actions, all four data states and scoped retry.
+During loading-switch testing a DOM observer checked that Orchard identity never
+appeared with Willow buyers; the obsolete timer could not complete the new load.
+That is a fixture timer/navigation test, not a real network-race integration test.
+
+33 request logs: zero unexpected requests. Every HTTP method is inspected; only the
+local prototype document and framework assets are allowed. No business-data requests,
+including GET. Service workers blocked during tests.
+Runtime import audit passed: 15 source files, pure helpers/inert components only.
+
+node --test tests/sales-permissions.test.mjs tests/sales-commercial-model.test.mjs tests/sales-completion-workflow.test.mjs tests/commercial-unit-allocation.test.mjs tests/sales-register-session.test.mjs
+71 passed. Existing rule/calculation/ordering/session tests, not real workflow integration.
+
+Focused ESLint passed. npm run build passed, including TypeScript.
+First sandbox build passed TypeScript but hit Windows EPERM creating generated files;
+normal-permission retry passed. Both logs retained.
+Production server returned 404 for seven prototype URL variants; no prototype markup.
+86 screenshots: 24 building journey initial views, 8 data-state initial views,
+54 detailed task views. Sizes: 1366x768, 390x844, 1600x1000, 820x1180.
+No horizontal overflow. Sticky identity and first worklist row visibility checked.
+Screenshot-only CSS hides the framework development diagnostic badge.
+
+ISOLATION / LIMITATIONS
+No tracked production files changed. Existing experimental files remain uncommitted.
+No reset, clean, stash, unrelated commit, push, merge or deployment.
+Pure helper rules, production screens/styles, authentication and APIs are unchanged.
+All saving, approvals, queries, uploads, payments and sending remain disabled.
+Roles, owners, amounts, dates and statuses are fictional fixed snapshots. Ownership
+wording does not grant permission or add workflow gates.
+No live data, signed documents, real auth enforcement, notification or payment integration.
+No new performance measurements; data-loading assessment is read-only source analysis.
+Background stale-refresh UI, multiple sale attempts and unchecked capability cases
+remain explicit future review items. No production integration was performed.

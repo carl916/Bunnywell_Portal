@@ -1,0 +1,81 @@
+{
+  "recordedDate": "2026-11-05",
+  "purpose": "Preserve the accepted visual and interaction baseline before approved backend integration.",
+  "worktree": "C:\\Users\\carlg\\.codex\\worktrees\\sales-workspace-redesign\\Bunnywell_Portal",
+  "branch": "experiment/sales-workspace-redesign",
+  "baseCommit": "0a1ee76a18c17c4466b1031efe52b22e9959abe3",
+  "route": "/dev/sales-workspace",
+  "deliveryType": "Design prototype; local fixtures only",
+  "connectedScreens": [],
+  "connectedSupportingPanels": [],
+  "environmentApproval": "Pending: bunnywell-workspace-stage2 isolated local Supabase project",
+  "integrationTarget": "Authenticated building selection, dashboard and building sales worklist, followed by the accepted full-page read-only Completion workspace.",
+  "integrationConstraints": [
+    "Keep accepted prototype unchanged for comparison.",
+    "Reuse contracts beneath the accepted interface, not the contracts preview drawer.",
+    "Never substitute fixture buyers, comments or documents in connected records.",
+    "Display unavailable or not-yet-connected states for unsupported panels.",
+    "Business actions remain disabled; preserve permissions and workflow rules.",
+    "No service connection, schema replay, test-account creation, merge or deployment performed by this inventory."
+  ],
+  "currentTurnChecks": [
+    "Read schema and synthetic-seed proposals.",
+    "Verified accepted prototype Git branch, base commit and working-tree status.",
+    "Checked listeners on ports 3027, 3031, 54321 and 54324: none found.",
+    "Hashed accepted prototype source and assets; no application tests executed this turn."
+  ],
+  "priorEvidence": [
+    "artifacts/laptop-density/browser-tests.log",
+    "artifacts/laptop-density/after-measurements.json"
+  ],
+  "files": [
+    {
+      "path": "src/app/dev/sales-workspace/page.tsx",
+      "sha256": "5c69bfdcc6cdd22f288d8ca489faa1d13d8b1468e5ba7266d47ac46bf9350615"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/assets/bunnywell-hex-gold.png",
+      "sha256": "bc7492f13bb9c7cbec9bb4abb9528cb24d8b3acead79ad86ae5c7773ed3a4175"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/assets/bunnywell-landscape-green.png",
+      "sha256": "139f47516c47c22a36e27e74c97d73d1c6a753f5eeaa2f93ed76b1827e43163c"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/BuildingScreens.tsx",
+      "sha256": "4866a51908ce5feb2875f9b23ddaf32ec0653a0cba24e708cc6cf066bd96881e"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/FixtureDataState.tsx",
+      "sha256": "2488be586e82da2bc9424197b03f4181ab22001b4114eb4935684803e22a6e73"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/PrototypeUI.tsx",
+      "sha256": "b50ec16287d304316ea633a52c42a57423df88a6dffcab6e485f0d5c6ed9464b"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/SaleContextPanel.tsx",
+      "sha256": "1cee95b029db35ba4c1bf0fd97cbab4c4590d2054706561920c480befd69871a"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/SalesWorkspacePrototype.tsx",
+      "sha256": "26698eea87a2b6566606cf5acd76079a8a3ba120912a2ab6ead72474e4da0210"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/Workspace.module.css",
+      "sha256": "982a6ef4813d0cf06809760eb4e2a1eed19fb01ea30e60b0b52ee6c7922b61c0"
+    },
+    {
+      "path": "src/components/experiments/sales-workspace/Workspaces.tsx",
+      "sha256": "7c709ae2f053207ed9cfec6869d0acf18adf5b688ed0a5ac9fddd026aec0a360"
+    },
+    {
+      "path": "src/lib/experiments/sales-workspace/model.ts",
+      "sha256": "4661c94b3f1bdf3078f69cd036293ed3ce50787567d1b1806137880f5a007031"
+    },
+    {
+      "path": "src/lib/experiments/sales-workspace/presentation.ts",
+      "sha256": "bbbc0d8868c590c2264761a99e56ae25aab2a204acdac2a5bfc4db38bb066433"
+    }
+  ]
+}

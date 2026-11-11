@@ -1,0 +1,8 @@
+# Preserve generated evidence locally; track only authored source and selected manifests.
+*
+!.gitignore
+!HANDOFF.txt
+!capability-checklist.html
+!data-loading-assessment.html
+!integration-milestones.html
+!integration-plan.html

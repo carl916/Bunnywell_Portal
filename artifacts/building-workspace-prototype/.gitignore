@@ -1,0 +1,4 @@
+# Preserve generated evidence locally; track only authored source and selected manifests.
+*
+!.gitignore
+!HANDOFF.txt

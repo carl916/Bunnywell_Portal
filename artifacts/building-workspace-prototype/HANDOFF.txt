@@ -1,0 +1,79 @@
+BUNNYWELL - BUILDING-FIRST PROTOTYPE
+Branch: experiment/sales-workspace-redesign
+Baseline: 0a1ee76a18c17c4466b1031efe52b22e9959abe3
+Worktree: C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal
+
+LAUNCH (PowerShell)
+Set-Location 'C:\Users\carlg\.codex\worktrees\sales-workspace-redesign\Bunnywell_Portal'
+$env:STAGING_WEB_VITALS='0'
+$env:SALES_PERF_LOCAL='0'
+npm run dev -- --hostname 127.0.0.1 --port 3027
+
+Open http://127.0.0.1:3027/dev/sales-workspace
+
+REVIEW JOURNEY
+1. Fresh homepage: choose among Willow Court, Orchard House and Cedar Place.
+2. Open Willow Court, then its Sales worklist. Search G11. Open G11 / Taylor Reed.
+3. Change building to Orchard House. This opens its worklist, never its G11 automatically.
+4. Open G11 / Harper Stone and compare the building, buyer and Reserved status.
+5. Return to Willow Court: its worklist search, stage filter, page and scroll are retained.
+6. Select One building in the prototype access control: the fixture enters Willow Court directly.
+7. Use separate tabs for the duplicate links below. Each tab retains its own URL and worklist state.
+8. At the foot of a unit workspace, Preview action confirmation shows building, unit, buyer and stable record reference beside a disabled confirmation action.
+9. Portfolio overview is an explicit, separate sidebar destination. It contains stage counts; entering operational work requires a building.
+
+DIRECT LINKS
+Willow G11: http://127.0.0.1:3027/dev/sales-workspace?building=willow&unit=g11&section=completion
+Orchard G11: http://127.0.0.1:3027/dev/sales-workspace?building=orchard&unit=orchard-g11&section=reservation
+Single-building homepage: http://127.0.0.1:3027/dev/sales-workspace?profile=single
+Mismatched link (must show unavailable): http://127.0.0.1:3027/dev/sales-workspace?building=orchard&unit=g11
+
+DUPLICATE FIXTURES
+Willow Court / G11 / g11 / Taylor Reed / Exchanged, completion query
+Orchard House / G11 / orchard-g11 / Harper Stone / Reserved, approved reservation
+Willow Court / LG11 / willow-lg11 / Jordan Finch / For sale, awaiting reservation approval
+Orchard House / LG11 / orchard-lg11 / Morgan West / Completed
+Willow Court / 301 / willow-301 / Avery Moss / Exchanged, approved invoice partly paid
+Orchard House / 301 / orchard-301 / Riley Lake / For sale, reservation draft
+There are 14 fictional records across 3 buildings.
+
+NAVIGATION AND STATE
+The URL identifies the building and stable record ID. Display labels never resolve records.
+A missing, inaccessible or mismatched record link shows Workspace unavailable; no substitute is opened.
+The single-building access profile is a fictional user presentation, not a change to authentication.
+A fresh multi-building URL always opens the chooser. Recent-building priority is explicitly static sample data.
+sessionStorage retains only list search, stage, page and scroll, keyed by access profile, role and building.
+It does not select the active building. Tabs have independent sessionStorage and URLs.
+The scenario selector previews a different immutable snapshot of the open record. Returning to the worklist restores its fixed fixture scenario; it never changes a sale.
+Next.js root metadata can arrive after hydration; a scoped title observer preserves building/unit titles until this component unmounts.
+Document previews and comments now identify the selected building/unit.
+All unit selectors and worklist queries are scoped to the selected building and use the shared configured floor ordering helper.
+
+ROLE PRESENTATIONS
+Developer dashboard: reservation/document/invoice review items, building stage counts, optional collapsed financial summary.
+Sales agent dashboard: reservation preparation and invoice submission items, building stage counts.
+Conveyancer dashboard: legal progression and document-query items, building stage counts.
+Developer financial summary is absent for external roles, using the existing pure permission helper.
+Existing detailed Completion, Agent Fees and Reservation workspace implementation is retained.
+
+VALIDATION ACTUALLY RUN
+npx playwright test --config playwright.sales-prototype.config.ts --timeout 30000
+25 tests passed, including 7 complete journey/interaction cases, 6 responsive building screens, 9 responsive detailed scenarios, and 3 retained unit interaction cases.
+Coverage: keyboard entry, single/multi-building entry, fresh homepage, all six duplicate records, direct-link refresh, invalid/mismatched/access-limited URLs, building switching, scoped searches, per-building filters, worklist page/scroll restoration, browser back/forward, two concurrent tabs, role boundaries, floor order, collapsed identity, disabled contextual confirmations and drawer focus/dismissal.
+All request methods are intercepted; only the local prototype route and framework assets are allowed. No unexpected requests or browser errors in 25 network logs. Service workers blocked for tests.
+Runtime dependency audit: 13 pure/inert source files; no business-data client or request code.
+npm run test:sales: 308 passed.
+Standalone TypeScript check and final npm run build: passed.
+Focused ESLint on prototype source, tests, config and audit script: passed.
+Production server: homepage, single-building entry, worklist, direct unit task and portfolio all return 404.
+Screenshots: 24 building journey initial viewports plus 54 updated detailed workspace captures.
+1366 x 768, 390 x 844, 1600 x 1000 and 820 x 1180 captured; no horizontal overflow; worklist first row visible without scrolling.
+Screenshot-only CSS hides the Next.js development diagnostic badge.
+
+ISOLATION AND LIMITATIONS
+All new/changed source is inside the existing experiment and its dedicated tests/audit.
+No tracked baseline production files were modified. No push, merge, deployment or commit.
+The earlier implementation is archived in previous-prototype-source.zip; earlier screenshot gallery and PDF remain available.
+No business actions run: uploads, submissions, approvals, queries, payments and sending are disabled.
+Fixtures and local HTML document facsimiles only. These are navigation/display checks, not real workflow or authentication integration tests.
+Prototype dev and production test servers are stopped after verification. Use the launch command above for review.
