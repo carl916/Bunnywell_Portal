@@ -1,6 +1,6 @@
 # Proposed A1/A2 staging security package
 
-Status: tested locally; **not applied to staging or production**. Target for later approval: `vxkpvdtrldwwqiddoyof`.
+Status: tested locally; **not applied to staging or production**. This remains a separately reviewable legacy security-only proposal for `vxkpvdtrldwwqiddoyof`, requiring its own approval and coordinated caller-impact review. It is not the next redesign release target or a prerequisite to publishing the separate integration environment. The new empty-project baseline includes these corrections independently. See the [12 November hosted destination decision](../../docs/architecture-review/2026-11-12-hosted-integration.html).
 
 The SQL file in this directory restricts all commercial-model overloads and wrappers to the existing authorised server path, validates the active internal actor, scopes new snag uploads, fixes resident room association, and scopes private reports to the building. Public snag-image reading and internal photo maintenance remain intentional. The conveyancer-payment function is not changed.
 

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-12",
+  "status": "proposal-awaiting-user-resource-and-hosted-publication-approval",
+  "repository": "https://github.com/carl916/Bunnywell_Portal",
+  "source": {
+    "branch": "codex/wider-workspace-integration",
+    "foundationCommit": "d568e114e2415328960f07a2723f8c8018e1da8b",
+    "route": "/workspace"
+  },
+  "acceptedPrototype": {
+    "branch": "experiment/sales-workspace-redesign",
+    "commit": "1df4bac80588491bc3fba47966c9854fb33b4c10",
+    "route": "/dev/sales-workspace"
+  },
+  "supabaseOrganization": {
+    "id": "pccjecgmcstaknwdbyec",
+    "name": "carl916's Org",
+    "verifiedPlan": "pro"
+  },
+  "vercelTeam": {
+    "id": "team_x65ctL8Fot37UcabAkdh8f72",
+    "slug": "carl-gilbert-s-projects",
+    "name": "Carl Gilbert's projects",
+    "plan": null,
+    "planVerification": "Connector omitted billing plan; billing charges endpoint returned costs_not_found. No upgrade authorised."
+  },
+  "protectedReferences": [
+    {
+      "environment": "legacy-staging",
+      "appUrl": "https://staging.bunnywell.co.uk",
+      "vercelProjectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "vercelDeploymentId": "dpl_2FgewspkDgVzWMf7vdaNv8UcW18w",
+      "deploymentUrl": "https://bunnywell-portal-36otsgmqo-carl-gilbert-s-projects.vercel.app",
+      "branch": "staging",
+      "commit": "bed77db86f7ec250ea1482824a7c6409660c2556",
+      "supabaseProjectId": "vxkpvdtrldwwqiddoyof",
+      "supabaseName": "Bunnywell Portal Staging",
+      "region": "eu-central-1",
+      "postgresVersion": "17.6.1.127",
+      "permittedForThisWork": "Read-only comparison and separately approved source export; never an integration migration/deployment target."
+    },
+    {
+      "environment": "production",
+      "appUrl": "https://portal.bunnywell.co.uk",
+      "additionalAppUrl": "https://defects.bunnywell.co.uk",
+      "vercelProjectId": "prj_4s8vIyfrGh9DSGJcixTU5slevr5P",
+      "vercelDeploymentId": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+      "deploymentUrl": "https://bunnywell-portal-dmms8oftq-carl-gilbert-s-projects.vercel.app",
+      "branch": "main",
+      "commit": "87ffc9b52884f83c91253858d16fa0fe03b5c8af",
+      "supabaseProjectId": "zxgezoiazsubopqhqhim",
+      "supabaseName": "Bunnywell Portal",
+      "region": "eu-central-1",
+      "postgresVersion": "17.6.1.127",
+      "permittedForThisWork": "Metadata reference only; no data access or mutations."
+    }
+  ],
+  "proposed": {
+    "supabaseProjectName": "Bunnywell Portal Integration",
+    "supabaseProjectId": null,
+    "region": "eu-central-1",
+    "compute": "Micro",
+    "vercelProjectName": "bunnywell-portal-integration",
+    "vercelProjectId": null,
+    "vercelFunctionRegion": "fra1",
+    "reviewUrl": null,
+    "desiredReviewUrl": "https://bunnywell-portal-integration.vercel.app/workspace",
+    "urlAvailabilityVerified": false,
+    "initialMode": "authenticated read-only",
+    "automaticGitDeployments": false,
+    "publication": "Manual release from the existing integration branch to the new explicit project ID only; no Git push/merge or existing project reconfiguration."
+  },
+  "cost": {
+    "currency": "USD",
+    "supabaseComputeHourly": 0.01344,
+    "supabaseComputeMonthlyApprox": 10,
+    "vercelAdditionalBaseIfExistingPro": 0,
+    "possibleProUpgradeMonthly": 20,
+    "upgradeApproved": false,
+    "usageAndTax": "Additional usage/overages and tax may apply; shared allowances are not a per-project hard cap.",
+    "excluded": [
+      "New seats",
+      "Custom domains",
+      "PITR",
+      "Dedicated IPs",
+      "Paid protection add-ons",
+      "Compute upgrades"
+    ]
+  },
+  "baselineOrder": [
+    "supabase/baseline/application.sql",
+    "supabase/security-patches/20261111211706_foundation_scoped_security.sql",
+    "supabase/baseline/ownership.sql",
+    "supabase/baseline/imports.sql",
+    "supabase/baseline/workspace-reads.sql"
+  ],
+  "runtimeGuardStatus": "Proposed, not implemented: new project allowlist plus explicit rejection of both protected project IDs; existing development-only gate remains closed in production builds.",
+  "evidence": "Read-only project/organisation/team/deployment/alias inspection and existing code review. No schema, seed, hosted build, migration, remote file copy or functional acceptance executed this turn."
+}
