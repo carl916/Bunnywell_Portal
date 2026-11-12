@@ -1,3 +1,4 @@
+import {coreActions,coreCommand} from "./core-commands";
 import {createClient} from "@supabase/supabase-js";
 import {completionUploadAction} from "@/lib/sales/completion-upload-server";
 import {createSupabaseServiceRoleClient} from "@/lib/supabase/admin";
@@ -17,9 +18,10 @@ export async function completionCommand(request:Request) {
  if(Number(request.headers.get("content-length"))>24000)throw new ReadError("Request too large.",413);
  const raw=await request.text();if(raw.length>24000)throw new ReadError("Request too large.",413);
  let p:Record<string,unknown>;try{p=JSON.parse(raw)}catch{throw new ReadError("Invalid request.",400)}
- if(!p||typeof p!=="object"||typeof p.action!=="string"||!completionActions.has(p.action))throw new ReadError("This operation is not enabled.");
+ if(!p||typeof p!=="object"||typeof p.action!=="string"||(!completionActions.has(p.action)&&!coreActions.has(p.action)))throw new ReadError("This operation is not enabled.");
  const scope=recordScope(p.scope);if(!scope)throw new ReadError("Select an exact building, unit and sale.",400);
  const v=await viewer(request);
+ if(coreActions.has(p.action))return coreCommand(v,p,scope);
  const current=await completion(v,scope);
  if(!current.sale.is_active||!current.sale.exchanged_at||current.sale.legal_completed_at||current.sale.workflow_status==="completed")throw new ReadError("An active exchanged sale awaiting completion is required.");
  if(p.action!=="comment"&&!current.sale.completion_arrangements_confirmed_at&&current.sale.completion_legacy_stage!=="arrangements")throw new ReadError("Confirm completion arrangements first.");

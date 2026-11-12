@@ -1,0 +1,115 @@
+{
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "f240d7d5-8b1a-4ee7-9dd9-a0646fb0aa74",
+    "saleId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3"
+  },
+  "unit": "Priors Gate 102",
+  "buyer": "Fictional Integration Buyer 102",
+  "method": "Scripted setup via canonical authorised workflow operations; not hosted-browser acceptance",
+  "externalDelivery": "captured_test only; no provider calls, no sent_at, no provider IDs",
+  "actions": [
+    {
+      "name": "draft",
+      "at": "2026-11-12T20:17:27.462Z",
+      "result": {
+        "saleAttemptId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3",
+        "workflowStatus": "draft"
+      }
+    },
+    {
+      "name": "reservationFile",
+      "at": "2026-11-12T20:17:28.048Z",
+      "result": {
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/29e8c2ba-c02d-4d3c-9803-b0766eae49b3/reservation-0d0b6115-0f10-484d-b552-3f82cdc54055/reservation_form.pdf",
+        "versionId": "699dc21e-4820-4184-8045-7b4f9e1f8925"
+      }
+    },
+    {
+      "name": "submit",
+      "at": "2026-11-12T20:17:28.443Z",
+      "result": {
+        "saleAttemptId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3",
+        "workflowStatus": "awaiting_approval"
+      }
+    },
+    {
+      "name": "approve",
+      "at": "2026-11-12T20:17:28.649Z",
+      "result": {
+        "saleAttemptId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3",
+        "workflowStatus": "approved"
+      }
+    },
+    {
+      "name": "requestAuthority",
+      "at": "2026-11-12T20:17:28.734Z",
+      "result": {
+        "saleAttemptId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3"
+      }
+    },
+    {
+      "name": "authorityCaptured",
+      "at": "2026-11-12T20:17:28.934Z",
+      "result": {
+        "sent": false,
+        "emailId": "648bd9fb-1840-4d1c-aab9-9dd383ed23ac",
+        "deliveryStatus": "captured_test"
+      }
+    },
+    {
+      "name": "exchange",
+      "at": "2026-11-12T20:17:29.012Z",
+      "result": {
+        "saleAttemptId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3"
+      }
+    },
+    {
+      "name": "requestNoticeAuthority",
+      "at": "2026-11-12T20:17:29.101Z",
+      "result": {
+        "requested": true
+      }
+    },
+    {
+      "name": "noticeAuthorityCaptured",
+      "at": "2026-11-12T20:17:29.269Z",
+      "result": {
+        "sent": false,
+        "emailId": "54985550-1067-4591-998b-a589b621d88d",
+        "deliveryStatus": "captured_test"
+      }
+    },
+    {
+      "name": "notice",
+      "at": "2026-11-12T20:17:29.907Z",
+      "result": {
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/29e8c2ba-c02d-4d3c-9803-b0766eae49b3/notice-ec811b7f-d52d-4a1c-abd0-c8bc508fb8c8/notice.pdf",
+        "versionId": "b1ba34e8-c379-47ea-bb2f-372689ab49be"
+      }
+    }
+  ],
+  "beforeCaptured": true,
+  "readyForHostedCompletionReview": true,
+  "finalFacts": {
+    "workflow": "exchanged",
+    "exchangedAt": "2026-11-12",
+    "arrangementsConfirmedAt": "2026-11-12T20:17:29.754336+00:00",
+    "completionDue": "2026-11-26",
+    "documents": [
+      {
+        "id": "e137a77e-2b43-4217-9a6f-98dac608c6e6",
+        "type": "completion_correspondence"
+      },
+      {
+        "id": "70103a0f-25d6-424a-9009-c4aa62e8c7f5",
+        "type": "reservation_form"
+      }
+    ],
+    "legalEmailIds": [
+      "648bd9fb-1840-4d1c-aab9-9dd383ed23ac",
+      "54985550-1067-4591-998b-a589b621d88d"
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-12T20:12:59.419Z",
+  "method": "Local PostgreSQL transaction rollback",
+  "passed": true,
+  "checks": [
+    "comment follows two workflow-generated comments",
+    "retry returns the same comment",
+    "changed retry rejected",
+    "interleaved workflow and ordinary comments remain ordered"
+  ],
+  "destinationRecordsChanged": []
+}

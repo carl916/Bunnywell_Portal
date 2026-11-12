@@ -1,10 +1,10 @@
 import {NextRequest,NextResponse} from "next/server";
-import {hostedIntegration,stagingEnabled,stagingOrigin,completionWritesEnabled,integrationProject} from "./lib/workspace/staging";
+import {hostedIntegration,stagingEnabled,stagingOrigin,completionWritesEnabled,coreSalesEnabled,integrationProject} from "./lib/workspace/staging";
 export function proxy(request:NextRequest) {
  if(!hostedIntegration)return NextResponse.next();
  if(!stagingEnabled())return new NextResponse("Integration environment unavailable",{status:503});
  const path=request.nextUrl.pathname;
- const command=path==="/workspace/command"&&request.method==="POST"&&completionWritesEnabled();
+ const command=request.method==="POST"&&((path==="/workspace/command"&&completionWritesEnabled())||(path==="/workspace/upload"&&coreSalesEnabled()));
  if(!["GET","HEAD"].includes(request.method)&&!command)return NextResponse.json({error:"This operation is unavailable in the integration."},{status:403});
  if(path==="/")return NextResponse.redirect(new URL("/workspace",request.url));
  const allowed=command||path==="/workspace"||path==="/workspace/read"||path.startsWith("/_next/")||path.startsWith("/branding/")||path.startsWith("/brand/")||path==="/favicon.ico";

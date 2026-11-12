@@ -74,7 +74,7 @@ export async function discussion(v:Viewer,p:URLSearchParams){
   const id=p.get("version")||"";if(!validId(id))throw new ReadError("Invalid document version.",400);
   const [version]=await rows<{document_id:string;storage_bucket:string;storage_path:string;file_name:string}>(v.client,"unit_sale_document_versions","document_id,storage_bucket,storage_path,file_name",q=>q.eq("id",id).is("redacted_at",null));
   if(!version||version.storage_bucket!=="sale-documents")throw new ReadError("Document unavailable.");
-  const [document]=await rows<{id:string}>(v.client,"unit_sale_documents","id",q=>q.eq("id",version.document_id).eq("sale_attempt_id",scope.saleId).is("redacted_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence"]));
+  const [document]=await rows<{id:string}>(v.client,"unit_sale_documents","id",q=>q.eq("id",version.document_id).eq("sale_attempt_id",scope.saleId).is("redacted_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence","reservation_form"]));
   if(!document)throw new ReadError("Document unavailable for this sale.");
   await check(v);
   const signed=await v.client.storage.from(version.storage_bucket).createSignedUrl(version.storage_path,60);

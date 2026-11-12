@@ -5,7 +5,7 @@ import {roles,type Building,type Scope,type Workspace} from "../building-contrac
 import type {DashboardInput,WorkSale} from "../../dashboard/types";
 import {canOpenSalesPipeline,isSalesInternalRole} from "../../sales/permissions";
 
-export type Config=typeof approvedLocalEnvironment & {anonKey:string;completionReview?:boolean};
+export type Config=typeof approvedLocalEnvironment & {anonKey:string;completionReview?:boolean;coreSales?:boolean};
 export type Session={access_token:string;expires_at:number;user:{id:string}};
 export type Catalog={access:Access;buildings:Building[]};
 export type Document={id:string;document_type:string;title:string;status:string;query_note:string|null;approved_version_id:string|null;approved_at:string|null;unit_sale_document_versions:{id:string;version_number:number;file_name:string;is_current:boolean;uploaded_at:string;redacted_at:string|null}[]};
@@ -105,5 +105,3 @@ export function reader(config:Config,session:Session){
  }
  return{read,catalog,load,completion,workflow:completionClient(session.access_token,config.anonKey)};
 }
-
-

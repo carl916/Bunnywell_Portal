@@ -8,7 +8,11 @@ export function hostedCompletionClient(token:string,anonKey:string){
  async function action(scope:RecordScope,value:Record<string,unknown>,signal?:AbortSignal){
   const response=await request(scope,value,signal);const data=await response.json();if(!response.ok)throw Error(data.error||"Completion operation failed.");return data;
  }
- return{action,async upload(scope:RecordScope,requestId:string,file:File,metadata:CompletionUploadFile,progress:(value:UploadProgress)=>void,signal:AbortSignal,attempts:Map<string,Upload>){
+ return{action,async upload(scope:RecordScope,requestId:string,file:File,metadata:CompletionUploadFile & {noticeDate?:string;dueDate?:string},progress:(value:UploadProgress)=>void,signal:AbortSignal,attempts:Map<string,Upload>){
+  if(["reservation_form","completion_correspondence"].includes(metadata.type)){
+   progress({loaded:0,total:file.size,phase:"uploading"});const form=new FormData();form.set("file",file);form.set("metadata",JSON.stringify({...metadata,scope,requestId}));
+   const response=await fetch("/workspace/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:form,signal,redirect:"error",cache:"no-store"});const result=await response.json();if(!response.ok)throw Error(result.error||"Upload failed.");progress({loaded:file.size,total:file.size,phase:"verifying"});return result;
+  }
   await uploadCompletionFiles(scope.saleId,requestId,[file],[metadata],progress,signal,attempts,{prepare:payload=>request(scope,payload,signal),anonKey,allowedStorageOrigin:"https://"+integrationProject+".storage.supabase.co"});
   return action(scope,{action:"finalize_completion_upload",requestId},signal);
  }};
