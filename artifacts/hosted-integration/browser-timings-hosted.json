@@ -1,0 +1,584 @@
+{
+  "at": "2026-11-12T13:51:02.931Z",
+  "app": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app",
+  "database": "https://mmwzhzziqvjbsphrkbqr.supabase.co",
+  "method": "Chromium 1366x768, authenticated warm browser navigation, 3 runs per role/screen; HTTP response body bytes via Playwright request.sizes; browser-visible data requests (not internal PostgreSQL calls). No before/after latency claim.",
+  "results": [
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "run": 1,
+      "usableMs": 1086,
+      "dataRequests": 3,
+      "responseBodyBytes": 3109,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 779
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 611
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1719
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "run": 1,
+      "usableMs": 1167,
+      "dataRequests": 3,
+      "responseBodyBytes": 2836,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 620
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1752
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "run": 1,
+      "usableMs": 1543,
+      "dataRequests": 5,
+      "responseBodyBytes": 3478,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 620
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1107
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 614
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 673
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "run": 2,
+      "usableMs": 1149,
+      "dataRequests": 3,
+      "responseBodyBytes": 2836,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 620
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1752
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "run": 2,
+      "usableMs": 1048,
+      "dataRequests": 3,
+      "responseBodyBytes": 2780,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 587
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1729
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "run": 2,
+      "usableMs": 1553,
+      "dataRequests": 5,
+      "responseBodyBytes": 3473,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 620
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1128
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 648
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 613
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "dashboard",
+      "run": 3,
+      "usableMs": 1073,
+      "dataRequests": 3,
+      "responseBodyBytes": 3091,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 463
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 877
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1751
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "worklist",
+      "run": 3,
+      "usableMs": 1130,
+      "dataRequests": 3,
+      "responseBodyBytes": 3123,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 750
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 653
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1720
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "view": "sale",
+      "run": 3,
+      "usableMs": 1639,
+      "dataRequests": 5,
+      "responseBodyBytes": 3459,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 455
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 620
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1131
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 605
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 648
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "run": 1,
+      "usableMs": 1031,
+      "dataRequests": 3,
+      "responseBodyBytes": 2452,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 777
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 372
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1303
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "run": 1,
+      "usableMs": 1174,
+      "dataRequests": 3,
+      "responseBodyBytes": 2424,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 467
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 360
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1597
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "run": 1,
+      "usableMs": 1558,
+      "dataRequests": 5,
+      "responseBodyBytes": 3212,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 467
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 392
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1068
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 637
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 648
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "run": 2,
+      "usableMs": 1070,
+      "dataRequests": 3,
+      "responseBodyBytes": 2158,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 391
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1303
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "run": 2,
+      "usableMs": 1057,
+      "dataRequests": 3,
+      "responseBodyBytes": 2481,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 486
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 398
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1597
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "run": 2,
+      "usableMs": 1587,
+      "dataRequests": 5,
+      "responseBodyBytes": 3189,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 469
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 391
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1068
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 648
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 613
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "dashboard",
+      "run": 3,
+      "usableMs": 1582,
+      "dataRequests": 3,
+      "responseBodyBytes": 2148,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 486
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 360
+        },
+        {
+          "kind": "summary",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1302
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "worklist",
+      "run": 3,
+      "usableMs": 1123,
+      "dataRequests": 3,
+      "responseBodyBytes": 2421,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 360
+        },
+        {
+          "kind": "worklist",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1597
+        }
+      ]
+    },
+    {
+      "role": "conveyancer",
+      "view": "sale",
+      "run": 3,
+      "usableMs": 2081,
+      "dataRequests": 5,
+      "responseBodyBytes": 3183,
+      "requests": [
+        {
+          "kind": "config",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 464
+        },
+        {
+          "kind": "catalog",
+          "building": null,
+          "status": 200,
+          "responseBodyBytes": 392
+        },
+        {
+          "kind": "record",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 1043
+        },
+        {
+          "kind": "comments",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 613
+        },
+        {
+          "kind": "completion",
+          "building": "b1700000-0000-4000-8000-000000000001",
+          "status": 200,
+          "responseBodyBytes": 671
+        }
+      ]
+    }
+  ]
+}

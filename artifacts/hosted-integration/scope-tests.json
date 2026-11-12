@@ -1,0 +1,38 @@
+{
+  "at": "2026-11-12T13:44:40.083Z",
+  "method": "Direct hosted PostgREST and Storage calls under real role sessions",
+  "results": [
+    {
+      "scope": {
+        "p_building": "b1700000-0000-4000-8000-000000000001"
+      },
+      "passed": true,
+      "units": 34,
+      "sales": 34
+    },
+    {
+      "scope": {
+        "p_building": "b1700000-0000-4000-8000-000000000001",
+        "p_unit": "b1700000-0000-4000-8000-000000000100",
+        "p_sale": "b1700000-0000-4000-8000-000000001100"
+      },
+      "passed": true,
+      "units": 1,
+      "sales": 1
+    },
+    {
+      "check": "Direct caller-RLS building denial",
+      "passed": true,
+      "status": 403
+    },
+    {
+      "check": "Contractor cannot read Completion version metadata",
+      "passed": true
+    },
+    {
+      "check": "Anonymous private-PDF signing denied",
+      "passed": true,
+      "status": 400
+    }
+  ]
+}

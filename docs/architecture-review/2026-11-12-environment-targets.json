@@ -1,12 +1,14 @@
 {
   "schemaVersion": 1,
   "recordedAt": "2026-11-12",
-  "status": "resources-created-baseline-data-and-application-deployment-pending",
+  "status": "hosted-read-only-integration-ready-for-review",
   "repository": "https://github.com/carl916/Bunnywell_Portal",
   "source": {
     "branch": "codex/wider-workspace-integration",
     "foundationCommit": "d568e114e2415328960f07a2723f8c8018e1da8b",
-    "route": "/workspace"
+    "route": "/workspace",
+    "deployedCommit": "2117f8a161682552c4350e5bd475f3bbf7407b70",
+    "deploymentId": "dpl_C1af8nn7ba6LeVs2C5phacnodKTD"
   },
   "acceptedPrototype": {
     "branch": "experiment/sales-workspace-redesign",
@@ -64,9 +66,9 @@
     "vercelProjectName": "bunnywell-portal-integration",
     "vercelProjectId": "prj_YMaQDDgEtACwTijrmmh1SxQwsfe5",
     "vercelFunctionRegion": "fra1",
-    "reviewUrl": null,
-    "desiredReviewUrl": "https://bunnywell-portal-integration.vercel.app/workspace",
-    "urlAvailabilityVerified": false,
+    "reviewUrl": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+    "desiredReviewUrl": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+    "urlAvailabilityVerified": true,
     "initialMode": "authenticated read-only",
     "automaticGitDeployments": false,
     "publication": "Manual release from the existing integration branch to the new explicit project ID only; no Git push/merge or existing project reconfiguration."
@@ -103,8 +105,8 @@
     "supabase/baseline/imports.sql",
     "supabase/baseline/workspace-reads.sql"
   ],
-  "runtimeGuardStatus": "New IDs recorded; runtime/release target guards remain to be implemented. Development-only gate remains closed in production builds. No application deployed.",
-  "evidence": "Confirmed US$10/month creation quote, created independent projects, verified new database health/version and zero application tables/Auth users/buckets, verified new Vercel Node24/authentication protection/zero deployments/zero variables, and rechecked unchanged legacy staging and production domain aliases. No legacy business data queried or modified.",
+  "runtimeGuardStatus": "Exact new Vercel/Supabase target gates, caller-authenticated RLS reads, read-only server fetch allowlist and hosted route proxy installed. Legacy business routes/cron/dev routes blocked in hosted mode.",
+  "evidence": "See artifacts/hosted-integration and 2026-11-12-hosted-delivery.html. Current checks use genuine hosted role sessions and synthetic records; no staging/production business data read or changed.",
   "provisioning": {
     "approval": "User agreed to separate resources and instructed creation of the new Vercel project and database.",
     "supabaseCreatedAt": "2026-11-12T11:51:39.426265Z",
@@ -112,25 +114,31 @@
     "supabasePostgresVersion": "17.11.0.019",
     "supabaseDashboard": "https://supabase.com/dashboard/project/mmwzhzziqvjbsphrkbqr",
     "supabaseApiOrigin": "https://mmwzhzziqvjbsphrkbqr.supabase.co",
-    "publicApplicationTables": 0,
-    "authUsers": 0,
-    "storageBuckets": 0,
+    "publicApplicationTables": 61,
+    "authUsers": 10,
+    "storageBuckets": 4,
     "pgCronOrPgNetExtensions": 0,
     "vercelDashboard": "https://vercel.com/carl-gilbert-s-projects/bunnywell-portal-integration",
     "vercelNodeVersion": "24.x",
     "vercelAuthenticationProtection": "all deployments",
     "autoAssignCustomDomains": false,
-    "gitRepositoryAttached": false,
-    "vercelEnvironmentVariables": 0,
-    "vercelDeployments": 0,
+    "gitRepositoryAttached": true,
+    "vercelEnvironmentVariables": 8,
+    "vercelDeployments": 2,
     "customDomains": [],
     "legacyDeploymentAliasesUnchanged": true,
     "legacyDatabaseWritesPerformed": false,
     "credentialsCopied": false,
-    "applicationBaselineApplied": false,
-    "testDataImported": false,
-    "testAccountsCreated": false,
-    "authOutboundControlsVerified": false,
-    "remaining": "Configure and verify hosted outbound blocking and explicit target guards before accounts/data; apply reviewed baseline; import controlled data/media; connect and test the accepted UI; publish the first read-only review."
+    "applicationBaselineApplied": true,
+    "testDataImported": true,
+    "testAccountsCreated": true,
+    "authOutboundControlsVerified": true,
+    "remaining": "UI/workflow review, approval of new-project manual-only Git release control, then remaining scoped integrations. Business writes remain disabled."
+  },
+  "gitReleaseControls": {
+    "automaticPreviewDeploymentsDisabled": true,
+    "manualArtifactGitDeploymentsDisabled": true,
+    "allProjectGitBuildsDisabled": false,
+    "blockedProposal": "Set new-project Ignored Build Step to exit 0; auto-review requires explicit approval for persistent release-control change. Not applied."
   }
 }

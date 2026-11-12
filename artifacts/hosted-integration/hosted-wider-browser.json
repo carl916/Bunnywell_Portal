@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-12T13:52:59.204Z",
+  "app": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app",
+  "results": [
+    {
+      "name": "Full-page Completion shows role-safe heading, current/previous PDF and disabled actions",
+      "passed": true
+    },
+    {
+      "name": "Snag record renders its own evidence and permanent discussion panel",
+      "passed": true
+    },
+    {
+      "name": "Building configuration and Setup render hosted records without write controls",
+      "passed": true
+    }
+  ]
+}

@@ -1,1 +1,10 @@
-{"crons":[],"regions":["fra1"],"git":{"deploymentEnabled":false}}
+{
+  "crons": [],
+  "regions": [
+    "fra1"
+  ],
+  "git": {
+    "deploymentEnabled": false
+  },
+  "outputDirectory": ".next-hosted"
+}

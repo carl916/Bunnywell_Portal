@@ -1,0 +1,35 @@
+{
+  "at": "2026-11-12T13:55:30.710Z",
+  "project": "prj_YMaQDDgEtACwTijrmmh1SxQwsfe5",
+  "supabase": "mmwzhzziqvjbsphrkbqr",
+  "deployment": "dpl_C1af8nn7ba6LeVs2C5phacnodKTD",
+  "sourceCommit": "2117f8a161682552c4350e5bd475f3bbf7407b70",
+  "branch": "codex/wider-workspace-integration",
+  "url": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+  "state": "READY",
+  "outputDirectory": ".next-hosted",
+  "vercelProtection": "all deployments",
+  "temporaryBrowserAccessRevoked": true,
+  "legacy": {
+    "staging": "dpl_2FgewspkDgVzWMf7vdaNv8UcW18w",
+    "production": "dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W",
+    "aliasesUnchanged": true,
+    "databaseAccessThisTurn": false
+  },
+  "releaseControls": {
+    "automaticPreviewDeploymentsDisabled": true,
+    "manualArtifactGitDeploymentsDisabled": true,
+    "allProjectGitBuildsDisabled": false,
+    "blockedProposal": "Set new-project Ignored Build Step to exit 0; auto-review requires explicit approval for persistent release-control change. Not applied."
+  },
+  "buildChecks": {
+    "local": "Next16 webpack build passed; local dependency junction is outside Turbopack root",
+    "hosted": "Next16 Turbopack build passed; first packaging attempt failed because Vercel expected .next. New-project output directory corrected to .next-hosted; redeploy passed."
+  },
+  "offlineTests": {
+    "passed": 19,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "focusedEslint": "passed"
+}

@@ -2,7 +2,7 @@
 project_id = "bunnywell-portal-integration"
 
 [auth]
-site_url = "https://bunnywell-portal-integration.vercel.app"
+site_url = "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app"
 additional_redirect_urls = []
 enable_signup = false
 enable_anonymous_sign_ins = false

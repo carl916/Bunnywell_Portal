@@ -1,0 +1,47 @@
+{
+  "at": "2026-11-12T13:50:29.890Z",
+  "app": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app",
+  "method": "Chromium at 1366x768 and 390x844; genuine hosted developer/conveyancer/agent sessions; production app",
+  "results": [
+    {
+      "name": "fresh multi-building entry requires explicit choice",
+      "passed": true
+    },
+    {
+      "name": "duplicate G11, LG11 and 301 retain exact distinct building identities",
+      "passed": true
+    },
+    {
+      "name": "direct Completion link refresh preserves exact sale; separate tabs remain independent",
+      "passed": true
+    },
+    {
+      "name": "building switching from sale opens worklist and restores each building filters",
+      "passed": true
+    },
+    {
+      "name": "origin return restores pagination and scroll; browser back and forward preserve record",
+      "passed": true
+    },
+    {
+      "name": "late building response cannot populate the newly selected building",
+      "passed": true
+    },
+    {
+      "name": "mobile worklist preserves identity and action text without horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "sign-out propagates to another tab and removes record content",
+      "passed": true
+    },
+    {
+      "name": "single-building genuine agent enters its sole building directly",
+      "passed": true
+    },
+    {
+      "name": "conveyancer session restores on refresh with read-only Completion",
+      "passed": true
+    }
+  ]
+}
