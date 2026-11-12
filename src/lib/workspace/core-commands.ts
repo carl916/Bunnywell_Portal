@@ -15,7 +15,7 @@ export const coreActions=new Set(["core_context","save_reservation_draft","save_
 const signature=(data:unknown)=>createHmac("sha256",process.env.SUPABASE_SERVICE_ROLE_KEY!).update(JSON.stringify(data)).digest("hex");
 export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:RecordScope){
  if(!coreSalesEnabled())throw new ReadError("Core Sales writes are unavailable.",404);
- await completion(v,scope);await check(v);
+ const current=await completion(v,scope);await check(v);
  const client=createSupabaseServiceRoleClient(coreCommandFetch(scope,v.profile.id),v.profile.id);
  async function rpc(name:string,args:Record<string,unknown>){const r=await client.rpc(name,{p_sale:scope.saleId,p_actor:v.profile.id,...args});if(r.error)throw new ReadError(r.error.message,400);return r.data;}
  if(p.action==="core_context"){
@@ -47,6 +47,8 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
   if(!canPerformSalesAction(v.profile.role,"approve_exchange"))throw new ReadError("Only developer reviewers can issue authority.");
   if(action==="preview_capture"){
    const kind=p.kind;if(kind!=="authority"&&kind!=="notice_authority")throw new ReadError("Choose an authority type.",400);
+   if(kind==="authority"&&(current.sale.exchanged_at||current.sale.legal_completed_at||!["approved","reservation_approved","awaiting_commercial_approval","ready_for_exchange"].includes(current.sale.workflow_status)))throw new ReadError("Approve the reservation before reviewing exchange authority.",400);
+   if(kind==="notice_authority"&&(!current.sale.exchanged_at||current.sale.legal_completed_at))throw new ReadError("An exchanged sale awaiting Completion is required.",400);
    const date=kind==="authority"?String(p.date||new Date(Date.now()+48*3600000).toISOString()):null;
    const snapshot=await rpc("sales_legal_snapshot",{}) as LegalSnapshot;
    const reviewUrl="https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace?"+new URLSearchParams({view:"sale",building:scope.buildingId,unit:scope.unitId,sale:scope.saleId,section:kind==="authority"?"exchange":"completion"});
