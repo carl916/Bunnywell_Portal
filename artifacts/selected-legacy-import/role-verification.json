@@ -1,0 +1,173 @@
+{
+  "at": "2026-11-12T17:54:03.607Z",
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "method": "Real destination JWTs, reviewed building-facts RPC, destination private signer and downloaded checksums",
+  "results": [
+    {
+      "alias": "developer",
+      "building": "Forum House",
+      "allowed": true,
+      "status": 200,
+      "units": 63
+    },
+    {
+      "alias": "developer",
+      "building": "Priors Gate",
+      "allowed": true,
+      "status": 200,
+      "units": 64
+    },
+    {
+      "alias": "developer",
+      "building": "Trinity Point",
+      "allowed": true,
+      "status": 200,
+      "units": 86
+    },
+    {
+      "alias": "developer",
+      "privateDocumentAllowed": true,
+      "status": 200
+    },
+    {
+      "alias": "conveyancer",
+      "building": "Forum House",
+      "allowed": true,
+      "status": 200,
+      "units": 63
+    },
+    {
+      "alias": "conveyancer",
+      "building": "Priors Gate",
+      "allowed": true,
+      "status": 200,
+      "units": 64
+    },
+    {
+      "alias": "conveyancer",
+      "building": "Trinity Point",
+      "allowed": true,
+      "status": 200,
+      "units": 86
+    },
+    {
+      "alias": "conveyancer",
+      "privateDocumentAllowed": true,
+      "status": 200
+    },
+    {
+      "alias": "agent",
+      "building": "Forum House",
+      "allowed": true,
+      "status": 200,
+      "units": 63
+    },
+    {
+      "alias": "agent",
+      "building": "Priors Gate",
+      "allowed": true,
+      "status": 200,
+      "units": 64
+    },
+    {
+      "alias": "agent",
+      "building": "Trinity Point",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "agent",
+      "privateDocumentAllowed": true,
+      "status": 200
+    },
+    {
+      "alias": "agent-single",
+      "building": "Forum House",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "agent-single",
+      "building": "Priors Gate",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "agent-single",
+      "building": "Trinity Point",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "agent-single",
+      "privateDocumentAllowed": false,
+      "status": 400
+    },
+    {
+      "alias": "restricted",
+      "building": "Forum House",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "restricted",
+      "building": "Priors Gate",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "restricted",
+      "building": "Trinity Point",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "restricted",
+      "privateDocumentAllowed": false,
+      "status": 400
+    },
+    {
+      "alias": "inactive",
+      "building": "Forum House",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "inactive",
+      "building": "Priors Gate",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "inactive",
+      "building": "Trinity Point",
+      "allowed": false,
+      "status": 403,
+      "units": 0
+    },
+    {
+      "alias": "inactive",
+      "privateDocumentAllowed": false,
+      "status": 400
+    },
+    {
+      "bucket": "snag-images",
+      "publicRead": true,
+      "status": 200
+    },
+    {
+      "bucket": "sale-documents",
+      "publicRead": false,
+      "status": 400
+    }
+  ]
+}

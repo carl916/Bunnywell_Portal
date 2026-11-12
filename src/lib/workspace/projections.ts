@@ -27,7 +27,14 @@ export async function projected(v:Viewer,id:string,mode:'summary'|'worklist'|'re
  let result:PortalSnapshot={contract:contractVersion,scope:scopeFor(access,id,true),building,asOf:new Date(now).toISOString(),fixtureOnly:false,population:'Authorised building records',sources:[],counts:{units:0,stages:{},complete:true,ours:{actions:0,sales:0},others:{actions:0,sales:0},unallocated:{actions:0,sales:0},distinctSales:0},rows:[]};
  if(sales){const buyers=Object.fromEntries((input.sales as (WorkSale&{buyer_person_name?:string;buyer_company_name?:string})[]).map(s=>[s.id,s.buyer_person_name||s.buyer_company_name||'Buyer not recorded']));result=projectWorkspace(access,building,{...input,snags:[]},buyers,false,true);}
  if(mode==='record'){
-  const row=result.rows.find(r=>r.unitId===unit&&r.saleId===sale);if(!row)throw new ReadError('This exact building, unit and sale are unavailable.');
+  let row=result.rows.find(r=>r.unitId===unit&&r.saleId===sale);
+  // Historical attempts without outstanding fees must remain directly readable.
+  // The reviewed RPC has already checked the exact building/unit/attempt and RLS.
+  if(!row){
+   const a=input.sales.find(a=>a.id===sale&&a.unit_id===unit&&!a.is_active&&!a.redacted_at),u=input.units.find(u=>u.id===unit);
+   if(a&&u){const buyer=a as WorkSale&{buyer_person_name?:string;buyer_company_name?:string};row={unitId:u.id,unitNumber:u.unit_number,buildingId:id,buildingName:b.name,floor:u.floor||"",saleId:a.id,buyerLabel:buyer.buyer_person_name||buyer.buyer_company_name||"Buyer not recorded",stage:a.workflow_status,historical:true,actions:[],primaryActionId:null,warning:"Historical sale attempt",preview:{heading:"Historical sale",state:a.workflow_status,responsibleTeam:"Recorded history",mode:"read-only",onBehalf:null}};}
+  }
+  if(!row)throw new ReadError('This exact building, unit and sale are unavailable.');
   return {...result,rows:[row]};
  }
  if(mode==='worklist'){

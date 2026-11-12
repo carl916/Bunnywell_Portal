@@ -1,3 +1,4 @@
+import type {SaleDetails,SaleDetailsReader} from "./sale-details-types";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import type {reader,Config,Session,Catalog,Completion} from "@/lib/experiments/building-integration/reader";
 import {stagingOrigin,stagingProject,hostedIntegration} from "./staging";
@@ -20,13 +21,14 @@ export async function stagingAuth(c:Config,path:"token?grant_type=password"|"use
  if(path==="user"){const r=await client.auth.getUser();if(r.error)throw r.error;return r.data.user;}
  const r=await client.auth.signOut();if(r.error){await client.auth.signOut({scope:"local"});throw r.error;}return null;
 }
-export function stagingReader(c:Config,session:Session):ReturnType<typeof reader>{
+export function stagingReader(c:Config,session:Session):ReturnType<typeof reader>&SaleDetailsReader{
  const scopeValues=(s:RecordScope)=>({building:s.buildingId,unit:s.unitId,sale:s.saleId});
  const disabled=async():Promise<never>=>{throw Error("Business actions are disabled in this staging review.");};
  return{
   read:disabled,catalog:(signal)=>stagingRead<Catalog>(session,"catalog",{},signal),
   load:(scope:Scope,signal:AbortSignal)=>stagingRead(session,"workspace",{building:scope.buildingId},signal),
   completion:(scope,unit,sale,signal)=>stagingRead<Completion>(session,"completion",{building:scope.buildingId,unit,sale},signal),
+  details:(scope,unit,sale,section,signal)=>stagingRead<SaleDetails>(session,"sale-details",{building:scope.buildingId,unit,sale,section},signal),
   workflow:{action:disabled,upload:disabled,
    comments:(s,before,signal,after,target)=>stagingRead(session,"comments",{...scopeValues(s),...(before==null?{}:{before:String(before)}),...(after==null?{}:{after:String(after)}),...(target?{target}:{})},signal),
    activity:(s,before?:SaleActivity,signal?:AbortSignal)=>stagingRead(session,"activity",{...scopeValues(s),...(before?{beforeId:before.id,beforeTime:before.created_at}:{})},signal),

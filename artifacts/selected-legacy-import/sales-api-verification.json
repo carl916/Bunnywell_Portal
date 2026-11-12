@@ -1,0 +1,95 @@
+{
+  "at": "2026-11-12T18:04:18.977Z",
+  "origin": "http://127.0.0.1:3037",
+  "database": "mmwzhzziqvjbsphrkbqr",
+  "results": [
+    {
+      "name": "developer: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "developer: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "developer: crossed building and unit identifiers denied",
+      "passed": true
+    },
+    {
+      "name": "Imported financial terms match API display, including missing amounts",
+      "passed": true
+    },
+    {
+      "name": "Completed history remains addressable; imported redactions remain denied",
+      "passed": true
+    },
+    {
+      "name": "Completion PDF uses destination; other private file types retain current denial",
+      "passed": true
+    },
+    {
+      "name": "Forum snag evidence and all building structures available",
+      "passed": true
+    },
+    {
+      "name": "conveyancer: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "conveyancer: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "conveyancer: crossed building and unit identifiers denied",
+      "passed": true
+    },
+    {
+      "name": "agent: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "agent: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "agent: crossed building and unit identifiers denied",
+      "passed": true
+    },
+    {
+      "name": "agent-single: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "agent-single: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "agent-single: crossed building and unit identifiers denied",
+      "passed": true
+    },
+    {
+      "name": "restricted: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "restricted: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "restricted: crossed building and unit identifiers denied",
+      "passed": true
+    },
+    {
+      "name": "inactive: selected-building scope and Sales-route unit counts",
+      "passed": true
+    },
+    {
+      "name": "inactive: six exact Sales details and role restrictions",
+      "passed": true
+    },
+    {
+      "name": "inactive: crossed building and unit identifiers denied",
+      "passed": true
+    }
+  ]
+}

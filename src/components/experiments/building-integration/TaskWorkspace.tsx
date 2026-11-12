@@ -1,4 +1,5 @@
 "use client";
+import SaleDetails from "./SaleDetails";
 import {usePathname} from "next/navigation";
 import {useEffect,useState,type ReactNode} from "react";
 import {Check,ChevronRight,Circle} from "lucide-react";
@@ -28,6 +29,7 @@ export function Action({children}:{children:ReactNode}){return <button className
 export function SaleTask({api,scope,row,section,task,onTask,onSaved,readOnly=false}:{api:ReturnType<typeof reader>;scope:Scope;row:SaleRow;section:string;task:string;onTask:(v:string)=>void;onSaved:(message:string)=>void;readOnly?:boolean}){
  const [data,setData]=useState<Completion|null>(null),[error,setError]=useState("");
  useEffect(()=>{if(section!=="completion")return;const c=new AbortController();api.completion(scope,row.unitId,row.saleId!,c.signal).then(v=>{if(!c.signal.aborted)setData(v)}).catch(e=>{if(!c.signal.aborted)setError(e.message)});return()=>c.abort()},[api,scope,row.unitId,row.saleId,section]);
+ if(section!=="completion"&&hostedIntegration)return <SaleDetails api={api} scope={scope} row={row} section={section}/>;
  if(section!=="completion")return <><Heading title={sections.find(v=>v[0]===section)?.[1]||"Sale workspace"}/><Notice>This detailed workspace is not yet connected. Completion is the first connected full-page example.</Notice><p>{row.preview.heading} · {row.preview.responsibleTeam}</p><button className={s.button} onClick={()=>go(saleValues(row))}>Open Completion</button><Action>Open existing sale file - unavailable</Action></>;
  if(error)return <><Heading title="Completion unavailable"/><Notice>{error}</Notice></>;
  if(!data)return <><Heading title="Loading Completion"/><Notice>Loading this building, unit and exact sale attempt...</Notice></>;

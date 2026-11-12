@@ -1,6 +1,6 @@
 import {integrationProject} from "./staging";
 const origin="https://"+integrationProject+".supabase.co";
-const tables=new Set("profiles buildings building_floors building_organisations organisations units unit_sale_attempts unit_sale_terms unit_sale_documents unit_sale_document_versions unit_sale_invoices unit_sale_invoice_payments sale_legal_emails sale_exchange_deposit_receipts sale_exchange_deposit_sources sale_further_deposit_facts user_unit_access user_building_access snags areas snag_photos snag_events building_sale_defaults trades unit_types audit_events".split(" "));
+const tables=new Set("profiles buildings building_floors building_organisations organisations units unit_sale_attempts unit_sale_terms unit_sale_payment_schedule handovers unit_sale_documents unit_sale_document_versions unit_sale_invoices unit_sale_invoice_payments sale_legal_emails sale_exchange_deposit_receipts sale_exchange_deposit_sources sale_further_deposit_facts user_unit_access user_building_access snags areas snag_photos snag_events building_sale_defaults trades unit_types audit_events".split(" "));
 export function allowedHostedRead(target:string,method="GET") {
  const u=new URL(target);if(u.origin!==origin)return false;
  if(u.pathname==="/auth/v1/user")return method==="GET";
