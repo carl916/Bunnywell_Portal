@@ -7,11 +7,13 @@ export function createWorkspaceSession(load:(scope:Scope,signal:AbortSignal)=>Pr
   return {
     getSnapshot:()=>state,
     subscribe:(f:()=>void)=>{listeners.add(f);return()=>{listeners.delete(f);};},
-    async select(scope:Scope,force=false) {
+    async select(scope:Scope,force=false,preserveCurrent=false) {
       if(!force&&state.scope&&sameScope(state.scope,scope)&&(state.snapshot||state.loading))return;
       const token=++generation;controller?.abort();controller=new AbortController();const current=controller;
-      // Synchronous invalidation before the selected identity can publish any rows.
-      publish({scope,snapshot:null,loading:true,error:""});
+      // Keep a successful write refresh mounted only within the identical access scope.
+      // Identity, permission, building and request changes still invalidate immediately.
+      const retained=preserveCurrent&&state.scope&&sameScope(state.scope,scope)?state.snapshot:null;
+      publish({scope,snapshot:retained,loading:true,error:""});
       try {
         const snapshot=assertWorkspace(await load(scope,current.signal),scope,fixtureOnly);
         if(token!==generation||current.signal.aborted)return;

@@ -177,3 +177,13 @@ test("all fixture projections execute without invoking any network transport",()
  finally{globalThis.fetch=original;}
 });
 
+
+test("write refresh retains only the identical scope and clears on denial",async()=>{
+ const a=fixture.workspace("developer",A),b=fixture.workspace("developer",B),calls=[];
+ const s=createWorkspaceSession(()=>{const d=defer();calls.push(d);return d.promise;});
+ let p=s.select(a.scope);calls[0].resolve(a);await p;
+ p=s.select(a.scope,true,true);assert.equal(s.getSnapshot().snapshot,a);assert.equal(s.getSnapshot().loading,true);calls[1].resolve({...a,asOf:"refreshed"});await p;
+ p=s.select({...a.scope,accessRevision:"revoked"},true,true);assert.equal(s.getSnapshot().snapshot,null);calls[2].reject(Error("Access denied"));await p;assert.equal(s.getSnapshot().snapshot,null);
+ p=s.select(a.scope);calls[3].resolve(a);await p;p=s.select(b.scope,true,true);assert.equal(s.getSnapshot().snapshot,null);calls[4].resolve(b);await p;
+ p=s.select(b.scope,true,true);calls[5].reject(Error("Access denied"));await p;assert.equal(s.getSnapshot().snapshot,null);
+});

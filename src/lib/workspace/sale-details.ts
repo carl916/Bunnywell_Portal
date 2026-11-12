@@ -1,3 +1,4 @@
+import {timingDescription,type FurtherDepositTiming} from "@/lib/sales/further-deposit";
 import {validId} from "@/lib/experiments/building-contracts/contracts";
 import {canViewDeveloperCommercials,isSalesInternalRole} from "@/lib/sales/permissions";
 import type {Document} from "@/lib/experiments/building-integration/reader";
@@ -39,7 +40,7 @@ export async function saleDetails(v:Viewer,p:URLSearchParams):Promise<SaleDetail
   terms.sort((x,y)=>Number(y.version_number)-Number(x.version_number));
   if(!terms.length)result.notices.push("No terms are available for this sale and your role.");
   for(const t of terms){
-   const fields:[string,string][]=[["Status",text(t.status)],["Contract price",money(t.contract_price)],["Reservation fee",money(t.reservation_fee)],["Fee holder",text(t.reservation_fee_holder)],["Exchange deposit",percent(t.exchange_deposit_percent)],["Further deposit",t.second_deposit_enabled===false?"Not required":t.second_deposit_enabled===true?percent(t.second_deposit_percent):"Not recorded"],["Further deposit timing",text(t.further_deposit_timing)],["Months after exchange",text(t.second_deposit_months_after_exchange)],["Completion balance",percent(t.completion_balance_percent)],["Approved",date(t.approved_at)]];
+   const fields:[string,string][]=[["Status",text(t.status)],["Contract price",money(t.contract_price)],["Reservation fee",money(t.reservation_fee)],["Fee holder",text(t.reservation_fee_holder)],["Exchange deposit",percent(t.exchange_deposit_percent)],["Further deposit",t.second_deposit_enabled===false?"Not required":t.second_deposit_enabled===true?percent(t.second_deposit_percent):"Not recorded"],["Further deposit timing",t.second_deposit_enabled===false?"Not required":timingDescription(t.further_deposit_timing as FurtherDepositTiming|null,t.second_deposit_months_after_exchange as number|null)],["Months after exchange",text(t.second_deposit_months_after_exchange)],["Completion balance",percent(t.completion_balance_percent)],["Approved",date(t.approved_at)]];
    if(internal&&section==="commercial")fields.push(["Developer contribution",money(t.developer_contribution)],["Agent contribution",money(t.agent_contribution)],["Solicitor fee",money(t.solicitor_fee)],["Commercial summary",text(t.commercial_summary)]);
    add(String(t.id),(t.is_current?"Current terms":"Previous terms")+" · version "+t.version_number,fields);
   }
