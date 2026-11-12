@@ -1,0 +1,82 @@
+{
+  "at": "2026-11-12T12:25:57.349Z",
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "accounts": [
+    {
+      "alias": "developer",
+      "id": "b1700000-0000-4000-8000-000000000901",
+      "role": "developer"
+    },
+    {
+      "alias": "developer-single",
+      "id": "b1700000-0000-4000-8000-000000000902",
+      "role": "developer"
+    },
+    {
+      "alias": "admin",
+      "id": "b1700000-0000-4000-8000-000000000903",
+      "role": "admin"
+    },
+    {
+      "alias": "agent",
+      "id": "b1700000-0000-4000-8000-000000000904",
+      "role": "sales_agent"
+    },
+    {
+      "alias": "agent-colleague",
+      "id": "b1700000-0000-4000-8000-000000000905",
+      "role": "sales_agent"
+    },
+    {
+      "alias": "agent-other",
+      "id": "b1700000-0000-4000-8000-000000000906",
+      "role": "sales_agent"
+    },
+    {
+      "alias": "conveyancer",
+      "id": "b1700000-0000-4000-8000-000000000907",
+      "role": "conveyancer"
+    },
+    {
+      "alias": "inactive",
+      "id": "b1700000-0000-4000-8000-000000000908",
+      "role": "developer"
+    },
+    {
+      "alias": "restricted",
+      "id": "b1700000-0000-4000-8000-000000000909",
+      "role": "contractor"
+    },
+    {
+      "alias": "agent-single",
+      "id": "b1700000-0000-4000-8000-000000000910",
+      "role": "sales_agent"
+    }
+  ],
+  "buildings": 3,
+  "sales": 8,
+  "snags": 3,
+  "files": [
+    {
+      "path": "integration-documents/b1700000-0000-4000-8000-000000003100.pdf",
+      "sha256": "aca957b47036cbd486cc13b9d0807163357b5d80b744126ef5db5441cccd1d9b",
+      "bytes": 3757
+    },
+    {
+      "path": "integration-documents/b1700000-0000-4000-8000-000000003101.pdf",
+      "sha256": "8199d2497277f6927946074988edb49373c1fa3b4cbd25d6538a1325d8929d11",
+      "bytes": 3763
+    },
+    {
+      "path": "integration-documents/b1700000-0000-4000-8000-000000003102.pdf",
+      "sha256": "1271bae758db1230dd25d9000d7e00b2a1e9787eed6234fa9874b0614986e34c",
+      "bytes": 3762
+    }
+  ],
+  "comments": 2,
+  "emailBlocked": 403,
+  "signupBlocked": 422,
+  "syntheticOnly": true,
+  "source": "Existing reviewed Stage 2 fixture proposal and canonical comment RPC",
+  "hostedBusinessActions": "disabled"
+}

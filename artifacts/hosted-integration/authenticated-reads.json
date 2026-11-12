@@ -1,0 +1,44 @@
+{
+  "at": "2026-11-12T12:30:25.135Z",
+  "app": "http://127.0.0.1:3037",
+  "database": "https://mmwzhzziqvjbsphrkbqr.supabase.co",
+  "method": "Real password-authenticated hosted accounts; read-only application HTTP checks",
+  "results": [
+    {
+      "name": "Unauthenticated reads denied and business route methods blocked",
+      "passed": true
+    },
+    {
+      "name": "developer building dashboard, worklist, exact Completion, comments, activity and PDFs",
+      "passed": true
+    },
+    {
+      "name": "conveyancer building dashboard, worklist, exact Completion, comments, activity and PDFs",
+      "passed": true
+    },
+    {
+      "name": "Developer Snags, exact snag, Buildings and Setup read correctly",
+      "passed": true
+    },
+    {
+      "name": "Foreign building/unit/sale combinations denied",
+      "passed": true
+    },
+    {
+      "name": "Agent has one building and cannot read another building or Setup",
+      "passed": true
+    },
+    {
+      "name": "Conveyancer cannot read Snags or Setup; inactive account cannot enter",
+      "passed": true
+    },
+    {
+      "name": "Private completion storage denies contractor and inactive accounts directly",
+      "passed": true
+    },
+    {
+      "name": "Public synthetic snag illustration remains independently readable",
+      "passed": true
+    }
+  ]
+}

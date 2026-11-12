@@ -39,7 +39,9 @@
     ".next-foundation/types/**/*.ts",
     ".next-foundation/dev/types/**/*.ts",
     ".next-foundation-check/types/**/*.ts",
-    ".next-foundation-check/dev/types/**/*.ts"
+    ".next-foundation-check/dev/types/**/*.ts",
+    ".next-hosted/types/**/*.ts",
+    ".next-hosted/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

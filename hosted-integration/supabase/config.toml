@@ -1,0 +1,23 @@
+# Applies only through the pinned hosted-integration tooling. No legacy project link.
+project_id = "bunnywell-portal-integration"
+
+[auth]
+site_url = "https://bunnywell-portal-integration.vercel.app"
+additional_redirect_urls = []
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enabled = true
+enable_confirmations = true
+
+[auth.sms]
+enabled = false
+
+[auth.hook.send_email]
+enabled = true
+uri = "pg-functions://postgres/integration_controls/block_delivery"
+
+[auth.hook.send_sms]
+enabled = true
+uri = "pg-functions://postgres/integration_controls/block_delivery"

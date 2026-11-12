@@ -1,6 +1,7 @@
+import {hostedReadFetch} from "./hosted-fetch";
 import { portalAccessKey } from "@/lib/portal-access-snapshot";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { stagingOrigin, moduleAllowed, foundationLocal } from "./staging";
+import { stagingOrigin, moduleAllowed, optimizedReads, hostedIntegration } from "./staging";
 import { rows, related } from "./reads";
 import { loadDashboardInput, dashboardAccessKey } from "@/lib/dashboard/read";
 import { deriveDashboard } from "@/lib/dashboard/model";
@@ -19,9 +20,9 @@ async function accessContext(client:SupabaseClient,id:string){
 export async function viewer(request:Request) {
  const token=request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
  if(!token)throw new ReadError("Sign in to the staging workspace.",401);
- const client=createClient(stagingOrigin,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});
+ const client=createClient(stagingOrigin,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token},...(hostedIntegration?{fetch:hostedReadFetch}:{})}});
  const auth=await client.auth.getUser(token);if(auth.error||!auth.data.user)throw new ReadError("Session expired. Sign in again.",401);
- if(foundationLocal){const context=await accessContext(client,auth.data.user.id);return{client,...context,token};}
+ if(optimizedReads){const context=await accessContext(client,auth.data.user.id);return{client,...context,token};}
  const p=await client.from("profiles").select("id,role,organisation_id,active").eq("id",auth.data.user.id).single();
  if(p.error||!p.data?.active||!moduleAllowed(p.data.role,"dashboard"))throw new ReadError("This account cannot open the workspace.");
  const profile=p.data as WorkViewer & {active:boolean};
@@ -29,7 +30,7 @@ export async function viewer(request:Request) {
  return{client,profile,revision,token};
 }
 export type Viewer = Awaited<ReturnType<typeof viewer>>;
-export async function check(v:Viewer){if(foundationLocal){const fresh=await accessContext(v.client,v.profile.id);if(fresh.revision!==v.revision)throw new ReadError("Access changed. Sign in again.");return;}const p=await v.client.from("profiles").select("id,role,organisation_id,active").eq("id",v.profile.id).single();if(p.error||JSON.stringify(p.data)!==JSON.stringify(v.profile)||await dashboardAccessKey(v.client,v.profile)!==v.revision)throw new ReadError("Access changed. Sign in again.");}
+export async function check(v:Viewer){if(optimizedReads){const fresh=await accessContext(v.client,v.profile.id);if(fresh.revision!==v.revision)throw new ReadError("Access changed. Sign in again.");return;}const p=await v.client.from("profiles").select("id,role,organisation_id,active").eq("id",v.profile.id).single();if(p.error||JSON.stringify(p.data)!==JSON.stringify(v.profile)||await dashboardAccessKey(v.client,v.profile)!==v.revision)throw new ReadError("Access changed. Sign in again.");}
 export async function catalog(v:Viewer):Promise<Catalog>{
  const buildings=await rows<Building>(v.client,"buildings","id,name,address_line_1,town");
  const access:Access={identity:v.profile.id,role:v.profile.role,organisationId:v.profile.organisation_id,active:true,buildingIds:buildings.map(b=>b.id),accessRevision:v.revision};
@@ -69,7 +70,17 @@ export async function discussion(v:Viewer,p:URLSearchParams){
  const kind=p.get("kind");const args:Record<string,unknown>={p_sale:scope.saleId};
  if(kind==="comments"){args.p_unit=scope.unitId;for(const [q,key]of [["before","p_before"],["after","p_after"]])if(p.has(q)){const n=Number(p.get(q));if(!Number.isSafeInteger(n)||n<0)throw new ReadError("Invalid cursor.",400);args[key]=n;}if(p.has("target")){if(!validId(p.get("target")!))throw new ReadError("Invalid comment.",400);args.p_target=p.get("target");}}
  else if(kind==="activity"){if(p.has("beforeId")){if(!validId(p.get("beforeId")!)||!Number.isFinite(Date.parse(p.get("beforeTime")||"")))throw new ReadError("Invalid cursor.",400);args.p_before_id=p.get("beforeId");args.p_before_time=p.get("beforeTime");}}
- else throw new ReadError("Document file viewing is not yet enabled in this read-only staging integration.",400);
+ else if(kind==="document"&&hostedIntegration){
+  const id=p.get("version")||"";if(!validId(id))throw new ReadError("Invalid document version.",400);
+  const [version]=await rows<{document_id:string;storage_bucket:string;storage_path:string;file_name:string}>(v.client,"unit_sale_document_versions","document_id,storage_bucket,storage_path,file_name",q=>q.eq("id",id).is("redacted_at",null));
+  if(!version||version.storage_bucket!=="sale-documents")throw new ReadError("Document unavailable.");
+  const [document]=await rows<{id:string}>(v.client,"unit_sale_documents","id",q=>q.eq("id",version.document_id).eq("sale_attempt_id",scope.saleId).is("redacted_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence"]));
+  if(!document)throw new ReadError("Document unavailable for this sale.");
+  await check(v);
+  const signed=await v.client.storage.from(version.storage_bucket).createSignedUrl(version.storage_path,60);
+  if(signed.error||!signed.data?.signedUrl)throw new ReadError("Document file unavailable.",503);
+  return{url:signed.data.signedUrl,fileName:version.file_name};
+ }else throw new ReadError("Document file viewing is not yet enabled in this read-only staging integration.",400);
  const result=await v.client.rpc(kind==="comments"?"sale_comment_page":"sale_activity_page",args);if(result.error)throw new ReadError("Discussion unavailable for this record.");return result.data;
 }
 export async function snags(v:Viewer,id:string):Promise<SnagList>{

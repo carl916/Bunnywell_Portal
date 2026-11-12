@@ -61,3 +61,5 @@ node_modules/
 
 /.next-foundation/
 /.next-foundation-check/
+
+.next-hosted/

@@ -1,6 +1,6 @@
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import type {reader,Config,Session,Catalog,Completion} from "@/lib/experiments/building-integration/reader";
-import {stagingOrigin,stagingProject} from "./staging";
+import {stagingOrigin,stagingProject,hostedIntegration} from "./staging";
 import type {Scope} from "@/lib/experiments/building-contracts/contracts";
 import type {RecordScope} from "@/lib/experiments/building-integration/completion-boundary";
 import type {SaleActivity} from "@/lib/sales/discussion";
@@ -30,7 +30,7 @@ export function stagingReader(c:Config,session:Session):ReturnType<typeof reader
   workflow:{action:disabled,upload:disabled,
    comments:(s,before,signal,after,target)=>stagingRead(session,"comments",{...scopeValues(s),...(before==null?{}:{before:String(before)}),...(after==null?{}:{after:String(after)}),...(target?{target}:{})},signal),
    activity:(s,before?:SaleActivity,signal?:AbortSignal)=>stagingRead(session,"activity",{...scopeValues(s),...(before?{beforeId:before.id,beforeTime:before.created_at}:{})},signal),
-   document:disabled
+   document:(scope,version,signal)=>hostedIntegration?stagingRead<{url:string;fileName:string}>(session,"document",{...scopeValues(scope),version},signal):disabled()
   }
  };
 }

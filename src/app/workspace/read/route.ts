@@ -1,4 +1,4 @@
-import { stagingEnabled, stagingOrigin, stagingProject, foundationLocal } from "@/lib/workspace/staging";
+import { stagingEnabled, stagingOrigin, stagingProject, optimizedReads } from "@/lib/workspace/staging";
 import {projected,unitOptions} from "@/lib/workspace/projections";
 import * as read from "@/lib/workspace/server";
 export const dynamic="force-dynamic";
@@ -11,8 +11,8 @@ export async function GET(request:Request){
  const v=await read.viewer(request);const id=p.get("building")||"";
  let result:unknown;
  if(kind==="catalog")result=await read.catalog(v);
- else if(foundationLocal&&["summary","worklist","record"].includes(kind||""))result=await projected(v,id,kind as "summary"|"worklist"|"record",p);
- else if(foundationLocal&&kind==="unit-options")result=await unitOptions(v,id);
+ else if(optimizedReads&&["summary","worklist","record"].includes(kind||""))result=await projected(v,id,kind as "summary"|"worklist"|"record",p);
+ else if(optimizedReads&&kind==="unit-options")result=await unitOptions(v,id);
  else if(kind==="workspace")result=await read.workspace(v,id);
  else if(kind==="completion")result=await read.completion(v,{buildingId:id,unitId:p.get("unit")||"",saleId:p.get("sale")||""});
  else if(["comments","activity","document"].includes(kind||""))result=await read.discussion(v,p);
