@@ -1,0 +1,13 @@
+{
+  "deploymentId": "dpl_4N85KoXuSrX2Gy99Ca2NkwP2gfUh",
+  "projectId": "prj_YMaQDDgEtACwTijrmmh1SxQwsfe5",
+  "alias": "bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app",
+  "commit": "d69db5b02f6c84d0d55234d42c0a8c1213c314fb",
+  "state": "READY",
+  "codeFilesVerified": 210,
+  "protectionBypassCount": 0,
+  "browserVerified": false,
+  "localApiChecks": 22,
+  "regressionChecks": 45,
+  "buildSeconds": 39
+}
