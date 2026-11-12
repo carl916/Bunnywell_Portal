@@ -1,0 +1,33 @@
+{
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "58c24b3d-c370-400b-8958-661d061373b1",
+    "saleId": "c749e4a5-1bcf-40fe-b862-1b1ba9663c15"
+  },
+  "unit": "Priors Gate 104",
+  "at": "2026-11-12T20:55:38.922Z",
+  "method": "Post-browser read-only reconciliation; browser observations recorded separately",
+  "buyer": null,
+  "workflow": "draft",
+  "unitStage": "for_sale",
+  "legalCompletedAt": null,
+  "changedRecords": {
+    "sale": [
+      "c749e4a5-1bcf-40fe-b862-1b1ba9663c15"
+    ],
+    "unit": [
+      "58c24b3d-c370-400b-8958-661d061373b1"
+    ],
+    "terms": [
+      "7c315bbe-0f95-4938-8e54-d4fdcf28d39a"
+    ],
+    "schedule": [],
+    "documents": [],
+    "versions": [],
+    "emails": [],
+    "events": [],
+    "comments": []
+  },
+  "externalDelivery": "none"
+}

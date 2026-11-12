@@ -1,0 +1,155 @@
+{
+  "acceptedImport": "Accepted as complete; importer not rerun. Original manifest, mappings, recovery exports and reconciliation retained.",
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "address": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+  "completionRelease": "3ab9fd21514c33cebab8596734caf3699453649d",
+  "coreRelease": "fbde7b1c565868e03282fbf8adba1820a03c0385",
+  "method": "Genuine authorized IAB Vercel and application sign-in. No protection bypass or share link.",
+  "hostedReadChecks": [
+    [
+      "Building versus Sales counts",
+      "Forum House 63/62; Priors Gate 64/64; Trinity Point 86/68"
+    ],
+    [
+      "Floor order",
+      "Forum LG, Ground then configured floors; natural unit order"
+    ],
+    [
+      "Completed Forum history",
+      "LG07: legal completion 5 Oct 2026; 2/2 approved and locked"
+    ],
+    [
+      "Read-only details",
+      "Reservation, Exchange, Deposits, Agent Fees, Commercial and empty Handover state loaded"
+    ],
+    [
+      "Current Completion PDF",
+      "Forum LG01 private PDF opened and rendered"
+    ],
+    [
+      "Previous Completion PDF",
+      "Forum 102 preserved version 1 opened and rendered"
+    ],
+    [
+      "Snag evidence/activity",
+      "Forum LG01 snag 1ccf1f12-f670-472b-bf5f-4724c782a08b: closed status, 2 photos loaded, recorded activity"
+    ],
+    [
+      "Role visibility",
+      "Conveyancer only Dashboard/Sales; Snags denied; developer contributions and solicitor fee hidden"
+    ],
+    [
+      "Wrong building",
+      "agent-single session denied Forum building and snag route"
+    ],
+    [
+      "Redaction",
+      "308468b0-ae7f-4e80-a4fe-afd24cc53c34 denied in genuine browser session"
+    ],
+    [
+      "Navigation",
+      "Filtered Completed worklist return, dashboard-origin return, building switching, refresh retained scope"
+    ]
+  ],
+  "hostedCompletionChecks": [
+    "Conveyancer uploaded completion statement v1 and statement of account on Priors101.",
+    "Current uploaded fictional PDF opened and rendered.",
+    "Comment saved with attributed actor after canonical sequence allocator correction.",
+    "Developer queried statement with reason; conveyancer revised to v2; both versions remained viewable.",
+    "Developer approved v2 and account; 2 of 2 approved; activity showed upload/query/supersession/revision/approvals.",
+    "Priors developer dashboard changed from 3 actions/3 sales after query to 2 actions/2 sales after approval; waiting-on-others remained 12 actions/4 sales."
+  ],
+  "timings": {
+    "method": "Observed browser action-to-usable wall clock, includes CUA overhead; not network-only metrics",
+    "forumBuildingsMs": 1593,
+    "priorsSwitchSalesMs": 837,
+    "forumDashboardToCompletionMs": 1097,
+    "priors101CompletionMs": 1296,
+    "accountUploadMs": 3292,
+    "trinityFullRefreshSingleSampleMs": 7904,
+    "priors102RefreshMs": 1488,
+    "conclusion": "No repeated material regression established. File-chooser tool delay excluded.",
+    "finalDraftRefreshMs": 3605,
+    "final102CompletionMs": 2036
+  },
+  "localEvidence": {
+    "tests24": "21 existing boundary checks + 3 new core boundary checks passed",
+    "coreAdapter": "9 isolated Auth/Postgres/Storage journey groups passed, including retries and role/scope denial through legal completion",
+    "atomicReservationCapture": "16 rollback checks",
+    "commentSequence": "4 rollback checks",
+    "lint": "Focused modified TypeScript/components passed",
+    "build": "Next 16.2.7 webpack production build passed; Turbopack is incompatible with existing shared node_modules junction",
+    "refreshContracts": "33 checks passed",
+    "captureProjection": "3 local rollback checks: conveyed capture, recipient/arbitrary metadata redaction, wrong-building denial",
+    "finalFocused": "27 discussion/email/core boundary tests passed; lint and final webpack production build passed"
+  },
+  "testRecords": [
+    "Priors101: canonical scripted setup then hosted query/revision/approval cycle; 4 documents, 5 versions; Completion approved, not legally completed.",
+    "Priors102: canonical scripted setup; 2 supporting documents, Completion review slots empty; ready for user.",
+    "Priors103: genuine hosted Reservation to legal Completion journey; 4 documents, 5 versions, 31 workflow events; legally completed.",
+    "Priors104: private test-capture enrollment and before-export only; available draft, no buyer/documents/workflow mutations; ready for user."
+  ],
+  "externalDelivery": "Six explicit test captures across Priors101/102/103. Read-only SQL reconciliation confirms zero sent_at/provider IDs. No invitations or historical account activation.",
+  "limitations": [
+    "Populated Handover history could not be checked through a sale route: Forum had no active sale with a Handover; imported Trinity Handovers have no sale attempts. No sale attempts were fabricated.",
+    "Payments, Agent Fee writes, Handover finalisation, Snags editing, Setup administration and real external delivery remain unavailable.",
+    "Document file viewing is scoped to Reservation and Completion/notice versions; other non-Completion document categories remain unavailable pending their workflows."
+  ],
+  "hostedRegressions": [
+    {
+      "release": "40bc8bd",
+      "finding": "Reservation upload refresh unmounted the form and cleared unsaved fields",
+      "fix": "Explicit successful-write refresh retains snapshot only for identical access scope. Fresh denial clears it; changed identity/revision/building/request still invalidates synchronously.",
+      "validation": "Hosted recheck passed: selected PDF survived Save draft; unsaved phone value 00000000103 survived PDF upload and was submitted."
+    },
+    {
+      "finding": "Imported further-deposit timing rendered as [object Object]",
+      "fix": "Reuse canonical timingDescription formatter; no data changes",
+      "validation": "Hosted Reservation showed 2027-04-01 at 17:00 UK time."
+    },
+    {
+      "finding": "Conveyancer activity omitted custom capture events",
+      "fix": "Safe event projection exposes only capture kind, captured_test status and externalDelivery=false, with same-sale access check",
+      "validation": "3 local rollback checks; hosted conveyancer saw exactly two capture entries on Priors103."
+    },
+    {
+      "finding": "Draft authority preview attempted to render an empty buyer",
+      "fix": "UI prerequisite and server-side approved-Reservation gate before preview/RPC",
+      "validation": "Four core boundary checks pass; final hosted Priors104 shows prerequisite with no authority preview offered."
+    }
+  ],
+  "coreJourneyVerifiedOn": "715771eee0af225f91cf3b2bb19de3eb365c2aff",
+  "deployment": "dpl_3MGNFioJrxp4w1gDZdjetRKW3ZCm",
+  "hostedCoreChecks": [
+    "Developer drafted Priors103 with fictional buyer; saving draft preserved selected PDF.",
+    "Saving revised Reservation PDF preserved unsaved buyer-phone edit. Current and previous versions retained; Reservation PDF rendered in a private signed browser tab.",
+    "Submitted and approved Reservation using existing commercial calculations; contract price £277,000 and 10/5/85 deposit percentages preserved; fixed deadline 1 Apr 2027 17:00 UK time displayed.",
+    "Conveyancer requested authority; developer reviewed preview and explicitly captured test authority; conveyancer confirmed Exchange. Agent Fees navigation hidden for conveyancer.",
+    "Conveyancer requested notice authority; developer reviewed and captured test authority; conveyancer uploaded notice PDF and dates atomically. Private notice PDF rendered.",
+    "Conveyancer uploaded Completion statement and account and saved attributed comment. Developer confirmed both current approvals.",
+    "Developer dashboard before approvals: 4 actions across 3 sales; after approvals: 2 actions across 2 sales. Waiting-on-others changed 22 to 23 actions as legal-completion action became available.",
+    "Conveyancer recorded fictional actual legal completion 12 Nov 2026 20:45 UTC; UI showed completed, both documents approved and locked, comment sending disabled, notice viewing still available.",
+    "Genuine activity showed reservation uploads/replacement/submission/approval, authority requests, Exchange, notice, Completion uploads/approvals and legal completion."
+  ],
+  "finalReleaseChecks": [
+    "fbde7b1: Priors104 draft shows approval prerequisite; authority preview control absent; refresh to usable 3605 ms.",
+    "fbde7b1: Priors103 completed record visible to conveyancer; two test-capture entries visible; approved documents locked and notice view enabled.",
+    "fbde7b1: Priors102 Completion opened as conveyancer with two empty upload controls in 2036 ms; browser left open for user.",
+    "837ca8e predecessor: agent-single ordinary sign-in denied Priors103 with Building unavailable, no alternative record opened."
+  ],
+  "status": "Delivered with explicit read-only limitations",
+  "readyRecords": {
+    "completion": {
+      "unit": "102",
+      "unitId": "f240d7d5-8b1a-4ee7-9dd9-a0646fb0aa74",
+      "saleId": "29e8c2ba-c02d-4d3c-9803-b0766eae49b3"
+    },
+    "fullJourney": {
+      "unit": "104",
+      "unitId": "58c24b3d-c370-400b-8958-661d061373b1",
+      "saleId": "c749e4a5-1bcf-40fe-b862-1b1ba9663c15",
+      "businessRecordsUnchanged": true
+    }
+  },
+  "legacyProtection": "No legacy staging or production operations; no import replay; no historical users activated; no Forum/Trinity/rental business mutations. Current restricted access retained."
+}

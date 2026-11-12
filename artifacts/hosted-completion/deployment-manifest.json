@@ -1,0 +1,1110 @@
+{
+  "commit": "fbde7b1c565868e03282fbf8adba1820a03c0385",
+  "deployment": "dpl_3MGNFioJrxp4w1gDZdjetRKW3ZCm",
+  "project": "prj_YMaQDDgEtACwTijrmmh1SxQwsfe5",
+  "supabase": "mmwzhzziqvjbsphrkbqr",
+  "address": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+  "method": "Existing manual integration artifact with cron/Git deployment disabled; changed application files read from committed worktree.",
+  "files": [
+    {
+      "file": "src/proxy.ts",
+      "sha": "379a622b8add75b4abfe093d2a815a0960bbe1d6",
+      "size": 1705
+    },
+    {
+      "file": "next.config.ts",
+      "sha": "768cf67c51441b7644b3f5555c15e59fad3ca8a8",
+      "size": 365
+    },
+    {
+      "file": "package-lock.json",
+      "sha": "b75c43ea95a38c7da9fbd20ba4a1b957c45b1b18",
+      "size": 305475
+    },
+    {
+      "file": "package.json",
+      "sha": "0bb8efafc4876ed62a13e2be9f07802dc134e9f1",
+      "size": 4719
+    },
+    {
+      "file": "postcss.config.mjs",
+      "sha": "ccb8b6288e0fe829534eb4c452a48bc27bbcdf01",
+      "size": 101
+    },
+    {
+      "file": "public/bunnywell-logo-icon.jpg",
+      "sha": "4774a5334600c1c2c93663d7397e03a196a48408",
+      "size": 13230
+    },
+    {
+      "file": "public/bunnywell-logo-icon.png",
+      "sha": "a3e0110e1e4586b3c4fe07c9ad0eff5fba3dd901",
+      "size": 5806
+    },
+    {
+      "file": "public/bunnywell-logo.png",
+      "sha": "18addba6a4ce80b682652a353afe3d0e13e011a7",
+      "size": 229894
+    },
+    {
+      "file": "public/bunnywell-report-logo.png",
+      "sha": "9618a10dd2cd7ae3341d3423923657f99eaa336f",
+      "size": 15126
+    },
+    {
+      "file": "public/file.svg",
+      "sha": "fb380eeffe87d50b597383664c02982964d0d28c",
+      "size": 391
+    },
+    {
+      "file": "public/globe.svg",
+      "sha": "2eba23b01a46733bb8423e6d38ebf5f7e95abec5",
+      "size": 1035
+    },
+    {
+      "file": "public/next.svg",
+      "sha": "3f3e95622612b989c5bd6a03299a308c6f3c7e6b",
+      "size": 1375
+    },
+    {
+      "file": "public/vercel.svg",
+      "sha": "cebb8852d58c8886be3e9051a26957f42bb82f1a",
+      "size": 128
+    },
+    {
+      "file": "public/window.svg",
+      "sha": "54c48e0daa6caa317fe1b4c419007fd93e948db9",
+      "size": 385
+    },
+    {
+      "file": "src/app/api/access-requests/route.ts",
+      "sha": "5b30290c3f98e78220598d04e0d8303441cf6145",
+      "size": 18831
+    },
+    {
+      "file": "src/app/api/admin/users/route.ts",
+      "sha": "db92ed4defdfe35b660b8c179fad6e339ce756bb",
+      "size": 19030
+    },
+    {
+      "file": "src/app/api/auth/activity/route.ts",
+      "sha": "15d1c8f09185d9346d0d25e4bc4d3a36b6046c4f",
+      "size": 1528
+    },
+    {
+      "file": "src/app/api/buildings/units/[unitId]/route.ts",
+      "sha": "1dba439cab2d0fa863b1e64a21df56d47349fc9e",
+      "size": 3423
+    },
+    {
+      "file": "src/app/api/cron/completion-uploads/route.ts",
+      "sha": "b3b3087607d4606b03b57dd45b92ec0d9fec94bd",
+      "size": 637
+    },
+    {
+      "file": "src/app/api/cron/snag-digest/route.ts",
+      "sha": "b00e3533fd6403708c5fd24966023312827226c2",
+      "size": 1055
+    },
+    {
+      "file": "src/app/api/dashboard/route.ts",
+      "sha": "983523256e16c6ea1770bf7c8f833c18fd519191",
+      "size": 3595
+    },
+    {
+      "file": "src/app/api/performance/vitals/route.ts",
+      "sha": "2dc0d30ae323ab40038ce1bc5fa1de336d6790dc",
+      "size": 1851
+    },
+    {
+      "file": "src/app/api/rentals/rent-risk/route.ts",
+      "sha": "eebe5a2e53cdc79360df80aedbc48e738299acc0",
+      "size": 3954
+    },
+    {
+      "file": "src/app/api/rentals/tenancies/route.ts",
+      "sha": "2c3053e9846e342d64497f952870319c46820fcb",
+      "size": 7817
+    },
+    {
+      "file": "src/app/api/sales/legal/route.ts",
+      "sha": "c6312d22a071002dc73bf9e5faff9efdfc82fa59",
+      "size": 17393
+    },
+    {
+      "file": "src/app/api/sales/register/route.ts",
+      "sha": "fe84b773ad2d7cf5c9bc181cf75491d946ae263e",
+      "size": 3257
+    },
+    {
+      "file": "src/app/api/sales/reservations/route.ts",
+      "sha": "6c70d18344ea97682cc0f2e3a7fc418e6483600d",
+      "size": 63281
+    },
+    {
+      "file": "src/app/api/snag-reports/send/route.ts",
+      "sha": "68f78fe6a027d495fa5f224ec2b2d74fd729bb30",
+      "size": 20239
+    },
+    {
+      "file": "src/app/api/units/allocation/route.ts",
+      "sha": "b923f8a24e3f62435206d2ad874dd749ecd3d99b",
+      "size": 3501
+    },
+    {
+      "file": "src/app/dev/building-workspace-contracts/fixtures/route.ts",
+      "sha": "330a34c6326f7a4a6534fca6167754fd1737e47d",
+      "size": 1615
+    },
+    {
+      "file": "src/app/dev/building-workspace-contracts/page.tsx",
+      "sha": "bd2f480f80dbb699c19c76aa3e25d0bf214a7703",
+      "size": 354
+    },
+    {
+      "file": "src/app/dev/building-workspace/completion/route.ts",
+      "sha": "fae5994038621fb0874988f05e1604891a989301",
+      "size": 8337
+    },
+    {
+      "file": "src/app/dev/building-workspace/page.tsx",
+      "sha": "8645b484b2a32728a5a283447645b3747d62950a",
+      "size": 341
+    },
+    {
+      "file": "src/app/dev/sales-workspace/page.tsx",
+      "sha": "3f81a83a5733520cd64ad8b50e128abd099bff83",
+      "size": 528
+    },
+    {
+      "file": "src/app/favicon.ico",
+      "sha": "0a260cae75732671d01e75f34da3521f1733e990",
+      "size": 34055
+    },
+    {
+      "file": "src/app/globals.css",
+      "sha": "a576568a7caea81bdb78dcc95321b1d8eb1fcb85",
+      "size": 28254
+    },
+    {
+      "file": "src/app/layout.tsx",
+      "sha": "72a379f63475400de7975775af225ed01d7822bd",
+      "size": 2054
+    },
+    {
+      "file": "src/app/page.tsx",
+      "sha": "04bc7966e73ad700d55e955fe45300a2ef0ec1ed",
+      "size": 154
+    },
+    {
+      "file": "src/app/request-access/page.tsx",
+      "sha": "cef05f1986a3916c5a44f6ab139017d791648815",
+      "size": 344
+    },
+    {
+      "file": "src/app/workspace/page.tsx",
+      "sha": "a0c85b761098907155db813021ec310f1b9c81a3",
+      "size": 337
+    },
+    {
+      "file": "src/components/experiments/building-contracts/ContractWorkspace.tsx",
+      "sha": "914d8789e9dc6360315a00799d6ce371452fda4c",
+      "size": 19503
+    },
+    {
+      "file": "src/components/experiments/building-contracts/Workspace.module.css",
+      "sha": "cfbc2ee1063ccec030a2d5a92c43b8bb22aeed6c",
+      "size": 40716
+    },
+    {
+      "file": "src/components/experiments/building-integration/BuildingWorkspace.tsx",
+      "sha": "c0445c87eabf88a32ce32b684236cfbd2c132fb0",
+      "size": 6034
+    },
+    {
+      "file": "src/components/experiments/building-integration/CompletionDocument.tsx",
+      "sha": "b20f83f56ff6259211d655180f05c2c90c6073d0",
+      "size": 9276
+    },
+    {
+      "file": "src/components/experiments/building-integration/ConnectedDiscussion.tsx",
+      "sha": "dd9efd978646363bc985e715b2e509355a1d73e6",
+      "size": 7440
+    },
+    {
+      "file": "src/components/experiments/building-integration/WiderViews.tsx",
+      "sha": "727d70d86716cd0555d538ed8417bd73911b83ec",
+      "size": 17024
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/BuildingScreens.tsx",
+      "sha": "37a1e53d12f6338c6b41a203ce0bcd576242cd7d",
+      "size": 9782
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/FixtureDataState.tsx",
+      "sha": "1214defb4491eb57b149e71b4a040a7b93e8bb9f",
+      "size": 2255
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/PrototypeUI.tsx",
+      "sha": "c6b74b0e41d919afb3361fb6d984a5702569c355",
+      "size": 7771
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/SaleContextPanel.tsx",
+      "sha": "9bf85d68bb33744360db1f0d4e7d155858357648",
+      "size": 5192
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/SalesWorkspacePrototype.tsx",
+      "sha": "ee0986e8cbbf650b789bf4ac234357d361cad5c9",
+      "size": 20679
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/Workspace.module.css",
+      "sha": "2075bc067140efb4d2260780688b080f4c75876d",
+      "size": 45370
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/Workspaces.tsx",
+      "sha": "599e08f82ef3b3b758a0106b8aacbc4872196119",
+      "size": 24127
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/assets/bunnywell-hex-gold.png",
+      "sha": "12a1d58de4d895aad8fec68cb06dc44897209912",
+      "size": 6050
+    },
+    {
+      "file": "src/components/experiments/sales-workspace/assets/bunnywell-landscape-green.png",
+      "sha": "bc6e188acf8d6ce57474d13c7de660e9cfcd2f3a",
+      "size": 32135
+    },
+    {
+      "file": "src/components/performance/StagingWebVitals.tsx",
+      "sha": "bec4fdd84480e65bc212ba4a4e46b01846f88bda",
+      "size": 1225
+    },
+    {
+      "file": "src/components/portal/EnvironmentBanner.tsx",
+      "sha": "fccedc1a3eb4d1dc19094a53714e4a2220cf94c4",
+      "size": 1060
+    },
+    {
+      "file": "src/components/portal/PortalApp.tsx",
+      "sha": "0609e181ff1a478c318071beb55ff85fb8f0bd0a",
+      "size": 40123
+    },
+    {
+      "file": "src/components/portal/ProductionPortalApp.tsx",
+      "sha": "fc1ed2d5686ecb2b32873f4b29ff50584a48f41c",
+      "size": 512594
+    },
+    {
+      "file": "src/components/portal/RequestAccessPage.tsx",
+      "sha": "dc7d305f35310c319905d282eb4d26fca8c6f690",
+      "size": 13291
+    },
+    {
+      "file": "src/components/portal/UnitAllocationWorkspace.tsx",
+      "sha": "5b712d718cec449062a7329fafa05947f3ddafc9",
+      "size": 30671
+    },
+    {
+      "file": "src/components/portal/audit/AuditLog.tsx",
+      "sha": "00a85740e66728d2a7f57edb6288c5c343c9d6b3",
+      "size": 26144
+    },
+    {
+      "file": "src/components/portal/audit/UnitOpenObserver.tsx",
+      "sha": "095ddad4398370ae9ed5a25a10619c5392004976",
+      "size": 1448
+    },
+    {
+      "file": "src/components/portal/dashboard/InternalDashboard.module.css",
+      "sha": "cc41bf141bafa425aa215828adb17725556fffe7",
+      "size": 10471
+    },
+    {
+      "file": "src/components/portal/dashboard/InternalDashboard.tsx",
+      "sha": "61a43ffb5f5061e32aaf55ed9d4795d3b8d93390",
+      "size": 14171
+    },
+    {
+      "file": "src/components/portal/dashboard/OrganisationWorklist.module.css",
+      "sha": "d9b72e53f412e2d973d04bd6f09317b85d8d72ab",
+      "size": 5732
+    },
+    {
+      "file": "src/components/portal/dashboard/OrganisationWorklist.tsx",
+      "sha": "df7bcc0f1f682fa059812955e9b28a0cc1588940",
+      "size": 17519
+    },
+    {
+      "file": "src/components/portal/rentals/RentRiskPanels.tsx",
+      "sha": "13adcbc0489d0cd64061741e8f6ec2435cd9628c",
+      "size": 12258
+    },
+    {
+      "file": "src/components/portal/rentals/RentalsWorkspace.tsx",
+      "sha": "53328f370fa36b1d8df3b37deb641f945f4ee7cb",
+      "size": 54009
+    },
+    {
+      "file": "src/components/portal/sales/AgentFeesPortfolio.module.css",
+      "sha": "46a7bf4d2f6b2393ecde667563ab698684e09c08",
+      "size": 4219
+    },
+    {
+      "file": "src/components/portal/sales/AgentFeesPortfolio.tsx",
+      "sha": "523010618541de4b2c81506101ce066b37c90b6e",
+      "size": 9868
+    },
+    {
+      "file": "src/components/portal/sales/BuildingSalesContacts.tsx",
+      "sha": "c4e7db2669a950cf6443954d6ba9192d595f97b8",
+      "size": 5332
+    },
+    {
+      "file": "src/components/portal/sales/CompletionDocuments.tsx",
+      "sha": "3446379e2bd9ee504a86b2943956149f2e928ef6",
+      "size": 15549
+    },
+    {
+      "file": "src/components/portal/sales/ConveyancerSalesRegister.module.css",
+      "sha": "8112cbc30ab148f7833934f9b5a5dd6d2625969c",
+      "size": 3467
+    },
+    {
+      "file": "src/components/portal/sales/ConveyancerSalesRegister.tsx",
+      "sha": "7be5039b8b40eac38f2fe12da2351e743eef99b8",
+      "size": 8767
+    },
+    {
+      "file": "src/components/portal/sales/DepositBeforeExchange.tsx",
+      "sha": "9f9082c31abcbfd29d31ab00bad6e4e897c8bb7f",
+      "size": 528
+    },
+    {
+      "file": "src/components/portal/sales/DeveloperSalesResults.module.css",
+      "sha": "88ea811e1238f2eef075a840b4d3c5741b102925",
+      "size": 4476
+    },
+    {
+      "file": "src/components/portal/sales/DeveloperSalesResults.tsx",
+      "sha": "092246371d5d2ab7db624f000b55fb721fe169fe",
+      "size": 7499
+    },
+    {
+      "file": "src/components/portal/sales/ExchangeDepositReceipt.tsx",
+      "sha": "a6ed8e1b8dc88be8ae2aa1d23bc8b4b43fe9895d",
+      "size": 6620
+    },
+    {
+      "file": "src/components/portal/sales/FinancialsTabs.tsx",
+      "sha": "2c29e58425c0461af2b7512049526034718975a7",
+      "size": 2175
+    },
+    {
+      "file": "src/components/portal/sales/FurtherDepositTimingFields.tsx",
+      "sha": "7cefff2efa49a757b7f5ab4df0f89338d8a0100f",
+      "size": 2481
+    },
+    {
+      "file": "src/components/portal/sales/GbpInput.tsx",
+      "sha": "98476c67b1a8ba95bfbe7b9632a7289aec4bbcba",
+      "size": 2296
+    },
+    {
+      "file": "src/components/portal/sales/PdfUploadBox.tsx",
+      "sha": "4ca28c4dea5b50aec42089936ccbccc5ad025b2c",
+      "size": 5302
+    },
+    {
+      "file": "src/components/portal/sales/SaleConversation.module.css",
+      "sha": "6444ac07360c8cc69411d412598cf0e3db490afb",
+      "size": 7090
+    },
+    {
+      "file": "src/components/portal/sales/SaleConversation.tsx",
+      "sha": "47d0a63ef6b14285d1d0e9d7594eb42f14880317",
+      "size": 39480
+    },
+    {
+      "file": "src/components/portal/sales/SaleDeposits.tsx",
+      "sha": "e2bf9cea42ca1f2b9b6c984e852ed34b353123d9",
+      "size": 15502
+    },
+    {
+      "file": "src/components/portal/sales/SaleFileHeader.module.css",
+      "sha": "2865c8aea653b0fa63e049287ca8ed3c98997663",
+      "size": 1115
+    },
+    {
+      "file": "src/components/portal/sales/SaleFileHeader.tsx",
+      "sha": "437034481983d2c10f7b8873dea24d33ca60a66a",
+      "size": 1944
+    },
+    {
+      "file": "src/components/portal/sales/SaleFileWorkspaceTabs.tsx",
+      "sha": "d732090af7163cc0451f599c7d3a185774026759",
+      "size": 3575
+    },
+    {
+      "file": "src/components/portal/sales/SaleReviewNavigation.module.css",
+      "sha": "b66b8a0727e318bb1ba8bf7e8a42c9a02436c0ae",
+      "size": 997
+    },
+    {
+      "file": "src/components/portal/sales/SaleReviewNavigation.tsx",
+      "sha": "5d4d71a4f1b2b291e6336500e97c39f86b620a88",
+      "size": 2045
+    },
+    {
+      "file": "src/components/portal/sales/SalesForecastingModule.tsx",
+      "sha": "9ea7cbe7ec983a4556a11e3f7bb9726a2d28dcf0",
+      "size": 24047
+    },
+    {
+      "file": "src/components/portal/sales/SalesLegalWorkflow.tsx",
+      "sha": "1d9b9184597f50493fb4ca0199c8066ab61cd65d",
+      "size": 38164
+    },
+    {
+      "file": "src/components/portal/sales/SalesOverviewControls.module.css",
+      "sha": "79c7fd8b280a4b2e544080033d2384892e2b2401",
+      "size": 1914
+    },
+    {
+      "file": "src/components/portal/sales/SalesOverviewControls.tsx",
+      "sha": "a8f96dc97aeaf809ade89667b2525293d0e2f44e",
+      "size": 3594
+    },
+    {
+      "file": "src/components/portal/sales/SalesPagination.tsx",
+      "sha": "84e01858df1a441967a1d0bb53e45e591193c04d",
+      "size": 1636
+    },
+    {
+      "file": "src/components/portal/sales/SalesReservationWorkflow.module.css",
+      "sha": "ec55a05224b47e21fef78bf9007c7ae24b4fba9d",
+      "size": 5271
+    },
+    {
+      "file": "src/components/portal/sales/SalesReservationWorkflow.tsx",
+      "sha": "456a10aad743afe0ae0d2827141f708151db4693",
+      "size": 238736
+    },
+    {
+      "file": "src/components/portal/sales/SalesStageTasks.module.css",
+      "sha": "1bab5274e0370f40d4684c0ef7345a26714a6615",
+      "size": 1212
+    },
+    {
+      "file": "src/components/portal/sales/SalesStageTasks.tsx",
+      "sha": "2a4f8fc4a56f4f918e8d9f076c6b059d10ac96e7",
+      "size": 1612
+    },
+    {
+      "file": "src/components/portal/sales/SalesTableScroll.module.css",
+      "sha": "fb74690e67ced09cd580ef092f63eed030f4a18c",
+      "size": 1300
+    },
+    {
+      "file": "src/components/portal/sales/SalesTableScroll.tsx",
+      "sha": "8fd711bfe1acd3005ae087db68466523f39afbcf",
+      "size": 1350
+    },
+    {
+      "file": "src/components/portal/sales/SalesWorkspace.tsx",
+      "sha": "0416ea3741e434cb002d7b34430dd187eb7d7ac4",
+      "size": 3895
+    },
+    {
+      "file": "src/components/portal/sales/useAgentFeePortfolio.ts",
+      "sha": "57b94a69906b3a14117b00f96fb4c5fba55e7225",
+      "size": 2877
+    },
+    {
+      "file": "src/components/portal/sales/useSalesOverviewNavigation.ts",
+      "sha": "6cb74bc84ffbf1aba0663cb8e85ec5f81f1a100a",
+      "size": 7279
+    },
+    {
+      "file": "src/components/portal/sales/useSalesRegister.ts",
+      "sha": "ee578e66af2e7a00f24927363f27ac062ba9cdb7",
+      "size": 3133
+    },
+    {
+      "file": "src/components/portal/sales/useSalesResultsSpace.ts",
+      "sha": "8112d497f54d94fdbce25aa1a423235484e1a4ff",
+      "size": 1657
+    },
+    {
+      "file": "src/hooks/useActivePanel.ts",
+      "sha": "0f8757ebbd48b4ed1ccd8b9623d1c353d825e2d3",
+      "size": 2351
+    },
+    {
+      "file": "src/hooks/useMobileToolbars.ts",
+      "sha": "a30c373c6868910e8e24cca8c0c7a9e99c05c88f",
+      "size": 10501
+    },
+    {
+      "file": "src/hooks/usePortalBuildingContext.ts",
+      "sha": "e8cdd80e34810fb651c4a950e6c88197433647b3",
+      "size": 5103
+    },
+    {
+      "file": "src/lib/audit/format.ts",
+      "sha": "d9b74689ff70fc1c68722f361b057becb77cb38e",
+      "size": 13782
+    },
+    {
+      "file": "src/lib/audit/types.ts",
+      "sha": "84697a0d4b85ac89db79fa0e740ea9c2e6ee87fe",
+      "size": 1635
+    },
+    {
+      "file": "src/lib/audit/unit-open.ts",
+      "sha": "47195b34aeeac36764868163da9425eebfdf066f",
+      "size": 860
+    },
+    {
+      "file": "src/lib/building-lifecycle.ts",
+      "sha": "bce1fd4a5fe01ccba170c909efd760c81f431cbb",
+      "size": 4327
+    },
+    {
+      "file": "src/lib/dashboard/dates.ts",
+      "sha": "ce77568c6151950b743858b68729f11d3404c8d0",
+      "size": 2693
+    },
+    {
+      "file": "src/lib/dashboard/model.ts",
+      "sha": "3e21f9d1bacb270dd3ccaef0eddf77767b44f658",
+      "size": 37742
+    },
+    {
+      "file": "src/lib/dashboard/overview.ts",
+      "sha": "c311dc53da03e3c1b86629d04c1d042dcf6303c7",
+      "size": 7535
+    },
+    {
+      "file": "src/lib/dashboard/pagination.ts",
+      "sha": "589dfd2b22d44e0c14a9305a36f940b82a4d27b4",
+      "size": 1278
+    },
+    {
+      "file": "src/lib/dashboard/presentation.ts",
+      "sha": "eb1c5dd0687d330615bce39ae4e23c3be071031e",
+      "size": 3014
+    },
+    {
+      "file": "src/lib/dashboard/read-diagnostics.ts",
+      "sha": "d73f2190783952857627160dab00b8ac6e8e7aa7",
+      "size": 7548
+    },
+    {
+      "file": "src/lib/dashboard/read.ts",
+      "sha": "0803d1eceb39937a00b380b27b9455c30726ffb6",
+      "size": 13318
+    },
+    {
+      "file": "src/lib/dashboard/response.ts",
+      "sha": "1ce51d552a57186c19d71a5b5f59b2637cc2ed34",
+      "size": 622
+    },
+    {
+      "file": "src/lib/dashboard/snags.ts",
+      "sha": "3efd8968e45c5489799b9ed667e2b5ad8d2724b5",
+      "size": 1002
+    },
+    {
+      "file": "src/lib/dashboard/types.ts",
+      "sha": "d6f45401ee163c685d111552aff1ce348278070f",
+      "size": 6644
+    },
+    {
+      "file": "src/lib/dashboard/work-classification.ts",
+      "sha": "6de5fdaaa791e8a4c1abb9b1052a720b33519c6e",
+      "size": 2531
+    },
+    {
+      "file": "src/lib/data/demo.ts",
+      "sha": "11fb243128ad836318c2d0701438137f0e915a4f",
+      "size": 1688
+    },
+    {
+      "file": "src/lib/data/production.ts",
+      "sha": "040d8c8483dbb64619f466990182216f026d4d8e",
+      "size": 6583
+    },
+    {
+      "file": "src/lib/digests/snag-digest.ts",
+      "sha": "469ae0a4fb642c620b07312b9d0eada989f8d1a6",
+      "size": 28854
+    },
+    {
+      "file": "src/lib/email/layout.ts",
+      "sha": "d1bcbde89f8d67ef95a34c26d7bd97673742fc2f",
+      "size": 4347
+    },
+    {
+      "file": "src/lib/experiments/building-contracts/contracts.ts",
+      "sha": "7ddf275e0e6574b9c68fa72e93f0c4a3dea731bd",
+      "size": 4093
+    },
+    {
+      "file": "src/lib/experiments/building-contracts/fixtures.ts",
+      "sha": "0aba9ec07dbe0d40205ad9b356b536a15c756f14",
+      "size": 7440
+    },
+    {
+      "file": "src/lib/experiments/building-contracts/navigation.ts",
+      "sha": "364b878650cb7bf615bfe8bf4ddf68b70be17509",
+      "size": 2058
+    },
+    {
+      "file": "src/lib/experiments/building-contracts/projection.ts",
+      "sha": "d23f8ddf02a44975209e0f035c5a5d83dc796f0c",
+      "size": 13859
+    },
+    {
+      "file": "src/lib/experiments/building-contracts/session.ts",
+      "sha": "1d40b5ce38c57f1c4d5d48f5845e8b90e242c51b",
+      "size": 1830
+    },
+    {
+      "file": "src/lib/experiments/building-integration/completion-boundary.ts",
+      "sha": "bfc54c7fcb7e5f18d463a9ef21f13ca436714b33",
+      "size": 928
+    },
+    {
+      "file": "src/lib/experiments/building-integration/completion-client.ts",
+      "sha": "dd2679c310c7a0862b60227e34539b6b41539c08",
+      "size": 2909
+    },
+    {
+      "file": "src/lib/experiments/building-integration/local-environment.ts",
+      "sha": "3e041b1f12ac5cdfcc6e049ed612dcaf49f0aa2a",
+      "size": 2480
+    },
+    {
+      "file": "src/lib/experiments/building-integration/reader.ts",
+      "sha": "4e60487f769d3d0eae7c262c6509e45f26a48c82",
+      "size": 12165
+    },
+    {
+      "file": "src/lib/experiments/sales-workspace/model.ts",
+      "sha": "d8ecefafab19a7703b59e569b7643bd2471f5119",
+      "size": 10808
+    },
+    {
+      "file": "src/lib/experiments/sales-workspace/presentation.ts",
+      "sha": "c7f36ce6ccd92aa94cbffa2aa63bcc991d9551e0",
+      "size": 3298
+    },
+    {
+      "file": "src/lib/notifications.ts",
+      "sha": "a173886ad66cc9cfc4a1a0a8fb551c4c2dee2ccf",
+      "size": 955
+    },
+    {
+      "file": "src/lib/performance/load-trace.ts",
+      "sha": "2087ecb3410c40f2940f4fcca96091d3078979f8",
+      "size": 2038
+    },
+    {
+      "file": "src/lib/performance/web-vitals.ts",
+      "sha": "01bc6bb06ab5edbdf4534f9a001574e3db010c00",
+      "size": 2144
+    },
+    {
+      "file": "src/lib/portal-access-snapshot.ts",
+      "sha": "88d6ce6a1322b901ddd8b26ce1ed140119743edc",
+      "size": 862
+    },
+    {
+      "file": "src/lib/portal-load-lifecycle.ts",
+      "sha": "2b2f0ee928f9ee5bc0901856161d11dd06fba4ce",
+      "size": 5589
+    },
+    {
+      "file": "src/lib/portal-screen-data.ts",
+      "sha": "47229ea588369d0a45be0e90e02322560a166da6",
+      "size": 2875
+    },
+    {
+      "file": "src/lib/portal-url.ts",
+      "sha": "84bd781531ffba7cf8f0917e9ff7cf3337084ced",
+      "size": 1519
+    },
+    {
+      "file": "src/lib/rentals/performance.ts",
+      "sha": "38f6eb277c33e29cdbcab22a57b00e2bc152e8c3",
+      "size": 15677
+    },
+    {
+      "file": "src/lib/rentals/rent-risk.ts",
+      "sha": "133f4d3c45e714abcb41272cec00eb723b6f63ff",
+      "size": 8495
+    },
+    {
+      "file": "src/lib/rentals/tenancies.ts",
+      "sha": "c6b6cae8ca3f95efb10407c356ffafd9d446239a",
+      "size": 5734
+    },
+    {
+      "file": "src/lib/reporting-date.ts",
+      "sha": "6ab230b21c510574407567359e9e41147b404bad",
+      "size": 349
+    },
+    {
+      "file": "src/lib/sales/action-refresh.ts",
+      "sha": "069bc30932d11b28a894c8063038294a622e25e4",
+      "size": 7788
+    },
+    {
+      "file": "src/lib/sales/activity-timeline.ts",
+      "sha": "5bf5491f018e4358ec3f6d5ac29f40418c4b7f7e",
+      "size": 6173
+    },
+    {
+      "file": "src/lib/sales/actor-identity.ts",
+      "sha": "3811b0736c7c4d67e9d6f09a3c5bfd8305752da9",
+      "size": 1841
+    },
+    {
+      "file": "src/lib/sales/agent-fees-portfolio.ts",
+      "sha": "927e767a42687369d32212a7e0024f41fa659054",
+      "size": 11008
+    },
+    {
+      "file": "src/lib/sales/agent-fees.ts",
+      "sha": "e9e6289c9b8c5f60acc62c81c824d1b73272e08d",
+      "size": 7299
+    },
+    {
+      "file": "src/lib/sales/authority-state.ts",
+      "sha": "f3a5f5dc5c76b8c1fac21f1bf072bba62d5efa8d",
+      "size": 2852
+    },
+    {
+      "file": "src/lib/sales/building-defaults.ts",
+      "sha": "2cc1f629de2b8b3a175f64ee9930ced145d2116d",
+      "size": 1548
+    },
+    {
+      "file": "src/lib/sales/building-scope.ts",
+      "sha": "159da22237568e9e96c7fc920b2976d9fb5cb8b4",
+      "size": 303
+    },
+    {
+      "file": "src/lib/sales/commercial-model.ts",
+      "sha": "6fa8019a774df212a407d1626eb647df03a03dd6",
+      "size": 2620
+    },
+    {
+      "file": "src/lib/sales/completion-notice.ts",
+      "sha": "1769a665d1d07cfe88ba6b17bc935ef1f6fb638d",
+      "size": 1968
+    },
+    {
+      "file": "src/lib/sales/completion-review.ts",
+      "sha": "f876fbe31147e05a25bf4a0de83077e6528433f6",
+      "size": 1930
+    },
+    {
+      "file": "src/lib/sales/completion-upload-client.ts",
+      "sha": "a836640221797e21bcd2931581d3434fa45a7b66",
+      "size": 4340
+    },
+    {
+      "file": "src/lib/sales/completion-upload-server.ts",
+      "sha": "1d03199f36c2b04e66f7bcca410226bca20096fa",
+      "size": 6101
+    },
+    {
+      "file": "src/lib/sales/completion-upload.ts",
+      "sha": "dae016d540b2736da25f08d9c72bc0609ae772e6",
+      "size": 1683
+    },
+    {
+      "file": "src/lib/sales/currency.ts",
+      "sha": "e6ed1644fda1b939ce46fd73b2598ce6712688e5",
+      "size": 1740
+    },
+    {
+      "file": "src/lib/sales/deal-structure.ts",
+      "sha": "cd88522295aedb2b26c7f105b864471d90fa6424",
+      "size": 5673
+    },
+    {
+      "file": "src/lib/sales/default-cascade.ts",
+      "sha": "8c3884ab6cc6db3ec6845e80a1201e015a37c0b0",
+      "size": 4390
+    },
+    {
+      "file": "src/lib/sales/developer-overview.ts",
+      "sha": "94f20f37e3bcb84235de2c255341458e9a34bad2",
+      "size": 7494
+    },
+    {
+      "file": "src/lib/sales/discussion.ts",
+      "sha": "3374932187765ff43930c10e849602051c771f66",
+      "size": 5624
+    },
+    {
+      "file": "src/lib/sales/fee-portfolio-data.ts",
+      "sha": "6374027cefbb93d0c5b9be0e642021c032bd8ccf",
+      "size": 7045
+    },
+    {
+      "file": "src/lib/sales/fee-workspace.ts",
+      "sha": "b75570b29d8cbe13c061df4b2023e2827ff7dde7",
+      "size": 8074
+    },
+    {
+      "file": "src/lib/sales/financial-navigation.ts",
+      "sha": "0ed76881e84daab4fd856123c26c1d7bf8b73899",
+      "size": 501
+    },
+    {
+      "file": "src/lib/sales/further-deposit.ts",
+      "sha": "b22355bdfbf5f23131cb8ea22a0303683273fd60",
+      "size": 6196
+    },
+    {
+      "file": "src/lib/sales/guidance-facts.ts",
+      "sha": "a7b2c3e3c92e1cdbfbbc6e60397a0e51909937ea",
+      "size": 2488
+    },
+    {
+      "file": "src/lib/sales/legal-email.ts",
+      "sha": "12b822b77d4a19bec0d4018640880f327e2853cf",
+      "size": 11214
+    },
+    {
+      "file": "src/lib/sales/legal-workflow.ts",
+      "sha": "141eeb5f133f7a1b105c89b981aea8a6c7924546",
+      "size": 7802
+    },
+    {
+      "file": "src/lib/sales/load-errors.ts",
+      "sha": "10872caa3280dda033eaca5851163b10cfa21931",
+      "size": 942
+    },
+    {
+      "file": "src/lib/sales/percentages.ts",
+      "sha": "bfd2193955a933d43d02a507ea5effa6f26a225b",
+      "size": 615
+    },
+    {
+      "file": "src/lib/sales/performance.ts",
+      "sha": "1828e4804405e61b6bf173d068b448deb004537a",
+      "size": 3879
+    },
+    {
+      "file": "src/lib/sales/permissions.ts",
+      "sha": "aa17a04fe4c3db56db2557db06e1e3ad9524bb83",
+      "size": 4320
+    },
+    {
+      "file": "src/lib/sales/register-presentation.ts",
+      "sha": "b3f610e1a28eb0d95efc59478e2ed1aa8335f8e0",
+      "size": 2966
+    },
+    {
+      "file": "src/lib/sales/register-session.ts",
+      "sha": "d19fa4e2c15538f275e4efcc6b67081d4bff1660",
+      "size": 4395
+    },
+    {
+      "file": "src/lib/sales/register.ts",
+      "sha": "512cea6b56d4eb02a38547f4f05186cf74499534",
+      "size": 8485
+    },
+    {
+      "file": "src/lib/sales/reservation-redaction.ts",
+      "sha": "bfc709be72320a133f0654f5a4f7e9c2866d02f5",
+      "size": 1807
+    },
+    {
+      "file": "src/lib/sales/responsibility.ts",
+      "sha": "4938da636cd75b2ea3aeecbad622269ba79546c6",
+      "size": 1892
+    },
+    {
+      "file": "src/lib/sales/server-performance.ts",
+      "sha": "1c1447fe13b1888c8de770a23e4604c80f0d95a1",
+      "size": 3115
+    },
+    {
+      "file": "src/lib/sales/stage-tasks.ts",
+      "sha": "43f9dde58134250574121afd0a2443fd17946eac",
+      "size": 5804
+    },
+    {
+      "file": "src/lib/snag-pagination.ts",
+      "sha": "8042f30b10deddeacb2478b547c84f8356b372d9",
+      "size": 599
+    },
+    {
+      "file": "src/lib/supabase/admin.ts",
+      "sha": "3ae57b2df5b9762ea3b5176cc33e6aa29c9c8139",
+      "size": 1191
+    },
+    {
+      "file": "src/lib/supabase/client.ts",
+      "sha": "43dbb377f41691dce5a9a89c636f5b071ad41bff",
+      "size": 529
+    },
+    {
+      "file": "src/lib/units/allocation-mutation.ts",
+      "sha": "f23122ba5a54eac71d13ba16266727041bc55611",
+      "size": 2200
+    },
+    {
+      "file": "src/lib/units/commercial-allocation.ts",
+      "sha": "1d616abc29fd3bc883a45c3e568462c176ec5935",
+      "size": 8343
+    },
+    {
+      "file": "src/lib/units/structural-update.ts",
+      "sha": "05d12c8dca4a226db9f4e0b84fa572eb8c049cdc",
+      "size": 3917
+    },
+    {
+      "file": "src/lib/workspace/navigation.ts",
+      "sha": "2a10016796f66e3432649f834a232b8c0feb039f",
+      "size": 1361
+    },
+    {
+      "file": "src/lib/workspace/reads.ts",
+      "sha": "7424b1dee9cca17bbfe8a9aab295ac3e4aef51d5",
+      "size": 2367
+    },
+    {
+      "file": "src/lib/workspace/server.ts",
+      "sha": "d7ae372d95cad8f027c528fdb181550df25d6f80",
+      "size": 16022
+    },
+    {
+      "file": "src/lib/workspace/staging.ts",
+      "sha": "8eb072424014058946864031f2e558038ff08c35",
+      "size": 2180
+    },
+    {
+      "file": "src/lib/workspace/types.ts",
+      "sha": "de03ac4bb3f0b4de01dafde72cbf8c722f39809d",
+      "size": 1237
+    },
+    {
+      "file": "tsconfig.json",
+      "sha": "8d43f093f65ac2b0e68b358f47872fdb062e45ae",
+      "size": 1003
+    },
+    {
+      "file": "vercel.json",
+      "sha": "ad69ab6b693413b33843feda96700ca756a84395",
+      "size": 66
+    },
+    {
+      "file": "src/lib/workspace/client.ts",
+      "sha": "ded631852a86aea7a4d484a841b506357d176aed",
+      "size": 3674
+    },
+    {
+      "file": "src/lib/workspace/hosted-fetch.ts",
+      "sha": "c95c925374057dfa935486b8c48e36c590cf2036",
+      "size": 1713
+    },
+    {
+      "file": "src/lib/workspace/projections.ts",
+      "sha": "97ab2470e475c989117d8baeb8e6d752a0dff5dc",
+      "size": 6691
+    },
+    {
+      "file": "src/lib/workspace/sale-details.ts",
+      "sha": "ce4a2638028955ddb90fa99e2884f70bd25893ac",
+      "size": 11818
+    },
+    {
+      "file": "src/lib/workspace/sale-details-types.ts",
+      "sha": "4e6bc5da95e6348d6e234708790ea3da9f6104f1",
+      "size": 573
+    },
+    {
+      "file": "src/app/workspace/read/route.ts",
+      "sha": "a9b377e3712aebe506640f9e0b5a7117ad649f48",
+      "size": 2495
+    },
+    {
+      "file": "src/components/experiments/building-integration/TaskWorkspace.tsx",
+      "sha": "ad395091936bb9af7c9a80dc453afddccd5e0c88",
+      "size": 11711
+    },
+    {
+      "file": "src/components/experiments/building-integration/ConnectedWorkspace.tsx",
+      "sha": "79e9c7e1286f9ebe0260894824a62e9340c038a3",
+      "size": 25742
+    },
+    {
+      "file": "src/components/experiments/building-integration/SaleDetails.tsx",
+      "sha": "0023da4287dc6de51afbf4bc70005f6a06724a6a",
+      "size": 4923
+    },
+    {
+      "file": "src/app/workspace/command/route.ts",
+      "sha": "15e392ba339f01232dab696d10ea386ff60a9c4e",
+      "size": 575
+    },
+    {
+      "file": "src/lib/sales/reservation-terms.ts",
+      "sha": "02c42b0f1249477a5707a5486a41dcd78fc9bcdc",
+      "size": 17106
+    },
+    {
+      "file": "src/lib/workspace/command-fetch.ts",
+      "sha": "eafb98e97dca4fc43eaba8c7e0ac830996c9231a",
+      "size": 2531
+    },
+    {
+      "file": "src/lib/workspace/commands.ts",
+      "sha": "fa40d38a39fed7425c2223891e763feee2fd35f7",
+      "size": 4304
+    },
+    {
+      "file": "src/lib/workspace/completion-client.ts",
+      "sha": "db39e55cc72d5d2ae798679176e25f962c58f02a",
+      "size": 2100
+    },
+    {
+      "file": "src/app/workspace/upload/route.ts",
+      "sha": "86a29e1523d1db21200eaa3c90178b0e471af37c",
+      "size": 541
+    },
+    {
+      "file": "src/components/experiments/building-integration/CoreSales.tsx",
+      "sha": "76b3a7f26e750bbc8b40fc683d9881465b53dba1",
+      "size": 15204
+    },
+    {
+      "file": "src/lib/workspace/core-commands.ts",
+      "sha": "4071e3f742f5119f5a8e2d0a4ed957f836c96328",
+      "size": 7976
+    },
+    {
+      "file": "src/lib/workspace/core-fetch.ts",
+      "sha": "08e4b912de976b30abdbe2e801f2f63fa5f31bb7",
+      "size": 2279
+    },
+    {
+      "file": "src/lib/workspace/workflow-upload.ts",
+      "sha": "3d401aa89a866177749ac78005e75202417d3ead",
+      "size": 4081
+    }
+  ]
+}
