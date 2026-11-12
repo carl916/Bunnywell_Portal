@@ -1,3 +1,4 @@
+import {hostedCompletionClient} from "./completion-client";
 import type {SaleDetails,SaleDetailsReader} from "./sale-details-types";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 import type {reader,Config,Session,Catalog,Completion} from "@/lib/experiments/building-integration/reader";
@@ -12,7 +13,7 @@ export async function stagingRead<T>(session:Session,kind:string,values:Record<s
 }
 export async function stagingConfig():Promise<Config>{
  const r=await fetch("/workspace/read?kind=config",{cache:"no-store"});if(!r.ok)throw Error("Staging review is unavailable.");const c=await r.json();
- if(c.projectId!==stagingProject||c.apiOrigin!==stagingOrigin||c.readOnly!==true)throw Error("Unexpected project.");return c;
+ if(c.projectId!==stagingProject||c.apiOrigin!==stagingOrigin||!(c.readOnly===true||(hostedIntegration&&c.readOnly===false&&c.completionReview===true)))throw Error("Unexpected project.");return c;
 }
 export async function stagingAuth(c:Config,path:"token?grant_type=password"|"user"|"logout",token?:string,body?:{email:string;password:string}){
  if(c.apiOrigin!==stagingOrigin)throw Error("Unexpected project.");
@@ -29,7 +30,7 @@ export function stagingReader(c:Config,session:Session):ReturnType<typeof reader
   load:(scope:Scope,signal:AbortSignal)=>stagingRead(session,"workspace",{building:scope.buildingId},signal),
   completion:(scope,unit,sale,signal)=>stagingRead<Completion>(session,"completion",{building:scope.buildingId,unit,sale},signal),
   details:(scope,unit,sale,section,signal)=>stagingRead<SaleDetails>(session,"sale-details",{building:scope.buildingId,unit,sale,section},signal),
-  workflow:{action:disabled,upload:disabled,
+  workflow:{...(hostedIntegration&&c.completionReview?hostedCompletionClient(session.access_token,c.anonKey):{action:disabled,upload:disabled}),
    comments:(s,before,signal,after,target)=>stagingRead(session,"comments",{...scopeValues(s),...(before==null?{}:{before:String(before)}),...(after==null?{}:{after:String(after)}),...(target?{target}:{})},signal),
    activity:(s,before?:SaleActivity,signal?:AbortSignal)=>stagingRead(session,"activity",{...scopeValues(s),...(before?{beforeId:before.id,beforeTime:before.created_at}:{})},signal),
    document:(scope,version,signal)=>hostedIntegration?stagingRead<{url:string;fileName:string}>(session,"document",{...scopeValues(scope),version},signal):disabled()

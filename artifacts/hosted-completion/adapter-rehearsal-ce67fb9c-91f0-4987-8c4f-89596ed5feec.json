@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-12T18:43:19.507Z",
+  "method": "New hosted adapter invoked in-process against isolated local Auth/Postgres/Storage with origin substitution only; not hosted-browser acceptance",
+  "scope": {
+    "buildingId": "b1700000-0000-4000-8000-000000000001",
+    "unitId": "2b2cae29-a9fa-4384-929f-6a11dc87121d",
+    "saleId": "ce67fb9c-91f0-4987-8c4f-89596ed5feec"
+  },
+  "hostedBusinessRecordsChanged": [],
+  "results": [
+    {
+      "name": "developer cannot upload",
+      "passed": true
+    },
+    {
+      "name": "upload, private verification, copy and retry-safe finalization",
+      "passed": false,
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n... Skipped lines\n\n  {\n    completed: true,\n    documents: [\n      {\n        path: 'b1700000-0000-4000-8000-000000000001/ce67fb9c-91f0-4987-8c4f-89596ed5feec/completion-560fb819-c752-4cd4-9821-013be8f1b2d7/completion_statement.pdf',\n...\n    ],\n-   files: []\n  }\n"
+    }
+  ]
+}

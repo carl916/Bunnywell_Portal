@@ -1,0 +1,19 @@
+{
+  "at": "2026-11-12T18:42:12.651Z",
+  "method": "Isolated local PostgreSQL; migration and fictional records inside a rolled-back transaction",
+  "checks": [
+    "draft retry produces one receipt and event",
+    "conflicting retry rejected",
+    "stale edit rejected",
+    "missing PDF rejected",
+    "mid-command schedule constraint failure rolls back terms and schedule",
+    "submission atomic",
+    "agent approval rejected",
+    "approval atomically updates sale, unit, terms, document and event",
+    "approval retry returns same result without duplicate event",
+    "anonymous and authenticated direct execution denied",
+    "outer rollback removes all rehearsal records and migration"
+  ],
+  "passed": true,
+  "destinationBusinessRecordsChanged": []
+}

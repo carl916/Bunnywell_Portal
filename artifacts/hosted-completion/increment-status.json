@@ -1,0 +1,58 @@
+{
+  "at": "2026-11-12T18:48:04.923Z",
+  "branch": "codex/wider-workspace-integration",
+  "reviewAddress": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+  "currentlyDeployedCommit": "d69db5b",
+  "importMilestone": "Accepted by user. Not rerun. Manifest, mappings, exports and reconciliation preserved.",
+  "implemented": [
+    "Bounded hosted Completion command route: upload preparation/finalization, query, approval, plain comments",
+    "Existing polished document UI connected by explicit capability; successful saves refresh document state, activity and worklist reads",
+    "Server egress allowlist confined to exact integration project, sale and generated Completion paths",
+    "Atomic Reservation draft, submission, review and approval RPC with stable retry receipts and stale-data checks; not enabled in UI",
+    "Existing Reservation calculations extracted unchanged for reuse"
+  ],
+  "destinationMigrations": [
+    "completion_verifier_boundary",
+    "workspace_sales_commands"
+  ],
+  "destinationBusinessRecordsChanged": [],
+  "designatedTestRecord": {
+    "building": "Priors Gate",
+    "unitNumber": "101",
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "5c874786-7b78-4f35-a430-a39130563979",
+    "saleId": "9c584a87-a447-4869-8e02-53215a3d9373",
+    "state": "Still for_sale / draft; buyer name null; zero documents. Not yet progressed."
+  },
+  "verification": {
+    "offlineTests": 88,
+    "localServiceCompletionChecks": 8,
+    "localTransactionalReservationChecks": 11,
+    "integrationAccountDenialChecks": 18,
+    "build": "Passed",
+    "lint": "Passed",
+    "hostedBrowser": "Pending ordinary Vercel sign-in; no hosted acceptance claimed",
+    "hostedLoadingTimes": "Not yet measured"
+  },
+  "blockers": [
+    {
+      "action": "Vercel ordinary browser sign-in",
+      "detail": "Normal login open in handed-off in-app browser. Continue with Google was auto-review rejected because accounts.google.com requires explicit authorisation. No retry/bypass."
+    },
+    {
+      "action": "Store integration service-role key as server-only Vercel Secret",
+      "detail": "Auto-review rejected the native create_project_env request. No key or flag stored. Explicit user approval pending. Destination is isolated integration project prj_YMaQDDgEtACwTijrmmh1SxQwsfe5, production target within that project; not the live production project."
+    }
+  ],
+  "notYetDelivered": [
+    "New Vercel release",
+    "Hosted Completion positive-cycle/browser acceptance",
+    "Fictional Priors test journey through canonical Reservation and Exchange",
+    "Reservation upload/UI commands",
+    "Exchange and remaining Completion commands and explicit test-capture delivery",
+    "Non-Completion private document viewing",
+    "Hosted role/navigation/performance acceptance"
+  ],
+  "restrictions": "External provider credentials/delivery absent; no invitations or historical-user activation; no payments, Handover finalisation, Snags editing, Setup administration enabled.",
+  "next": "After secret approval, deploy the scoped Completion increment at the same alias. After ordinary Vercel sign-in, validate actual hosted role sessions. Continue the prepared atomic Reservation adapter and canonical fictional Priors journey without resetting imported history."
+}

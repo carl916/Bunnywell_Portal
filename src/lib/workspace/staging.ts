@@ -22,3 +22,5 @@ export const moduleAllowed = (role:string, module:string) =>
  module === "sales" ? ["admin","developer","sales_agent","conveyancer"].includes(role) :
  module === "snags" ? ["admin","developer","developer_representative","contractor"].includes(role) :
  ["buildings","setup"].includes(module)&&["admin","developer"].includes(role);
+
+export function completionWritesEnabled(env:Record<string,string|undefined>=process.env){return stagingEnabled(env)&&env.NEXT_PUBLIC_WORKSPACE_INTEGRATION==="1"&&env.WORKSPACE_COMPLETION_WRITES==="1"&&Boolean(env.SUPABASE_SERVICE_ROLE_KEY);}

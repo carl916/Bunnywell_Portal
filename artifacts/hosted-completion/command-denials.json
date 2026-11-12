@@ -1,0 +1,80 @@
+{
+  "at": "2026-11-12T18:38:14.324Z",
+  "environment": "https://mmwzhzziqvjbsphrkbqr.supabase.co",
+  "method": "Local production HTTP route with genuine integration Auth/Postgres; not hosted-browser acceptance",
+  "changedBusinessRecords": [],
+  "results": [
+    {
+      "name": "active available Priors unit cannot skip exchange and completion arrangements",
+      "passed": true
+    },
+    {
+      "name": "wrong-building membership denied for exact Priors record",
+      "passed": true
+    },
+    {
+      "name": "inactive profile denied",
+      "passed": true
+    },
+    {
+      "name": "mismatched building unit sale scope denied",
+      "passed": true
+    },
+    {
+      "name": "cross-origin command denied",
+      "passed": true
+    },
+    {
+      "name": "unconnected action rejected: send",
+      "passed": true
+    },
+    {
+      "name": "unconnected action rejected: confirm_completion",
+      "passed": true
+    },
+    {
+      "name": "unconnected action rejected: confirm_exchange",
+      "passed": true
+    },
+    {
+      "name": "unconnected action rejected: record_agent_fee_payment",
+      "passed": true
+    },
+    {
+      "name": "unconnected action rejected: save_reservation",
+      "passed": true
+    },
+    {
+      "name": "developer cannot call server-only sales_completion_upload",
+      "passed": true
+    },
+    {
+      "name": "developer cannot call server-only sales_completion_upload_session",
+      "passed": true
+    },
+    {
+      "name": "developer cannot call server-only sales_legal_action",
+      "passed": true
+    },
+    {
+      "name": "developer cannot call server-only sales_legal_action_before_notice",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot call server-only sales_completion_upload",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot call server-only sales_completion_upload_session",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot call server-only sales_legal_action",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot call server-only sales_legal_action_before_notice",
+      "passed": true
+    }
+  ]
+}

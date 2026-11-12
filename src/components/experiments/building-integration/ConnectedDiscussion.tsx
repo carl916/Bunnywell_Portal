@@ -6,9 +6,9 @@ import { activityPresentation, COMMENT_LIMIT, mergeComments, type SaleComment, t
 import { Notice, date, label } from "./TaskWorkspace";
 import s from "../sales-workspace/Workspace.module.css";
 
-export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=false }: {
+export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=false,refresh=0 }: {
   api: ReturnType<typeof reader>; row: SaleRow; view: string; onView: (v: string) => void;
-  readOnly?: boolean; draft: string; onDraft: (v: string) => void;
+  readOnly?: boolean; refresh?:number; draft: string; onDraft: (v: string) => void;
 }) {
   const panel = useRef<HTMLElement>(null), alive = useRef(true), submission = useRef({ body: "", id: "" });
   const [comments, setComments] = useState<SaleComment[]>([]), [activity, setActivity] = useState<SaleActivity[]>([]);
@@ -38,7 +38,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
     });
     load.then(() => { if (!c.signal.aborted) { setLoaded(true); setError(""); } }).catch(e => { if (!c.signal.aborted) setError(e.message); });
     return () => c.abort();
-  }, [api, row.buildingId, row.unitId, row.saleId, view]);
+  }, [api, row.buildingId, row.unitId, row.saleId, view,refresh]);
   async function send() {
     if (readOnly || busy || !draft.trim()) return;
     setBusy(true); setError("");
@@ -73,7 +73,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
     </div>
     {view === "comments" && <form className={s.contextComposer} onSubmit={e => { e.preventDefault(); void send(); }}>
       <label className={s.field}>Comment<textarea aria-label="Comment" value={draft} maxLength={COMMENT_LIMIT} disabled={readOnly || busy} onChange={e => onDraft(e.target.value)} placeholder="Add an update for this sale"/></label>
-      <div><small>{readOnly?"Connected history · sending is disabled":"Saved to this local sale · no mentions or notifications"}</small><button className={s.primary} disabled={readOnly || busy || !draft.trim()}>{busy ? "Saving comment..." : "Send comment"}</button></div>
+      <div><small>{readOnly?"Connected history · sending is disabled":"Saved to this sale · no external messages"}</small><button className={s.primary} disabled={readOnly || busy || !draft.trim()}>{busy ? "Saving comment..." : "Send comment"}</button></div>
     </form>}
   </aside>;
 }

@@ -1,0 +1,44 @@
+{
+  "at": "2026-11-12T18:44:22.076Z",
+  "method": "New hosted adapter invoked in-process against isolated local Auth/Postgres/Storage with origin substitution only; not hosted-browser acceptance",
+  "scope": {
+    "buildingId": "b1700000-0000-4000-8000-000000000001",
+    "unitId": "0ca4b9b4-1416-4f05-a0c5-dff1f8680b21",
+    "saleId": "6dccdee1-d3b9-4a46-805b-4aff7890cbe7"
+  },
+  "hostedBusinessRecordsChanged": [],
+  "results": [
+    {
+      "name": "developer cannot upload",
+      "passed": true
+    },
+    {
+      "name": "upload, private verification, copy and retry-safe finalization",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot approve",
+      "passed": true
+    },
+    {
+      "name": "query records genuine activity once on retry",
+      "passed": true
+    },
+    {
+      "name": "revised version preserves history and rejects stale approval",
+      "passed": true
+    },
+    {
+      "name": "approve both current documents and replay approval",
+      "passed": true
+    },
+    {
+      "name": "comment retries save one attributed comment",
+      "passed": true
+    },
+    {
+      "name": "unconnected final completion remains denied",
+      "passed": true
+    }
+  ]
+}

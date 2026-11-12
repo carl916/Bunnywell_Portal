@@ -26,7 +26,7 @@ async function verifyObject(client: SupabaseClient, bucket: string, file: Stored
   if (new TextDecoder().decode(new Uint8Array(prefix)) !== "%PDF-") throw new Error("The uploaded file is not a PDF. Remove it and choose a PDF again.");
 }
 
-export async function completionUploadAction(client: SupabaseClient, actor: string, payload: Record<string, unknown>, timing?: SalesServerTiming) {
+export async function completionUploadAction(client: SupabaseClient, actor: string, payload: Record<string, unknown>, timing?: SalesServerTiming, verifiedFetch: typeof fetch = fetch) {
   const sale = payload.sale, request = payload.requestId;
   if (!uploadUuid(sale) || !uploadUuid(request)) throw new Error("Select a sale and a valid submission reference.");
   const begin = payload.action === "prepare_completion_upload";
@@ -51,7 +51,7 @@ export async function completionUploadAction(client: SupabaseClient, actor: stri
   for (const file of session.files) {
     const verify = (bucket: string) => timing
       ? timing.measure("storage_verify", () => verifyObject(client, bucket, file, timing.fetch))
-      : verifyObject(client, bucket, file);
+      : verifyObject(client, bucket, file, verifiedFetch);
     await verify(completionUploadBucket);
     // Storage performs the copy internally. Signed upload capabilities never
     // address a published document, even while their tokens remain valid.
