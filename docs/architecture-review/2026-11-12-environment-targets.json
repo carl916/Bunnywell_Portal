@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordedAt": "2026-11-12",
-  "status": "proposal-awaiting-user-resource-and-hosted-publication-approval",
+  "status": "resources-created-baseline-data-and-application-deployment-pending",
   "repository": "https://github.com/carl916/Bunnywell_Portal",
   "source": {
     "branch": "codex/wider-workspace-integration",
@@ -58,11 +58,11 @@
   ],
   "proposed": {
     "supabaseProjectName": "Bunnywell Portal Integration",
-    "supabaseProjectId": null,
+    "supabaseProjectId": "mmwzhzziqvjbsphrkbqr",
     "region": "eu-central-1",
     "compute": "Micro",
     "vercelProjectName": "bunnywell-portal-integration",
-    "vercelProjectId": null,
+    "vercelProjectId": "prj_YMaQDDgEtACwTijrmmh1SxQwsfe5",
     "vercelFunctionRegion": "fra1",
     "reviewUrl": null,
     "desiredReviewUrl": "https://bunnywell-portal-integration.vercel.app/workspace",
@@ -86,7 +86,15 @@
       "Dedicated IPs",
       "Paid protection add-ons",
       "Compute upgrades"
-    ]
+    ],
+    "confirmedProjectQuote": {
+      "amount": 10,
+      "recurrence": "monthly",
+      "currency": "USD",
+      "source": "Supabase get_cost",
+      "organizationId": "pccjecgmcstaknwdbyec",
+      "userApproved": true
+    }
   },
   "baselineOrder": [
     "supabase/baseline/application.sql",
@@ -95,6 +103,34 @@
     "supabase/baseline/imports.sql",
     "supabase/baseline/workspace-reads.sql"
   ],
-  "runtimeGuardStatus": "Proposed, not implemented: new project allowlist plus explicit rejection of both protected project IDs; existing development-only gate remains closed in production builds.",
-  "evidence": "Read-only project/organisation/team/deployment/alias inspection and existing code review. No schema, seed, hosted build, migration, remote file copy or functional acceptance executed this turn."
+  "runtimeGuardStatus": "New IDs recorded; runtime/release target guards remain to be implemented. Development-only gate remains closed in production builds. No application deployed.",
+  "evidence": "Confirmed US$10/month creation quote, created independent projects, verified new database health/version and zero application tables/Auth users/buckets, verified new Vercel Node24/authentication protection/zero deployments/zero variables, and rechecked unchanged legacy staging and production domain aliases. No legacy business data queried or modified.",
+  "provisioning": {
+    "approval": "User agreed to separate resources and instructed creation of the new Vercel project and database.",
+    "supabaseCreatedAt": "2026-11-12T11:51:39.426265Z",
+    "supabaseStatus": "ACTIVE_HEALTHY",
+    "supabasePostgresVersion": "17.11.0.019",
+    "supabaseDashboard": "https://supabase.com/dashboard/project/mmwzhzziqvjbsphrkbqr",
+    "supabaseApiOrigin": "https://mmwzhzziqvjbsphrkbqr.supabase.co",
+    "publicApplicationTables": 0,
+    "authUsers": 0,
+    "storageBuckets": 0,
+    "pgCronOrPgNetExtensions": 0,
+    "vercelDashboard": "https://vercel.com/carl-gilbert-s-projects/bunnywell-portal-integration",
+    "vercelNodeVersion": "24.x",
+    "vercelAuthenticationProtection": "all deployments",
+    "autoAssignCustomDomains": false,
+    "gitRepositoryAttached": false,
+    "vercelEnvironmentVariables": 0,
+    "vercelDeployments": 0,
+    "customDomains": [],
+    "legacyDeploymentAliasesUnchanged": true,
+    "legacyDatabaseWritesPerformed": false,
+    "credentialsCopied": false,
+    "applicationBaselineApplied": false,
+    "testDataImported": false,
+    "testAccountsCreated": false,
+    "authOutboundControlsVerified": false,
+    "remaining": "Configure and verify hosted outbound blocking and explicit target guards before accounts/data; apply reviewed baseline; import controlled data/media; connect and test the accepted UI; publish the first read-only review."
+  }
 }
