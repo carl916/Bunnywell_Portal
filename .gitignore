@@ -63,3 +63,4 @@ node_modules/
 /.next-foundation-check/
 
 .next-hosted/
+hosted-integration/supabase/.temp/
