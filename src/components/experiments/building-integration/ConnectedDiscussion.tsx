@@ -13,7 +13,8 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
   const panel = useRef<HTMLElement>(null), alive = useRef(true), submission = useRef({ body: "", id: "" });
   const [comments, setComments] = useState<SaleComment[]>([]), [activity, setActivity] = useState<SaleActivity[]>([]);
   const [older, setOlder] = useState(false), [newer, setNewer] = useState(false), [moreActivity, setMoreActivity] = useState(false);
-  const [error, setError] = useState(""), [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(""), [busy, setBusy] = useState(false), [loadedView, setLoadedView] = useState("");
+  const loaded=loadedView===view;
   const scope = { buildingId: row.buildingId, unitId: row.unitId, saleId: row.saleId! };
   useEffect(() => {
     let frame = 0;
@@ -36,7 +37,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
     }) : api.workflow.activity(scope, undefined, c.signal).then(p => {
       if (!c.signal.aborted) { setActivity(p.slice(0, 50)); setMoreActivity(p.length > 50); }
     });
-    load.then(() => { if (!c.signal.aborted) { setLoaded(true); setError(""); } }).catch(e => { if (!c.signal.aborted) setError(e.message); });
+    load.then(() => { if (!c.signal.aborted) { setLoadedView(view); setError(""); } }).catch(e => { if (!c.signal.aborted) setError(e.message); });
     return () => c.abort();
   }, [api, row.buildingId, row.unitId, row.saleId, view,refresh]);
   async function send() {
@@ -48,7 +49,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
       if (!alive.current) return;
       onDraft(""); submission.current = { body: "", id: "" };
       const p = await api.workflow.comments(scope, undefined, undefined, undefined, saved.id);
-      if (alive.current) { setComments(p.comments); setOlder(p.hasBefore); setNewer(p.hasAfter); setLoaded(true); }
+      if (alive.current) { setComments(p.comments); setOlder(p.hasBefore); setNewer(p.hasAfter); setLoadedView(view); }
     } catch (e) { if (alive.current) setError((e as Error).message); }
     finally { if (alive.current) setBusy(false); }
   }

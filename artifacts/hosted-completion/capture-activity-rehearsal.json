@@ -1,0 +1,11 @@
+{
+  "at": "2026-11-12T20:49:16.893Z",
+  "method": "Local rolled-back projection migration using fictional rehearsal event",
+  "checks": [
+    "conveyancer sees explicit test capture",
+    "metadata allowlist strips recipients and arbitrary content",
+    "wrong-building actor denied"
+  ],
+  "passed": true,
+  "destinationBusinessRecordsChanged": []
+}

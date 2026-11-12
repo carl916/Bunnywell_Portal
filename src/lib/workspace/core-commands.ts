@@ -1,3 +1,4 @@
+import {renderLegalEmailContent} from "@/lib/sales/legal-email";
 import {createHmac,timingSafeEqual} from "node:crypto";
 import {createSupabaseServiceRoleClient} from "@/lib/supabase/admin";
 import {termsSnapshotFromDefaults} from "@/lib/sales/reservation-terms";
@@ -47,7 +48,9 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
   if(action==="preview_capture"){
    const kind=p.kind;if(kind!=="authority"&&kind!=="notice_authority")throw new ReadError("Choose an authority type.",400);
    const date=kind==="authority"?String(p.date||new Date(Date.now()+48*3600000).toISOString()):null;
-   const snapshot=await rpc("sales_legal_snapshot",{}) as LegalSnapshot,rendered=renderLegalEmail(snapshot,kind,date||"");
+   const snapshot=await rpc("sales_legal_snapshot",{}) as LegalSnapshot;
+   const reviewUrl="https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace?"+new URLSearchParams({view:"sale",building:scope.buildingId,unit:scope.unitId,sale:scope.saleId,section:kind==="authority"?"exchange":"completion"});
+   const rendered={...renderLegalEmail(snapshot,kind,date||""),...renderLegalEmailContent(snapshot,kind,date||"",reviewUrl)};
    const preview={kind,date,snapshot,email:{...rendered,subject:"[INTEGRATION TEST] "+rendered.subject,body:"TEST CAPTURE ONLY - no external delivery\n\n"+rendered.body,html:"<p>TEST CAPTURE ONLY - no external delivery</p>"+rendered.html,from:"Integration Test <no-send@example.invalid>"}};
    return {...preview,token:signature(preview)};
   }

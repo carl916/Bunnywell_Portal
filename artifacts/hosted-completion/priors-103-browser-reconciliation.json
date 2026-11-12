@@ -1,0 +1,277 @@
+{
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "a03763ed-fee0-41d8-85e6-391acf976f80",
+    "saleId": "cb3e40ca-f3fc-4aa4-9108-4151077416f7"
+  },
+  "unit": "Priors Gate 103",
+  "at": "2026-11-12T20:49:15.316Z",
+  "method": "Post-browser read-only reconciliation; browser observations recorded separately",
+  "buyer": "Fictional Integration Buyer 103",
+  "workflow": "completed",
+  "unitStage": "completed",
+  "legalCompletedAt": "2026-11-12T20:45:00+00:00",
+  "changedRecords": {
+    "sale": [
+      "cb3e40ca-f3fc-4aa4-9108-4151077416f7"
+    ],
+    "unit": [
+      "a03763ed-fee0-41d8-85e6-391acf976f80"
+    ],
+    "terms": [
+      "3da22d50-060e-4a98-8007-8c4cfd1402fb"
+    ],
+    "schedule": [
+      "081a7e11-0614-4266-aac1-894204352fc4",
+      "0dd50fc7-b87a-4dfa-91b3-a69971507b39",
+      "9d7480db-dd29-4379-8610-51895228a8c6"
+    ],
+    "documents": [
+      {
+        "id": "7ad7018d-4c57-4244-bdf4-51064a3775aa",
+        "type": "completion_correspondence",
+        "status": "uploaded",
+        "approvedVersion": null
+      },
+      {
+        "id": "9b67bafc-51eb-40ff-9053-5a22f135ce47",
+        "type": "completion_statement",
+        "status": "approved",
+        "approvedVersion": "1a37988a-bfa5-40c8-a5e7-b4c156a1ee06"
+      },
+      {
+        "id": "986cec82-28f9-4e57-8a8c-2a95123476c1",
+        "type": "draft_statement_of_account",
+        "status": "approved",
+        "approvedVersion": "4cafed40-e5c1-4b20-8b55-2b109da00a1b"
+      },
+      {
+        "id": "5043482e-7351-45b9-8be0-6a0a3e66ea54",
+        "type": "reservation_form",
+        "status": "approved",
+        "approvedVersion": "39c3647a-07b2-4dc8-9f18-f5775cfe1a8a"
+      }
+    ],
+    "versions": [
+      {
+        "id": "9c05cf6d-0a6d-4a4a-bd4c-835ed2ffb4e3",
+        "document": "7ad7018d-4c57-4244-bdf4-51064a3775aa",
+        "current": true,
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/cb3e40ca-f3fc-4aa4-9108-4151077416f7/notice-951144a5-b1cf-44a7-ac2c-a3ae63bd4b55/notice.pdf"
+      },
+      {
+        "id": "1a37988a-bfa5-40c8-a5e7-b4c156a1ee06",
+        "document": "9b67bafc-51eb-40ff-9053-5a22f135ce47",
+        "current": true,
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/cb3e40ca-f3fc-4aa4-9108-4151077416f7/completion-4b4ee74b-00ff-496f-b769-6cda08d37266/completion_statement.pdf"
+      },
+      {
+        "id": "4cafed40-e5c1-4b20-8b55-2b109da00a1b",
+        "document": "986cec82-28f9-4e57-8a8c-2a95123476c1",
+        "current": true,
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/cb3e40ca-f3fc-4aa4-9108-4151077416f7/completion-21d70432-a43d-4bf9-b5eb-52e128014750/draft_statement_of_account.pdf"
+      },
+      {
+        "id": "39c3647a-07b2-4dc8-9f18-f5775cfe1a8a",
+        "document": "5043482e-7351-45b9-8be0-6a0a3e66ea54",
+        "current": true,
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/cb3e40ca-f3fc-4aa4-9108-4151077416f7/reservation-7f100dbd-2042-4d11-a67e-71221cf100cc/reservation_form.pdf"
+      },
+      {
+        "id": "59eafd4d-7d99-4efa-80e7-709638af511b",
+        "document": "5043482e-7351-45b9-8be0-6a0a3e66ea54",
+        "current": false,
+        "path": "35de5f9d-3217-4a11-beaf-83519bda9e5b/cb3e40ca-f3fc-4aa4-9108-4151077416f7/reservation-d1aafb4e-f732-4264-8a89-ab85d2ae1c6d/reservation_form.pdf"
+      }
+    ],
+    "emails": [
+      {
+        "id": "de680751-0059-4bfc-8e5f-b65cf82d7d53",
+        "kind": "authority",
+        "status": "captured_test",
+        "sentAt": null,
+        "providerId": null
+      },
+      {
+        "id": "31bf486a-1906-45c3-86f4-7eb232df22f6",
+        "kind": "notice_authority",
+        "status": "captured_test",
+        "sentAt": null,
+        "providerId": null
+      }
+    ],
+    "events": [
+      {
+        "id": "08a0e6aa-ac71-462b-9987-3e14c4eedd04",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:45:58.085204+00:00"
+      },
+      {
+        "id": "8cddac91-7f40-4086-abdd-a31e5d36d779",
+        "type": "completion_recorded",
+        "at": "2026-11-12T20:45:58.085204+00:00"
+      },
+      {
+        "id": "b59f95c6-a3d3-46fd-9f75-918783150e68",
+        "type": "completion_documents_approved",
+        "at": "2026-11-12T20:45:21.224054+00:00"
+      },
+      {
+        "id": "32665585-cd36-4249-b1a4-99d6bf1f9516",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:45:21.224054+00:00"
+      },
+      {
+        "id": "6501f536-d0a1-438e-944e-5da6a0796e7b",
+        "type": "completion_documents_approved",
+        "at": "2026-11-12T20:45:14.1134+00:00"
+      },
+      {
+        "id": "33cdc97c-23a6-47ea-9932-52515837a861",
+        "type": "completion_draft_statement_of_account_uploaded",
+        "at": "2026-11-12T20:44:02.815435+00:00"
+      },
+      {
+        "id": "8dcd268b-69b2-4183-9d12-576c23cb5b1c",
+        "type": "completion_statement_uploaded",
+        "at": "2026-11-12T20:43:45.006676+00:00"
+      },
+      {
+        "id": "216a1336-555e-43ae-9452-61b38e1770bc",
+        "type": "completion_correspondence_uploaded",
+        "at": "2026-11-12T20:43:27.622118+00:00"
+      },
+      {
+        "id": "2afda579-a724-4afa-afe1-82a2518125ff",
+        "type": "completion_arrangements_confirmed",
+        "at": "2026-11-12T20:43:27.622118+00:00"
+      },
+      {
+        "id": "4cf231e1-39e9-4f59-a1e2-12dc6de51891",
+        "type": "legal_email_prepared",
+        "at": "2026-11-12T20:43:13.111782+00:00"
+      },
+      {
+        "id": "29795037-4523-4fb4-90e3-79488329d1fc",
+        "type": "integration_correspondence_captured",
+        "at": "2026-11-12T20:43:13.111782+00:00"
+      },
+      {
+        "id": "9e8e3e25-ce44-4843-97c5-81eb7c765be1",
+        "type": "authority_notice_requested",
+        "at": "2026-11-12T20:42:54.194944+00:00"
+      },
+      {
+        "id": "814207d3-e49d-4286-a419-b820ec2805be",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:42:48.127336+00:00"
+      },
+      {
+        "id": "1dfc67e3-42d3-427c-bcbf-53768d90cbae",
+        "type": "exchange_recorded",
+        "at": "2026-11-12T20:42:48.127336+00:00"
+      },
+      {
+        "id": "d3819fa3-c7f0-4b91-bcd2-6640cc07a974",
+        "type": "legal_email_prepared",
+        "at": "2026-11-12T20:42:34.364853+00:00"
+      },
+      {
+        "id": "027f5cf8-b8f8-4851-93d1-e16e7d200587",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:42:34.364853+00:00"
+      },
+      {
+        "id": "18bee5d5-29cf-48d0-93e2-f00084032226",
+        "type": "integration_correspondence_captured",
+        "at": "2026-11-12T20:42:34.364853+00:00"
+      },
+      {
+        "id": "33edf557-b71b-4289-ae07-837f0637d8db",
+        "type": "authority_requested",
+        "at": "2026-11-12T20:42:09.763827+00:00"
+      },
+      {
+        "id": "4965442d-0ecc-4345-8e2d-662fd6bc69ef",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:53.268758+00:00"
+      },
+      {
+        "id": "121ad6ad-6cc7-4a6c-b773-ca8d4a2cc013",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:53.268758+00:00"
+      },
+      {
+        "id": "6747fdd3-069d-478c-89ea-37405268bc81",
+        "type": "reservation_approved",
+        "at": "2026-11-12T20:41:53.268758+00:00"
+      },
+      {
+        "id": "bca98061-8e24-40da-ae2b-532e5e3a146b",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:43.117365+00:00"
+      },
+      {
+        "id": "6e73e772-9236-43b3-afbe-5a293d69b3cf",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:43.117365+00:00"
+      },
+      {
+        "id": "7ac120a1-8960-4762-9d6c-876d89cc426f",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:43.117365+00:00"
+      },
+      {
+        "id": "bf6c696d-76b8-4f85-991a-c72c575b2ad7",
+        "type": "reservation_submitted",
+        "at": "2026-11-12T20:41:43.117365+00:00"
+      },
+      {
+        "id": "3ddf1af9-412b-413e-b45a-3b126ccf6de3",
+        "type": "reservation_form_replaced",
+        "at": "2026-11-12T20:41:10.513299+00:00"
+      },
+      {
+        "id": "0f8a8e80-01ed-4d4e-98b4-f0482deeb000",
+        "type": "reservation_form_uploaded",
+        "at": "2026-11-12T20:41:10.513299+00:00"
+      },
+      {
+        "id": "3ca6a2c2-b479-4101-b798-2d3f93546925",
+        "type": "sale_record_changed",
+        "at": "2026-11-12T20:41:04.766876+00:00"
+      },
+      {
+        "id": "fd11dac6-2947-4670-a3aa-320e71448a67",
+        "type": "reservation_draft_saved",
+        "at": "2026-11-12T20:41:04.766876+00:00"
+      },
+      {
+        "id": "8fac4c7b-7358-4abf-a9e7-886db674aa27",
+        "type": "reservation_form_uploaded",
+        "at": "2026-11-12T20:36:49.855795+00:00"
+      },
+      {
+        "id": "8b9e59dc-9b18-4787-baa7-ee1add0e6d12",
+        "type": "reservation_form_uploaded",
+        "at": "2026-11-12T20:36:49.855795+00:00"
+      }
+    ],
+    "comments": [
+      {
+        "id": "5734557b-fc50-4789-bacf-7236c74ca7ce",
+        "sequence": 1
+      },
+      {
+        "id": "d7ce3209-35f3-446c-813f-5672efd2eab2",
+        "sequence": 2
+      },
+      {
+        "id": "c2e6d4b4-efec-4bb2-93a4-5326059a0126",
+        "sequence": 3
+      }
+    ]
+  },
+  "externalDelivery": "none"
+}
