@@ -1,0 +1,8 @@
+{
+  "at": "2026-11-13T15:59:56.901Z",
+  "method": "Local/offline Node test suite; not hosted-browser evidence",
+  "command": "node --test tests/workspace-completion-commands.test.mjs tests/workspace-core-sales.test.mjs tests/workspace-hosted.test.mjs tests/workspace-operations.test.mjs tests/workspace-staging.test.mjs",
+  "passed": 25,
+  "failed": 0,
+  "applicationCommit": "13f9e842e17c0c22d9ef25c33a1462c28f6fcdb2"
+}

@@ -15,7 +15,7 @@ let migration=fs.readFileSync('supabase/migrations/20261113140117_workspace_oper
 migration=migration.replaceAll('create table workspace_commands.','create table if not exists workspace_commands.').replaceAll('create function ','create or replace function ');
 migration=migration.replace("create policy \"exact visible workspace snag evidence\"", "drop policy if exists \"exact visible workspace snag evidence\" on storage.objects;\ncreate policy \"exact visible workspace snag evidence\"");
 migration=migration.replace("array['image/jpeg','image/png','image/webp','video/mp4','video/webm']);","array['image/jpeg','image/png','image/webp','video/mp4','video/webm']) on conflict(id) do nothing;");
-sql(migration);sql("notify pgrst,'reload schema';");console.log('Local operations migration applied');
+sql(migration);sql(fs.readFileSync('supabase/migrations/20261113154033_workspace_defaults_fields.sql','utf8'));sql("notify pgrst,'reload schema';");console.log('Local operations migrations applied');
 Object.assign(process.env,{NEXT_PUBLIC_SUPABASE_URL:local,NEXT_PUBLIC_SUPABASE_ANON_KEY:cfg.ANON_KEY,SUPABASE_SERVICE_ROLE_KEY:cfg.SERVICE_ROLE_KEY,WORKSPACE_OPERATIONS_WRITES:'1'});
 const nativeFetch=fetch;globalThis.fetch=(input,options)=>{const u=new URL(typeof input==='string'?input:input instanceof URL?input.href:input.url);assert([local,hosted].includes(u.origin),'Blocked nonlocal rehearsal request');return nativeFetch(local+u.pathname+u.search,options)};
 const staging=loadTypescriptModule('src/lib/workspace/staging.ts'),realGuard=loadTypescriptModule('src/lib/workspace/operations-fetch.ts').operationsFetch;
@@ -80,6 +80,7 @@ await test('Sales defaults replace schedule atomically and reject invalid percen
  const req=randomUUID(),p={buildingId:building,revision:d.defaultsRevision,form};
  assert.deepEqual(await op('save_defaults',building,p,req),await op('save_defaults',building,p,req));
  assert.equal(sql("select count(*) from building_sale_default_payment_schedule where building_id='"+building+"'").trim(),'3');
+ assert.deepEqual(JSON.parse(sql("select jsonb_build_array(default_vat_rate,default_sales_solicitor_fee) from building_sale_defaults where building_id='"+building+"'").trim()),[20,882]);
  await assert.rejects(()=>op('save_defaults',building,p),/changed/);
  assert.deepEqual(JSON.parse(sql("select jsonb_build_array(agent_fee_percent,exchange_agent_fee_percent,completion_agent_fee_percent) from unit_sale_terms where sale_attempt_id='"+changed.sale+"' and is_current").trim()),[2,1,1]);
 });
@@ -191,5 +192,3 @@ await test('deactivating only a designated test person denies the existing app s
  assert.equal((await snagContext('contractor',snag)).snag.status,'closed');
 });
 for(const c of Object.values(clients))await c.auth.signOut();
-
-

@@ -1,0 +1,855 @@
+{
+  "at": "2026-11-13T15:57:33.800Z",
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": "New fictional building G01; no existing records changed outside this scope. Auth sessions for established developer account were used for sign-in. Private credentials omitted.",
+  "records": {
+    "areas": [
+      {
+        "id": "9a14e4d6-621c-4977-aa3c-658ec1004f10",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:29:03.876993+00:00",
+        "updated_at": "2026-11-13T15:29:03.876993+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "snags": [
+      {
+        "id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "status": "closed",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:32:28.793572+00:00",
+        "updated_at": "2026-11-13T15:32:28.793572+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "units": [
+      {
+        "id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:28:57.393016+00:00",
+        "updated_at": "2026-11-13T15:48:16.927729+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "profiles": [
+      {
+        "id": "eceb3206-017b-461b-9ffb-b2f0c18b614a",
+        "created_at": "2026-11-13T15:31:05.563181+00:00",
+        "updated_at": "2026-11-13T15:31:05.669455+00:00"
+      },
+      {
+        "id": "08596c73-3290-47c0-ad9b-23feee845311",
+        "created_at": "2026-11-13T15:31:06.247359+00:00",
+        "updated_at": "2026-11-13T15:31:06.328066+00:00"
+      },
+      {
+        "id": "4134a143-d1b1-439f-b340-7cf6be5faee3",
+        "created_at": "2026-11-13T15:31:06.839087+00:00",
+        "updated_at": "2026-11-13T15:31:06.89305+00:00"
+      }
+    ],
+    "buildings": [
+      {
+        "id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "status": "active",
+        "created_at": "2026-11-13T15:28:27.685401+00:00",
+        "updated_at": "2026-11-13T15:31:59.916871+00:00"
+      }
+    ],
+    "snag_events": [
+      {
+        "id": "9b08b9aa-8d9b-4e07-bd1d-9335c9d7d419",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:32:28.794864+00:00",
+        "event_type": "created"
+      },
+      {
+        "id": "5a2c2e93-b153-476c-a49a-b2d024c25fa0",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:32:28.794864+00:00",
+        "event_type": "photo_added"
+      },
+      {
+        "id": "ee1c9428-8e12-4e11-b63c-00772ac66fa4",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:34:21.609435+00:00",
+        "event_type": "note"
+      },
+      {
+        "id": "ccdb8474-b3ab-4ffd-9cd2-51572b32081b",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:34:35.258925+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "23ed18d1-da9f-4b9f-aefd-689ed9e9e26c",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:35:24.989375+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "ec33d83f-b1cb-423a-a1e3-909c7f31dc28",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:35:27.699308+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "38c95dad-820e-45bf-b9a5-6d08b248b662",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:10.325812+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "75240b6d-a880-4d85-bc8e-d0800df195a0",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:40.004139+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "59169f3f-c71d-4368-9e9c-034dd8247548",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:40.004139+00:00",
+        "event_type": "photo_added"
+      },
+      {
+        "id": "48d33bb3-2567-489d-bd33-ab8abe0b3d5e",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:43.534674+00:00",
+        "event_type": "status_change"
+      },
+      {
+        "id": "ece573ae-c057-40d9-a4af-08671c139471",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:43.534674+00:00",
+        "event_type": "closed_at_changed"
+      }
+    ],
+    "snag_photos": [
+      {
+        "id": "563ea7b9-3898-44d6-af5b-c15f5915a1a5",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:32:28.793572+00:00",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/4675eb99-9c1c-4eb2-9ced-62014dc8deac/evidence.png"
+      },
+      {
+        "id": "a4afdc68-0e90-4d88-83f6-2fcf799133a9",
+        "snag_id": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38",
+        "created_at": "2026-11-13T15:36:40.003314+00:00",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/cbecc12e-fc18-40f1-858f-0c750c9f2905/evidence.png"
+      }
+    ],
+    "organisations": [
+      {
+        "id": "7be8762f-a85a-48fe-a18c-be20c5bb9b67",
+        "type": "contractor",
+        "created_at": "2026-11-13T15:29:41.956189+00:00",
+        "updated_at": "2026-11-13T15:29:41.956189+00:00"
+      },
+      {
+        "id": "3576f097-8e1c-41b5-81cd-efa225610eee",
+        "type": "conveyancer",
+        "created_at": "2026-11-13T15:29:48.195994+00:00",
+        "updated_at": "2026-11-13T15:29:48.195994+00:00"
+      },
+      {
+        "id": "471a0359-2523-41b0-ab40-72e46b90f8f8",
+        "type": "sales_agent",
+        "created_at": "2026-11-13T15:29:55.12258+00:00",
+        "updated_at": "2026-11-13T15:29:55.12258+00:00"
+      }
+    ],
+    "sale_comments": [
+      {
+        "id": "3c79cf62-c8d0-4334-b70d-5c3d4ad5c594",
+        "created_at": "2026-11-13T15:45:47.329851+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "snag_comments": [],
+    "building_floors": [
+      {
+        "id": "0480b0bd-879e-426b-930e-9f976da8c780",
+        "created_at": "2026-11-13T15:28:42.899721+00:00",
+        "updated_at": "2026-11-13T15:28:42.899721+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "813985e4-4e74-4056-82b1-65eb39c63831",
+        "created_at": "2026-11-13T15:28:50.986309+00:00",
+        "updated_at": "2026-11-13T15:28:50.986309+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "unit_sale_notes": [],
+    "unit_sale_terms": [
+      {
+        "id": "6cdc36c9-fb8b-4902-b7c8-5481e869fc51",
+        "status": "approved",
+        "created_at": "2026-11-13T15:38:10.85584+00:00",
+        "is_current": true,
+        "updated_at": "2026-11-13T15:44:16.755291+00:00",
+        "approved_at": "2026-11-13T15:44:16.755291+00:00",
+        "version_number": 1,
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_legal_emails": [
+      {
+        "id": "18aefc37-7db2-46b2-8ca9-3698dd6fd055",
+        "kind": "authority",
+        "exchanged_at": "2026-11-13",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "2b81b5db-5f62-4f83-b85d-a22d6bec39ec",
+        "kind": "notice_authority",
+        "exchanged_at": null,
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_participants": [],
+    "unit_sale_attempts": [
+      {
+        "id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:28:57.393016+00:00",
+        "updated_at": "2026-11-13T15:48:16.927729+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "exchanged_at": "2026-11-13",
+        "workflow_status": "completed",
+        "legal_completed_at": "2026-11-13T15:30:00+00:00"
+      }
+    ],
+    "unit_sale_invoices": [
+      {
+        "id": "540271b2-b5ae-44f6-b9a6-91b559ee7f86",
+        "status": "approved",
+        "created_at": "2026-11-13T15:49:02.992312+00:00",
+        "updated_at": "2026-11-13T15:50:29.680913+00:00",
+        "approved_at": "2026-11-13T15:50:29.680913+00:00",
+        "document_id": "8368beb0-3135-4f71-bc31-4f3a9af59860",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "unit_sale_documents": [
+      {
+        "id": "8368beb0-3135-4f71-bc31-4f3a9af59860",
+        "status": "approved",
+        "created_at": "2026-11-13T15:49:02.992312+00:00",
+        "updated_at": "2026-11-13T15:50:29.680913+00:00",
+        "approved_at": "2026-11-13T15:50:29.680913+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "approved_version_id": "3454ff38-d8a6-47ec-947c-5399aa9a7b7c"
+      },
+      {
+        "id": "189db364-3cb3-4166-bd08-b8991fecd728",
+        "status": "uploaded",
+        "created_at": "2026-11-13T15:46:23.420213+00:00",
+        "updated_at": "2026-11-13T15:46:23.420213+00:00",
+        "approved_at": null,
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "approved_version_id": null
+      },
+      {
+        "id": "23ce2c09-51a0-48b6-8a56-801afea80102",
+        "status": "approved",
+        "created_at": "2026-11-13T15:46:38.613041+00:00",
+        "updated_at": "2026-11-13T15:48:03.009346+00:00",
+        "approved_at": "2026-11-13T15:48:03.009346+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "approved_version_id": "ee63d766-f69d-49f8-b853-007e2365fb70"
+      },
+      {
+        "id": "8ade64fc-0a22-49b1-8162-218aef7d737a",
+        "status": "approved",
+        "created_at": "2026-11-13T15:47:05.146616+00:00",
+        "updated_at": "2026-11-13T15:47:29.776424+00:00",
+        "approved_at": "2026-11-13T15:47:29.776424+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "approved_version_id": "a11eeba7-59a4-4825-b62d-240ccf3c0a4a"
+      },
+      {
+        "id": "d06f93d7-f3ab-4d01-9607-505d400b674e",
+        "status": "approved",
+        "created_at": "2026-11-13T15:38:57.885259+00:00",
+        "updated_at": "2026-11-13T15:44:16.755291+00:00",
+        "approved_at": "2026-11-13T15:44:16.755291+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "approved_version_id": "7ac89562-4b25-409f-8b96-c2c2cde3003b"
+      }
+    ],
+    "user_building_access": [
+      {
+        "id": "afd4842f-031f-497d-9e66-d75238e553ae",
+        "user_id": "eceb3206-017b-461b-9ffb-b2f0c18b614a",
+        "created_at": "2026-11-13T15:31:05.669455+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "b9bbc407-4a60-4875-98bb-7fd04d1bbfc7",
+        "user_id": "08596c73-3290-47c0-ad9b-23feee845311",
+        "created_at": "2026-11-13T15:31:06.328066+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "b74ba476-d044-4ead-8b95-5ed14d719d7a",
+        "user_id": "4134a143-d1b1-439f-b340-7cf6be5faee3",
+        "created_at": "2026-11-13T15:31:06.89305+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "sale_comment_receipts": [],
+    "building_organisations": [
+      {
+        "id": "e5ae000c-e343-486f-9e23-d519eeaf036e",
+        "created_at": "2026-11-13T15:31:53.93453+00:00",
+        "updated_at": "2026-11-13T15:31:53.93453+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "b5908b1a-b7e6-436b-8a3a-57a1fce33c67",
+        "created_at": "2026-11-13T15:31:54.742846+00:00",
+        "updated_at": "2026-11-13T15:31:54.742846+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "86463dda-b42c-4e46-b820-91ebf25602fc",
+        "created_at": "2026-11-13T15:31:59.916871+00:00",
+        "updated_at": "2026-11-13T15:31:59.916871+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "building_sale_defaults": [
+      {
+        "created_at": "2026-11-13T15:29:25.636056+00:00",
+        "updated_at": "2026-11-13T15:51:32.37289+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ],
+    "sale_comment_revisions": [],
+    "sale_comment_read_state": [],
+    "sale_completion_uploads": [
+      {
+        "id": "5f5adb25-f55e-4a40-8331-5e96b08e1c77",
+        "sale_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "created_at": "2026-11-13T15:46:36.101757+00:00"
+      },
+      {
+        "id": "e33748fe-46d9-49ba-b5d9-bc20f63f308e",
+        "sale_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "created_at": "2026-11-13T15:47:02.798318+00:00"
+      },
+      {
+        "id": "a35cdedb-5500-4f01-9b1f-cf67c50ab1b3",
+        "sale_id": "dae16114-7ae2-46e8-8244-8ba02920a539",
+        "created_at": "2026-11-13T15:47:41.234692+00:00"
+      }
+    ],
+    "unit_sale_workflow_events": [
+      {
+        "id": "a101b764-8b91-42c2-860d-80c92755f649",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:38.41291+00:00",
+        "event_type": "integration_correspondence_captured",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "0dc6ad99-ba6f-43ad-87a7-a24d8059ba37",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:28:57.393016+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "aa25c739-5efe-484a-8e7f-4eba23c9d45b",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:38:10.85584+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "b43a591f-cd56-48de-a128-36380b50c047",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:38:10.85584+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "b487de1d-ca44-48cc-a39c-bb02176200ca",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:38:10.85584+00:00",
+        "event_type": "commercial_model_saved",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "09414ef6-5abc-4b80-ae5f-38bc9ceebd23",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:38:57.885259+00:00",
+        "event_type": "reservation_form_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "fac45b15-848a-4b21-ad83-936a675df4ad",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:38:57.885259+00:00",
+        "event_type": "reservation_form_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "c24391f7-c661-419d-bed3-01e7061d7c66",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "3c5a161c-eed0-47ed-beeb-561313648d70",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "b62e48cb-7bd8-4365-adf5-ae566affdcf1",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "385e005e-c234-45d7-a48e-8726040cafd8",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "event_type": "reservation_submitted",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "38780520-2c4d-450a-b30a-15fae54af62a",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:16.755291+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "ecbd73ee-1f95-4ddb-a021-93abe3e63783",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:16.755291+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "8debd0fa-828a-4c32-b50c-6a24b197bf82",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:16.755291+00:00",
+        "event_type": "reservation_approved",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "b266548b-5e82-47b3-bcb1-bed5b392cb33",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:38.41291+00:00",
+        "event_type": "legal_email_prepared",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "3ca58739-48c7-4a89-9648-93de280acb9a",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:38.41291+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "04a49896-8ed1-4832-89ed-b865e0e83957",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:51.580273+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "2c9ed252-5a2c-4deb-a209-6797b19b80a9",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:44:51.580273+00:00",
+        "event_type": "exchange_recorded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "1a678b1a-b3f3-43bb-a13b-343aafc4057f",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:45:10.182423+00:00",
+        "event_type": "exchange_deposit_received",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "729ace63-032a-4f77-874e-306801928cb8",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:45:46.890028+00:00",
+        "event_type": "further_deposit_received",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "1db20626-e143-40f3-adcd-8e394578b0c6",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:46:12.695987+00:00",
+        "event_type": "legal_email_prepared",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "c54e36ab-c055-4037-abf6-9d1dd9211ea0",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:46:12.695987+00:00",
+        "event_type": "integration_correspondence_captured",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "22e5c9cf-048a-41db-9c9e-099fa24349ef",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:46:23.420213+00:00",
+        "event_type": "completion_correspondence_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "424fc86f-5c76-4418-99e7-fea07c9e054d",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:46:23.420213+00:00",
+        "event_type": "completion_arrangements_confirmed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "450474df-fbbf-4a30-a34b-21675f2ac165",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:46:38.613041+00:00",
+        "event_type": "completion_statement_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "7e6be3c1-14fb-4a36-bcbd-75307ae4b438",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:47:05.146616+00:00",
+        "event_type": "completion_draft_statement_of_account_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "28d923b1-507a-4de9-86c4-40d0be0c84a2",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:47:21.34716+00:00",
+        "event_type": "completion_documents_query_raised",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "076565d4-7a4d-489f-8714-11e941c0a9b9",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:47:29.776424+00:00",
+        "event_type": "completion_documents_approved",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "51a9290c-f09a-4012-aac5-4bdad46bbcc9",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:47:43.063587+00:00",
+        "event_type": "completion_statement_superseded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "6b8dc6ba-9765-4928-a758-824a57b413ee",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:47:43.063587+00:00",
+        "event_type": "completion_statement_replaced",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "10ccd162-fad1-44e3-9c65-d997de36e4ad",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:48:03.009346+00:00",
+        "event_type": "completion_documents_approved",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "04223039-7e2e-495f-b458-8c26d3146991",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:48:03.009346+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "ceca30f1-ad77-4616-a509-3a16977cba89",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:48:16.927729+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "73c0a8e0-99c4-4be9-81c9-2c175a4e7327",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:48:16.927729+00:00",
+        "event_type": "completion_recorded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "badde930-0082-4252-9891-4d2d571d90dc",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:49:02.992312+00:00",
+        "event_type": "agent_invoice_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "33ab727d-85eb-41e1-9d41-f1e3d930998e",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:49:02.992312+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "dbade4e0-800b-4de0-9da5-aa004e92349d",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:49:02.992312+00:00",
+        "event_type": "agent_invoice_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "3abab4ab-7a08-460a-a7cb-388539021490",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:49:42.345723+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "f796486c-3365-4e12-a7d3-8eadeedd3055",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:49:42.345723+00:00",
+        "event_type": "agent_invoice_rejected",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "e6f8b613-e022-4ea3-9b58-adcef9e26070",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:26.501643+00:00",
+        "event_type": "agent_invoice_replaced",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "2ef65188-49bd-4d97-9a3a-5d4b797a33ed",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:26.501643+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "e2e9a726-6683-418f-8ebc-e7126fe9d5c5",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:26.501643+00:00",
+        "event_type": "agent_invoice_uploaded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "f8ccfa53-c10c-420f-96af-57c396f3e197",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:29.680913+00:00",
+        "event_type": "sale_record_changed",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "28a498e6-527e-4d63-9350-41b51b683e25",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:29.680913+00:00",
+        "event_type": "agent_invoice_approved",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "0f1f58d8-ccab-4ad4-8475-9f018c51d739",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:42.832593+00:00",
+        "event_type": "agent_fee_payment_recorded",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "49b45aba-fb33-4c87-ba51-db3fd5addfe4",
+        "unit_id": "d0c239cb-2bf8-4fe4-8ec4-50f74fffd4ee",
+        "created_at": "2026-11-13T15:50:42.832593+00:00",
+        "event_type": "agent_fee_invoice_paid",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_further_deposit_facts": [
+      {
+        "id": "f9a29333-941d-4dad-9c86-402d8cde4add",
+        "exchanged_at": "2026-11-13",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "unit_sale_invoice_payments": [
+      {
+        "id": "3a6bc3c8-4c1e-4f0f-92fe-443a776f0946",
+        "created_at": "2026-11-13T15:50:42.832593+00:00",
+        "invoice_id": "540271b2-b5ae-44f6-b9a6-91b559ee7f86",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "unit_sale_payment_schedule": [
+      {
+        "id": "3164c033-19e7-4535-b263-a1a98960b083",
+        "status": "pending",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "updated_at": "2026-11-13T15:41:09.024641+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "a3a13e7f-6176-421b-af3a-7a77e5a3a395",
+        "status": "pending",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "updated_at": "2026-11-13T15:41:09.024641+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      },
+      {
+        "id": "fa6a7d3c-f58b-4f5c-bc05-459d81008ffa",
+        "status": "pending",
+        "created_at": "2026-11-13T15:41:09.024641+00:00",
+        "updated_at": "2026-11-13T15:41:09.024641+00:00",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "unit_sale_document_versions": [
+      {
+        "id": "3454ff38-d8a6-47ec-947c-5399aa9a7b7c",
+        "is_current": true,
+        "document_id": "8368beb0-3135-4f71-bc31-4f3a9af59860",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/invoice-df7b3065-72ec-4e52-bfd9-3279284ed2a7/agent_invoice.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 2
+      },
+      {
+        "id": "1ee152dc-6950-4f93-8f3a-9aeda9d008d2",
+        "is_current": false,
+        "document_id": "8368beb0-3135-4f71-bc31-4f3a9af59860",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/invoice-69d5c6c1-d427-4bf4-a460-17e9bd20dc74/agent_invoice.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 1
+      },
+      {
+        "id": "0adce929-917a-42f5-bf5d-66d8665b09c6",
+        "is_current": true,
+        "document_id": "189db364-3cb3-4166-bd08-b8991fecd728",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/notice-a55f3be8-6c2a-4426-b751-2c6b03adfed0/notice.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 1
+      },
+      {
+        "id": "ee63d766-f69d-49f8-b853-007e2365fb70",
+        "is_current": true,
+        "document_id": "23ce2c09-51a0-48b6-8a56-801afea80102",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/completion-a35cdedb-5500-4f01-9b1f-cf67c50ab1b3/completion_statement.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 2
+      },
+      {
+        "id": "466ebd36-cfd1-40bc-acff-a38d9fd61167",
+        "is_current": false,
+        "document_id": "23ce2c09-51a0-48b6-8a56-801afea80102",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/completion-5f5adb25-f55e-4a40-8331-5e96b08e1c77/completion_statement.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 1
+      },
+      {
+        "id": "a11eeba7-59a4-4825-b62d-240ccf3c0a4a",
+        "is_current": true,
+        "document_id": "8ade64fc-0a22-49b1-8162-218aef7d737a",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/completion-e33748fe-46d9-49ba-b5d9-bc20f63f308e/draft_statement_of_account.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 1
+      },
+      {
+        "id": "7ac89562-4b25-409f-8b96-c2c2cde3003b",
+        "is_current": true,
+        "document_id": "d06f93d7-f3ab-4d01-9607-505d400b674e",
+        "storage_path": "8dccf2b3-862a-4564-a45f-d825d524b6a5/dae16114-7ae2-46e8-8244-8ba02920a539/reservation-34322d9c-c3d7-42da-8a2d-0ef8fef3f8aa/reservation_form.pdf",
+        "storage_bucket": "sale-documents",
+        "version_number": 1
+      }
+    ],
+    "sale_exchange_deposit_sources": [
+      {
+        "id": "f9a29333-941d-4dad-9c86-402d8cde4add",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_further_deposit_receipts": [
+      {
+        "id": "b28790ee-c632-449a-b6c3-34107cb7a2c1",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_exchange_deposit_receipts": [
+      {
+        "id": "acaa09bd-43d9-4bd6-8f87-b9732ccffecb",
+        "sale_attempt_id": "dae16114-7ae2-46e8-8244-8ba02920a539"
+      }
+    ],
+    "sale_further_deposit_deadlines": [],
+    "sale_completion_package_approvals": [],
+    "building_sale_default_payment_schedule": [
+      {
+        "id": "6080d737-2a8e-4973-bc10-18cbb10a6eaa",
+        "created_at": "2026-11-13T15:51:32.37289+00:00",
+        "updated_at": "2026-11-13T15:51:32.37289+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "528a5f6a-9dbc-4bae-999b-e206af4ce59b",
+        "created_at": "2026-11-13T15:51:32.37289+00:00",
+        "updated_at": "2026-11-13T15:51:32.37289+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      },
+      {
+        "id": "15b03f0f-d891-425b-aecd-3263f032329c",
+        "created_at": "2026-11-13T15:51:32.37289+00:00",
+        "updated_at": "2026-11-13T15:51:32.37289+00:00",
+        "building_id": "8dccf2b3-862a-4564-a45f-d825d524b6a5"
+      }
+    ]
+  },
+  "query": "select jsonb_build_object('areas',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'unit_id',\"unit_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"areas\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'building_floors',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"building_floors\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'building_organisations',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"building_organisations\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'building_sale_default_payment_schedule',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"building_sale_default_payment_schedule\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'building_sale_defaults',(select coalesce(jsonb_agg(jsonb_build_object('building_id',\"building_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"building_sale_defaults\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'buildings',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'status',\"status\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"buildings\" where id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'organisations',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'type',\"type\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"organisations\" where id in(select entity_id from workspace_commands.test_entities where kind='organisation')),'profiles',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"profiles\" where id in(select entity_id from workspace_commands.test_entities where kind='profile')),'sale_comment_read_state',(select coalesce(jsonb_agg(jsonb_build_object('sale_attempt_id',\"sale_attempt_id\",'user_id',\"user_id\")),'[]') from \"sale_comment_read_state\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_comment_receipts',(select coalesce(jsonb_agg(jsonb_build_object('sale_attempt_id',\"sale_attempt_id\",'user_id',\"user_id\")),'[]') from \"sale_comment_receipts\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_comment_revisions',(select coalesce(jsonb_agg(jsonb_build_object('sale_attempt_id',\"sale_attempt_id\")),'[]') from \"sale_comment_revisions\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_comments',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'created_at',\"created_at\")),'[]') from \"sale_comments\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_completion_package_approvals',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'approved_at',\"approved_at\")),'[]') from \"sale_completion_package_approvals\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_completion_uploads',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_id',\"sale_id\",'created_at',\"created_at\")),'[]') from \"sale_completion_uploads\" where sale_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_exchange_deposit_receipts',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\")),'[]') from \"sale_exchange_deposit_receipts\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_exchange_deposit_sources',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\")),'[]') from \"sale_exchange_deposit_sources\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_further_deposit_deadlines',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\")),'[]') from \"sale_further_deposit_deadlines\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_further_deposit_facts',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'exchanged_at',\"exchanged_at\")),'[]') from \"sale_further_deposit_facts\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_further_deposit_receipts',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\")),'[]') from \"sale_further_deposit_receipts\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_legal_emails',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'kind',\"kind\",'exchanged_at',\"exchanged_at\")),'[]') from \"sale_legal_emails\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'sale_participants',(select coalesce(jsonb_agg(jsonb_build_object('sale_attempt_id',\"sale_attempt_id\",'user_id',\"user_id\")),'[]') from \"sale_participants\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'snag_comments',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'snag_id',\"snag_id\",'user_id',\"user_id\",'created_at',\"created_at\")),'[]') from \"snag_comments\" where snag_id='15cd4e35-4f46-4ea7-93cd-46dbb50bba38'),'snag_events',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'snag_id',\"snag_id\",'event_type',\"event_type\",'created_at',\"created_at\")),'[]') from \"snag_events\" where snag_id='15cd4e35-4f46-4ea7-93cd-46dbb50bba38'),'snag_photos',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'snag_id',\"snag_id\",'created_at',\"created_at\",'storage_path',\"storage_path\")),'[]') from \"snag_photos\" where snag_id='15cd4e35-4f46-4ea7-93cd-46dbb50bba38'),'snags',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'status',\"status\",'created_at',\"created_at\",'updated_at',\"updated_at\",'building_id',\"building_id\",'unit_id',\"unit_id\")),'[]') from \"snags\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'unit_sale_attempts',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'unit_id',\"unit_id\",'workflow_status',\"workflow_status\",'exchanged_at',\"exchanged_at\",'created_at',\"created_at\",'updated_at',\"updated_at\",'legal_completed_at',\"legal_completed_at\")),'[]') from \"unit_sale_attempts\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'unit_sale_document_versions',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'document_id',\"document_id\",'version_number',\"version_number\",'is_current',\"is_current\",'storage_bucket',\"storage_bucket\",'storage_path',\"storage_path\")),'[]') from \"unit_sale_document_versions\" where document_id in(select id from unit_sale_documents where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539')),'unit_sale_documents',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'status',\"status\",'approved_at',\"approved_at\",'created_at',\"created_at\",'updated_at',\"updated_at\",'approved_version_id',\"approved_version_id\")),'[]') from \"unit_sale_documents\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'unit_sale_invoice_payments',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'invoice_id',\"invoice_id\",'sale_attempt_id',\"sale_attempt_id\",'created_at',\"created_at\")),'[]') from \"unit_sale_invoice_payments\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'unit_sale_invoices',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'document_id',\"document_id\",'status',\"status\",'approved_at',\"approved_at\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"unit_sale_invoices\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'unit_sale_notes',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'building_id',\"building_id\",'unit_id',\"unit_id\",'created_at',\"created_at\")),'[]') from \"unit_sale_notes\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'unit_sale_payment_schedule',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'status',\"status\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"unit_sale_payment_schedule\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'unit_sale_terms',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'version_number',\"version_number\",'is_current',\"is_current\",'status',\"status\",'approved_at',\"approved_at\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"unit_sale_terms\" where sale_attempt_id='dae16114-7ae2-46e8-8244-8ba02920a539'),'unit_sale_workflow_events',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'sale_attempt_id',\"sale_attempt_id\",'building_id',\"building_id\",'unit_id',\"unit_id\",'event_type',\"event_type\",'created_at',\"created_at\")),'[]') from \"unit_sale_workflow_events\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'units',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'building_id',\"building_id\",'created_at',\"created_at\",'updated_at',\"updated_at\")),'[]') from \"units\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5'),'user_building_access',(select coalesce(jsonb_agg(jsonb_build_object('id',\"id\",'user_id',\"user_id\",'building_id',\"building_id\",'created_at',\"created_at\")),'[]') from \"user_building_access\" where building_id='8dccf2b3-862a-4564-a45f-d825d524b6a5')) as changed_records"
+}

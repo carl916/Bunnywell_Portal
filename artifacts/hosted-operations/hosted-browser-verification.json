@@ -1,0 +1,209 @@
+{
+  "at": "2026-11-13T15:56:23.411Z",
+  "commit": "13f9e842e17c0c22d9ef25c33a1462c28f6fcdb2",
+  "deployment": "dpl_9jRMUuACD3wpqnc7sHoiTEUzFxNP",
+  "method": "Ordinary authorised Vercel and application sessions in hosted in-app browser; native UI interaction and rendered documents. No protection bypass.",
+  "checks": [
+    {
+      "check": "Fictional Setup building, floors, unit, room, defaults and three organisations saved through browser",
+      "passed": true,
+      "commit": "f6a3ccf"
+    },
+    {
+      "check": "Contractor sees Dashboard and Snags, with no Sales or Setup navigation",
+      "passed": true,
+      "commit": "f6a3ccf"
+    },
+    {
+      "check": "Wrong-building snag deep link denied without opening an alternative record",
+      "passed": true,
+      "commit": "f6a3ccf"
+    },
+    {
+      "check": "Snags create with private image → contractor query → developer reply → resolution → rejection → revised resolution with evidence → developer close; genuine activity",
+      "passed": true,
+      "commit": "13f9e84",
+      "snag": "15cd4e35-4f46-4ea7-93cd-46dbb50bba38"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Agent reservation submitted; developer private PDF rendered and approved; exchange authority captured without delivery; scoped conveyancer confirmed exchange",
+      "result": "pass",
+      "saleId": "dae16114-7ae2-46e8-8244-8ba02920a539",
+      "at": "2026-11-13T15:44:51.847Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Conveyancer exchange deposit 10000 and further deposit 5000 saved; zero outstanding; genuine sale comment visible",
+      "result": "pass",
+      "at": "2026-11-13T15:45:57.812Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Notice uploaded; Completion v1 queried, revised v2, current and previous PDFs visibly rendered, both documents approved; conveyancer legal completion persisted after refresh and activity updated",
+      "result": "pass",
+      "at": "2026-11-13T15:48:29.865Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Agent invoice upload/query/revised v2/developer approval; private PDF visually rendered; bookkeeping payment 1100 leaves zero outstanding; no transfer",
+      "result": "pass",
+      "at": "2026-11-13T15:51:05.741Z"
+    },
+    {
+      "release": "13f9e84 + workspace_defaults_fields",
+      "check": "Fictional building Sales defaults save succeeded; backend VAT20 and solicitor882 persisted",
+      "result": "pass",
+      "at": "2026-11-13T15:51:42.297Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Forum House 63 Buildings units / 62 Sales; LG10 completed history dated30Oct preserved; Reservation Exchange Completion Deposits AgentFees Commercial Handover detail sections loaded; reference write restriction visible",
+      "result": "pass",
+      "at": "2026-11-13T15:53:19.322Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Priors64 Buildings/64Sales; available LG02 read-only with exchange gate; back returns filtered for_sale worklist; building switch resets sale; Trinity86Buildings/68Sales",
+      "result": "pass",
+      "at": "2026-11-13T15:54:18.070Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Exact redacted historical Forum sale denied without buyer/documents or alternative record",
+      "result": "pass",
+      "at": "2026-11-13T15:54:52.625Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Conveyancer nav omits Agent Fees and direct fee URL denies access; Priors deep link denied to fictional-building-only account",
+      "result": "pass",
+      "at": "2026-11-13T15:55:08.913Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Imported Forum LG01 closed snag: two photographs loaded; July1 activity retained; comment and edit restriction displayed",
+      "result": "pass",
+      "at": "2026-11-13T15:55:26.633Z"
+    },
+    {
+      "release": "13f9e84",
+      "check": "Dashboard-origin sale returns to dashboard; worklist-origin sale returns to remembered filtered worklist",
+      "result": "pass",
+      "at": "2026-11-13T15:56:21.456Z"
+    }
+  ],
+  "timings": [
+    {
+      "page": "Developer sign-in to building chooser",
+      "observedMs": 1399
+    },
+    {
+      "page": "Snag detail including private evidence after reload",
+      "observedMs": 2811
+    },
+    {
+      "page": "Completed G01 refresh",
+      "observedMs": 2111,
+      "at": "2026-11-13T15:48:29.509Z"
+    },
+    {
+      "page": "Forum House populated dashboard refresh",
+      "observedMs": 1676,
+      "at": "2026-11-13T15:52:31.436Z"
+    },
+    {
+      "page": "Switch Forum sale to Priors worklist",
+      "observedMs": 946,
+      "at": "2026-11-13T15:53:32.681Z"
+    }
+  ],
+  "forumReadSections": [
+    {
+      "section": "Reservation",
+      "headings": [
+        "Reservation",
+        "Sales actions",
+        "Sales controls",
+        "Recorded sale",
+        "Reservation record",
+        "Current terms · version 1",
+        "Reservation form",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    },
+    {
+      "section": "Exchange",
+      "headings": [
+        "Exchange",
+        "Sales actions",
+        "Sales controls",
+        "Recorded sale",
+        "Exchange record",
+        "notice authority · version 1",
+        "authority · version 1",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    },
+    {
+      "section": "Deposits",
+      "headings": [
+        "Deposits",
+        "Sales controls",
+        "Recorded sale",
+        "Current terms · version 1",
+        "10% exchange deposit",
+        "5% further deposit",
+        "85% balance on completion",
+        "Exchange deposit source",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    },
+    {
+      "section": "Agent Fees",
+      "headings": [
+        "Agent Fees",
+        "Sales controls",
+        "Recorded sale",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    },
+    {
+      "section": "Commercial Terms",
+      "headings": [
+        "Commercial Terms",
+        "Sales controls",
+        "Recorded sale",
+        "Current terms · version 1",
+        "Final statement of account",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    },
+    {
+      "section": "Handover",
+      "headings": [
+        "Handover",
+        "Recorded sale",
+        "Comments & activity"
+      ],
+      "alerts": [
+        ""
+      ]
+    }
+  ]
+}
