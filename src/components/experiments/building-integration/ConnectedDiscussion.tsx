@@ -22,7 +22,13 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
   const scope = { buildingId: row.buildingId, unitId: row.unitId, saleId: row.saleId! };
   useEffect(() => {
     let frame = 0;
-    const update = () => { const e = panel.current, i = document.querySelector("header[aria-label='Sale identity']"); if (!e || !i) return; const top = i.getBoundingClientRect().height + 16, b = e.parentElement!.getBoundingClientRect(); e.style.setProperty("--context-top", top + "px"); e.style.setProperty("--context-height", Math.max(0, Math.min(innerHeight - 16, b.bottom) - Math.max(top, b.top)) + "px"); };
+    const update = () => {
+      const e=panel.current, identity=document.querySelector("header[aria-label='Sale identity']");
+      if(!e||!identity)return;
+      const top=getComputedStyle(identity).position==="sticky"?identity.getBoundingClientRect().height+16:16;
+      e.style.setProperty("--context-top",top+"px");
+      e.style.setProperty("--context-height",Math.max(240,innerHeight-top-16)+"px");
+    };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(update); };
     const observer = new ResizeObserver(schedule);
     if (panel.current?.parentElement) observer.observe(panel.current.parentElement);

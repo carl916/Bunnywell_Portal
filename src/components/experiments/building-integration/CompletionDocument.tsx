@@ -1,4 +1,5 @@
 "use client";
+import { usePendingUpload } from "./usePendingUpload";
 import { useEffect, useRef, useState } from "react";
 import { FileText, Upload as UploadIcon } from "lucide-react";
 import type { Upload } from "tus-js-client";
@@ -19,6 +20,7 @@ export default function CompletionDocument({ api, scope, document, type, title, 
   const [file, setFile] = useState<File | null>(null), [query, setQuery] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [progress, setProgress] = useState<UploadProgress | null>(null), [events, setEvents] = useState<SaleActivity[] | null>(null);
+  usePendingUpload(Boolean(file));
   const input = useRef<HTMLInputElement>(null), controller = useRef<AbortController | null>(null);
   const attempts = useRef(new Map<string, Upload>()), requestId = useRef(""), alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; controller.current?.abort(); }; }, []);
@@ -43,9 +45,10 @@ export default function CompletionDocument({ api, scope, document, type, title, 
   function upload() {
     if (!file) return;
     controller.current = new AbortController();
-    void run(() => api.workflow.upload(scope, requestId.current, file, {
+    const selected=file;
+    void run(async () => {await api.workflow.upload(scope, requestId.current, selected, {
       type, name: file.name, size: file.size, mime: file.type, expectedVersionId: current?.id ?? null,
-    }, setProgress, controller.current!.signal, attempts.current), title + " uploaded. Worklists refreshed.");
+    }, setProgress, controller.current!.signal, attempts.current);if(alive.current){setFile(null);setProgress(null);attempts.current.clear();requestId.current="";if(input.current)input.current.value="";}}, title + " uploaded. Worklists refreshed.");
   }
   const status = approved ? "Approved" : document?.status === "uploaded" ? "Awaiting approval" : document ? label(document.status) : "Awaiting upload";
   return <section className={s.documentCard} aria-label={title}>

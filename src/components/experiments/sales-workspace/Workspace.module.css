@@ -337,6 +337,7 @@
 /* Permanent discussion column, within the full-page sale workspace. */
 .saleLayout { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; }
 .saleTask { min-width:0; container-type:inline-size; }
+.recordMain { max-width:none; }
 .contextPanel { min-width:0; display:flex; flex-direction:column; gap:12px; padding:24px 0 0; border-top:1px solid var(--line); scroll-margin-top:110px; }
 .contextHeader h2 { font-size:17px; }
 .contextHeader p { margin-top:5px; font-size:12px; font-weight:600; }
@@ -364,14 +365,16 @@
 .completionOverview .checklist button { min-height:44px; padding:6px; gap:6px; }
 .completionOverview .checklist strong { font-size:12px; }
 .completionOverview .checklist small { font-size:11px; }
-@media(min-width:1200px) {
+@media(min-width:1024px) {
   .saleLayout { grid-template-columns:minmax(0,1fr) 320px; }
   .contextPanel { border-top:0; border-left:1px solid var(--line); padding:0 0 0 24px; }
 }
-@media(min-width:1200px) and (min-height:650px) {
-  .contextPanel { position:sticky; top:var(--context-top,94px); height:var(--context-height,calc(100dvh - 255px)); overflow:hidden; }
+@media(min-width:1024px) {
+  .contextPanel { position:sticky; top:var(--context-top,94px); height:var(--context-height,calc(100dvh - 110px)); overflow:auto; }
   .contextMessages { flex:1; max-height:none; }
   .contextHeader,.contextFixture { flex-shrink:0; }
+  .contextComposer>div { flex-wrap:wrap; }
+  .contextComposer .primary { flex-shrink:0; }
 }
 @container (min-width:1000px) {
   .completionOverview .checklist { grid-template-columns:repeat(4,minmax(0,1fr)); }

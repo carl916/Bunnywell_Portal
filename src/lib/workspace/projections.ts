@@ -43,7 +43,7 @@ export async function projected(v:Viewer,id:string,mode:'summary'|'worklist'|'re
   const filtered=result.rows.filter(r=>(!stage||r.stage===stage)&&(!queue||r.actions.some(a=>a.queue===queue))&&(r.unitNumber+' '+r.buyerLabel).toLowerCase().includes(search));
   const pages=Math.max(1,Math.ceil(filtered.length/20)),page=Math.min(pages,Math.max(1,Math.trunc(Number(p.get('page'))||1)));
   const filteredCounts=summarise(filtered,result.counts.complete);const currentCounts=summarise(filtered.filter(r=>!r.historical),true);filteredCounts.units=currentCounts.units;filteredCounts.stages=currentCounts.stages;
-  return {...result,filteredCounts,rows:filtered.slice((page-1)*20,page*20),page:{number:page,pages,total:filtered.length,size:20}};
+  return {...result,...(result.rows.length<=200?{filterRows:result.rows}:{}),filteredCounts,rows:filtered.slice((page-1)*20,page*20),page:{number:page,pages,total:filtered.length,size:20}};
  }
  const items=overview.items.filter(i=>i.module==='snags');
  const queues=Object.fromEntries((['ours','others','unallocated'] as const).map(q=>{const chosen=items.filter(i=>q==='unallocated'?isUnallocatedWork(i):matchesWorkTeam(i,q));return[q,{actions:chosen.length,records:new Set(chosen.map(i=>i.recordKey)).size}];}));
