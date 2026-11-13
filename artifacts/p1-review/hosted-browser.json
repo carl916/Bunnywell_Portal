@@ -1,0 +1,39 @@
+{
+  "origin": "https://bunnywell-portal-integration-ha58czr5d-carl-gilbert-s-projects.vercel.app",
+  "method": "Actual protected integration deployment; real Auth and authorised reads. All business writes blocked by the browser test.",
+  "businessRecordsChanged": [],
+  "results": [
+    {
+      "name": "hosted filter uses the complete authorised cache without a worklist round trip",
+      "passed": true
+    },
+    {
+      "name": "hosted Completion starts with Authority and refocus preserves its mounted state",
+      "passed": true
+    },
+    {
+      "name": "Dashboard, Sales, Snags, Buildings and Setup retain mounted content after idle refocus",
+      "passed": true
+    },
+    {
+      "name": "hosted developer commercial summary has Developer, Agent and Buyer groups",
+      "passed": true
+    },
+    {
+      "name": "hosted conveyancer sees for-sale buyer terms and receives no private commercial group",
+      "passed": true
+    },
+    {
+      "name": "hosted staged PDFs survive focus and a cancelled step change without sending an upload",
+      "passed": true
+    },
+    {
+      "name": "hosted notice has recorded evidence and Legal completion remains gated",
+      "passed": true
+    },
+    {
+      "name": "hosted wrong-building commercial direct read is denied",
+      "passed": true
+    }
+  ]
+}

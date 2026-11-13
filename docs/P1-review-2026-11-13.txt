@@ -1,0 +1,242 @@
+BUNNYWELL PORTAL — P1 REVIEW AND IMPLEMENTATION
+13 November 2026
+
+Scope and provenance
+--------------------
+All 27 findings were reviewed. Only the 13 P1 items were addressed, in the
+brief's workstream order; the 14 P2/P3 items remain for the UI refinement phase.
+The findings log's historical statements that implementation had not yet been
+requested were treated as context, not as instructions overriding Carl's current
+request. The ZIP contains the findings TXT/PDF and brief; the referenced original
+screenshots and HAR are not in it. Diagnosis therefore used source inspection,
+fresh browser reproduction and the accepted prototype's existing model code.
+
+The integration worktree was clean at 7acee2a on codex/wider-workspace-integration,
+one commit beyond the brief's 13f9e84. Its deployed runtime source was reconciled
+by file hashes. Work was isolated in tmp/p1-integration on
+codex/p1-integration-review, preserving the original staging checkout's unrelated
+uncommitted work. No remote Git push was performed.
+
+Deployment: dpl_5AQZUgwdHcuwWh8xKQM74MZw6Fzk — READY; source 61d92b8.
+Review URL (existing alias verified on this deployment):
+https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace
+Target: bunnywell-portal-integration, prj_YMaQDDgEtACwTijrmmh1SxQwsfe5,
+team_x65ctL8Fot37UcabAkdh8f72. Vercel calls this project's main environment
+"production"; it is the isolated integration app, not the production portal.
+Supabase target remains mmwzhzziqvjbsphrkbqr. Staging and production databases,
+accounts, imported business records and permission policies were not changed.
+
+P1 findings: root causes, changes and status
+------------------------------------------
+BW-004 — FIXED. This was principally a React subtree remount, not a browser
+document reload. Unchanged SIGNED_IN events emitted on tab visibility triggered
+an unconditional lifecycle reload. A fresh Session object recreated the reader
+and workspace and cleared the rendered snapshot. Stable, revocable credentials
+now rotate tokens without replacing the reader. Focus still verifies getUser,
+the current session and the authoritative role/building catalogue. Identity,
+revocation and access-revision changes invalidate protected state. Same-scope
+Sales refreshes preserve mounted content; Setup/Snags/Buildings use explicit
+refresh and their own successful mutations, so idle focus cannot discard forms.
+A final regression caught and removed a remaining refresh-key remount on Snags.
+
+BW-020 — FIXED. Document-slot keys included the parent refresh counter, so
+uploading either PDF remounted both slots. Slots now have stable sale/type keys,
+independent pending state and request IDs, and clear only their own successful
+upload. Failed/conflicting uploads retain the file for retry. Expected version is
+captured when selected, protecting against replacement of a newer version.
+Files remain in component memory, never browser storage. Step changes and real
+page departure warn about pending files; sign-out/security changes take priority.
+
+BW-007 — FIXED. Changing a filter recreated the reader request even though the
+server had already computed the complete authorised building projection. Before
+the fix a filter issued a new worklist request; after it, the tested subset filter
+issues none. A complete projection of at most 200 rows is cached in memory for
+30 seconds, scoped by account, role, organisation, access revision and building.
+Larger/incomplete projections continue server reads. Counts, pagination, URL/back
+navigation and configured floor order are preserved. Mutations, explicit refresh,
+security invalidation and expired entries bypass/clear the cache.
+
+BW-010 — FIXED. The record width cap left unused space; panel sizing used the
+parent's lower edge and overflow:hidden could clip the composer. Records now
+use available width, with a permanent sticky desktop right column and usable
+scrolling. Composer/actions fit laptop and short desktop viewports. Mobile stacks
+the panel. No drawer or default collapse was introduced.
+
+BW-013 — FIXED. A hardcoded documents default selected step three. Fresh visits
+now select Authority; explicit task links survive refresh. Notice-authority
+action links are routed to Completion, independently of exchange-authority links.
+
+BW-018 — FIXED. The editable notice form had remained dominant after recording.
+A prominent recorded state now shows issue date, contractual due date, recorded
+actor/time where available, current filename/version and private PDF action.
+Replacement is secondary and deliberate. Wording says integration test recording,
+and explicitly does not claim real delivery or legal service.
+
+BW-019 — FIXED. Successful uploads now show their filename and success message,
+current version/date, and "Uploaded — awaiting approval". Approval still depends
+on approval of that exact current version; upload alone does not imply approval.
+
+BW-022 — FIXED. Core and correction controls were mounted across all Completion
+tasks. Authority, Notice, Documents and Legal now contain only their own actions.
+Legal-completion entry is absent until both current required documents are
+approved. The compact progress summary remains visible.
+
+BW-023 — VERIFIED EXISTING CAPABILITY / SAFEGUARD, WITH CLARITY IMPROVEMENT.
+The current backend and receipt component already support authorised conveyancer
+recording/correction on enrolled fictional exchanged sales, beside expected,
+received and outstanding amounts. Actual isolated-adapter tests exercised receipt
+recording, retry and correction. Imported reference sales remain protected; their
+deposit position now remains visible with a clear reason recording is unavailable.
+Missing locked source amounts still require reconciliation rather than guessing.
+
+BW-025 — VERIFIED EXISTING CAPABILITY / SAFEGUARD. Developer editing already
+works for enrolled fictional for-sale units and was exercised through the actual
+adapter, including stale-edit rejection. The editor is a deliberate action below
+the restored summary. Imported records were not enrolled or made writable.
+Operational rollout for real imported records is a separate decision below.
+
+BW-026 — FIXED. The integration detail adapter returned a sparse raw field list.
+It now supplies Developer / Agent / Buyer summaries from authorised current terms,
+using the existing commercial-model and payment-schedule functions used by the
+accepted product. This includes developer proceeds, milestone fees/net/VAT/gross,
+reservation-fee and agent-contribution deductions, and buyer payments/timing.
+Missing values stay unknown. Drafts are clearly labelled; penny rounding is
+explicit. The developer figure retains the established model's treatment of VAT
+and other costs, with an explanatory note. Existing editing and audit paths remain.
+
+BW-027 — FIXED GENUINE READ/SCREEN DEFECT. For non-internal users the detail
+adapter filtered out unapproved terms, hiding for-sale draft terms. The page also
+requested a developer-only commercial controls context for conveyancers. The
+commercial view now reads existing buyer terms within exact building/unit/sale
+access, with a server-side column allowlist and a buyer-only response. It omits
+developer fees, margins, commission and private narrative. No RLS widening was
+needed: the existing SELECT policy uses can_access_sale_attempt. Missing terms
+and denied record access are distinct states. No developer-only control request
+is made from the conveyancer commercial view.
+
+BW-002 — INVESTIGATED; INTENTIONAL SAFEGUARD / DECISION REQUIRED. See below.
+
+Authentication decision and imported-record release
+--------------------------------------------------
+The app uses Supabase email/password authentication (@supabase/ssr browser
+sessions). Integration Auth and data are in project mmwzhzziqvjbsphrkbqr; staging
+uses vxkpvdtrldwwqiddoyof and production zxgezoiazsubopqhqhim. Integration has
+fictional review identities, separate auth.users UUIDs, profiles, organisations
+and building/unit assignments. Server validation plus RLS and action permissions
+remain authoritative. Vercel Authentication protects the deployment separately;
+passing that outer gate is not application sign-in.
+
+The pinned integration Auth configuration disables signup/anonymous access/SMS
+and routes email/SMS hooks to integration_controls.block_delivery. The new code
+does not alter it. Existing capture-only legal correspondence and private evidence
+rules remain. There were no invitations, emails, SMS, payments or legal notices.
+
+Decision for Carl:
+1. Keep fictional review accounts (recommended while testing isolated workflows).
+2. Provision specifically approved reviewers as separate integration identities,
+   with explicit role, organisation and building assignments and an agreed access
+   process that preserves blocked external delivery. The same email in two
+   projects is still two independent identities, not a shared staging session.
+Pointing integration at staging Auth/data or accepting staging tokens would cross
+the isolation boundary, require access/data mapping and a separate reviewed
+environment plan. Nothing in this round does that or enables invitations.
+
+Imported-record rollout must not relabel real buyers/records as fictional test
+journeys. Before operational writes: inventory the approved record cohort and
+owners; take recovery exports; reconcile unit/sale stages, terms, deposit sources,
+private files and legacy timestamps; validate role/building assignments and RLS;
+design an explicit operational activation path separate from fictional enrollment;
+dry-run with audited before/after comparisons; obtain approval for the cohort and
+delivery policy; then release a small monitored batch with rollback/reconciliation.
+No such activation or migration was performed here.
+
+Verification and limits
+-----------------------
+- 190 workspace, lifecycle, permission, commercial/deposit, Completion and floor
+  ordering tests passed. A subsequent added navigation test also passed; the
+  focused credential/navigation/cache and lifecycle run passed 17/17.
+- Actual isolated local Auth/Postgres/private Storage adapter runs: Sales 16/16,
+  Completion 8/8, Setup/Snags 10/10. Sales covers a fresh fictional for-sale sale
+  through reservation, exchange, receipts/corrections, notices, document
+  query/revision/approval and legal completion, as well as Agent Fees and retries.
+  Wrong role/building, stale versions, idempotence, rollback and imported-record
+  guards remain covered. Local container outbound access was verified blocked.
+- The Completion harness was brought up to date with the existing test-journey
+  enrollment guard and Core-Sales-disabled error. It initially collided with
+  parallel account-deactivation testing; the serial rerun passed all eight.
+  Two older source assertions were updated to reference the already-extracted
+  reservation-terms module; application guards were not relaxed.
+- Nine local browser checks passed against an actual production build with real
+  integration authentication/reads. Upload success, conflict/retry and independent
+  slots were tested with intercepted writes; these are UI tests, not claims of
+  hosted database writes. Actual upload/storage effects are covered by the local
+  adapter runs above. Staged PDFs also survive simulated idle refocus.
+- Responsive checks: 1366x768, 1920x1080, 1024x700, 1366x600 and 390x844.
+- Eight hosted browser checks passed on the final protected deployment, including
+  idle refocus in Dashboard, Sales, Snags, Buildings and Setup; filter caching;
+  fresh Completion; developer/conveyancer commercial visibility; staged files and
+  cancelled navigation; notice state/legal gating; and wrong-building read denial.
+  Temporary verification share links were revoked; deployment protection remains.
+- TypeScript, focused ESLint and the production build pass. Windows sandbox EPERM
+  errors on generated build directories required a clean/retried build; no app
+  code or security settings were changed to address that tooling failure.
+- Hosted checks block business mutations. This round did not create a new hosted
+  end-to-end sale or re-run external delivery. Read-only hosted acceptance, local
+  actual-adapter evidence and intercepted UI tests are intentionally distinguished.
+- Browser close/OS termination cannot guarantee preservation of in-memory files;
+  users must reselect after genuinely leaving. Background focus preserves forms;
+  explicit refresh and security/account changes may discard them. Worklists over
+  200 rows retain network filtering. Non-Sales modules refresh explicitly or after
+  their own successful operations.
+
+Evidence: artifacts/p1-review/{regression-tests.txt,browser-regression.json,
+hosted-browser.json,sales-adapter.json,completion-adapter.json,
+operations-adapter.json} and the screenshots alongside them. Credentials, raw HAR,
+private account files and temporary deployment-access secrets are excluded.
+
+Implementation and migration implications
+-----------------------------------------
+No schema migration, RLS change, dependency addition, backend rewrite or delivery
+configuration change. Existing command adapters, transactional functions, private
+Storage and exact-scope guards are preserved. Read contracts add only optional
+complete filter rows, a role-safe commercial summary and notice actor metadata.
+
+Main changed files:
+- src/components/experiments/building-integration/ConnectedWorkspace.tsx,
+  ConnectedDiscussion.tsx, TaskWorkspace.tsx, CompletionDocument.tsx,
+  CoreSales.tsx, ExtendedSales.tsx, SaleDetails.tsx, usePendingUpload.ts
+- src/components/experiments/sales-workspace/Workspace.module.css
+- src/lib/workspace/client-state.ts, completion-navigation.ts,
+  commercial-summary.ts, sale-details.ts, sale-details-types.ts, client.ts,
+  completion-client.ts, projections.ts, types.ts, server.ts, core-commands.ts
+- src/lib/experiments/building-integration/reader.ts
+- tests/workspace-p1-state.test.mjs, workspace-p1-commercial.test.mjs,
+  sales-commercial-model.test.mjs; scripts/p1-review/; the Completion harness.
+
+Reviewable implementation commits:
+90ed70b — focus/upload state, bounded local filters and discussion layout
+79f00db — Completion step ownership and recorded/upload confirmation
+4e53d2b — non-destructive idle Sales refresh and notice action links
+d4475be — authorised commercial summaries, buyer visibility and deposit clarity
+61d92b8 — preserve non-Sales forms on idle focus; reset on access revision
+
+P2/P3 backlog — deliberately outstanding
+---------------------------------------
+BW-001 (P2): Sign-in button alignment.
+BW-003 (P3): Building chooser visual hierarchy.
+BW-005 (P2): Dashboard spacing/proportions.
+BW-006 (P2): Selected sidebar hover contrast.
+BW-008 (P2): Progression / Financials / Commercial sidebar grouping.
+BW-009 (P2): Reservation card density and recorded-detail layout.
+BW-011 (P2): Header sale-status prominence.
+BW-012 (P2): Redundant desktop Comments & Activity shortcut.
+BW-014 (P2): Concise preconditions for inapplicable Exchange/Completion screens.
+BW-015 (P2): Polished HTML authority preview and fallback-link presentation.
+BW-016 (P2): Authority acknowledgment checkbox sizing.
+BW-017 (P2): Broader notice form/layout refinement. Only P1 recorded-state and
+              action-ownership necessities were changed.
+BW-021 (P2): Coordinated upload-progress/pause/retry/remove visual refinement.
+              P1 state preservation and success feedback do not close this item.
+BW-024 (P2): Deposit-page density, history and information hierarchy.
+
+No P2/P3 finding is claimed resolved by this round.
