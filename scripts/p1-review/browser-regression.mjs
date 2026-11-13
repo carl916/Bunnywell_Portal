@@ -38,6 +38,13 @@ try{
   }
   await page.setViewportSize({width:1366,height:768});await page.screenshot({path:output+'/discussion-desktop.png'});
  });
+ await check('developer sees connected commercial model on a fictional for-sale unit',async()=>{
+  const params=new URL(saleUrl).searchParams;await page.goto(origin+'/workspace?'+new URLSearchParams({building:params.get('building'),view:'worklist',stage:'for_sale'}));await ready(page);
+  await page.getByRole('table').locator('tbody tr').first().getByRole('link').first().click();await page.getByRole('link',{name:'Commercial Terms',exact:true}).click();
+  await page.getByRole('region',{name:'Commercial model'}).waitFor();await page.getByRole('heading',{name:'Developer',exact:true}).waitFor();await page.getByRole('heading',{name:'Agent',exact:true}).waitFor();await page.getByRole('heading',{name:'Buyer · payment schedule',exact:true}).waitFor();
+  await page.screenshot({path:output+'/commercial-developer.png'});
+ });
+ const forSaleUrl=page.url();
  await context.close();
 
  const c=await browser.newContext({viewport:{width:1366,height:768}}),p=await c.newPage();p.setDefaultTimeout(30000);
@@ -64,12 +71,22 @@ try{
   throw Error('Unplanned write was blocked: '+body.action);
  });
  await login(p,'conveyancer');
+ await check('conveyancer sees existing for-sale buyer terms without private fees or a developer-controls request',async()=>{
+  const requests=[];p.on('request',r=>{if(r.url().endsWith('/workspace/command'))requests.push(r.postDataJSON())});
+  await p.goto(forSaleUrl);await p.getByRole('region',{name:'Commercial model'}).waitFor();await p.getByRole('heading',{name:'Buyer · payment schedule',exact:true}).waitFor();
+  assert.equal(await p.getByRole('heading',{name:'Developer',exact:true}).count(),0);assert.equal(await p.getByRole('heading',{name:'Agent',exact:true}).count(),0);assert(!requests.some(r=>r.action==='extended_sales_context'&&r.section==='commercial'));
+  assert.doesNotMatch(await p.getByRole('region',{name:'Commercial model'}).innerText(),/net developer|agent-funded|solicitor fee|\bVAT\b/i);
+  await p.screenshot({path:output+'/commercial-conveyancer.png'});
+ });
  const step=async task=>{await p.goto(saleUrl+(saleUrl.includes('?')?'&':'?')+'task='+task);await p.getByRole('heading',{name:'Completion at a glance',exact:true}).waitFor();};
  const pdf=name=>({name,mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nFictional regression evidence only\n%%EOF')});
  const slot=name=>p.getByRole('region',{name,exact:true});
  await check('two staged PDFs survive refocus; uploading one preserves the other and confirms its own filename',async()=>{
   await step('documents');await slot('Completion statement').locator('input[type=file]').setInputFiles(pdf('statement-test.pdf'));await slot('Statement of account').locator('input[type=file]').setInputFiles(pdf('account-test.pdf'));
   await focus(p);await p.waitForTimeout(1500);assert.equal(await slot('Statement of account').locator('input[type=file]').evaluate(el=>el.files[0]?.name),'account-test.pdf');
+  await p.evaluate(()=>{window.p1Now=Date.now;Date.now=()=>window.p1Now()+31000;});
+  await focus(p);await p.waitForTimeout(1800);await p.evaluate(()=>{Date.now=window.p1Now;delete window.p1Now;});
+  assert.equal(await slot('Statement of account').locator('input[type=file]').evaluate(el=>el.files[0]?.name),'account-test.pdf');
   await slot('Completion statement').getByRole('button',{name:'Upload document',exact:true}).click();await slot('Completion statement').getByText('Uploaded — awaiting approval',{exact:true}).waitFor();
   assert.equal(await slot('Statement of account').locator('input[type=file]').evaluate(el=>el.files[0]?.name),'account-test.pdf');assert.equal(await slot('Completion statement').locator('input[type=file]').evaluate(el=>el.files.length),0);
   assert.match(await slot('Completion statement').innerText(),/statement-test.pdf.*uploaded successfully/s);assert.match(await slot('Completion statement').innerText(),/Current version 1/);

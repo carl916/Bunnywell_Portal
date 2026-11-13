@@ -1,0 +1,63 @@
+{
+  "at": "2026-11-13T17:59:16.122Z",
+  "method": "Actual server adapters, local Auth/Postgres/private Storage; outbound traffic blocked. Not hosted-browser acceptance.",
+  "results": [
+    {
+      "name": "Setup requires developer role and never modifies imported reference configuration",
+      "passed": true
+    },
+    {
+      "name": "fictional organisations, types and trades persist with stale-edit protection",
+      "passed": true
+    },
+    {
+      "name": "floors, units, areas and baseline Sales enrollment are atomic",
+      "passed": true
+    },
+    {
+      "name": "Sales defaults replace schedule atomically and reject invalid percentages",
+      "passed": true
+    },
+    {
+      "name": "test account provisioning retries without email, and keeps access assignments scoped",
+      "passed": true
+    },
+    {
+      "name": "snag creation includes private evidence and genuine activity exactly once",
+      "passed": true
+    },
+    {
+      "name": "a failure after domain writes rolls back defaults, inherited terms, snag status and activity",
+      "passed": true
+    },
+    {
+      "name": "wrong building, stale transition and wrong role cannot mutate a snag",
+      "passed": true
+    },
+    {
+      "name": "contractor query, developer answer, resolution, rejection and final close preserve activity",
+      "passed": true
+    },
+    {
+      "name": "deactivating only a designated test person denies the existing app session",
+      "passed": true
+    }
+  ],
+  "localRecords": {
+    "building": "62b4c7a3-a803-409a-9096-e6b880bcdbac",
+    "floor": "36c2ed0f-f32d-49a8-8a53-be9002c8ca35",
+    "ground": "b562ac21-7777-48a8-a12e-4d34fc502171",
+    "unit": "d18a063f-d666-4c75-a5dc-3af6a714ffd6",
+    "area": "f2f50f4a-2798-4a46-a17f-5243159b1ea2",
+    "type": "6896ec1b-01c5-4961-abbe-0ae76d7c6f19",
+    "trade": "553189cc-b665-4a70-ad9d-ca54345edc43",
+    "org": "0c4a9bce-2212-4a0c-8b58-7ff4af29a5d5",
+    "repOrg": "bf785ebf-ae74-4f86-95b6-20c4dd0fe302",
+    "contractor": "27ce1e1a-827b-479f-ba7c-630e279d2362",
+    "rep": "26090bbe-4cfb-4ea6-aea5-a08b72917d76",
+    "sale": "04ee7a2d-6d71-4da4-8476-5c4b36536815",
+    "team": "c8b6f18f-76c4-4c65-855a-5fa500055155",
+    "snag": "b3ce20ec-2772-455c-9236-033f5c2e0b6a"
+  },
+  "destinationBusinessRecordsChanged": []
+}

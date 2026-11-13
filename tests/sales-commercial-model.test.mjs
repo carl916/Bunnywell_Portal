@@ -230,8 +230,8 @@ test("commercial model opening scrolls to the close button and top cards show co
 });
 
 test("commercial model preserves contribution input types and calculates pound values", () => {
-  assert.match(routeSource, /developerContributionValueType/);
-  assert.match(routeSource, /calculateContributionAmount\(developerContributionValue, developerContributionValueType, contractPrice\)/);
+  assert.match(readFileSync("src/lib/sales/reservation-terms.ts", "utf8"), /developerContributionValueType/);
+  assert.match(readFileSync("src/lib/sales/reservation-terms.ts", "utf8"), /calculateContributionAmount\(developerContributionValue, developerContributionValueType, contractPrice\)/);
   assert.match(routeSource, /p_developer_contribution_value_type: termsPatch\.developer_contribution_value_type/);
   assert.match(routeSource, /p_agent_contribution_value_type: termsPatch\.agent_contribution_value_type/);
   assert.match(buyerIncentivesMigrationSource, /developer_contribution_value_type text not null default 'amount'/);

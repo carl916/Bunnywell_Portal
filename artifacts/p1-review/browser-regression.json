@@ -14,6 +14,14 @@
       "passed": true
     },
     {
+      "name": "developer sees connected commercial model on a fictional for-sale unit",
+      "passed": true
+    },
+    {
+      "name": "conveyancer sees existing for-sale buyer terms without private fees or a developer-controls request",
+      "passed": true
+    },
+    {
       "name": "two staged PDFs survive refocus; uploading one preserves the other and confirms its own filename",
       "passed": true
     },

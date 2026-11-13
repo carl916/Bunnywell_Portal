@@ -342,6 +342,8 @@
 .recordedNotice h2 { font-size:20px; margin-bottom:14px; }
 .recordedNotice>p { margin-block:12px; }
 .uploadSuccess { padding:12px; border:1px solid #91b4a4; border-radius:6px; background:#f0f6f2; font-weight:600; }
+.commercialGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:14px; }
+@container (max-width:950px) { .commercialGrid { grid-template-columns:1fr; } }
 .contextPanel { min-width:0; display:flex; flex-direction:column; gap:12px; padding:24px 0 0; border-top:1px solid var(--line); scroll-margin-top:110px; }
 .contextHeader h2 { font-size:17px; }
 .contextHeader p { margin-top:5px; font-size:12px; font-weight:600; }

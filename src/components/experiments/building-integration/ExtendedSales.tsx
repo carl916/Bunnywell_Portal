@@ -41,14 +41,14 @@ export default function ExtendedSales({api,scope,role,section,task,refresh,onSav
  if(!data)return <section className={s.card}><h2>Sales controls</h2>{error?<div role="alert"><Notice>{error}</Notice></div>:<p>Loading authorised controls…</p>}</section>;
  const dev=["admin","developer"].includes(role),active=data.sale?.is_active!==false;
  return <>{error&&<div role="alert"><Notice>{error}</Notice></div>}
- {!data.enrolled?<Notice>Imported reference records remain read-only for these operations. Use a designated fictional test journey.</Notice>:<>
- {section==="deposits"&&data.deposits&&<section className={s.card}><h2>Deposit receipts</h2><p>Record actual test receipts against the retained sale terms. Corrections retain their history.</p>
- <ExchangeDepositReceipt deposit={data.deposits.exchange} exchanged={data.deposits.exchanged} editable={data.deposits.canRecord&&data.deposits.active} busy={busy} run={run}/>
- <FurtherDepositCard context={data.deposits} now={now} busy={busy} run={run}/></section>}
- {section==="commercial"&&dev&&data.sale&&<CommercialForm key={data.termsRevision} data={data} busy={busy} run={run}/>}
- {section==="agent-fees"&&active&&(["admin","developer","sales_agent"].includes(role))&&(["exchange","completion"] as const).map(milestone=><InvoiceCard key={milestone} api={api} scope={scope} data={data} milestone={milestone} dev={dev} busy={busy} run={run} onSaved={onSaved}/>)}
- {["reservation","exchange","completion"].includes(section)&&data.sale&&active&&<Corrections data={data} section={section} task={task} dev={dev} conveyancer={role==="conveyancer"} busy={busy} run={run}/>}
- </>}</>;
+ {!data.enrolled&&<Notice>{section==="deposits"?"Receipt recording is disabled for this imported reference sale. Its deposit position remains visible. Use a designated fictional exchanged sale to record or correct receipts.":"Imported reference records remain read-only for these operations. Use a designated fictional test journey."}</Notice>}
+ {section==="deposits"&&data.deposits&&<section className={s.card}><h2>Deposit receipts</h2><p>{data.enrolled?"The appointed conveyancer can record actual test receipts beside the expected, received and outstanding amounts. Corrections retain their history.":"Recorded deposit position · reference only"}</p>
+ <ExchangeDepositReceipt deposit={data.deposits.exchange} exchanged={data.deposits.exchanged} editable={data.enrolled&&data.deposits.canRecord&&data.deposits.active} busy={busy} run={run}/>
+ <FurtherDepositCard context={{...data.deposits,canRecord:data.enrolled&&data.deposits.canRecord,canAmendDeadline:data.enrolled&&data.deposits.canAmendDeadline}} now={now} busy={busy} run={run}/></section>}
+ {section==="commercial"&&data.enrolled&&dev&&data.sale&&<CommercialForm key={data.termsRevision} data={data} busy={busy} run={run}/>}
+ {section==="agent-fees"&&data.enrolled&&active&&(["admin","developer","sales_agent"].includes(role))&&(["exchange","completion"] as const).map(milestone=><InvoiceCard key={milestone} api={api} scope={scope} data={data} milestone={milestone} dev={dev} busy={busy} run={run} onSaved={onSaved}/>)}
+ {data.enrolled&&["reservation","exchange","completion"].includes(section)&&data.sale&&active&&<Corrections data={data} section={section} task={task} dev={dev} conveyancer={role==="conveyancer"} busy={busy} run={run}/>}
+ </>;
 }
 const commercialFields=[
  ["contractPrice","Agreed sale price (£)","contract_price"],["listPriceAtOffer","List price (£)","list_price_at_offer"],
@@ -68,7 +68,7 @@ function CommercialForm({data,busy,run}:{data:Context;busy:boolean;run:Run}){
  const [months,setMonths]=useState(String(t.second_deposit_months_after_exchange??d.second_deposit_months_after_exchange??0)),[timing,setTiming]=useState<FurtherDepositTiming>((t.further_deposit_timing??d.further_deposit_timing??{basis:"after_exchange"}) as FurtherDepositTiming);
  const [parking,setParking]=useState(String(t.parking_location_details??"")),[conditions,setConditions]=useState((Array.isArray(t.additional_special_conditions)?t.additional_special_conditions:[]).join("\n")),[summary,setSummary]=useState(String(t.commercial_summary??""));
  if(!data.sale||data.sale.exchanged_at||!["draft","rejected","reservation_query_raised"].includes(data.sale.workflow_status))return <Notice>Commercial terms are locked at this stage. Their recorded versions are shown below.</Notice>;
- return <section className={s.card}><h2>Edit commercial terms</h2><form onSubmit={e=>{e.preventDefault();void run({action:"save_commercial",termsId:t.id??null,termsRevision:data.termsRevision,commercial:{...form,reservationFeeHolder:holder,developerContributionValueType:devType,agentContributionValueType:agentType,secondDepositEnabled:second,secondDepositPercent:percent,secondDepositMonthsAfterExchange:months,furtherDepositTiming:timing,parkingLocationDetails:parking,additionalSpecialConditions:conditions.split("\n").map(x=>x.trim()).filter(Boolean),commercialSummary:summary}},"Commercial terms saved. The payment schedule and worklist have refreshed.")}}>
+ return <section className={s.card}><details><summary>Edit commercial terms</summary><form onSubmit={e=>{e.preventDefault();void run({action:"save_commercial",termsId:t.id??null,termsRevision:data.termsRevision,commercial:{...form,reservationFeeHolder:holder,developerContributionValueType:devType,agentContributionValueType:agentType,secondDepositEnabled:second,secondDepositPercent:percent,secondDepositMonthsAfterExchange:months,furtherDepositTiming:timing,parkingLocationDetails:parking,additionalSpecialConditions:conditions.split("\n").map(x=>x.trim()).filter(Boolean),commercialSummary:summary}},"Commercial terms saved. The payment schedule and worklist have refreshed.")}}>
  <fieldset disabled={busy} style={{border:0,padding:0}}><div className={s.documentGrid}>{commercialFields.map(([key,title])=><label className={s.field} key={key}>{title}<input type="number" min="0" step="0.01" required value={form[key]} onChange={e=>setForm(f=>({...f,[key]:e.target.value}))}/></label>)}
  <label className={s.field}>Reservation fee holder<select value={holder} onChange={e=>setHolder(e.target.value)}>{["sales_agent","developer","conveyancer","other"].map(v=><option key={v} value={v}>{label(v)}</option>)}</select></label>
  {[[devType,setDevType,"Developer contribution basis"],[agentType,setAgentType,"Agent contribution basis"]].map(([value,set,title])=><label className={s.field} key={String(title)}>{String(title)}<select value={value as string} onChange={e=>(set as (v:string)=>void)(e.target.value)}><option value="amount">Amount (£)</option><option value="percent">Percent (%)</option></select></label>)}</div>
@@ -77,7 +77,7 @@ function CommercialForm({data,busy,run}:{data:Context;busy:boolean;run:Run}){
  <label className={s.field}>Parking location<input value={parking} onChange={e=>setParking(e.target.value)}/></label>
  <label className={s.field}>Special conditions (one per line)<textarea value={conditions} onChange={e=>setConditions(e.target.value)}/></label>
  <label className={s.field}>Commercial notes<textarea value={summary} onChange={e=>setSummary(e.target.value)}/></label>
- <button className={s.primary}>{busy?"Saving…":"Save commercial terms"}</button></fieldset></form></section>;
+ <button className={s.primary}>{busy?"Saving…":"Save commercial terms"}</button></fieldset></form></details></section>;
 }
 function InvoiceCard({api,scope,data,milestone,dev,busy,run,onSaved}:{api:Api;scope:RecordScope;data:Context;milestone:"exchange"|"completion";dev:boolean;busy:boolean;run:Run;onSaved:(m:string)=>void}){
  const invoice=data.invoices?.find(i=>i.fee_milestone===milestone),doc=data.documents?.find(d=>d.id===invoice?.document_id),version=doc?.unit_sale_document_versions.find(v=>v.is_current&&!v.redacted_at);

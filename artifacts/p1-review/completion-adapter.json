@@ -1,0 +1,44 @@
+{
+  "at": "2026-11-13T18:02:50.341Z",
+  "method": "New hosted adapter invoked in-process against isolated local Auth/Postgres/Storage with origin substitution only; not hosted-browser acceptance",
+  "scope": {
+    "buildingId": "b1700000-0000-4000-8000-000000000001",
+    "unitId": "defc9be2-e0ba-4bd1-ac33-876c7c61f03b",
+    "saleId": "795f2483-bc69-4ed1-8343-9675cf9316e9"
+  },
+  "hostedBusinessRecordsChanged": [],
+  "results": [
+    {
+      "name": "developer cannot upload",
+      "passed": true
+    },
+    {
+      "name": "upload, private verification, copy and retry-safe finalization",
+      "passed": true
+    },
+    {
+      "name": "conveyancer cannot approve",
+      "passed": true
+    },
+    {
+      "name": "query records genuine activity once on retry",
+      "passed": true
+    },
+    {
+      "name": "revised version preserves history and rejects stale approval",
+      "passed": true
+    },
+    {
+      "name": "approve both current documents and replay approval",
+      "passed": true
+    },
+    {
+      "name": "comment retries save one attributed comment",
+      "passed": true
+    },
+    {
+      "name": "Completion-only mode denies final completion while Core Sales is disabled",
+      "passed": true
+    }
+  ]
+}
