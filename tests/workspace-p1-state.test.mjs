@@ -2,11 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadTypescriptModule} from './helpers/load-typescript-module.mjs';
 const {createWorkspaceCredentials, createWorklistCache, filterWorklist} = loadTypescriptModule('src/lib/workspace/client-state.ts');
+const {completionTask,saleActionDestination}=loadTypescriptModule('src/lib/workspace/completion-navigation.ts');
 const session=(token='first',id='alice')=>({access_token:token,expires_at:100,user:{id}});
 const scope={identity:'alice',role:'developer',organisationId:'org',accessRevision:'one',buildingId:'building-a'};
 const row=(n)=>({buildingId:'building-a',unitId:String(n),saleId:String(n),unitNumber:String(n),buyerLabel:'Fictional buyer',stage:n%2?'exchanged':'for_sale',actions:[],historical:false});
 const all=Array.from({length:45},(_,n)=>row(n+1));
 const snapshot={scope,rows:all.slice(0,20),filterRows:all,counts:{units:45,complete:true,stages:{for_sale:22,exchanged:23}},page:{number:1,pages:3,total:45,size:20}};
+
+test('fresh Completion starts with Authority while explicit links land on their own step',()=>{
+ assert.equal(completionTask(null),'authority');assert.equal(completionTask('invalid'),'authority');
+ for(const step of ['authority','notice','documents','legal'])assert.equal(completionTask(step),step);
+ assert.deepEqual(saleActionDestination('notice_authority_request','notice-authority'),{section:'completion',task:'authority'});
+ assert.deepEqual(saleActionDestination('completion_arrangements','completion-arrangements'),{section:'completion',task:'notice'});
+ assert.deepEqual(saleActionDestination('confirm_completion','completion-legal'),{section:'completion',task:'legal'});
+ assert.deepEqual(saleActionDestination('completion_documents','completion-documents'),{section:'completion',task:'documents'});
+ assert.deepEqual(saleActionDestination('exchange_authority_request','exchange-authority'),{section:'exchange'});
+});
 test('credentials retain reader identity during focus/token rotation, but revoke old readers on identity change/sign-out',()=>{
  const store=createWorkspaceCredentials(),first=store.update(session());
  assert.equal(store.update(session()),first);assert.equal(store.update(session('rotated')),first);assert.equal(first.access_token,'rotated');

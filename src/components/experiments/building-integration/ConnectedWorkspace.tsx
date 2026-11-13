@@ -61,7 +61,7 @@ export default function ConnectedWorkspace({staging=false}:{staging?:boolean}){
   const lifecycle=createSessionLifecycle({
    validate:async()=>{const r=await client.auth.getUser();return r.error?null:r.data.user;},
    load:async(user)=>{const revision=authRevision;const r=await client.auth.getSession();const next=r.data.session;if(!live||revision!==authRevision)return;if(!next||next.user.id!==user.id){clear();return;}if(!live)return;setSession(credentials.update({access_token:next.access_token,expires_at:next.expires_at!,user:{id:user.id}}));setCatalogRefresh(v=>v+1);},
-   clear,invalidate:()=>{},recheck:async(user)=>{const revision=authRevision;const verified=await client.auth.getUser();if(!live||revision!==authRevision)return false;if(verified.error||verified.data.user?.id!==user.id){clear();return false;}const r=await client.auth.getSession();if(!live||revision!==authRevision)return false;if(!r.data.session||r.data.session.user.id!==user.id){clear();return false;}const next=credentials.update({access_token:r.data.session.access_token,expires_at:r.data.session.expires_at!,user:{id:user.id}});const fresh=await stagingRead<Catalog>(next,'catalog');if(live&&revision===authRevision)setCatalog(old=>JSON.stringify(old)===JSON.stringify(fresh)?old:fresh);return false;},error:e=>{clear();setError(e instanceof Error?e.message:'Session unavailable.');}
+   clear,invalidate:()=>{authRevision++;worklistCache.clear();},recheck:async(user)=>{const revision=authRevision;const verified=await client.auth.getUser();if(!live||revision!==authRevision)return false;if(verified.error||verified.data.user?.id!==user.id){clear();return false;}const r=await client.auth.getSession();if(!live||revision!==authRevision)return false;if(!r.data.session||r.data.session.user.id!==user.id){clear();return false;}const next=credentials.update({access_token:r.data.session.access_token,expires_at:r.data.session.expires_at!,user:{id:user.id}});const fresh=await stagingRead<Catalog>(next,'catalog');if(live&&revision===authRevision){setCatalog(old=>JSON.stringify(old)===JSON.stringify(fresh)?old:fresh);window.dispatchEvent(new Event("workspace-revalidate"));}return false;},error:e=>{clear();setError(e instanceof Error?e.message:'Session unavailable.');}
   });
   const listener=client.auth.onAuthStateChange((event,next)=>lifecycle.observe(event,next));
   void lifecycle.restore().catch(e=>{clear();setError(e.message);});
@@ -69,6 +69,17 @@ export default function ConnectedWorkspace({staging=false}:{staging?:boolean}){
  },[staging,config,credentials,worklistCache]);
  useEffect(()=>{if(!api)return;const c=new AbortController();api.catalog(c.signal).then(value=>{if(c.signal.aborted)return;setCatalog(old=>JSON.stringify(old)===JSON.stringify(value)?old:value);setError("");if(!new URLSearchParams(location.search).size&&value.buildings.length===1)go({building:value.buildings[0].id,view:"dashboard"},true)}).catch(e=>{if(!c.signal.aborted)setError(e.message)});return()=>c.abort()},[api,catalogRefresh]);
  useEffect(()=>{if(scope&&(!staging||["dashboard","worklist","sale"].includes(view)))void workspace.select(scope);else workspace.clear();return()=>workspace.clear()},[workspace,scope,staging,view]);
+ useEffect(()=>{
+  let lastCheck=Date.now();
+  const revalidate=()=>{
+   if(!scope||Date.now()-lastCheck<30000)return;
+   lastCheck=Date.now();worklistCache.clear();
+   if(["dashboard","worklist","sale"].includes(view))void workspace.select(scope,true,true);
+   setSaleRefresh(v=>v+1);setRefresh(v=>v+1);
+  };
+  window.addEventListener("workspace-revalidate",revalidate);
+  return()=>window.removeEventListener("workspace-revalidate",revalidate);
+ },[workspace,scope,view,worklistCache]);
  useEffect(()=>{document.title=[row?.unitNumber||(view==="snag"&&snagIdentity?.buildingId===buildingId&&snagIdentity?.id===p.get("snag")?snagIdentity.unit:null),building?.name,view==="sale"?sections.find(v=>v[0]===section)?.[1]:view==="worklist"?"Sales":view==="dashboard"?"Dashboard":view==="snag"?"Snag":view==="snags"?"Snags":view==="setup"?"Setup":"Buildings",staging?(hostedIntegration?"Bunnywell · Integration":optimizedReads?"Bunnywell · Local foundation":"Bunnywell · Staging read-only"):"Bunnywell - Local document review"].filter(Boolean).join(" · ")},[row?.unitNumber,building?.name,buildingId,view,section,staging,snagIdentity,p]);
  useEffect(()=>{if(!staging&&view==="worklist"&&catalog&&buildingId)sessionStorage.setItem("bw-list:"+catalog.access.identity+":"+buildingId,JSON.stringify(Object.fromEntries(p)))},[p,view,catalog,buildingId,staging]);
  useEffect(()=>{const heading=document.querySelector<HTMLElement>("main h1");heading?.focus({preventScroll:true});window.scrollTo(0,0)},[view,buildingId,row?.saleId,section]);

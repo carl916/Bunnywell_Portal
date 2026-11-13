@@ -14,6 +14,7 @@ import {canPerformSalesAction} from "@/lib/sales/permissions";
 import s from "../sales-workspace/Workspace.module.css";
 import {hostedIntegration} from "@/lib/workspace/staging";
 import {originValues} from "@/lib/workspace/navigation";
+import {saleActionDestination} from "@/lib/workspace/completion-navigation";
 export const path="/dev/building-workspace";
 export const sections=[["reservation","Reservation"],["exchange","Exchange"],["completion","Completion"],["handover","Handover"],["deposits","Deposits"],["agent-fees","Agent Fees"],["commercial","Commercial Terms"]];
 export const label=(v:string)=>v.replaceAll("_"," ").replace(/^./,x=>x.toUpperCase());
@@ -22,7 +23,7 @@ export const queueLabel=(q:string)=>q==="ours"?"Our actions":q==="others"?"Waiti
 export function url(v:Record<string,string>,base?:string){const staging=typeof location!=="undefined"&&location.pathname==="/workspace";return (base||(staging?"/workspace":path))+"?"+new URLSearchParams(staging?originValues(v,new URLSearchParams(location.search)):v)}
 export function go(v:Record<string,string>,replace=false){if(!dispatchEvent(new Event("workspace-before-leave",{cancelable:true})))return;dispatchEvent(new Event("workspace-leaving"));history[replace?"replaceState":"pushState"]({},"",url(v));dispatchEvent(new PopStateEvent("popstate"));}
 export function saleValues(r:SaleRow){return{view:"sale",building:r.buildingId,unit:r.unitId,sale:r.saleId!,section:"completion"}}
-export function actionValues(r:SaleRow,a:SaleAction){const k=a.kind,anchor=a.destination.anchor;const section=k.startsWith("fee_")?"agent-fees":k.startsWith("reservation")?"reservation":/deposit/.test(k)?"deposits":/commercial/.test(k)?"commercial":/exchange|authority/.test(k)&&!/completion/.test(k)?"exchange":"completion";return {...saleValues(r),section,...(section==="completion"?{task:anchor.includes("authority")?"authority":anchor.includes("arrangements")?"notice":anchor.includes("legal")?"legal":"documents"}:{})};}
+export function actionValues(r:SaleRow,a:SaleAction){return {...saleValues(r),...saleActionDestination(a.kind,a.destination.anchor)};}
 export function LocalLink({values,children,className}:{values:Record<string,string>;children:ReactNode;className?:string}){const base=usePathname();return <a href={url(values,base)} className={className} onClick={e=>{if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&e.button===0){e.preventDefault();go(values)}}}>{children}</a>}
 export function Heading({title,description,eyebrow="Building workspace"}:{title:string;description?:string;eyebrow?:string}){return <div className={s.pageHeading}><div><p className={s.eyebrow}>{eyebrow}</p><h1 tabIndex={-1}>{title}</h1>{description&&<p>{description}</p>}</div></div>}
 export function Notice({children}:{children:ReactNode}){return <div className={s.notice} role="status">{children}</div>}
