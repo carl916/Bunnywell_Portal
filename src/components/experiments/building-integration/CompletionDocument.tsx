@@ -18,21 +18,22 @@ export default function CompletionDocument({ api, scope, document, type, title, 
 }) {
   const current = currentCompletionVersion(document), approved = completionDocumentApproved(document);
   const [file, setFile] = useState<File | null>(null), [query, setQuery] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [success, setSuccess] = useState(""), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [progress, setProgress] = useState<UploadProgress | null>(null), [events, setEvents] = useState<SaleActivity[] | null>(null);
   usePendingUpload(Boolean(file));
   const input = useRef<HTMLInputElement>(null), controller = useRef<AbortController | null>(null);
+  const stagedVersion=useRef<string|null>(null);
   const attempts = useRef(new Map<string, Upload>()), requestId = useRef(""), alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; controller.current?.abort(); }; }, []);
   function select(next: File | null) {
     setError(""); setProgress(null);
     if (next) try { completionUploadFiles([{ type, name: next.name, size: next.size, mime: next.type, expectedVersionId: current?.id ?? null }]); }
     catch (e) { setError((e as Error).message); return; }
-    setFile(next); requestId.current = crypto.randomUUID(); attempts.current.clear();
+    stagedVersion.current=current?.id??null;setSuccess("");setFile(next); requestId.current = crypto.randomUUID(); attempts.current.clear();
   }
   async function run(action: () => Promise<unknown>, message: string) {
     if (busy) return; setBusy(true); setError("");
-    try { await action(); if (alive.current) onSaved(message); }
+    try { await action(); if (alive.current) {setConfirm(false);setQuery(null);setEvents(null);onSaved(message);} }
     catch (e) { if (alive.current) setError((e as Error).message); }
     finally { if (alive.current) setBusy(false); }
   }
@@ -47,12 +48,13 @@ export default function CompletionDocument({ api, scope, document, type, title, 
     controller.current = new AbortController();
     const selected=file;
     void run(async () => {await api.workflow.upload(scope, requestId.current, selected, {
-      type, name: file.name, size: file.size, mime: file.type, expectedVersionId: current?.id ?? null,
-    }, setProgress, controller.current!.signal, attempts.current);if(alive.current){setFile(null);setProgress(null);attempts.current.clear();requestId.current="";if(input.current)input.current.value="";}}, title + " uploaded. Worklists refreshed.");
+      type, name: file.name, size: file.size, mime: file.type, expectedVersionId: stagedVersion.current,
+    }, setProgress, controller.current!.signal, attempts.current);if(alive.current){setSuccess(selected.name+" uploaded successfully — awaiting approval.");setFile(null);setProgress(null);attempts.current.clear();requestId.current="";if(input.current)input.current.value="";}}, title + " uploaded. Worklists refreshed.");
   }
-  const status = approved ? "Approved" : document?.status === "uploaded" ? "Awaiting approval" : document ? label(document.status) : "Awaiting upload";
+  const status = approved ? "Approved" : document?.status === "uploaded" ? "Uploaded — awaiting approval" : document ? label(document.status) : "Awaiting upload";
   return <section className={s.documentCard} aria-label={title}>
     <div className={s.cardHeading}><h2>{title}</h2><Badge>{status}</Badge></div>
+    {success && !approved && document?.status!=="query_raised" && <p className={s.uploadSuccess} role="status">{success}</p>}
     {document?.query_note && <div className={s.queryNote}><strong>Current query</strong><p>{document.query_note}</p></div>}
     <FileText size={26}/><p>{current?.file_name || "No document uploaded"}</p>
     <p className={s.meta}>{current ? "Current version " + current.version_number + " · " + date(current.uploaded_at) : canUpload ? "Choose a PDF to begin the review." : "Waiting on the conveyancing team."}</p>

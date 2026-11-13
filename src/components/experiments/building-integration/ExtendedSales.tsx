@@ -20,7 +20,7 @@ type Context={termsRevision:string;enrolled:boolean;deposits?:DepositsContext;sa
 type Run=(body:Fields,message:string)=>Promise<boolean>;
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London"}).format(new Date());
 const money=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(n);
-export default function ExtendedSales({api,scope,role,section,refresh,onSaved}:{api:Api;scope:RecordScope;role:string;section:string;refresh:number;onSaved:(m:string)=>void}){
+export default function ExtendedSales({api,scope,role,section,task,refresh,onSaved}:{api:Api;scope:RecordScope;role:string;section:string;task?:string;refresh:number;onSaved:(m:string)=>void}){
  const [data,setData]=useState<Context>(),[error,setError]=useState(""),[busy,setBusy]=useState(false),[now,setNow]=useState(Date.now);
  const alive=useRef(true),pending=useRef({key:"",id:""}),inFlight=useRef(false);
  const {buildingId,unitId,saleId}=scope;
@@ -47,7 +47,7 @@ export default function ExtendedSales({api,scope,role,section,refresh,onSaved}:{
  <FurtherDepositCard context={data.deposits} now={now} busy={busy} run={run}/></section>}
  {section==="commercial"&&dev&&data.sale&&<CommercialForm key={data.termsRevision} data={data} busy={busy} run={run}/>}
  {section==="agent-fees"&&active&&(["admin","developer","sales_agent"].includes(role))&&(["exchange","completion"] as const).map(milestone=><InvoiceCard key={milestone} api={api} scope={scope} data={data} milestone={milestone} dev={dev} busy={busy} run={run} onSaved={onSaved}/>)}
- {["reservation","exchange","completion"].includes(section)&&data.sale&&active&&<Corrections data={data} section={section} dev={dev} conveyancer={role==="conveyancer"} busy={busy} run={run}/>}
+ {["reservation","exchange","completion"].includes(section)&&data.sale&&active&&<Corrections data={data} section={section} task={task} dev={dev} conveyancer={role==="conveyancer"} busy={busy} run={run}/>}
  </>}</>;
 }
 const commercialFields=[
@@ -116,12 +116,12 @@ function PaymentRow({payment:p,dev,busy,run}:{payment:Payment;dev:boolean;busy:b
  const [reason,setReason]=useState("");
  return <article className={s.documentCard}><p>{money(p.amount)} · {label(p.payer_type)} · {p.paid_at?.slice(0,10)} · {p.voided_at?"Voided":"Recorded"}</p><p className={s.meta}>{p.recorded_by_name}{p.void_reason?" · "+p.void_reason:""}</p>{dev&&!p.voided_at&&<details><summary>Correct this payment</summary><p>Void the incorrect payment, then record its replacement. The original stays in history.</p><label className={s.field}>Reason for voiding<textarea required value={reason} onChange={e=>setReason(e.target.value)}/></label><button className={s.button} disabled={busy||!reason.trim()} onClick={()=>void run({action:"void_agent_payment",paymentId:p.id,reason},"Payment voided. Its history is retained.")}>Void payment</button></details>}</article>;
 }
-function Corrections({data,section,dev,conveyancer,busy,run}:{data:Context;section:string;dev:boolean;conveyancer:boolean;busy:boolean;run:Run}){
+function Corrections({data,section,task,dev,conveyancer,busy,run}:{data:Context;section:string;task?:string;dev:boolean;conveyancer:boolean;busy:boolean;run:Run}){
  const a=data.sale!,[reason,setReason]=useState(""),[notice,setNotice]=useState(a.completion_notice_issued_at?.slice(0,10)||""),[due,setDue]=useState(a.contractual_completion_date?.slice(0,10)||""),[confirmed,setConfirmed]=useState(false);
  if(a.legal_completed_at)return null;
  const kind=section==="exchange"?"authority":"notice_authority",email=data.emails?.filter(e=>e.kind===kind&&!e.revoked_at&&!e.replaced_by).sort((x,y)=>y.version-x.version)[0];
- const cancel=dev&&email&&(section==="exchange"?!a.exchanged_at:section==="completion"&&!a.completion_arrangements_confirmed_at);
- const fall=dev&&section==="reservation"&&!a.exchanged_at,dates=conveyancer&&section==="completion"&&a.completion_arrangements_confirmed_at;
+ const cancel=dev&&email&&(section==="exchange"?!a.exchanged_at:section==="completion"&&task==="authority"&&!a.completion_arrangements_confirmed_at);
+ const fall=dev&&section==="reservation"&&!a.exchanged_at,dates=conveyancer&&section==="completion"&&task==="notice"&&a.completion_arrangements_confirmed_at;
  if(!cancel&&!fall&&!dates)return null;
  return <section className={s.card}><details><summary>Corrections and exceptions</summary>
  {(cancel||fall)&&<label className={s.field}>Reason<textarea required maxLength={5000} value={reason} onChange={e=>setReason(e.target.value)}/></label>}

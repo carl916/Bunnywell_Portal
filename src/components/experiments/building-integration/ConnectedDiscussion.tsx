@@ -27,7 +27,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
       if(!e||!identity)return;
       const top=getComputedStyle(identity).position==="sticky"?identity.getBoundingClientRect().height+16:16;
       e.style.setProperty("--context-top",top+"px");
-      e.style.setProperty("--context-height",Math.max(240,innerHeight-top-16)+"px");
+      e.style.setProperty("--context-height",Math.max(240,innerHeight-Math.max(top,e.parentElement!.getBoundingClientRect().top)-16)+"px");
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(update); };
     const observer = new ResizeObserver(schedule);

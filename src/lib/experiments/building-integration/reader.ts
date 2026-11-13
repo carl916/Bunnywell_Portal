@@ -9,7 +9,7 @@ export type Config=typeof approvedLocalEnvironment & {anonKey:string;completionR
 export type Session={access_token:string;expires_at:number;user:{id:string}};
 export type Catalog={access:Access;buildings:Building[]};
 export type Document={id:string;document_type:string;title:string;status:string;query_note:string|null;approved_version_id:string|null;approved_at:string|null;unit_sale_document_versions:{id:string;version_number:number;file_name:string;is_current:boolean;uploaded_at:string;redacted_at:string|null}[]};
-export type Completion={sale:WorkSale;documents:Document[]};
+export type Completion={sale:WorkSale;documents:Document[];noticeRecordedBy?:string|null};
 const tables=["profiles","buildings","building_floors","building_organisations","organisations","units","unit_sale_attempts","unit_sale_terms","unit_sale_documents","unit_sale_invoices","unit_sale_invoice_payments","sale_legal_emails","sale_exchange_deposit_receipts","sale_exchange_deposit_sources","sale_further_deposit_facts"];
 export const sessionKey="bunnywell-stage2-auth";
 export async function localConfig():Promise<Config>{

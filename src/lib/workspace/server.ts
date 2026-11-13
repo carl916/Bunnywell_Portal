@@ -59,10 +59,10 @@ export async function workspace(v:Viewer,id:string):Promise<PortalSnapshot>{
 export async function completion(v:Viewer,scope:{buildingId:string;unitId:string;saleId:string}):Promise<Completion>{
  await building(v,scope.buildingId,"sales");
  if(!validId(scope.unitId)||!validId(scope.saleId))throw new ReadError("Invalid record.");
- const sales=await rows<WorkSale>(v.client,"unit_sale_attempts","id,building_id,unit_id,is_active,workflow_status,exchanged_at,legal_completed_at,completion_authority_given_at,completion_arrangements_confirmed_at,completion_legacy_stage,completion_notice_issued_at,contractual_completion_date",q=>q.eq("id",scope.saleId).eq("unit_id",scope.unitId).eq("building_id",scope.buildingId).is("redacted_at",null));
+ const sales=await rows<WorkSale & {notice_actor:{full_name:string|null;name:string|null}|null}>(v.client,"unit_sale_attempts","id,building_id,unit_id,is_active,workflow_status,exchanged_at,legal_completed_at,completion_authority_given_at,completion_arrangements_confirmed_at,completion_legacy_stage,completion_notice_issued_at,contractual_completion_date,notice_actor:profiles!unit_sale_attempts_completion_arrangements_confirmed_by_fkey(full_name,name)",q=>q.eq("id",scope.saleId).eq("unit_id",scope.unitId).eq("building_id",scope.buildingId).is("redacted_at",null));
  if(sales.length!==1)throw new ReadError("This exact building, unit and sale are unavailable.");
  const documents=await rows<Document>(v.client,"unit_sale_documents","id,document_type,title,status,query_note,approved_version_id,approved_at,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,version_number,file_name,is_current,uploaded_at,redacted_at)",q=>q.eq("sale_attempt_id",scope.saleId).is("redacted_at",null).is("superseded_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence"]));
- return{sale:sales[0],documents};
+ const {notice_actor,...sale}=sales[0];return{sale,documents,noticeRecordedBy:notice_actor?.full_name||notice_actor?.name||null};
 }
 export async function discussion(v:Viewer,p:URLSearchParams){
  const scope={buildingId:p.get("building")||"",unitId:p.get("unit")||"",saleId:p.get("sale")||""};
