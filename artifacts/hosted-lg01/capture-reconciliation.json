@@ -1,0 +1,71 @@
+{
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "f29914be-cb37-4251-b3a7-fba6c73c431b",
+    "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685"
+  },
+  "at": "2026-11-13T11:43:53.553Z",
+  "method": "Read-only comparison after genuine hosted developer capture and conveyancer enabled-button/refresh checks; exchange intentionally left for user",
+  "changedRecords": {
+    "testJourney": {
+      "table": "workspace_commands.test_journeys",
+      "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685",
+      "fictionalConfirmation": true
+    },
+    "sale": {
+      "id": "e36611ff-7423-48c9-83db-d6ebba85b685",
+      "fields": [
+        "workflow_status",
+        "commercial_approved_at",
+        "commercial_approved_by_user_id",
+        "updated_at"
+      ]
+    },
+    "legalEmails": [
+      {
+        "id": "9076c0da-e21e-4581-8802-b5399b3306f2",
+        "kind": "authority",
+        "version": 1,
+        "status": "captured_test",
+        "expiresAt": "2026-11-15T11:41:46.759+00:00",
+        "sentAt": null,
+        "providerId": null
+      }
+    ],
+    "testDeliveries": [
+      {
+        "emailId": "9076c0da-e21e-4581-8802-b5399b3306f2",
+        "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685"
+      }
+    ],
+    "events": [
+      {
+        "id": "7f8bbdad-7518-4024-9889-f617f85aca94",
+        "type": "legal_email_prepared",
+        "at": "2026-11-13T11:41:56.373012+00:00"
+      },
+      {
+        "id": "6461ab15-c3de-4277-8953-92ec77f7e00a",
+        "type": "sale_record_changed",
+        "at": "2026-11-13T11:41:56.373012+00:00"
+      },
+      {
+        "id": "65fc6f99-a72c-4382-9346-df5e61755b2d",
+        "type": "integration_correspondence_captured",
+        "at": "2026-11-13T11:41:56.373012+00:00"
+      }
+    ]
+  },
+  "unchangedBusinessCollections": [
+    "unit",
+    "terms",
+    "schedule",
+    "documents",
+    "versions",
+    "comments"
+  ],
+  "allBuyerFieldsUnchanged": true,
+  "exchangedAt": null,
+  "externalDelivery": "none"
+}

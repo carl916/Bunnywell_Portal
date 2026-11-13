@@ -1,0 +1,29 @@
+{
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "f29914be-cb37-4251-b3a7-fba6c73c431b",
+    "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685"
+  },
+  "at": "2026-11-13T11:41:23.083Z",
+  "method": "Read-only hosted database comparison before and after explicit test enrollment",
+  "unchangedBusinessCollections": [
+    "unit",
+    "sale",
+    "terms",
+    "schedule",
+    "documents",
+    "versions",
+    "emails",
+    "events",
+    "comments"
+  ],
+  "changedRecords": [
+    {
+      "table": "workspace_commands.test_journeys",
+      "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685",
+      "reason": "User explicitly confirmed fictional test details and requested LG01 designation"
+    }
+  ],
+  "externalDelivery": "none"
+}

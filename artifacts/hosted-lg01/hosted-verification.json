@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-13",
+  "project": "mmwzhzziqvjbsphrkbqr",
+  "applicationCommit": "fbde7b1c565868e03282fbf8adba1820a03c0385",
+  "deployment": "dpl_3MGNFioJrxp4w1gDZdjetRKW3ZCm",
+  "address": "https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace",
+  "scope": {
+    "buildingId": "35de5f9d-3217-4a11-beaf-83519bda9e5b",
+    "unitId": "f29914be-cb37-4251-b3a7-fba6c73c431b",
+    "saleId": "e36611ff-7423-48c9-83db-d6ebba85b685"
+  },
+  "backendMigration": "20261113114104_workspace_confirmed_fictional_journey",
+  "userAcceptance": "User successfully uploaded, queried, revised and approved Priors Gate 102 Completion documents.",
+  "diagnosis": {
+    "reservation": "approved",
+    "authorityRecordsBefore": 0,
+    "exchangeBefore": null,
+    "registeredTestJourneyBefore": false,
+    "customTestDetailsRequiredExplicitConfirmation": true
+  },
+  "hostedBrowser": {
+    "method": "Genuine ordinary Vercel session and application developer/conveyancer sign-in through IAB; no share link or protection bypass.",
+    "checks": [
+      "Developer opened exact LG01 Exchange",
+      "Developer reviewed and captured explicitly labelled test authority",
+      "Page showed ready for exchange with captured-test delivery status",
+      "Conveyancer signed in and Confirm exchange was enabled",
+      "Full refresh preserved enabled Confirm exchange",
+      "Conveyancer activity showed genuine test-capture event"
+    ],
+    "exchangeSubmitted": false,
+    "reason": "Leave exchange step for user",
+    "screenshot": "lg01-exchange-ready.png"
+  },
+  "localEvidence": {
+    "file": "confirmed-fictional-rehearsal.json",
+    "method": "20 checks against isolated local PostgreSQL in a rolled-back transaction; not hosted browser acceptance",
+    "passed": true
+  },
+  "hostedDatabase": {
+    "files": [
+      "designation-reconciliation.json",
+      "capture-reconciliation.json"
+    ],
+    "authorityId": "9076c0da-e21e-4581-8802-b5399b3306f2",
+    "authorityExpires": "2026-11-15T11:41:46.759Z",
+    "externalDelivery": "none",
+    "buyerFieldsUnchanged": true,
+    "exchangeRecorded": false,
+    "anonRpcExecute": false,
+    "authenticatedRpcExecute": false,
+    "serviceRpcExecute": true,
+    "clientRegistryInsert": false
+  },
+  "preserved": [
+    "Accepted selected-data import and evidence",
+    "Existing LG01 buyer fields, unit, terms, payment schedule, documents and previous events",
+    "Legacy staging",
+    "Real production",
+    "Rental dataset"
+  ],
+  "status": "Core Sales connected; full-system functional acceptance remains pending. No Snags or Setup writes were enabled in this correction."
+}
