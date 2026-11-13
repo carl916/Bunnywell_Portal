@@ -5,5 +5,5 @@ export type PortalSnapshot = Workspace & { filteredCounts?:Workspace["counts"]; 
 export type SnagRow = ProductionSnag & { unitLabel:string; areaLabel:string; actions:WorkItem[] };
 export type SnagList = { buildingId:string; rows:SnagRow[]; complete:boolean };
 export type SnagDetail = { buildingId:string; snag:SnagRow; photos:SnagPhoto[]; events:(SnagEvent & {actor_name?:string|null;actor_role?:string|null})[]; moreEvents:boolean; unit:Unit|null };
-export type BuildingDetail = { building:Building; units:Unit[]; floors:BuildingFloor[]; areas:Area[]; teams:BuildingOrganisation[]; organisations:Organisation[]; defaults:Record<string,unknown>|null };
+export type BuildingDetail = { building:Building & {updated_at:string}; units:(Unit & {updated_at:string})[]; floors:(BuildingFloor & {updated_at:string})[]; areas:(Area & {updated_at:string})[]; teams:BuildingOrganisation[]; organisations:Organisation[]; defaultsRevision:string;defaults:Record<string,unknown>|null };
 export type SetupData = { tab:string; rows:Record<string,unknown>[]; more:boolean };

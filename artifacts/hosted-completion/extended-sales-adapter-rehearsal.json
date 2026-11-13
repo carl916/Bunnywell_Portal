@@ -1,0 +1,76 @@
+{
+  "at": "2026-11-13T12:36:01.484Z",
+  "method": "Actual adapter invoked against isolated local Auth/Postgres/Storage; origin substitution only. Not hosted browser evidence.",
+  "scope": {
+    "buildingId": "b1700000-0000-4000-8000-000000000001",
+    "unitId": "dc77b127-ed72-4ce2-a72f-e9d014203e46",
+    "saleId": "698053d7-f23d-413c-8a92-ab5ae56e7b49"
+  },
+  "destinationBusinessRecordsChanged": [],
+  "results": [
+    {
+      "name": "extended writes require exact designated test journey and private service access",
+      "passed": true
+    },
+    {
+      "name": "commercial versions, schedule, stale save and lost-response replay",
+      "passed": true
+    },
+    {
+      "name": "comments send outside Completion without external mention delivery",
+      "passed": true
+    },
+    {
+      "name": "exact scope and conveyancer reservation denial",
+      "passed": true
+    },
+    {
+      "name": "draft retry and stale edit",
+      "passed": true
+    },
+    {
+      "name": "reservation PDF roles, immutable upload and retry conflict",
+      "passed": true
+    },
+    {
+      "name": "submit calculates terms and retries once; approval restricted",
+      "passed": true
+    },
+    {
+      "name": "invoice upload/query/revision/approval/payment/void and exact private viewing",
+      "passed": true
+    },
+    {
+      "name": "authority previews cannot be forged and capture requires enrollment",
+      "passed": true
+    },
+    {
+      "name": "canonical exchange and notice authority remain role checked",
+      "passed": true
+    },
+    {
+      "name": "exchange and further deposit receipts are canonical, retry-safe and role restricted",
+      "passed": true
+    },
+    {
+      "name": "notice PDF and arrangements are atomic and retry safe",
+      "passed": true
+    },
+    {
+      "name": "notice dates can be corrected and served authority cannot be cancelled",
+      "passed": true
+    },
+    {
+      "name": "Completion uploads approvals and final legal completion",
+      "passed": true
+    },
+    {
+      "name": "no provider delivery, payments, Handover or post-completion mutation",
+      "passed": true
+    },
+    {
+      "name": "fall-through retains history and can recover a lost response after redaction",
+      "passed": true
+    }
+  ]
+}

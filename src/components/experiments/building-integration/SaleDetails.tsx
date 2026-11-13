@@ -1,4 +1,6 @@
 "use client";
+import ExtendedSales from "./ExtendedSales";
+
 import CoreSales from "./CoreSales";
 import {useEffect,useRef,useState} from "react";
 import type {reader} from "@/lib/experiments/building-integration/reader";
@@ -23,14 +25,15 @@ export default function SaleDetails({api,scope,row,section,refresh=0,coreWritabl
  const data=current.data;
  return <><Heading eyebrow={"Progression / "+data.title} title={data.title} description={row.buildingName+" / "+row.unitNumber+" · recorded sale details"}/>
   {coreWritable&&["reservation","exchange"].includes(section)&&<CoreSales key={section+":"+row.saleId} api={api} scope={{buildingId:row.buildingId,unitId:row.unitId,saleId:row.saleId!}} role={scope.role} section={section} refresh={refresh} onSaved={onSaved}/>}
+  {coreWritable&&["reservation","exchange","commercial","agent-fees","deposits"].includes(section)&&<ExtendedSales key={section+":"+row.saleId} api={api} scope={{buildingId:row.buildingId,unitId:row.unitId,saleId:row.saleId!}} role={scope.role} section={section} refresh={refresh} onSaved={onSaved}/>}
   {data.historical&&<Notice>This is a historical sale attempt. Its dates, amounts and statuses are preserved.</Notice>}
   {data.attempts.length>1&&<section className={s.card}><h2>Sale attempts for this unit</h2><div className={s.actions}>{[...data.attempts].sort((a,b)=>b.attempt_number-a.attempt_number).map(a=><LocalLink key={a.id} className={s.button} values={{...saleValues(row),sale:a.id,section:"reservation"}}>Attempt {a.attempt_number} · {label(a.workflow_status)}{a.is_active?" · current":" · historical"}</LocalLink>)}</div></section>}
   {data.notices.map(n=><Notice key={n}>{n}</Notice>)}
   {data.groups.map(g=><section className={s.card} key={g.id}><h2>{g.title}</h2><dl className={s.keyValues}>{g.fields.map(([name,value])=><div key={name}><dt>{name}</dt><dd>{value}</dd></div>)}</dl></section>)}
   {fileError&&<div role="alert"><Notice>{fileError}</Notice></div>}
   {data.documents.map(d=><section className={s.documentCard} key={d.id}><div className={s.cardHeading}><h2>{d.title||label(d.document_type)}</h2><Badge>{label(d.status)}</Badge></div>{d.query_note&&<p className={s.queryNote}>{d.query_note}</p>}
-   <p className={s.meta}>{d.document_type==="reservation_form"?"Private PDF viewing is connected for authorised participants.":"Metadata and versions are connected. File viewing for this document type is not yet available."}</p><p className={s.meta}>Approval recorded: {date(d.approved_at)}{d.approved_version_id?" · applies to the recorded approved version":""}</p>
-   <details className={s.historyDisclosure} open><summary>Recorded document versions</summary>{[...d.unit_sale_document_versions].filter(v=>!v.redacted_at).sort((a,b)=>b.version_number-a.version_number).map(v=><article key={v.id}><p><strong>{v.is_current?"Current":"Previous"} · version {v.version_number}</strong> · {v.file_name} · {date(v.uploaded_at)}{d.approved_version_id===v.id?" · Approved version":""}</p><button className={s.button} disabled={!["completion_statement","draft_statement_of_account","completion_correspondence","reservation_form"].includes(d.document_type)} title="Open the authorised private document version" onClick={()=>void view(v.id)}>View version {v.version_number}</button></article>)}</details>
+   <p className={s.meta}>{["reservation_form","agent_invoice"].includes(d.document_type)?"Private PDF viewing is connected for authorised participants.":"Metadata and versions are connected. File viewing for this document type is not yet available."}</p><p className={s.meta}>Approval recorded: {date(d.approved_at)}{d.approved_version_id?" · applies to the recorded approved version":""}</p>
+   <details className={s.historyDisclosure} open><summary>Recorded document versions</summary>{[...d.unit_sale_document_versions].filter(v=>!v.redacted_at).sort((a,b)=>b.version_number-a.version_number).map(v=><article key={v.id}><p><strong>{v.is_current?"Current":"Previous"} · version {v.version_number}</strong> · {v.file_name} · {date(v.uploaded_at)}{d.approved_version_id===v.id?" · Approved version":""}</p><button className={s.button} disabled={!["completion_statement","draft_statement_of_account","completion_correspondence","reservation_form","agent_invoice"].includes(d.document_type)} title="Open the authorised private document version" onClick={()=>void view(v.id)}>View version {v.version_number}</button></article>)}</details>
   </section>)}
   {!coreWritable&&<Notice>Recorded details are connected. Business actions remain disabled in this integration review.</Notice>}
  </>;

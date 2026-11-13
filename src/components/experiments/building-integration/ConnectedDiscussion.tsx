@@ -1,4 +1,5 @@
 "use client";
+import {hostedIntegration} from "@/lib/workspace/staging";
 import { useEffect, useRef, useState } from "react";
 import type { reader } from "@/lib/experiments/building-integration/reader";
 import type { SaleRow } from "@/lib/experiments/building-contracts/contracts";
@@ -14,7 +15,10 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
   const [comments, setComments] = useState<SaleComment[]>([]), [activity, setActivity] = useState<SaleActivity[]>([]);
   const [older, setOlder] = useState(false), [newer, setNewer] = useState(false), [moreActivity, setMoreActivity] = useState(false);
   const [error, setError] = useState(""), [busy, setBusy] = useState(false), [loadedView, setLoadedView] = useState("");
+  const [commentAccess,setCommentAccess]=useState(false);
+  const locked=readOnly||(hostedIntegration&&!commentAccess);
   const loaded=loadedView===view;
+  useEffect(()=>{if(!hostedIntegration||readOnly)return;const c=new AbortController();api.workflow.action({buildingId:row.buildingId,unitId:row.unitId,saleId:row.saleId!},{action:"comment_context"},c.signal).then(r=>{if(!c.signal.aborted)setCommentAccess((r as {writable:boolean}).writable)}).catch(()=>{if(!c.signal.aborted)setCommentAccess(false)});return()=>c.abort()},[api,row.buildingId,row.unitId,row.saleId,readOnly]);
   const scope = { buildingId: row.buildingId, unitId: row.unitId, saleId: row.saleId! };
   useEffect(() => {
     let frame = 0;
@@ -41,7 +45,7 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
     return () => c.abort();
   }, [api, row.buildingId, row.unitId, row.saleId, view,refresh]);
   async function send() {
-    if (readOnly || busy || !draft.trim()) return;
+    if (locked || busy || !draft.trim()) return;
     setBusy(true); setError("");
     if (submission.current.body !== draft) submission.current = { body: draft, id: crypto.randomUUID() };
     try {
@@ -73,8 +77,8 @@ export function Discussion({ api, row, view, onView, draft, onDraft, readOnly=fa
         <>{loaded && !activity.length && <p>No recorded activity for this sale.</p>}{activity.map(a => { const v = activityPresentation(a); return <article key={a.id} className={s.comment}><div><strong>{v.title}</strong>{v.details.map((d, i) => <p key={i}>{d}</p>)}<small>{a.actor_name || "Recorded actor"} · {date(a.created_at)} · {new Date(a.created_at).toLocaleTimeString("en-GB")}</small></div></article>; })}{moreActivity && <button className={s.button} disabled={busy} onClick={() => void loadOlder()}>Load older activity</button>}</>}
     </div>
     {view === "comments" && <form className={s.contextComposer} onSubmit={e => { e.preventDefault(); void send(); }}>
-      <label className={s.field}>Comment<textarea aria-label="Comment" value={draft} maxLength={COMMENT_LIMIT} disabled={readOnly || busy} onChange={e => onDraft(e.target.value)} placeholder="Add an update for this sale"/></label>
-      <div><small>{readOnly?"Connected history · sending is disabled":"Saved to this sale · no external messages"}</small><button className={s.primary} disabled={readOnly || busy || !draft.trim()}>{busy ? "Saving comment..." : "Send comment"}</button></div>
+      <label className={s.field}>Comment<textarea aria-label="Comment" value={draft} maxLength={COMMENT_LIMIT} disabled={locked || busy} onChange={e => onDraft(e.target.value)} placeholder="Add an update for this sale"/></label>
+      <div><small>{locked?"Connected history · sending is disabled":"Saved to this sale · no external messages"}</small><button className={s.primary} disabled={locked || busy || !draft.trim()}>{busy ? "Saving comment..." : "Send comment"}</button></div>
     </form>}
   </aside>;
 }

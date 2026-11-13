@@ -1,3 +1,4 @@
+import {operationsEnabled} from "@/lib/workspace/operations";
 import {saleDetails} from "@/lib/workspace/sale-details";
 import { stagingEnabled, stagingOrigin, stagingProject, optimizedReads, completionWritesEnabled, coreSalesEnabled } from "@/lib/workspace/staging";
 import {projected,unitOptions} from "@/lib/workspace/projections";
@@ -8,7 +9,7 @@ export async function GET(request:Request){
  if(!stagingEnabled())return json({error:"Unavailable"},404);
  try{
  const p=new URL(request.url).searchParams,kind=p.get("kind");
- if(kind==="config")return json({projectId:stagingProject,apiOrigin:stagingOrigin,appOrigin:new URL(request.url).origin,anonKey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,readOnly:!completionWritesEnabled(),completionReview:completionWritesEnabled(),coreSales:coreSalesEnabled()});
+ if(kind==="config")return json({projectId:stagingProject,apiOrigin:stagingOrigin,appOrigin:new URL(request.url).origin,anonKey:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,readOnly:!completionWritesEnabled(),completionReview:completionWritesEnabled(),coreSales:coreSalesEnabled(),operations:operationsEnabled()});
  const v=await read.viewer(request);const id=p.get("building")||"";
  let result:unknown;
  if(kind==="catalog")result=await read.catalog(v);

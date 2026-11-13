@@ -1,5 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- public evidence is read directly; no image proxy or transformation. */
+import {SnagControls,SnagComposer} from "./SnagControls";
+import BuildingControls from "./BuildingControls";
+import {SetupControls} from "./SetupControls";
 import {useEffect,useRef,useState} from "react";
 import type {Session} from "@/lib/experiments/building-integration/reader";
 import type {PortalSnapshot,SnagList,SnagDetail,BuildingDetail,SetupData} from "@/lib/workspace/types";
@@ -25,20 +28,21 @@ export function BuildingOverview({snapshot,onList}:{snapshot:PortalSnapshot;onLi
  {items.filter(i=>matchesWorkTeam(i,"ours")&&i.destination?.snagId).slice(0,2).map(i=><LocalLink className={s.taskRow} key={i.id} values={{view:"snag",building:snapshot.building.id,snag:i.destination!.snagId!}}><strong>{i.reference}</strong><span>{i.action}</span></LocalLink>)}
  {!snapshot.rows.some(r=>r.actions.some(a=>a.queue==="ours"))&&!items.some(i=>matchesWorkTeam(i,"ours"))&&<p>No actions shown for your team in the available sources.</p>}</section></>;
 }
-function useRead<T>(session:Session,kind:string,values:Record<string,string>){
+function useRead<T>(session:Session,kind:string,values:Record<string,string>,refresh=0){
  const key=JSON.stringify(values),[state,set]=useState<{key:string;data?:T;error?:string}>({key:""});
- useEffect(()=>{const c=new AbortController();stagingRead<T>(session,kind,JSON.parse(key),c.signal).then(data=>{if(!c.signal.aborted)set({key,data})}).catch(e=>{if(!c.signal.aborted)set({key,error:e.message})});return()=>c.abort()},[session,kind,key]);
+ useEffect(()=>{const c=new AbortController();stagingRead<T>(session,kind,JSON.parse(key),c.signal).then(data=>{if(!c.signal.aborted)set({key,data})}).catch(e=>{if(!c.signal.aborted)set({key,error:e.message})});return()=>c.abort()},[session,kind,key,refresh]);
  return state.key===key?state:{key};
 }
-export function SnagsRegister({session,building,p}:{session:Session;building:string;p:URLSearchParams}){
- const {data,error}=useRead<SnagList>(session,"snags",{building});
+export function SnagsRegister({session,building,p,writable=false}:{session:Session;building:string;p:URLSearchParams;writable?:boolean}){
+ const [refresh,setRefresh]=useState(0),[notice,setNotice]=useState("");
+ const {data,error}=useRead<SnagList>(session,"snags",{building},refresh);
  const q=p.get("q")||"",status=p.get("status")||"",source=p.get("source")||"",queue=p.get("queue")||"";
  const update=(change:Record<string,string>,replace=false)=>go({...Object.fromEntries(p),page:"1",...change},replace);
  if(error)return <><Heading title="Snags unavailable"/><Notice>{error}</Notice></>;
  if(!data)return <><Heading title="Loading snags"/><Notice>Loading this building&apos;s records only.</Notice></>;
  const filtered=data.rows.filter(r=>(!q||(r.title+" "+r.unitLabel+" "+r.areaLabel).toLowerCase().includes(q.toLowerCase()))&&(!status||r.status===status)&&(!source||r.source_type===source)&&(!queue||r.actions.some(a=>queue==="unallocated"?isUnallocatedWork(a):matchesWorkTeam(a,queue as "ours"|"others"))));
  const pages=Math.max(1,Math.ceil(filtered.length/20)),page=Math.min(pages,Math.max(1,Number(p.get("page"))||1));
- return <><Heading title="Snags register" description="Developer snagging and resident defects for this building."/>
+ return <><Heading title="Snags register" description="Developer snagging and resident defects for this building."/>{notice&&<Notice>{notice}</Notice>}{writable&&<SnagControls session={session} building={building} refresh={refresh} onSaved={m=>{setNotice(m);setRefresh(v=>v+1)}}/>}
  {!data.complete&&<Notice>Action information is incomplete. Counts are unavailable; this is not a clear worklist.</Notice>}
  <section className={s.listCard}><div className={s.filters}><label>Search this building<input aria-label="Search snags" placeholder="Unit, location or description" value={q} onChange={e=>update({q:e.target.value},true)}/></label>
  <label>Status<select value={status} onChange={e=>update({status:e.target.value})}><option value="">All statuses</option>{[...new Set(data.rows.map(r=>r.status))].sort().map(v=><option key={v}>{v}</option>)}</select></label>
@@ -48,37 +52,43 @@ export function SnagsRegister({session,building,p}:{session:Session;building:str
  {!filtered.length&&<div className={s.emptyList}>No snags match these filters. <button className={s.button} onClick={()=>update({q:"",queue:"",source:"",status:""})}>Clear filters</button></div>}
  <div className={s.pagination}><span>{filtered.length} records · Page {page} of {pages}</span><button className={s.button} disabled={page===1} onClick={()=>update({page:String(page-1)})}>Previous</button><button className={s.button} disabled={page===pages} onClick={()=>update({page:String(page+1)})}>Next</button></div></section></>;
 }
-export function SnagWorkspace({session,building,snagId,onIdentity}:{session:Session;building:string;snagId:string;onIdentity:(v:{id:string;buildingId:string;title:string;unit:string}|null)=>void}){
- const {data,error}=useRead<SnagDetail>(session,"snag",{building,snag:snagId});
+export function SnagWorkspace({session,building,snagId,onIdentity,writable=false}:{session:Session;building:string;snagId:string;writable?:boolean;onIdentity:(v:{id:string;buildingId:string;title:string;unit:string}|null)=>void}){
+ const [refresh,setRefresh]=useState(0),[notice,setNotice]=useState("");
+ const {data,error}=useRead<SnagDetail>(session,"snag",{building,snag:snagId},refresh);
  const [view,setView]=useState("comments"),[older,setOlder]=useState<SnagDetail["events"]>([]),[more,setMore]=useState<boolean|null>(null),[loadError,setLoadError]=useState("");
  const panel=useRef<HTMLElement>(null);
  useEffect(()=>{onIdentity(data?{id:snagId,buildingId:building,title:data.snag.title,unit:data.snag.unitLabel}:null);return()=>onIdentity(null)},[data,snagId,onIdentity,building]);
  useEffect(()=>{let frame=0;const update=()=>{const e=panel.current,i=document.querySelector('header[aria-label="Sale identity"]');if(!e||!i)return;const top=i.getBoundingClientRect().height+16,b=e.parentElement!.getBoundingClientRect();e.style.setProperty("--context-top",top+"px");e.style.setProperty("--context-height",Math.max(0,Math.min(innerHeight-16,b.bottom)-Math.max(top,b.top))+"px")};const schedule=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(update)};window.addEventListener("scroll",schedule,{passive:true});window.addEventListener("resize",schedule);schedule();return()=>{cancelAnimationFrame(frame);window.removeEventListener("scroll",schedule);window.removeEventListener("resize",schedule)}},[data]);
  if(error)return <><Heading title="Snag unavailable"/><Notice>{error}</Notice></>;
  if(!data)return <><Heading title="Loading snag"/><Notice>No previous record is displayed.</Notice></>;
+ const saved=(m:string)=>{setNotice(m);setOlder([]);setMore(null);setRefresh(v=>v+1)};
  const events=[...data.events,...older],notes=events.filter(e=>e.comment),shown=view==="comments"?notes:events;
  const safeMedia=(url:string|null|undefined)=>{try{return new URL(url||"").origin===stagingOrigin?url!:undefined}catch{return undefined}};
  return <div className={s.saleLayout}><div className={s.saleTask}><Heading title={data.snag.title} eyebrow="Snags / Record" description={data.snag.unitLabel+" · "+data.snag.areaLabel}/>
  <section className={s.completionOverview}><h2>Snag at a glance</h2><div className={s.stageCounts}><Badge>{label(data.snag.status)}</Badge><span>{label(data.snag.source_type)}</span><span>Raised {date(data.snag.created_at)}</span><span>{data.snag.sla_due_date?"Due "+date(data.snag.sla_due_date):"No recorded deadline"}</span></div>{data.snag.actions.map(a=><p key={a.id}><strong>{a.action}</strong> · {a.responsibility.label} · {isUnallocatedWork(a)?"Unallocated":a.ours?"Our actions":"Waiting on others"}</p>)}</section>
- <section className={s.card}><h2>Description</h2><p style={{whiteSpace:"pre-wrap"}}>{data.snag.description||"No description recorded."}</p><p className={s.meta}>Record {data.snag.id}</p><button className={s.button} disabled>Update snag — unavailable in read-only review</button></section>
+ <section className={s.card}><h2>Description</h2><p style={{whiteSpace:"pre-wrap"}}>{data.snag.description||"No description recorded."}</p><p className={s.meta}>Record {data.snag.id}</p></section>
+ {notice&&<Notice>{notice}</Notice>}{writable&&<SnagControls session={session} building={building} snagId={snagId} refresh={refresh} onSaved={saved}/>}
  <section className={s.card}><h2>Evidence</h2>{!data.photos.length&&<p>No media recorded.</p>}<div className={s.documentGrid}>{data.photos.map(photo=>{const href=safeMedia(photo.file_url);return <article className={s.documentCard} key={photo.id}><strong>{label(photo.photo_type)}</strong>{href?<><a href={href} target="_blank" rel="noreferrer">{photo.media_type==="video"?"Open video":<img src={safeMedia(photo.thumbnail_url)||href} alt={photo.caption||"Recorded snag photograph"} style={{width:"100%",maxHeight:220,objectFit:"contain"}}/>}</a><p>{photo.caption}</p></>:<Notice>This media URL is unavailable in the staging review.</Notice>}<small>{date(photo.created_at)}</small></article>})}</div></section></div>
  <aside className={s.contextPanel} id="sale-context-panel" ref={panel}><header className={s.contextHeader}><h2 id="sale-context-heading" tabIndex={-1}>Comments & activity</h2><p>{data.snag.unitLabel} · {data.snag.title}</p></header><div className={s.drawerTabs}>{["comments","activity"].map(v=><button key={v} aria-pressed={v===view} onClick={()=>setView(v)}>{label(v)}</button>)}</div>
  <div className={s.contextMessages} tabIndex={0} role="region" aria-label={view==="comments"?"Snag comments":"Snag activity"}>{!shown.length&&<p>No {view} in this page of history.</p>}{shown.map(e=><article className={s.comment} key={e.id}><div><strong>{e.actor_name||"Recorded actor"} · {label(e.event_type)}</strong>{view==="activity"&&<p>{e.old_value?label(e.old_value)+" → ":""}{label(e.new_value||"")}</p>}{e.comment&&<p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{e.comment}</p>}<small>{date(e.created_at)}</small></div></article>)}
  {(more??data.moreEvents)&&<button className={s.button} onClick={async()=>{try{const last=events.at(-1)!;const next=await stagingRead<SnagDetail>(session,"snag",{building,snag:snagId,before:last.created_at+"|"+last.id});setOlder(v=>[...v,...next.events]);setMore(next.moreEvents)}catch(e){setLoadError((e as Error).message)}}}>Load older history</button>}{loadError&&<Notice>{loadError}</Notice>}</div>
- <div className={s.contextComposer}><label className={s.field}>Comment<textarea aria-label="Snag comment" disabled placeholder="Comments are read-only in this staging review."/></label><button className={s.button} disabled>Send comment</button></div></aside></div>;
+ {writable?<SnagComposer session={session} building={building} snagId={snagId} onSaved={saved}/>:(<div className={s.contextComposer}><label className={s.field}>Comment<textarea aria-label="Snag comment" disabled placeholder="Comments are read-only in this staging review."/></label><button className={s.button} disabled>Send comment</button></div>)}</aside></div>;
 }
-export function BuildingSettings({session,building}:{session:Session;building:string}){
- const {data,error}=useRead<BuildingDetail>(session,"building",{building});if(error)return <><Heading title="Building information unavailable"/><Notice>{error}</Notice></>;if(!data)return <Heading title="Loading building information"/>;
- return <><Heading title="Building configuration" description="Structure, lifecycle and delivery team. All changes remain disabled."/>
+export function BuildingSettings({session,building,writable=false}:{session:Session;building:string;writable?:boolean}){
+ const [refresh,setRefresh]=useState(0),[notice,setNotice]=useState("");
+ const {data,error}=useRead<BuildingDetail>(session,"building",{building},refresh);if(error)return <><Heading title="Building information unavailable"/><Notice>{error}</Notice></>;if(!data)return <Heading title="Loading building information"/>;
+ return <><Heading title="Building configuration" description="Structure, lifecycle and delivery team."/>{notice&&<Notice>{notice}</Notice>}{writable&&<BuildingControls session={session} data={data} refresh={refresh} onSaved={m=>{setNotice(m);setRefresh(v=>v+1)}}/>}
  <section className={s.card}><h2>{data.building.name}</h2><p>{[data.building.address_line_1,data.building.town,data.building.postcode].filter(Boolean).join(", ")}</p><div className={s.stageCounts}><span>Practical completion · {date(data.building.pc_date)}</span><span>{data.building.pc_confirmed?"PC confirmed":"PC unconfirmed"}</span><span>Initial reporting period ends · {date(initialDefectsReportingEndDate(data.building))}</span></div></section>
  <section className={s.card}><h2>Delivery team</h2>{data.teams.map(t=><p key={t.id}><strong>{data.organisations.find(o=>o.id===t.organisation_id)?.name||"Organisation unavailable"}</strong> · {label(t.role_on_project||"")} · {t.active===false?"Inactive":"Active"}</p>)}</section>
  <section className={s.listCard}><h2 style={{padding:20}}>Units and floors</h2><table className={s.salesTable} aria-label="Building structure"><thead><tr><th>Unit</th><th>Floor</th><th>Type</th><th>Allocation</th></tr></thead><tbody>{data.units.map(u=><tr key={u.id}><td>{u.unit_number}</td><td>{u.floor||"Unconfigured"}</td><td>{u.unit_type||"Not recorded"}</td><td>{label(u.sale_status)} · {label(u.rental_portfolio_status||"")}</td></tr>)}</tbody></table></section>
- <section className={s.card}><h2>Communal areas</h2>{data.areas.filter(a=>!a.unit_id).map(a=><p key={a.id}>{a.floor} · {a.name}</p>)}<details><summary>Recorded sales defaults</summary>{data.defaults?Object.entries(data.defaults).filter(([k])=>!/(^id$|_id$|created|updated)/.test(k)).map(([k,v])=><p key={k}>{label(k)} · {v==null?"Not recorded":String(v)}</p>):<p>No defaults recorded.</p>}</details><button className={s.button} disabled>Edit building — unavailable</button></section></>;
+ <section className={s.card}><h2>Communal areas</h2>{data.areas.filter(a=>!a.unit_id).map(a=><p key={a.id}>{a.floor} · {a.name}</p>)}<details><summary>Recorded sales defaults</summary>{data.defaults?Object.entries(data.defaults).filter(([k])=>!/(^id$|_id$|created|updated)/.test(k)).map(([k,v])=><p key={k}>{label(k)} · {v==null?"Not recorded":String(v)}</p>):<p>No defaults recorded.</p>}</details></section></>;
 }
-export function SetupViews({session,p}:{session:Session;p:URLSearchParams}){
- const tab=p.get("tab")||"people",page=Math.max(1,Number(p.get("page"))||1),{data,error}=useRead<SetupData>(session,"setup",{tab,page:String(page)});
+export function SetupViews({session,p,writable=false}:{session:Session;p:URLSearchParams;writable?:boolean}){
+ const [refresh,setRefresh]=useState(0),[notice,setNotice]=useState("");
+ const tab=p.get("tab")||"people",page=Math.max(1,Number(p.get("page"))||1),{data,error}=useRead<SetupData>(session,"setup",{tab,page:String(page)},refresh);
  const names:Record<string,string>={people:"People & access",organisations:"Organisations",trades:"Trades",types:"Unit types",audit:"Audit"};
- return <><Heading title="Setup" description="Organisation-wide administration · read-only. Building-specific configuration is under Buildings."/><div className={s.stageCounts}>{Object.entries(names).map(([v,n])=><button key={v} aria-pressed={v===tab} onClick={()=>go({...Object.fromEntries(p),tab:v,page:"1"})}>{n}</button>)}</div>
+ return <><Heading title="Setup" description="Organisation-wide administration. Building-specific configuration is under Buildings."/><div className={s.stageCounts}>{Object.entries(names).map(([v,n])=><button key={v} aria-pressed={v===tab} onClick={()=>go({...Object.fromEntries(p),tab:v,page:"1"})}>{n}</button>)}</div>
+ {notice&&<Notice>{notice}</Notice>}{writable&&<SetupControls key={tab} session={session} tab={tab} refresh={refresh} onSaved={m=>{setNotice(m);setRefresh(v=>v+1)}}/>}
  {error?<Notice>{error}</Notice>:!data?<Notice>Loading authorised {names[tab]?.toLowerCase()}...</Notice>:<section className={s.card}><h2>{names[tab]}</h2>{data.rows.map((r,i)=><article key={String(r.id||i)} className={s.taskRow}><div>{Object.entries(r).filter(([k])=>k!=="id"&&k!=="organisation_id").map(([k,v])=><p key={k}><strong>{label(k)}:</strong> {v==null?"Not recorded":typeof v==="boolean"?(v?"Yes":"No"):String(v)}</p>)}</div></article>)}{!data.rows.length&&<p>No records in this view.</p>}<div className={s.pagination}><span>Page {page}</span><button className={s.button} disabled={page===1} onClick={()=>go({...Object.fromEntries(p),page:String(page-1)})}>Previous</button><button className={s.button} disabled={!data.more} onClick={()=>go({...Object.fromEntries(p),page:String(page+1)})}>Next</button></div></section>}
- <Notice>Account creation, invitations, access changes, imports and outbound messages are disabled. Existing permissions are unchanged.</Notice></>;
+ <Notice>Imported accounts and configuration remain restricted. Test accounts use ordinary password sign-in; invitations and external messages are blocked.</Notice></>;
 }

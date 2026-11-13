@@ -1,3 +1,4 @@
+import {revision} from "./operations";
 import {hostedReadFetch} from "./hosted-fetch";
 import { portalAccessKey } from "@/lib/portal-access-snapshot";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -74,7 +75,7 @@ export async function discussion(v:Viewer,p:URLSearchParams){
   const id=p.get("version")||"";if(!validId(id))throw new ReadError("Invalid document version.",400);
   const [version]=await rows<{document_id:string;storage_bucket:string;storage_path:string;file_name:string}>(v.client,"unit_sale_document_versions","document_id,storage_bucket,storage_path,file_name",q=>q.eq("id",id).is("redacted_at",null));
   if(!version||version.storage_bucket!=="sale-documents")throw new ReadError("Document unavailable.");
-  const [document]=await rows<{id:string}>(v.client,"unit_sale_documents","id",q=>q.eq("id",version.document_id).eq("sale_attempt_id",scope.saleId).is("redacted_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence","reservation_form"]));
+  const [document]=await rows<{id:string}>(v.client,"unit_sale_documents","id",q=>q.eq("id",version.document_id).eq("sale_attempt_id",scope.saleId).is("redacted_at",null).in("document_type",["completion_statement","draft_statement_of_account","completion_correspondence","reservation_form","agent_invoice"]));
   if(!document)throw new ReadError("Document unavailable for this sale.");
   await check(v);
   const signed=await v.client.storage.from(version.storage_bucket).createSignedUrl(version.storage_path,60);
@@ -98,7 +99,7 @@ export async function snagDetail(v:Viewer,id:string,snagId:string,before?:string
  const [units,areas,photos,teams,transition]=await Promise.all([
  s.unit_id?rows<Unit>(v.client,"units","id,building_id,unit_number,floor",q=>q.eq("id",s.unit_id).eq("building_id",id)):[],
  s.area_id?rows<Area>(v.client,"areas","id,name",q=>q.eq("id",s.area_id).eq("building_id",id)):[],
- rows<SnagPhoto>(v.client,"snag_photos","id,snag_id,file_url,photo_type,caption,media_type,thumbnail_url,created_at",q=>q.eq("snag_id",snagId)),
+ rows<SnagPhoto>(v.client,"snag_photos","id,snag_id,file_url,photo_type,caption,media_type,thumbnail_url,storage_path,created_at",q=>q.eq("snag_id",snagId)),
  rows<BuildingOrganisation>(v.client,"building_organisations","id,building_id,organisation_id,role_on_project,active",q=>q.eq("building_id",id)),
  v.client.from("snag_events").select("id,snag_id,event_type,old_value,new_value,created_at,created_by_user_id,comment").eq("snag_id",snagId).in("event_type",["status_change","triage"]).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(1)
  ]);
@@ -109,21 +110,28 @@ export async function snagDetail(v:Viewer,id:string,snagId:string,before?:string
  // Timestamp + ID cursor gives stable pages even for events written together.
  let q=v.client.from("snag_events").select("id,snag_id,event_type,old_value,new_value,comment,created_by_user_id,actor_name,actor_role,created_at").eq("snag_id",snagId).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(101);
  if(before){const [at,key]=before.split("|");if(!validId(key)||!Number.isFinite(Date.parse(at)))throw new ReadError("Invalid history cursor.",400);q=q.or("created_at.lt."+at+",and(created_at.eq."+at+",id.lt."+key+")");}
+ for(const photo of photos){
+  if(photo.storage_path&&photo.file_url==="private:"+photo.storage_path){
+   const signed=await v.client.storage.from("workspace-snag-media").createSignedUrl(photo.storage_path,120);
+   photo.file_url=signed.error?"":signed.data.signedUrl;
+   photo.thumbnail_url=null;
+  }
+ }
  const events=await q;if(events.error)throw new ReadError("Snag history unavailable.",503);
  return{buildingId:id,snag:{...s,unitLabel:units[0]?.unit_number||(s.unit_id?"Unit unavailable":"Communal"),areaLabel:areas[0]?.name||"Location not recorded",actions},unit:units[0]||null,photos,events:events.data.slice(0,100) as SnagEvent[],moreEvents:events.data.length>100};
 }
 export async function buildingDetail(v:Viewer,id:string):Promise<BuildingDetail>{
  await building(v,id,"buildings");
  const [[b],units,floors,areas,teams]=await Promise.all([
- rows<Building>(v.client,"buildings","*",q=>q.eq("id",id)),
- rows<Unit>(v.client,"units","*",q=>q.eq("building_id",id)),
- rows<BuildingFloor>(v.client,"building_floors","*",q=>q.eq("building_id",id)),
- rows<Area>(v.client,"areas","*",q=>q.eq("building_id",id)),
+ rows<BuildingDetail["building"]>(v.client,"buildings","*",q=>q.eq("id",id)),
+ rows<BuildingDetail["units"][number]>(v.client,"units","*",q=>q.eq("building_id",id)),
+ rows<BuildingDetail["floors"][number]>(v.client,"building_floors","*",q=>q.eq("building_id",id)),
+ rows<BuildingDetail["areas"][number]>(v.client,"areas","*",q=>q.eq("building_id",id)),
  rows<BuildingOrganisation>(v.client,"building_organisations","*",q=>q.eq("building_id",id))
  ]);
  const organisations=await related<Organisation>(v.client,"organisations","id,name,type,email,phone","id",[...new Set(teams.map(t=>t.organisation_id))]);
  const defaults=await v.client.from("building_sale_defaults").select("*").eq("building_id",id).maybeSingle();if(defaults.error)throw new ReadError("Building defaults unavailable.",503);
- return{building:b,units:sortUnitsByBuildingFloorOrder(units,floors,[b]),floors,areas,teams,organisations,defaults:defaults.data||null};
+ return{building:b,units:sortUnitsByBuildingFloorOrder(units,floors,[b]),floors,areas,teams,organisations,defaults:defaults.data||null,defaultsRevision:revision(defaults.data||null)};
 }
 export async function setup(v:Viewer,tab:string,page:number):Promise<SetupData>{
  if(!moduleAllowed(v.profile.role,"setup"))throw new ReadError("Setup unavailable.");

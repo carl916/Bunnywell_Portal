@@ -8,11 +8,13 @@ export function allowedCoreRequest(target:string,method:string,body:unknown,scop
  if(rpc){
   if(method!=="POST"||p?.p_sale!==scope.saleId||p?.p_actor!==actor)return false;
   if(rpc[1]==="workspace_reservation_command")return p.p_building===scope.buildingId&&p.p_unit===scope.unitId&&["save_reservation_draft","save_reservation","approve_reservation","query_reservation","reject_reservation"].includes(String(p.p_action));
+  if(["workspace_sale_test_context","workspace_sale_operation","workspace_sale_receipt"].includes(rpc[1]))return p.p_building===scope.buildingId&&p.p_unit===scope.unitId;
+  if(rpc[1]==="sales_deposit_context")return true;
   if(rpc[1]==="workspace_reservation_inputs")return p.p_building===scope.buildingId&&p.p_unit===scope.unitId;
   if(rpc[1]==="sales_legal_action")return legalActions.includes(String(p.p_action));
   return ["sales_legal_snapshot","workspace_capture_legal_email","workspace_reservation_file","sales_legal_submit_notice"].includes(rpc[1]);
  }
- const path=new RegExp("^/storage/v1/object/(?:authenticated/)?sale-documents/"+scope.buildingId+"/"+scope.saleId+"/(?:reservation|notice)-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/(?:reservation_form|notice)\\.pdf$","i");
+ const path=new RegExp("^/storage/v1/object/(?:authenticated/)?sale-documents/"+scope.buildingId+"/"+scope.saleId+"/(?:reservation|notice|invoice)-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}/(?:reservation_form|notice|agent_invoice)\\.pdf$","i");
  return path.test(u.pathname)&&["GET","POST"].includes(method);
 }
 export function coreCommandFetch(scope:RecordScope,actor:string):typeof fetch{return async(input,options)=>{

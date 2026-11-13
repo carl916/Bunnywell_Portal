@@ -27,3 +27,4 @@ export function completionWritesEnabled(env:Record<string,string|undefined>=proc
 
 
 export function coreSalesEnabled(env:Record<string,string|undefined>=process.env){return completionWritesEnabled(env)&&env.WORKSPACE_CORE_SALES_WRITES==="1";}
+export function operationsWritesEnabled(env:Record<string,string|undefined>=process.env){return coreSalesEnabled(env)&&env.WORKSPACE_OPERATIONS_WRITES==="1";}

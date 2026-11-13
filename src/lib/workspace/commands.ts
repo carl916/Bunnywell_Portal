@@ -1,3 +1,4 @@
+import {extendedSalesActions,extendedSalesCommand,saleService} from "./extended-sales";
 import {coreActions,coreCommand} from "./core-commands";
 import {createClient} from "@supabase/supabase-js";
 import {completionUploadAction} from "@/lib/sales/completion-upload-server";
@@ -9,7 +10,7 @@ import {completionWritesEnabled,stagingOrigin} from "./staging";
 import {viewer,completion,check,ReadError} from "./server";
 import {completionCommandFetch} from "./command-fetch";
 
-export const completionActions=new Set(["prepare_completion_upload","finalize_completion_upload","approve_completion_document","query_completion_document","comment"]);
+export const completionActions=new Set(["prepare_completion_upload","finalize_completion_upload","approve_completion_document","query_completion_document","comment","comment_context"]);
 
 export async function completionCommand(request:Request) {
  if(!completionWritesEnabled())throw new ReadError("Completion writes are unavailable.",404);
@@ -18,12 +19,19 @@ export async function completionCommand(request:Request) {
  if(Number(request.headers.get("content-length"))>24000)throw new ReadError("Request too large.",413);
  const raw=await request.text();if(raw.length>24000)throw new ReadError("Request too large.",413);
  let p:Record<string,unknown>;try{p=JSON.parse(raw)}catch{throw new ReadError("Invalid request.",400)}
- if(!p||typeof p!=="object"||typeof p.action!=="string"||(!completionActions.has(p.action)&&!coreActions.has(p.action)))throw new ReadError("This operation is not enabled.");
+ if(!p||typeof p!=="object"||typeof p.action!=="string"||(!completionActions.has(p.action)&&!coreActions.has(p.action)&&!extendedSalesActions.has(p.action)))throw new ReadError("This operation is not enabled.");
  const scope=recordScope(p.scope);if(!scope)throw new ReadError("Select an exact building, unit and sale.",400);
  const v=await viewer(request);
+ if(extendedSalesActions.has(p.action))return extendedSalesCommand(v,p,scope);
  if(coreActions.has(p.action))return coreCommand(v,p,scope);
  const current=await completion(v,scope);
- if(!current.sale.is_active||!current.sale.exchanged_at||current.sale.legal_completed_at||current.sale.workflow_status==="completed")throw new ReadError("An active exchanged sale awaiting completion is required.");
+ if(p.action==="comment"||p.action==="comment_context"){
+  await check(v);
+  const eligibility=await saleService(v,scope).rpc("workspace_sale_test_context",{p_building:scope.buildingId,p_unit:scope.unitId});
+  if(p.action==="comment_context")return {writable:eligibility.enrolled===true};
+  if(!eligibility.enrolled)throw new ReadError("Imported reference histories remain read-only. Use a designated fictional test journey.");
+ }
+ if(p.action!=="comment"&&(!current.sale.is_active||!current.sale.exchanged_at||current.sale.legal_completed_at||current.sale.workflow_status==="completed"))throw new ReadError("An active exchanged sale awaiting completion is required.");
  if(p.action!=="comment"&&!current.sale.completion_arrangements_confirmed_at&&current.sale.completion_legacy_stage!=="arrangements")throw new ReadError("Confirm completion arrangements first.");
  const upload=p.action==="prepare_completion_upload"||p.action==="finalize_completion_upload";
  if(p.action!=="comment"&&!canPerformSalesAction(v.profile.role,upload?"submit_completion_documents":"approve_completion_documents"))throw new ReadError("This account cannot perform this operation.");
