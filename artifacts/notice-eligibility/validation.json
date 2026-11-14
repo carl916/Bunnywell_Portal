@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-14",
+  "sourceCommit": "473690feff800fb2abb3096d12ad88e8555c17bc",
+  "deploymentId": "dpl_2vJ7MMVhLGux2gk6YK4chXWZKfqz",
+  "project": "bunnywell-portal-integration",
+  "supabaseProject": "mmwzhzziqvjbsphrkbqr",
+  "aliasVerified": true,
+  "temporaryVerificationAccessRevoked": true,
+  "focusedTestsPassed": 12,
+  "localBrowserChecksPassed": 9,
+  "hostedBrowserChecksPassed": 3,
+  "productionBuild": "passed",
+  "typecheck": "passed",
+  "focusedEslint": "passed",
+  "localAdapterRerun": "Not run: Docker Linux engine unavailable",
+  "protectedRecord": "Priors Gate / G11",
+  "userConfirmed": "Real/imported reference data",
+  "stillUnenrolled": true,
+  "noticeAuthorityRecorded": false,
+  "noticeRecorded": false,
+  "businessRecordsChanged": [],
+  "schemaOrPermissionChanges": []
+}

@@ -1,0 +1,41 @@
+{
+  "method": "Local app; real isolated integration Auth and authorised reads. Completion writes intercepted in the browser, never sent to the database.",
+  "results": [
+    {
+      "name": "complete authorised list filters locally with correct URL, pages and back navigation",
+      "passed": true
+    },
+    {
+      "name": "fresh Completion opens Authority and tab refocus retains the mounted workspace",
+      "passed": true
+    },
+    {
+      "name": "persistent discussion composer fits laptop, wide desktop and short desktop; mobile stacks",
+      "passed": true
+    },
+    {
+      "name": "developer sees connected commercial model on a fictional for-sale unit",
+      "passed": true
+    },
+    {
+      "name": "conveyancer sees existing for-sale buyer terms without private fees or a developer-controls request",
+      "passed": true
+    },
+    {
+      "name": "two staged PDFs survive refocus; uploading one preserves the other and confirms its own filename",
+      "passed": true
+    },
+    {
+      "name": "upload conflict retains the pending PDF; cancelled navigation preserves it; retry clears only on success",
+      "passed": true
+    },
+    {
+      "name": "each Completion step owns its actions and approval gates legal entry",
+      "passed": true
+    },
+    {
+      "name": "refresh preserves a deliberate Completion deep link",
+      "passed": true
+    }
+  ]
+}

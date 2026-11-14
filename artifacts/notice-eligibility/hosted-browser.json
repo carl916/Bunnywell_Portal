@@ -1,0 +1,18 @@
+{
+  "origin": "https://bunnywell-portal-integration-2bs36u4f5-carl-gilbert-s-projects.vercel.app",
+  "method": "Real integration Auth, context reads and non-mutating previews; no capture, uploads or business changes.",
+  "results": [
+    {
+      "name": "Priors Gate G11 clearly shows read-only status without offering authority capture",
+      "passed": true
+    },
+    {
+      "name": "protected notice preview is denied before capture preparation",
+      "passed": true
+    },
+    {
+      "name": "existing designated fictional sale retains its read-only authority preview capability",
+      "passed": true
+    }
+  ]
+}

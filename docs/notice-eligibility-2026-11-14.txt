@@ -1,0 +1,52 @@
+Notice authority investigation — 14 November 2026
+
+The HAR contains two requests on the P1 deployment:
+1. preview_capture (notice_authority): HTTP 200.
+2. capture_authority: HTTP 400, "Only explicitly designated fictional integration
+   journeys can capture correspondence."
+
+The record is Priors Gate / G11. An exact-scope, read-only database query confirmed
+it is an active exchanged sale without integration enrollment, notice authority
+or a recorded notice. Carl confirmed that it contains real/imported reference
+data. Its protection therefore remains in place. No sale was enrolled, no notice
+was recorded and no external delivery was attempted.
+
+Root cause: CoreSales offered preview/capture using role and sale stage alone.
+Unlike the ExtendedSales controls, its context omitted the existing enrollment
+check. The database correctly rejected capture, but only after the user had
+reviewed a preview and clicked its enabled action.
+
+Fix (473690f): Core context now includes the existing exact-scope enrollment
+result. Unenrolled sales show an explicit read-only explanation instead of
+editable Core Sales actions. Preview requests fail with HTTP 403 before a legal
+snapshot is prepared; capture rechecks enrollment so an older signed preview
+cannot bypass removal of eligibility. The original database capture guard,
+role checks, private evidence rules and integration delivery block remain intact.
+No migration, RLS change, enrollment or UI redesign was made.
+
+Validation:
+- Production build, TypeScript and focused ESLint passed.
+- 12 focused tests passed, covering protected previews, exact-scope context,
+  enrolled capture, revoked enrollment, developer/conveyancer roles and egress.
+- Nine local browser regressions passed using real integration reads and
+  intercepted fictional writes. Three checks on the actual protected deployment
+  passed: G11 read-only UI/context, protected preview rejection, and a successful
+  non-mutating notice preview on an existing designated fictional sale.
+- A final database read confirmed G11 is still unenrolled, with no notice
+  authority or notice recorded. Temporary browser verification access was revoked.
+- The full isolated adapter rerun could not start: Docker's Linux engine is not
+  running. No local adapter writes took place in this attempt. The prior P1
+  adapter evidence is retained, not represented as a new test run.
+- HAR contents, cookies, bearer tokens, previews and buyer details were not
+  committed or included in the evidence.
+
+Deployed and verified: dpl_2vJ7MMVhLGux2gk6YK4chXWZKfqz (source 473690f).
+The stable integration alias points to this READY deployment. Source review
+branch: codex/notice-read-only-context. Staging and production were not changed.
+Use the stable integration review URL, rather than the old immutable deployment
+URL in the HAR:
+https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace
+
+G11 remains intentionally read-only. Enabling real imported sales requires the
+separate operational rollout decision described in the P1 review. Integration
+captures are not real email delivery or legal service.
