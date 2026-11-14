@@ -19,10 +19,11 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
  const client=createSupabaseServiceRoleClient(coreCommandFetch(scope,v.profile.id),v.profile.id);
  async function rpc(name:string,args:Record<string,unknown>){const r=await client.rpc(name,{p_sale:scope.saleId,p_actor:v.profile.id,...args});if(r.error)throw new ReadError(r.error.message,400);return r.data;}
  if(p.action==="core_context"){
+  const test=await rpc("workspace_sale_test_context",{p_building:scope.buildingId,p_unit:scope.unitId});
   const [sale]=await rows<Record<string,unknown>>(v.client,"unit_sale_attempts","id,is_active,workflow_status,updated_at,buyer_person_name,buyer_company_name,buyer_email,buyer_phone,buyer_solicitor_name,reservation_date,reservation_terms_checked,exchanged_at,legal_completed_at,authority_requested_at,completion_authority_requested_at,completion_authority_given_at,completion_arrangements_confirmed_at,completion_notice_issued_at,contractual_completion_date",q=>q.eq("id",scope.saleId).eq("building_id",scope.buildingId).eq("unit_id",scope.unitId).is("redacted_at",null));
   const documents=await rows<Record<string,unknown>>(v.client,"unit_sale_documents","id,document_type,status,approved_version_id,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,is_current,redacted_at,file_name)",q=>q.eq("sale_attempt_id",scope.saleId).is("redacted_at",null).is("superseded_at",null).in("document_type",["reservation_form","completion_correspondence","completion_statement","draft_statement_of_account"]));
   const emails=await rows<Record<string,unknown>>(v.client,"sale_legal_emails","id,kind,version,delivery_status,sent_at,expires_at,revoked_at,replaced_by",q=>q.eq("sale_attempt_id",scope.saleId));
-  return {asOf:new Date().toISOString(),sale,documents,emails};
+  return {asOf:new Date().toISOString(),enrolled:test?.enrolled===true,sale,documents,emails};
  }
  const action=String(p.action);
  if(action.includes("reservation")){
@@ -45,10 +46,15 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
  }
  if(action==="preview_capture"||action==="capture_authority"){
   if(!canPerformSalesAction(v.profile.role,"approve_exchange"))throw new ReadError("Only developer reviewers can issue authority.");
+  const requireEnrolled=async()=>{
+   const test=await rpc("workspace_sale_test_context",{p_building:scope.buildingId,p_unit:scope.unitId});
+   if(test?.enrolled!==true)throw new ReadError("This sale is read-only in integration. Authority capture is available only for designated fictional test sales.",403);
+  };
   if(action==="preview_capture"){
    const kind=p.kind;if(kind!=="authority"&&kind!=="notice_authority")throw new ReadError("Choose an authority type.",400);
    if(kind==="authority"&&(current.sale.exchanged_at||current.sale.legal_completed_at||!["approved","reservation_approved","awaiting_commercial_approval","ready_for_exchange"].includes(current.sale.workflow_status)))throw new ReadError("Approve the reservation before reviewing exchange authority.",400);
    if(kind==="notice_authority"&&(!current.sale.exchanged_at||current.sale.legal_completed_at))throw new ReadError("An exchanged sale awaiting Completion is required.",400);
+   await requireEnrolled();
    const date=kind==="authority"?String(p.date||new Date(Date.now()+48*3600000).toISOString()):null;
    const snapshot=await rpc("sales_legal_snapshot",{}) as LegalSnapshot;
    const reviewUrl="https://bunnywell-portal-integration-carl-gilbert-s-projects.vercel.app/workspace?"+new URLSearchParams({view:"sale",building:scope.buildingId,unit:scope.unitId,sale:scope.saleId,section:kind==="authority"?"exchange":"completion"});
@@ -59,6 +65,7 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
   if(!validId(String(p.requestId))||!p.preview||typeof p.preview!=="object")throw new ReadError("Review a fresh authority preview.",400);
   const {token,...preview}=p.preview as Record<string,unknown>;
   if(typeof token!=="string"||!/^[a-f0-9]{64}$/.test(token)||!timingSafeEqual(Buffer.from(token,"hex"),Buffer.from(signature(preview),"hex")))throw new ReadError("Authority preview changed. Review it again.",400);
+  await requireEnrolled();
   return rpc("workspace_capture_legal_email",{p_request:p.requestId,p_kind:preview.kind,p_snapshot:preview.snapshot,p_email:preview.email,p_date:preview.date});
  }
  const permission=action==="request_authority"||action==="request_notice_authority"?"request_exchange_approval":action==="confirm_exchange"?"record_exchange":"record_completion";

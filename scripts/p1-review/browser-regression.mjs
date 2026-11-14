@@ -61,7 +61,7 @@ try{
  await p.route('**/workspace/command',async route=>{
   const body=route.request().postDataJSON();
   if(body.action==='comment_context')return route.fulfill({json:{writable:true}});
-  if(body.action==='core_context'){while(!model)await new Promise(r=>setTimeout(r,20));return route.fulfill({json:{asOf:'2026-11-13T12:00:00Z',sale:model.sale,documents:model.documents,emails:[]}})}
+  if(body.action==='core_context'){while(!model)await new Promise(r=>setTimeout(r,20));return route.fulfill({json:{asOf:'2026-11-13T12:00:00Z',enrolled:true,sale:model.sale,documents:model.documents,emails:[]}})}
   if(body.action==='extended_sales_context')return route.fulfill({json:{enrolled:true,sale:model?.sale,terms:null,emails:[]}});
   if(body.action==='prepare_completion_upload'){metadata=body.files[0];return route.fulfill({json:{completed:true}})}
   if(body.action==='finalize_completion_upload'){

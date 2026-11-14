@@ -10,7 +10,7 @@ import s from "../sales-workspace/Workspace.module.css";
 type Version={id:string;is_current:boolean;redacted_at:string|null;file_name:string};
 type Document={id:string;document_type:string;status:string;approved_version_id:string|null;unit_sale_document_versions:Version[]};
 type Sale={id:string;is_active:boolean;workflow_status:string;updated_at:string;buyer_person_name:string|null;buyer_company_name:string|null;buyer_email:string|null;buyer_phone:string|null;buyer_solicitor_name:string|null;reservation_date:string|null;reservation_terms_checked:boolean;exchanged_at:string|null;legal_completed_at:string|null;authority_requested_at:string|null;completion_authority_requested_at:string|null;completion_authority_given_at:string|null;completion_arrangements_confirmed_at:string|null;completion_notice_issued_at:string|null;contractual_completion_date:string|null};
-type Context={asOf:string;sale:Sale;documents:Document[];emails:{id:string;kind:string;version:number;delivery_status:string;sent_at:string|null;expires_at:string|null;revoked_at:string|null;replaced_by:string|null}[]};
+type Context={asOf:string;enrolled:boolean;sale:Sale;documents:Document[];emails:{id:string;kind:string;version:number;delivery_status:string;sent_at:string|null;expires_at:string|null;revoked_at:string|null;replaced_by:string|null}[]};
 type Preview={kind:string;date:string|null;token:string;email:{body:string;subject:string};snapshot:unknown};
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London"}).format(new Date());
 const fields=[["buyerPersonName","Buyer name","buyer_person_name"],["buyerCompanyName","Buyer company (optional)","buyer_company_name"],["buyerEmail","Buyer email","buyer_email"],["buyerPhone","Buyer phone","buyer_phone"],["buyerSolicitorName","Buyer solicitor","buyer_solicitor_name"],["reservationDate","Reservation date","reservation_date"]] as const;
@@ -45,6 +45,7 @@ export default function CoreSales({api,scope,role,section,task="authority",refre
  if(!data)return <section className={s.card}><h2>Sales actions</h2>{errorBox||<p>Loading authorised actions…</p>}</section>;
  const a=data.sale,active=a.is_active&&!a.legal_completed_at&&a.workflow_status!=="completed";
  if(!active)return null;
+ if(data.enrolled!==true)return <section className={s.card} aria-label="Read-only integration sale"><h2>This sale is read-only in integration</h2><Notice>Actions are available only for designated fictional test sales. This reference sale has not been enabled for testing, so authority capture, notice recording and other sale changes are unavailable. Its recorded details remain visible.</Notice></section>;
  const editing=["draft","rejected","reservation_query_raised"].includes(a.workflow_status)&&!a.exchanged_at,reviewing=["awaiting_approval","reservation_submitted"].includes(a.workflow_status);
  const formCurrent=version("reservation_form"),notice=version("completion_correspondence");
  const approved=data.documents.filter(d=>["completion_statement","draft_statement_of_account"].includes(d.document_type)&&d.status==="approved"&&d.unit_sale_document_versions.some(v=>v.id===d.approved_version_id&&v.is_current&&!v.redacted_at)).length===2;
