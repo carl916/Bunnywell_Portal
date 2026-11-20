@@ -1,5 +1,7 @@
 "use client";
 
+import { EmptyValue } from "@/components/portal/DisplayValue";
+
 import type { MouseEvent, RefCallback } from "react";
 import type { Building } from "@/lib/data/production";
 import type { RegisterState } from "@/lib/sales/register-session";
@@ -87,8 +89,8 @@ export function ConveyancerSalesRegister({ buildingId, buildings, filters, onFil
               {row.warning && <span className={styles.warning}>{row.warning}</span>}
               {primary && <a className={styles.review} aria-label={`${review} for Unit ${row.unitNumber}`} href={href(destination)} onClick={e => open(e, destination)}>{review}<span aria-hidden="true"> →</span></a>}
             </td>
-            <td data-label="Action with">{actions.length ? [...new Set(actions.map(action => action.party.label))].map(party => <div key={party}>{party}</div>) : "—"}</td>
-            <td data-label="Key date">{row.keyDate ? <><span className={row.keyDate.warning ? styles.warning : undefined}>{row.keyDate.label}</span>{!row.keyDate.label.includes(row.keyDate.actual) && <span className={styles.secondary}>{row.keyDate.actual}</span>}</> : "—"}</td>
+            <td data-label="Action with">{actions.length ? [...new Set(actions.map(action => action.party.label))].map(party => <div key={party}>{party}</div>) : <EmptyValue />}</td>
+            <td data-label="Key date">{row.keyDate ? <><span className={row.keyDate.warning ? styles.warning : undefined}>{row.keyDate.label}</span>{!row.keyDate.label.includes(row.keyDate.actual) && <span className={styles.secondary}>{row.keyDate.actual}</span>}</> : <EmptyValue />}</td>
           </tr>;
         })}</tbody>
       </table>

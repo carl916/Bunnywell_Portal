@@ -1,0 +1,17 @@
+"use client";
+import {useId,useRef,useState} from 'react';
+import {COMMENT_LIMIT,type SalePerson} from '@/lib/sales/discussion';
+import styles from './MentionComposer.module.css';
+export default function MentionComposer({value,onChange,people,mentionIds,onMentions,disabled}:{value:string;onChange:(value:string)=>void;people:SalePerson[];mentionIds:string[];onMentions:(ids:string[])=>void;disabled:boolean}){
+ const input=useRef<HTMLTextAreaElement>(null),listId=useId();
+ const [query,setQuery]=useState<{start:number;end:number;term:string}|null>(null),[active,setActive]=useState(0);
+ const matches=query?people.filter(p=>!mentionIds.includes(p.id)&&`${p.name} ${p.role} ${p.organisation||''}`.toLowerCase().includes(query.term.toLowerCase())).slice(0,25):[];
+ const selected=people.filter(p=>mentionIds.includes(p.id));
+ function inspect(text:string,cursor:number){const match=/(?:^|\s)@([^@\n]{0,80})$/.exec(text.slice(0,cursor));setQuery(match&&mentionIds.length<25?{start:cursor-match[1].length-1,end:cursor,term:match[1]}:null);setActive(0);}
+ function choose(person:SalePerson){if(!query)return;const replacement='@'+person.name+' ',text=value.slice(0,query.start)+replacement+value.slice(query.end);if(text.length>COMMENT_LIMIT)return;onChange(text);onMentions([...mentionIds,person.id]);setQuery(null);requestAnimationFrame(()=>{input.current?.focus();input.current?.setSelectionRange(query.start+replacement.length,query.start+replacement.length);});}
+ return <div className={styles.composer}>
+  {query&&<div className={styles.picker}><span className={styles.hint}>Tag someone who can view this sale</span><div id={listId} role="listbox" aria-label="People to mention">{matches.length?matches.map((person,index)=><button type="button" role="option" aria-selected={index===active} id={listId+'-'+index} key={person.id} onPointerDown={e=>e.preventDefault()} onClick={()=>choose(person)}><strong>{person.name}</strong><small>{person.role.replaceAll('_',' ')}{person.organisation?' · '+person.organisation:''}</small></button>):<p role="status">No matching people</p>}</div></div>}
+  <label>Comment<textarea ref={input} aria-label="Comment" role="combobox" aria-autocomplete="list" aria-expanded={Boolean(query)} aria-controls={query?listId:undefined} aria-activedescendant={query&&matches[active]?listId+'-'+active:undefined} value={value} maxLength={COMMENT_LIMIT} disabled={disabled} placeholder="Add an update · type @ to tag someone" onChange={e=>{const text=e.target.value;onChange(text);onMentions(selected.filter(p=>text.includes('@'+p.name)).map(p=>p.id));inspect(text,e.target.selectionStart);}} onClick={e=>inspect(value,e.currentTarget.selectionStart)} onBlur={()=>setQuery(null)} onKeyDown={e=>{if(!query)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setQuery(null);}else if(matches.length&&['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();setActive(n=>(n+(e.key==='ArrowDown'?1:-1)+matches.length)%matches.length);}else if(matches[active]&&['Enter','Tab'].includes(e.key)){e.preventDefault();choose(matches[active]);}}}/></label>
+  {selected.length>0&&<div className={styles.tags} aria-label="Tagged people">{selected.map(p=><span key={p.id}>@{p.name}<button type="button" disabled={disabled} aria-label={'Remove mention of '+p.name} onClick={()=>{onMentions(mentionIds.filter(id=>id!==p.id));onChange(value.replaceAll('@'+p.name,p.name));}}>×</button></span>)}</div>}
+ </div>;
+}

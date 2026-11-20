@@ -1,0 +1,76 @@
+.panel { display:grid; gap:20px; margin-top:24px; min-width:0; }
+.content { display:grid; gap:20px; min-width:0; }
+.panel form { max-width:880px; }
+.panel fieldset { display:grid; gap:20px; margin:0; }
+.panel fieldset>button { justify-self:start; }
+.panel label { line-height:1.5; min-width:0; }
+.panel :is(input,select,textarea) { max-width:100%; }
+.panel select { width:100%; color:var(--ink); font-size:13px; }
+.panel textarea { resize:vertical; }
+.panel input[type=number] { max-width:220px; }
+.fieldPairs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px 24px; align-items:start; }
+.overview { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.overview section { display:grid; align-content:start; gap:10px; }
+.overview section:last-child { grid-column:1 / -1; }
+.lifecycleGroup { display:grid; gap:16px; padding:20px; border:1px solid var(--line); border-radius:6px; background:var(--surface-soft); }
+.pcControls { display:flex; flex-wrap:wrap; align-items:end; gap:16px 24px; }
+.dateField { width:220px; max-width:100%; }
+.checkboxRow { display:flex; align-items:center; gap:10px; min-height:44px; font-size:13px; font-weight:500; cursor:pointer; }
+.checkboxRow input[type=checkbox] { width:16px; height:16px; min-height:16px; margin:0; padding:0; flex:none; accent-color:var(--green); }
+.calculatedDates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 24px; margin:0; }
+.calculatedDates div { display:grid; gap:6px; }
+.calculatedDates dt { color:var(--muted); font-size:12px; }
+.calculatedDates dd { margin:0; font-size:13px; }
+.residentAccess { display:grid; gap:4px; }
+.residentAccess p { padding-left:26px; }
+.teamList { display:grid; gap:0; margin-top:8px; }
+.teamRow { display:grid; grid-template-columns:minmax(150px,.8fr) minmax(0,1.2fr) auto; align-items:center; gap:12px 24px; padding:16px 0; border-bottom:1px solid var(--line); font-size:13px; }
+.teamRole { color:var(--muted); }
+.teamRow strong { overflow-wrap:anywhere; font-weight:600; }
+.teamRow button { justify-self:end; }
+.structurePicker { max-width:420px; }
+.structureForm fieldset { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+.structureForm fieldset>:is(p,a,button) { grid-column:1 / -1; }
+@media(max-width:700px){
+ .fieldPairs,.overview,.calculatedDates { grid-template-columns:1fr; }
+ .structureForm fieldset { grid-template-columns:1fr; }
+ .panel { gap:18px; }
+ .panel fieldset { gap:18px; }
+ .lifecycleGroup { padding:16px; }
+ .teamRow { grid-template-columns:minmax(0,1fr) auto; gap:6px 12px; }
+ .teamRole { grid-column:1; }
+ .teamRow strong { grid-column:1; }
+ .teamRow button { grid-column:2; grid-row:1 / span 2; }
+}
+
+.formActions { display:flex; align-items:center; gap:12px; padding-top:8px; }
+.depositFields { display:grid; gap:20px; padding:20px; border:1px solid var(--line); border-radius:6px; }
+.depositFields :global(.field-label) { display:flex; flex-direction:column; gap:8px; font-size:12px; font-weight:500; }
+.depositFields :global(.field) { width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:5px; background:white; font-size:13px; }
+.allocationTable.allocationTable { table-layout:fixed; min-width:680px; }
+.allocationTable.allocationTable th:first-child,.allocationTable.allocationTable td:first-child { width:52px!important; padding:8px!important; }
+.allocationTable.allocationTable th:nth-child(2) { width:18%; }
+.allocationTable.allocationTable input[type=checkbox] { width:18px; height:18px; margin:9px; cursor:pointer; accent-color:var(--green); }
+.peopleHeading { margin:24px 0 20px; }
+.peopleNav { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0 24px; }
+.accessChoices { display:grid; gap:8px; }
+.flatRow { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:12px; padding:16px 0; border-bottom:1px solid var(--line); }
+.flatRow button { margin-bottom:1px; }
+.accountActions { border-top:1px solid var(--line); padding-top:20px; margin-top:28px; }
+@media(max-width:700px){
+ .allocationTable.allocationTable { display:table; }
+ .allocationTable.allocationTable thead { display:table-header-group; }
+ .allocationTable.allocationTable tbody { display:table-row-group; }
+ .allocationTable.allocationTable tr { display:table-row; }
+ .allocationTable.allocationTable th,.allocationTable.allocationTable td { display:table-cell!important; width:auto; padding:12px 10px; }
+ .depositFields { padding:16px; }
+}
+.feeHolder { grid-column:2; grid-row:3; } @media(max-width:700px){.feeHolder { grid-column:auto; grid-row:auto; }}
+.directoryTable.directoryTable { min-width:620px; }
+@media(max-width:700px){
+ .directoryTable.directoryTable { display:table; }
+ .directoryTable.directoryTable thead { display:table-header-group; }
+ .directoryTable.directoryTable tbody { display:table-row-group; }
+ .directoryTable.directoryTable tr { display:table-row; }
+ .directoryTable.directoryTable th,.directoryTable.directoryTable td { display:table-cell!important; padding:12px 10px; width:auto; }
+}

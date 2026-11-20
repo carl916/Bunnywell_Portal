@@ -6,19 +6,21 @@ type Prepared = { completed: boolean; bucket: string; endpoint: string; files: {
 export type UploadProgress = { loaded: number; total: number; phase: "preparing" | "uploading" | "verifying" };
 
 export async function uploadCompletionFiles(sale: string, requestId: string, files: File[], metadata: CompletionUploadFile[],
-  progress: (value: UploadProgress) => void, signal: AbortSignal, attempts: Map<string, Upload>) {
+  progress: (value: UploadProgress) => void, signal: AbortSignal, attempts: Map<string, Upload>, transport?: { prepare: (payload: Record<string, unknown>) => Promise<Response>; anonKey: string; allowedStorageOrigin: string }) {
   completionUploadFiles(metadata); // Reject unsupported selections before ANY transfer.
   const total = files.reduce((sum, file) => sum + file.size, 0);
   progress({ loaded: 0, total, phase: "preparing" });
-  const { data, error } = await createSupabaseBrowserClient().auth.getSession();
+  const { data, error } = transport ? { data: { session: { access_token: "" } }, error: null } : await createSupabaseBrowserClient().auth.getSession();
   if (error || !data.session) throw new Error("Sign in again, then retry the upload.");
-  const response = await fetch("/api/sales/legal", { method: "POST", signal,
+  const payload = { action: "prepare_completion_upload", sale, requestId, files: metadata };
+  const response = transport ? await transport.prepare(payload) : await fetch("/api/sales/legal", { method: "POST", signal,
     headers: { Authorization: `Bearer ${data.session.access_token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ action: "prepare_completion_upload", sale, requestId, files: metadata }),
   });
   if (!response.ok) { const result = await response.json().catch(() => ({})); throw new Error(result.error || "Could not prepare the upload. Reload the page and retry; no files were sent."); }
   const prepared = await response.json() as Prepared;
   if (prepared.completed) return;
+  if (transport && new URL(prepared.endpoint).origin !== transport.allowedStorageOrigin) throw new Error("Unexpected upload origin.");
   const { Upload: ResumableUpload } = await import("tus-js-client");
   const loaded = files.map(() => 0);
   // Sequential files give a clear progress indicator and avoid saturating mobile
@@ -30,7 +32,7 @@ export async function uploadCompletionFiles(sale: string, requestId: string, fil
     if (!target.ready) await new Promise<void>((resolve, reject) => {
       const key = `${requestId}:${index}`;
       const upload = attempts.get(key) ?? new ResumableUpload(file, {
-        endpoint: prepared.endpoint, headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, "x-signature": target.token!, "x-upsert": "false" },
+        endpoint: prepared.endpoint, headers: { apikey: transport?.anonKey ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, "x-signature": target.token!, "x-upsert": "false" },
         metadata: { bucketName: prepared.bucket, objectName: target.path, contentType: "application/pdf", cacheControl: "0" },
         chunkSize: 6 * 1024 * 1024, uploadDataDuringCreation: true, storeFingerprintForResuming: false,
         retryDelays: [0, 1000, 3000, 5000],

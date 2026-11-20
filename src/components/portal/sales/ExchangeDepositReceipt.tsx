@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import styles from "./Deposits.module.css";
 import { emailDate, emailMoney } from "@/lib/sales/legal-email";
 import { legalDateTime } from "@/lib/sales/legal-workflow";
 import { isCalendarDate } from "@/lib/sales/completion-notice";
 import { DepositBeforeExchange } from "./DepositBeforeExchange";
+import {depositPosition} from "@/lib/workspace/deposit-position";
 
 export type ExchangeDepositContext = {
+  due_date?: string|null;
   percent?: number | null;
   preview_amount?: number | null;
   source: { id: string; expected_amount: number | null; source_kind: string; authority_version: number | null; terms_version: number | null } | null;
@@ -26,29 +29,34 @@ export function ExchangeDepositReceipt({ deposit, exchanged, editable, busy, run
   const source = deposit?.source;
   const receipt = deposit?.receipt;
   const amount = source?.expected_amount;
+  const position=depositPosition(amount,receipt?.received_amount);
   const validDate = isCalendarDate(date) && date <= todayInLondon();
   const canSubmit = !busy && validDate && (correcting ? Boolean(reason.trim()) && date !== receipt?.received_date : confirmed);
 
-  return <section className="py-5" id="exchange-deposit-task">
+  return <section className={styles.receiptSection} id="exchange-deposit-task">
     <h4 className="font-bold">Exchange deposit</h4>
     {!exchanged ? <DepositBeforeExchange percent={deposit?.percent} amount={deposit?.preview_amount} timing="Due on legal exchange." /> : <>
-      <p className="mt-2 text-sm font-semibold text-[#0F3D2E]">{receipt ? "Deposit received" : "Deposit confirmation outstanding"}</p>
+      <p className="mt-2 text-sm font-semibold text-[#0F3D2E]" role="status">{position.status}</p>
       {source && amount !== null && amount !== undefined ? <>
         <div className="mt-4 rounded-xl border border-[#d9ded6] bg-[#f5f7f3] p-4">
           <p className="text-lg font-bold text-[#0F3D2E]">Expected exchange deposit: {emailMoney(amount)}</p>
-          <p className="mt-1 text-sm">{deposit?.percent != null ? `${deposit.percent}% · ` : ""}Due on legal exchange.</p>
-          <p className="mt-2 text-sm">Received: {emailMoney(receipt?.received_amount ?? 0)} · Outstanding: {emailMoney(Math.max(0, amount - (receipt?.received_amount ?? 0)))}</p>
+          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+           <div><dt>Amount received</dt><dd className="font-semibold">{position.received===null?'Not recorded':emailMoney(position.received)}</dd></div>
+           <div><dt>Outstanding amount</dt><dd className="font-semibold">{position.outstanding===null?'Not confirmed':emailMoney(position.outstanding)}</dd></div>
+           <div><dt>Due date</dt><dd className="font-semibold">{deposit?.due_date?emailDate(deposit.due_date):'On legal exchange'}</dd></div>
+          </dl>
+          {!receipt&&<p className="mt-2 text-sm">No receipt has been entered. This does not mean the money has not been received.</p>}
           <p className="mt-1 text-xs text-[#617169]">{source.source_kind === "executed_authority" ? `Exchange authority version ${source.authority_version}` : "Historical locked commercial terms"}{source.terms_version ? ` · Commercial version ${source.terms_version}` : ""}. Amount retained from the exchange record.</p>
         </div>
-        {receipt && <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        {receipt && <details className="mt-4"><summary>Recorded receipt and correction details</summary><dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
           <div><dt className="text-[#617169]">Amount received</dt><dd className="font-semibold">{emailMoney(receipt.received_amount)}</dd></div>
           <div><dt className="text-[#617169]">Date received</dt><dd className="font-semibold">{emailDate(receipt.received_date)}</dd></div>
           <div><dt className="text-[#617169]">Recorded by</dt><dd>{receipt.recorded_by_name}</dd></div>
           <div><dt className="text-[#617169]">Date and time recorded</dt><dd>{legalDateTime(receipt.recorded_at)}</dd></div>
           {receipt.revision > 1 && <div className="sm:col-span-2"><dt className="text-[#617169]">Audited date correction</dt><dd>{receipt.correction_reason}. Original confirmation and corrections are retained in Activity.</dd></div>}
-        </dl>}
+        </dl></details>}
         {editable && receipt && !correcting && <button className="secondary mt-4" disabled={busy} onClick={() => { setDate(receipt.received_date); setReason(""); setCorrecting(true); }}>Correct receipt date</button>}
-        {editable && !receipt && !recording && <button className="primary mt-4" disabled={busy} onClick={() => setRecording(true)}>Record exchange receipt</button>}
+        {editable && !receipt && !recording && <button className="primary mt-4" disabled={busy} onClick={() => setRecording(true)}>Record deposit receipt</button>}
         {editable && ((!receipt && recording) || correcting) && <form className="mt-4 grid gap-4" onSubmit={(event) => {
           event.preventDefault();
           if (!canSubmit) return;
@@ -60,7 +68,7 @@ export function ExchangeDepositReceipt({ deposit, exchanged, editable, busy, run
             : <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" required checked={confirmed} disabled={busy} onChange={(event) => setConfirmed(event.target.checked)} />I confirm that the full expected exchange deposit of {emailMoney(amount)} has been received.</label>}
           <div className="flex flex-wrap gap-2"><button className="primary" disabled={!canSubmit}>{correcting ? "Save corrected receipt date" : "Confirm deposit received"}</button><button type="button" className="secondary" disabled={busy} onClick={() => { setCorrecting(false); setRecording(false); }}>Cancel</button></div>
         </form>}
-        {!receipt && <p className="mt-3 text-sm text-[#617169]">{editable ? "If the full amount has not been received, leave this task outstanding and raise the discrepancy in Comments." : "The building’s conveyancer records receipt of the full deposit."} Completion remains available while this task is outstanding.</p>}
+        {!receipt && <p className={styles.receiptHelp+" text-sm text-[#617169]"}>{editable ? "If the full amount has not been received, leave this task outstanding and raise the discrepancy in Comments." : "The building’s conveyancer records receipt of the full deposit."} Completion remains available while this task is outstanding.</p>}
       </> : <p className="mt-3 text-sm text-amber-800">The locked exchange deposit amount is unavailable. Raise the missing commercial record in Comments before confirming receipt. Completion remains available.</p>}
     </>}
   </section>;

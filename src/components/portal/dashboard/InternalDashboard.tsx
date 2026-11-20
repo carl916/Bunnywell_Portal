@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue, EmptyValue } from "@/components/portal/DisplayValue";
+
 import type { CSSProperties, MouseEvent } from "react";
 import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { markUnitOpenIntent } from "@/lib/audit/unit-open";
@@ -54,7 +56,7 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
     return <tr key={item.id} role="row">
       <td role="cell" className={styles.dateIdentity}><strong>{item.reference}</strong><small>{buildings.get(item.buildingId) ?? "Building unavailable"}</small></td>
       <td role="cell" className={styles.dateIssue}>{item.action}<small>{isWorkObservation(item) ? "Recorded contractual date" : item.deadline?.basis === "Fixed-term review date" ? "Review date" : item.deadline ? "Actionable deadline" : item.urgent ? "Urgent resident defect" : isUnallocatedWork(item) ? "Responsible team unallocated" : item.responsibility.allocation === "unavailable" ? "Appointment unavailable" : "Undated exception"}</small></td>
-      <td role="cell" className={styles.dateValue}>{item.deadline ? <>{formatWorkDate(item.deadline.at, item.deadline.precision)}<small>{isWorkObservation(item) && deadlineState(item.deadline, Date.parse(snapshot!.asOf)) === "overdue" ? "Passed date" : item.deadline.basis}</small></> : <span className={styles.muted}>No deadline recorded</span>}</td>
+      <td role="cell" className={styles.dateValue}>{item.deadline ? <>{formatWorkDate(item.deadline.at, item.deadline.precision)}<small>{isWorkObservation(item) && deadlineState(item.deadline, Date.parse(snapshot!.asOf)) === "overdue" ? "Passed date" : item.deadline.basis}</small></> : <EmptyValue />}</td>
       <td role="cell" className={styles.dateAction}>{href ? <a className={styles.open} href={href} aria-label={`Open ${item.reference}: ${item.action}`} onClick={event => navigate(event, href, item.unitId)}>Open<ArrowUpRight size={14} aria-hidden /></a> : <span className={styles.muted}>Authorised colleague</span>}</td>
     </tr>;
   });
@@ -121,7 +123,7 @@ export function InternalDashboard({ snapshot, buildingId, scopeLabel, error, ref
       <p className={styles.caption}>Up to 7 entries from the last 7 days. Latest milestone per sale and event type; open a sale for its full history.</p>
       {!snapshot ? loading ? <ul aria-hidden="true">{Array.from({ length: 2 }, (_, index) => <li key={index}><DashboardSkeleton /><small><DashboardSkeleton variant="secondary" /></small></li>)}</ul> : <p className={styles.muted}>Recent activity unavailable.</p> : snapshot.sources.some(source => source.key === "history" && source.state !== "ready") ? <p className={styles.muted}>Recent activity unavailable.</p> : snapshot.activity.length ? <ul>{snapshot.activity.map(event => {
         const href = destinationUrl(event.destination, buildingId);
-        return <li key={event.id}><a href={href} onClick={click => navigate(click, href, event.destination.unitId)}>{[event.buildingName, event.reference].filter(Boolean).join(" · ")}{(event.buildingName || event.reference) && " — "}{event.text}</a><small>{event.account ?? "Account not recorded"} · {formatWorkDate(event.at)}</small></li>;
+        return <li key={event.id}><a href={href} onClick={click => navigate(click, href, event.destination.unitId)}>{[event.buildingName, event.reference].filter(Boolean).join(" · ")}{(event.buildingName || event.reference) && " — "}{event.text}</a><small><DisplayValue value={event.account === "Account not recorded" ? null : event.account} /> · {formatWorkDate(event.at)}</small></li>;
       })}</ul> : <p className={styles.muted}>No recent sales milestones in the available history.</p>}
     </details>
   </section>;

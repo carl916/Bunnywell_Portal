@@ -1,3 +1,6 @@
+import {deliverSalesEmails} from '@/lib/workspace/sales-email-delivery';
+import {isStagingSalesRequest} from '@/lib/workspace/staging-email';
+import {renderLegalEmailContent} from '@/lib/sales/legal-email';
 import { completionUploadAction } from "@/lib/sales/completion-upload-server";
 import { SalesServerTiming } from "@/lib/sales/server-performance";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -127,6 +130,24 @@ async function postLegal(request: Request, timing: SalesServerTiming) {
     const snapshot = snapshotResult.data as LegalSnapshot;
     if (["preview", "send", "retry_email", "refresh_delivery"].includes(action)) {
       if (!canPerformSalesAction(role, "approve_exchange")) throw new Error("Only authorised developer users can issue instructions.");
+      const stagingSales=isStagingSalesRequest(request.url,process.env);
+      if(stagingSales){
+       if(action==='retry_email'||action==='refresh_delivery'){
+        // Staging status reads must never wake a queued or uncertain send.
+        // The old retry control is retained only as a read-only compatibility alias.
+        const result=await client.rpc('workspace_legal_test_delivery',{p_sale:sale,p_actor:actor});if(result.error)throw result.error;return NextResponse.json({deliveries:result.data});
+       }
+       const kind=payload.kind;if(kind!=='authority'&&kind!=='notice_authority')throw Error('Choose an instruction type.');
+       const date=kind==='notice_authority'?'':String(payload.date||new Date(Date.now()+48*3600000).toISOString());
+       const url='https://staging.bunnywell.co.uk/workspace?'+new URLSearchParams({view:'sale',building:String(snapshot.building.id),unit:snapshot.unit_id,sale,section:kind==='authority'?'exchange':'completion'});
+       const rendered={...renderLegalEmail(snapshot,kind,date),...renderLegalEmailContent(snapshot,kind,date,url),from:process.env.SALES_FROM_EMAIL||process.env.DIGEST_FROM_EMAIL||'Bunnywell Portal <no-reply@bunnywell.co.uk>'};
+       const preview={sale,kind,date,snapshot,...rendered};if(action==='preview')return NextResponse.json({...preview,token:signature(preview)});
+       if(!sameSignature(String(payload.token||''),signature(preview)))throw Error('Review a fresh preview before sending.');
+       const issued=await client.rpc('workspace_capture_legal_email',{p_sale:sale,p_actor:actor,p_request:payload.requestId,p_kind:kind,p_snapshot:snapshot,p_email:rendered,p_date:date||null});if(issued.error)throw issued.error;
+       const records=await client.rpc('workspace_legal_test_delivery',{p_sale:sale,p_actor:actor});if(records.error)throw records.error;
+       const d=records.data.find((item:{emailId:string})=>item.emailId===issued.data.emailId);if(d)await deliverSalesEmails(d.id,1);
+       return NextResponse.json({email:issued.data,actualDestination:'carl@accoladeproperties.co.uk'});
+      }
       if (action === "refresh_delivery") {
         const found = await client.from("sale_legal_emails").select("*").eq("sale_attempt_id", sale).eq("id", payload.emailId).single();
         if (found.error) throw found.error;

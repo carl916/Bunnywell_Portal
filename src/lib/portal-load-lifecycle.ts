@@ -59,7 +59,13 @@ export function createSessionLifecycle<U extends SessionUser>(options: {
     if (!alive || current !== epoch) return;
     // Validate a new principal with Auth rather than trusting stored session data.
     const verified = identity === session.user.id ? session.user : await options.validate();
-    if (!alive || current !== epoch || verified?.id !== session.user.id) return;
+    if (!alive || current !== epoch) return;
+    if (!verified || verified.id !== session.user.id) {
+      identity = null;
+      appliedToken = null;
+      options.clear();
+      return;
+    }
     if (identity && identity !== verified.id) options.clear();
     identity = verified.id;
     appliedToken = session.access_token;

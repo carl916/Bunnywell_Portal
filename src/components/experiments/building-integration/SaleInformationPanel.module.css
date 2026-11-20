@@ -1,0 +1,51 @@
+.panel { display:contents; color:inherit; }
+.heading { display:none; }
+
+@media(max-width:1023px) {
+ .panel:not([open]) { display:none; }
+ .panel[open] {
+  position:fixed;
+  inset:0;
+  display:block;
+  width:100%;
+  max-width:none;
+  height:100dvh;
+  max-height:none;
+  margin:0;
+  padding:0 max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
+  border:0;
+  border-radius:0;
+  background:var(--canvas,#f7f5ef);
+  color:var(--ink,#1a332a);
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+ }
+ .panel::backdrop { background:#0f3d2e66; }
+ .heading {
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:var(--canvas,#f7f5ef);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:calc(16px + env(safe-area-inset-top)) 0 12px;
+ }
+ .heading>div { min-width:0; }
+ .panel .heading h2 { margin:0; font-size:22px; line-height:1.25; }
+ .panel .heading p { margin:8px 0 0; color:var(--muted,#617169); font-size:14px; overflow-wrap:anywhere; }
+ .heading button { display:grid; place-items:center; width:44px; min-width:44px; height:44px; border:1px solid var(--line,#d9ded6); border-radius:8px; background:white; }
+ .heading button:focus-visible { outline:2px solid var(--green,#0f3d2e); outline-offset:3px; }
+ .panel [data-sale-information] { display:flex; position:static; max-height:none; padding:0; border:0; overflow:visible; }
+ .panel [data-sale-information]>header { display:none; }
+ .panel [role="tablist"] { position:sticky; top:var(--sale-information-heading-height,90px); z-index:1; background:var(--canvas,#f7f5ef); }
+ .panel [role="tablist"] button { min-height:48px; }
+ .panel [data-sale-information] [role="tabpanel"],
+ .panel [data-sale-information] [role="region"] { flex:none; max-height:none; overflow:visible; scroll-margin-top:calc(var(--sale-information-heading-height,90px) + 64px); }
+ .panel [data-sale-information] [role="region"] { padding-right:0; }
+ .panel [data-sale-information] form>div { flex-wrap:wrap; }
+ .panel [data-sale-information] form textarea { font-size:16px; }
+ .panel :is(a,button,input,textarea,summary,[tabindex]) { scroll-margin-top:calc(var(--sale-information-heading-height,90px) + 64px); }
+}

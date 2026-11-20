@@ -1,4 +1,6 @@
 "use client";
+
+import { DisplayValue } from "@/components/portal/DisplayValue";
 import { FurtherDepositTimingFields } from "./sales/FurtherDepositTimingFields";
 import { timingError, timingDescription, type FurtherDepositTiming } from "@/lib/sales/further-deposit";
 
@@ -3227,7 +3229,7 @@ function UnitStructureCard({
                 <div className="grid gap-2 lg:grid-cols-[10rem_9rem_6rem_6rem_minmax(12rem,1fr)_auto] lg:items-center lg:gap-3">
                   <div><h4 className="font-semibold text-[#0F3D2E]">Unit {unit.unit_number}</h4><p className={`text-xs ${unitPrice === null ? "text-[#a15b3d]" : "text-[#617169]"}`}>{unitPrice === null ? "Price not set" : formatGbp(unitPrice)}</p></div>
                   <p className="text-sm text-[#34413a]">{unitType}</p>
-                  <p className="text-sm text-[#617169]">{unit.size_sqm ? `${unit.size_sqm} sqm` : "—"}</p>
+                  <p className="text-sm text-[#617169]"><DisplayValue value={unit.size_sqm == null ? null : `${unit.size_sqm} sqm`} /></p>
                   <p className="text-sm text-[#617169]">{formatParkingBays(unit.parking_bays)}</p>
                   <div className="flex flex-wrap gap-1"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(unit.sale_status)}`}>{statusLabel(unit.sale_status)}</span>{unit.rental_portfolio_status === "active" && <span className="rounded-md bg-[#eef8fa] px-2 py-1 text-xs font-semibold text-[#315f6a]">Rental</span>}</div>
                   <div className="flex gap-2 lg:justify-end">
@@ -3600,7 +3602,7 @@ function AdminSetup({
             </div>
             {hasWarning && (
               <div className="rounded-bw-inset border border-[#D6A23A] bg-[#fff8e7] p-3 text-sm text-[#5c4a1f]">
-                PC date requires confirmation: {selectedBuilding.name} has an expected PC date of {formatDate(pcDateValue)}, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
+                PC date requires confirmation: {selectedBuilding.name} has an expected PC date of <DisplayValue value={formatDate(pcDateValue)} />, but PC has not been confirmed. The portal has not moved into the initial defects reporting period.
               </div>
             )}
 
@@ -3644,8 +3646,8 @@ function AdminSetup({
               </div>
             ) : (
               <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
-                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{pcConfirmedValue ? "PC confirmed" : "Expected PC"}</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{pcDateValue ? formatDate(pcDateValue) : "Not set"}</dd></div>
-                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Defects reporting</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reportingEnd ? `Closes ${formatDate(reportingEnd)}` : "Awaiting PC confirmation"}</dd>{closingStart && <dd className="mt-0.5 text-xs text-[#617169]">Closing notice begins {formatDate(closingStart)}</dd>}</div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{pcConfirmedValue ? "PC confirmed" : "Expected PC"}</dt><dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={formatDate(pcDateValue)} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Defects reporting</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reportingEnd ? `Closes ${formatDate(reportingEnd)}` : "Awaiting PC confirmation"}</dd>{closingStart && <dd className="mt-0.5 text-xs text-[#617169]">Closing notice begins <DisplayValue value={formatDate(closingStart)} /></dd>}</div>
                 <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Resident portal</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{lifecycleLabel(portalMode)}</dd><dd className="mt-0.5 text-xs text-[#617169]">New access requests {allowRequestsValue ? "On" : "Off"}</dd></div>
               </dl>
             )}
@@ -4012,9 +4014,9 @@ function BuildingSalesSetup({
           <button className="snag-action-link" type="button" onClick={() => setIsEditing(true)} disabled={isLoading}>{isLoading ? "Loading…" : "Edit"}</button>
         </div>
         <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: {buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : "Not set"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{agentFeePercent ? `${agentFeePercent}% total` : "Not set"}</dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : "Not set"}</dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Development</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">Build cost: <DisplayValue value={buildCost ? formatGbp(moneyInputToNumber(buildCost) ?? 0) : null} /></dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agent fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={agentFeePercent ? `${agentFeePercent}% total` : null} /></dd>{agentFeePercent && <dd className="mt-0.5 text-xs text-[#617169]">{exchangeAgentFeePercent || "0"}% exchange · {completionAgentFeePercent || "0"}% completion</dd>}</div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Reservation fee</dt><dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={reservationFee ? formatGbp(moneyInputToNumber(reservationFee) ?? 0) : null} /></dd><dd className="mt-0.5 text-xs text-[#617169]">Holder: {reservationFeeHolderLabel}</dd></div>
           <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Buyer payment schedule</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{depositStructure.exchangeDepositPercent}% exchange{depositStructure.secondDepositEnabled ? ` / ${depositStructure.secondDepositPercent}% further deposit` : ""} / {depositStructure.completionBalancePercent}% completion</dd>{depositStructure.secondDepositEnabled && <dd className="mt-0.5 text-xs text-[#617169]">Further deposit due: {timingDescription(furtherDepositTiming, secondDepositMonths === "" ? null : Number(secondDepositMonths))}</dd>}</div>
         </dl>
       </section>
@@ -4250,9 +4252,9 @@ function BuildingDeliveryTeam({
       </div>
       {!isEditing ? (
         <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-3">
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Main contractor</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === mainContractorLink?.organisation_id)?.name ?? "Not set"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]">{organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name ?? "Not set"}</dd></div>
-          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? "None" : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Main contractor</dt><dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={organisations.find((item) => item.id === mainContractorLink?.organisation_id)?.name} /></dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Developer representative</dt><dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={organisations.find((item) => item.id === developerRepLink?.organisation_id)?.name} /></dd></div>
+          <div><dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Supporting trades</dt><dd className="mt-1 grid gap-1 font-semibold text-[#0F3D2E]">{supportingTradeLinks.length === 0 ? <DisplayValue /> : supportingTradeLinks.map((link) => <span key={link.id}>{organisations.find((item) => item.id === link.organisation_id)?.name ?? "Unknown organisation"}{link.trade_type ? <small className="ml-1 font-normal text-[#617169]">· {link.trade_type}</small> : null}</span>)}</dd></div>
         </dl>
       ) : <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">
@@ -4867,16 +4869,16 @@ function UserDirectory({
             <article key={row.key} data-access-request={row.kind === "request" ? row.id : undefined} style={{ scrollMarginTop: "9rem" }} className={`mobile-card ${isOpen ? "mobile-card-active" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-bold text-[#1F2A24]">{row.name}</p>
+                  <p className="truncate font-bold text-[#1F2A24]"><DisplayValue value={row.name === "No name" ? null : row.name} /></p>
                   <p className="mt-0.5 truncate text-sm text-[#66736B]">{row.email}</p>
                 </div>
                 <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
               </div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Role/type</span><span className="min-w-0 break-words text-right font-medium">{row.roleLabel}</span></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Organisation</span><span className="min-w-0 break-words text-right font-medium">{row.organisation || "—"}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Organisation</span><span className="min-w-0 break-words text-right font-medium"><DisplayValue value={row.organisation} /></span></div>
                 <div><span className="text-[#66736B]">Allocation</span><p className="mt-1 break-words text-[#1F2A24]">{row.allocation}</p></div>
-                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last active</span><span className="min-w-0 text-right font-medium">{lastActiveLabel(row)}</span></div>
+                <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3"><span className="text-[#66736B]">Last active</span><span className="min-w-0 text-right font-medium"><DisplayValue value={lastActiveLabel(row)} /></span></div>
               </div>
               <div className="mt-3 flex justify-end gap-2">
                 <button
@@ -4945,18 +4947,18 @@ function UserDirectory({
                 <Fragment key={row.key}>
                   <tr data-access-request={row.kind === "request" ? row.id : undefined} style={{ scrollMarginTop: "9rem" }} className={`${isOpen ? "bg-[#fff8ec]" : ""} ${isMuted ? "opacity-60 grayscale" : ""}`}>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
-                      <p className="font-medium">{row.name}</p>
+                      <p className="font-medium"><DisplayValue value={row.name === "No name" ? null : row.name} /></p>
                       <p className="text-xs text-[#617169]">{row.email}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <span className={statusTone(row.status)}>{statusLabel(row.status)}</span>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.roleLabel}</td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{row.organisation || <span className="text-xs text-[#9aa59f]">—</span>}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle"><DisplayValue value={row.organisation} /></td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <p>{row.allocation}</p>
                     </td>
-                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">{lastActiveLabel(row)}</td>
+                    <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle"><DisplayValue value={lastActiveLabel(row)} /></td>
                     <td className="border-b border-[#e5e9e4] px-3 py-3 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
@@ -5184,8 +5186,8 @@ function AccessRequestReviewPanel({
         <InfoRow label="Existing profile" value={existingProfileLabel} />
         {existingProfile && <InfoRow label="Existing role" value={statusLabel(existingProfile.role)} />}
         {existingProfile && <InfoRow label="Current access" value={currentAllocation} />}
-        {!isPending && <InfoRow label="Reviewed" value={request.reviewed_at ? formatDate(request.reviewed_at) : "Not recorded"} />}
-        {!isPending && <InfoRow label="Reviewer" value={reviewer?.full_name || reviewer?.name || reviewer?.email || "Not recorded"} />}
+        {!isPending && <InfoRow label="Reviewed" value={formatDate(request.reviewed_at)} />}
+        {!isPending && <InfoRow label="Reviewer" value={reviewer?.full_name || reviewer?.name || reviewer?.email} />}
       </div>
 
       <div className="form-section mt-4">
@@ -5239,11 +5241,11 @@ function AccessRequestReviewPanel({
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
       <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#66736B]">{label}</p>
-      <p className="mt-1 text-sm font-medium text-[#1F2A24]">{value || "None"}</p>
+      <p className="mt-1 text-sm font-medium text-[#1F2A24]"><DisplayValue value={value} /></p>
     </div>
   );
 }
@@ -5616,12 +5618,12 @@ function UserEditPanel({
                       <span className={statusTone(request.status)}>{statusLabel(request.status)}</span>
                       <p className="mt-2 text-sm font-semibold text-[#1F2A24]">{requestUnitsLabel(request)}</p>
                     </div>
-                    <p className="text-xs text-[#617169]">Submitted {formatDate(request.created_at)}</p>
+                    <p className="text-xs text-[#617169]">Submitted <DisplayValue value={formatDate(request.created_at)} /></p>
                   </div>
                   <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
-                    <p><span className="font-semibold text-[#0F3D2E]">Phone:</span> {request.phone || "None"}</p>
+                    <p><span className="font-semibold text-[#0F3D2E]">Phone:</span> <DisplayValue value={request.phone} /></p>
                     <p><span className="font-semibold text-[#0F3D2E]">Reviewed:</span> {request.reviewed_at ? formatDate(request.reviewed_at) : "Not reviewed"}</p>
-                    <p><span className="font-semibold text-[#0F3D2E]">Reviewer:</span> {reviewer?.full_name || reviewer?.name || reviewer?.email || "Not recorded"}</p>
+                    <p><span className="font-semibold text-[#0F3D2E]">Reviewer:</span> <DisplayValue value={reviewer?.full_name || reviewer?.name || reviewer?.email} /></p>
                     <p><span className="font-semibold text-[#0F3D2E]">Resident type:</span> {statusLabel(request.resident_type)}</p>
                   </div>
                   {request.notes && <p className="mt-3 text-sm text-[#1F2A24]"><span className="font-semibold text-[#0F3D2E]">Requester notes:</span> {request.notes}</p>}
@@ -6190,7 +6192,7 @@ function OrganisationManagement({
                 <div>
                   <p className="font-medium">{organisation.name}</p>
                   <p className="text-xs text-[#617169]">{organisationTypeLabel(organisation.type)}</p>
-                  <p className="mt-1 break-all text-sm">Shared system email: {organisation.shared_system_email || "Not configured"}</p>
+                  <p className="mt-1 break-all text-sm">Shared system email: <DisplayValue value={organisation.shared_system_email} /></p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -6814,12 +6816,12 @@ function UnitsSection({
                   <tr key={unit.id}>
                     <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
                       <p className="font-semibold text-[#1F2A24]">{unit.unit_number}</p>
-                      <p className="text-xs text-[#617169]">{unit.floor ?? "No floor"}{parkingLabel}</p>
+                      <p className="text-xs text-[#617169]"><DisplayValue value={unit.floor} />{parkingLabel}</p>
                     </td>
                     <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle"><span className={statusTone(unit.sale_status)}>{statusLabel(unit.sale_status)}</span></td>
                     <td className="border-b border-[#e5e9e4] px-3 py-2 align-middle">
                       {handoverUnitIds.has(unit.id) ? (
-                        <span className="text-[#0F3D2E]">{formatDateTime(latestHandover?.handover_datetime ?? latestHandover?.created_at ?? latestHandover?.handover_date)}</span>
+                        <span className="text-[#0F3D2E]"><DisplayValue value={formatDateTime(latestHandover?.handover_datetime ?? latestHandover?.created_at ?? latestHandover?.handover_date)} /></span>
                       ) : (
                         <span className="text-[#617169]">Not handed over</span>
                       )}
@@ -7170,9 +7172,9 @@ function LeaseholderDefects({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Selected home</p>
               <h1 className="mt-1 text-2xl font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"} {selectedUnit?.unit_number ?? ""}</h1>
               <div className="mt-2 flex flex-wrap gap-2 text-sm text-[#617169]">
-                <span>Flat {selectedUnit?.unit_number ?? "-"}</span>
+                <span>Flat <DisplayValue value={selectedUnit?.unit_number} /></span>
                 <span aria-hidden>/</span>
-                <span>{selectedUnit?.floor || "Floor not set"}</span>
+                <span><DisplayValue value={selectedUnit?.floor} /></span>
                 <span aria-hidden>/</span>
                 <span>Bay: {formatParkingBays(selectedUnit?.parking_bays)}</span>
               </div>
@@ -7265,7 +7267,7 @@ function LeaseholderDefects({
                       <div key={snag.id} className="flex items-center justify-between gap-3 py-3">
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-[#0F3D2E]">{snag.title}</p>
-                          <p className="text-sm text-[#617169]">{areas.find((area) => area.id === snag.area_id)?.name ?? "No area"}</p>
+                          <p className="text-sm text-[#617169]"><DisplayValue value={areas.find((area) => area.id === snag.area_id)?.name} /></p>
                         </div>
                         <span className={statusTone(snag.status)}>{residentSnagStatusLabel(snag.status)}</span>
                       </div>
@@ -7371,7 +7373,7 @@ function LeaseholderDefects({
             {hasSingleUnit ? (
               <div className="rounded-bw-inset border border-[#d9ded6] bg-[#f8faf7] p-3 text-sm">
                 <p className="font-semibold text-[#0F3D2E]">{selectedBuilding?.name ?? "Building"}</p>
-                <p className="mt-1 text-[#34413a]">Unit {selectedUnit?.unit_number ?? "-"}</p>
+                <p className="mt-1 text-[#34413a]">Unit <DisplayValue value={selectedUnit?.unit_number} /></p>
               </div>
             ) : (
               <>
@@ -7400,8 +7402,8 @@ function LeaseholderDefects({
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0F3D31]">{selectedBuilding?.name ?? "No building"}</p>
-            <h2 className="mt-1 text-2xl font-semibold">Unit {selectedUnit?.unit_number ?? "-"}</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0F3D31]"><DisplayValue value={selectedBuilding?.name} /></p>
+            <h2 className="mt-1 text-2xl font-semibold">Unit <DisplayValue value={selectedUnit?.unit_number} /></h2>
             <p className="mt-1 text-sm text-[#617169]">
               Parking bay{(selectedUnit?.parking_bays?.length ?? 0) === 1 ? "" : "s"}: {formatParkingBays(selectedUnit?.parking_bays)}
             </p>
@@ -7445,7 +7447,7 @@ function LeaseholderDefects({
         </div>
         {selectedBuildingLifecycle === "dlp_closing" && selectedBuildingReportingEnd && (
           <div className="mt-4 rounded-bw-inset border border-[#E5C27B] bg-[#FFF8E8] p-4 text-sm text-[#7A5A1F]">
-            <p className="font-semibold text-[#5F4315]">The initial defects reporting period for this building is due to close on {formatDate(selectedBuildingReportingEnd)}.</p>
+            <p className="font-semibold text-[#5F4315]">The initial defects reporting period for this building is due to close on <DisplayValue value={formatDate(selectedBuildingReportingEnd)} />.</p>
             <p className="mt-2">Please make sure any outstanding routine snagging items are submitted through the portal before this date.</p>
             <p className="mt-2">After this date, the portal will remain available as a record and document library, but new routine snag reports will no longer be accepted through the portal.</p>
           </div>
@@ -7545,7 +7547,7 @@ function LeaseholderDefects({
                 <div key={reading.id} className="grid gap-2 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div>
                     <p className="font-medium">{statusLabel(reading.meter_type)}: {reading.reading_value}</p>
-                    <p className="text-sm text-[#617169]">{formatDateTime(reading.created_at)}</p>
+                    <p className="text-sm text-[#617169]"><DisplayValue value={formatDateTime(reading.created_at)} /></p>
                   </div>
                   <button
                     className="secondary min-h-9 px-3 py-1.5 text-sm"
@@ -7745,7 +7747,7 @@ function SelectedUnitHandover({
     return (
       <div className="rounded-bw-inset border border-[#d9ded6] bg-white p-3 text-sm">
         <p className="font-semibold text-[#0F3D2E]">Handover complete</p>
-        <p className="mt-1 text-[#34413a]">Completed on {formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}.</p>
+        <p className="mt-1 text-[#34413a]">Completed on <DisplayValue value={formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)} />.</p>
         {isResident ? (
           <p className="mt-1 text-[#617169]">Completed by an authorised user.</p>
         ) : (
@@ -7884,11 +7886,11 @@ function TriageActions({ user, snag, buildings, organisations, onNotice, reload 
   );
 }
 
-function SummaryTile({ label, value }: { label: string; value: string | number }) {
+function SummaryTile({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
       <p className="text-xs font-semibold uppercase text-[#617169]">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-[#0F3D31]">{value}</p>
+      <p className="mt-1 text-2xl font-semibold text-[#0F3D31]"><DisplayValue value={value} /></p>
     </div>
   );
 }
@@ -8126,7 +8128,7 @@ function HandoverAndMeters({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-bold text-[#0F3D2E]">Handover completed</p>
-                <p className="text-sm text-[#617169]">{formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)}</p>
+                <p className="text-sm text-[#617169]"><DisplayValue value={formatDateTime(existingHandover.handover_datetime ?? existingHandover.created_at ?? existingHandover.handover_date)} /></p>
               </div>
               <span className={statusTone("closed")}>Handed Over</span>
             </div>
@@ -8216,9 +8218,9 @@ function HandoverAndMeters({
             <div className="grid gap-4">
               <SectionHeader title="Review and submit" subtitle="Check the record before creating the permanent handover." />
               <div className="grid gap-3 md:grid-cols-2">
-                <SummaryTile label="Building" value={selectedBuilding?.name ?? "-"} />
-                <SummaryTile label="Unit" value={selectedUnit?.unit_number ?? "-"} />
-                <SummaryTile label="Recipient" value={recipientName || "-"} />
+                <SummaryTile label="Building" value={selectedBuilding?.name} />
+                <SummaryTile label="Unit" value={selectedUnit?.unit_number} />
+                <SummaryTile label="Recipient" value={recipientName} />
                 <SummaryTile label="Relationship" value={relationship === "Other" ? relationshipOther : relationship} />
                 <SummaryTile label="Keys/fobs" value={totalKeys} />
                 <SummaryTile label="Meters" value="Electricity and water" />
@@ -9356,7 +9358,7 @@ function SnagList({
                 <div className="grid grid-cols-[minmax(0,1fr)_58px] gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold leading-tight text-[#1F2A24]">{snag.title}</p>
-                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{contextIsAll ? `${building?.name ?? "Building"} / ` : ""}{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+                    <p className="mt-0.5 truncate text-xs text-[#66736B]">{contextIsAll ? `${building?.name ?? "Building"} / ` : ""}{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / <DisplayValue value={area?.name} /></p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       {snag.priority_code && <span className={statusTone(snag.priority_code)}>{snag.priority_code}</span>}
@@ -9374,10 +9376,10 @@ function SnagList({
                   {!residentMode && (
                     <div className="min-w-0 truncate text-[#66736B]">
                       <span className="mr-1">Trade</span>
-                      <span className="font-medium text-[#1F2A24]">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</span>
+                      <span className="font-medium text-[#1F2A24]">{tradeControl ? tradeControl(snag, trade) : <DisplayValue value={trade?.name} />}</span>
                     </div>
                   )}
-                  <span className={`font-medium text-[#1F2A24] ${residentMode ? "col-start-2" : ""}`}>{formatDate(snag.created_at)}</span>
+                  <span className={`font-medium text-[#1F2A24] ${residentMode ? "col-start-2" : ""}`}><DisplayValue value={formatDate(snag.created_at)} /></span>
                 </div>
                 <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-[#E2DED3] pt-2">
                   {rowActions}
@@ -9435,12 +9437,12 @@ function SnagList({
                       </td>
                       {contextIsAll && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{building?.name ?? "Building"}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{unit?.unit_number ?? "Communal"}</td>
-                      <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{area?.name ?? "No area"}</td>
-                      {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : trade?.name ?? "No trade"}</td>}
+                      <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle"><DisplayValue value={area?.name} /></td>
+                      {!residentMode && <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">{tradeControl ? tradeControl(snag, trade) : <DisplayValue value={trade?.name} />}</td>}
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         <span className={statusTone(snag.status)} title={statusLabel(snag.status)}>{displayTableStatusLabel(snag.status)}</span>
                       </td>
-                      <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle whitespace-nowrap">{formatDate(snag.created_at)}</td>
+                      <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle whitespace-nowrap"><DisplayValue value={formatDate(snag.created_at)} /></td>
                       <td className="border-b border-[#e5e9e4] bg-white px-3 py-2 align-middle">
                         {photo?.file_url ? (
                           <PhotoThumb photo={photo} onOpen={setPreviewPhoto} />
@@ -9817,7 +9819,7 @@ function SnagDetailPage({
           </div>
         </div>
         <h2 className="mt-3 text-xl font-semibold">{snag.title}</h2>
-        <p className="text-sm text-[#617169]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / {area?.name ?? "No area"}</p>
+        <p className="text-sm text-[#617169]">{unit?.unit_number ? `${residentMode ? "Flat" : "Unit"} ${unit.unit_number}` : "Communal"} / <DisplayValue value={area?.name} /></p>
         {hasDetailActions && (
           <div className="mt-3 rounded-md border border-[#d9ded6] bg-[#f8faf7] p-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -9864,15 +9866,15 @@ function SnagDetailPage({
           </div>
           <div className="grid gap-3 rounded-md border border-[#d9ded6] p-3 text-sm sm:grid-cols-2">
             <DetailField label={residentMode ? "Flat" : "Unit"} value={unit?.unit_number ?? "Communal"} />
-            <DetailField label="Area" value={area?.name ?? "No area"} />
+            <DetailField label="Area" value={area?.name} />
             {!residentMode && <div>
               <p className="text-xs font-semibold uppercase text-[#617169]">Trade</p>
-              <div className="mt-1">{tradeControl ?? trade?.name ?? <span className="text-xs text-[#9aa59f]">No trade</span>}</div>
+              <div className="mt-1">{tradeControl ?? <DisplayValue value={trade?.name} />}</div>
             </div>}
             <DetailField label="Created" value={formatDateTime(snag.created_at)} />
             <div className="sm:col-span-2">
               <p className="text-xs font-semibold uppercase text-[#617169]">Description</p>
-              <p className="mt-1 text-[#34413a]">{snag.description || "No description"}</p>
+              <p className="mt-1 text-[#34413a]"><DisplayValue value={snag.description} /></p>
             </div>
           </div>
           <div className="rounded-md border border-[#d9ded6] p-3">
@@ -9903,11 +9905,11 @@ function SnagDetailPage({
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
             <div className="rounded-md border border-[#d9ded6] bg-white p-2">
               <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Created</p>
-              <p className="mt-1 text-xs text-[#34413a]">{formatDateTime(snag.created_at)}</p>
+              <p className="mt-1 text-xs text-[#34413a]"><DisplayValue value={formatDateTime(snag.created_at)} /></p>
             </div>
             <div className="rounded-md border border-[#d9ded6] bg-white p-2">
               <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Updated</p>
-              <p className="mt-1 text-xs text-[#34413a]">{formatDateTime(new Date(lastUpdatedTime).toISOString())}</p>
+              <p className="mt-1 text-xs text-[#34413a]"><DisplayValue value={formatDateTime(new Date(lastUpdatedTime).toISOString())} /></p>
             </div>
             <div className="rounded-md border border-[#d9ded6] bg-white p-2">
               <p className="text-[0.68rem] font-semibold uppercase text-[#617169]">Notes</p>
@@ -9940,7 +9942,7 @@ function SnagDetailPage({
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-[#0F3D2E]">{timelineHeading(event)}</p>
-                      <p className="mt-1 text-xs text-[#617169]">{formatDateTime(event.created_at)} / {timelineAuthorName(event)}</p>
+                      <p className="mt-1 text-xs text-[#617169]"><DisplayValue value={formatDateTime(event.created_at)} /> / {timelineAuthorName(event)}</p>
                     </div>
                     {event.new_value && <span className={`rounded-md px-2 py-1 text-xs font-semibold ${statusTone(event.new_value)}`}>{statusLabel(event.new_value)}</span>}
                   </div>
@@ -9961,7 +9963,7 @@ function SnagDetailPage({
                       <p className="font-semibold text-[#0F3D2E]">
                         {grouped ? `${authorName(group.userId)} added ${group.events.length} notes` : authorName(group.userId)}
                       </p>
-                      <p className="text-xs text-[#617169]">{formatDateTime(group.createdAt)}</p>
+                      <p className="text-xs text-[#617169]"><DisplayValue value={formatDateTime(group.createdAt)} /></p>
                     </div>
                     {grouped && (
                       <button className="mt-2 text-xs font-semibold text-[#0F3D2E] underline" onClick={() => toggleNoteGroup(group.id)}>
@@ -9971,7 +9973,7 @@ function SnagDetailPage({
                     {(!grouped || expanded) && (
                       <div className="mt-3 grid gap-2">
                         {group.events.map((event) => (
-                          <p key={event.id} className="rounded-md bg-[#f8faf7] px-3 py-2 text-[#34413a]">{event.comment || "No note text recorded."}</p>
+                          <p key={event.id} className="rounded-md bg-[#f8faf7] px-3 py-2 text-[#34413a]"><DisplayValue value={event.comment} /></p>
                         ))}
                       </div>
                     )}
@@ -10009,7 +10011,7 @@ function SnagDetailPage({
                   </span>
                   <span className="self-center text-sm">
                     <span className="block font-semibold text-[#0F3D2E]">{snagMediaType(item) === "video" ? "Video" : item.photo_type === "resolution_photo" ? "Follow-up photo" : "Snag photo"}</span>
-                    <span className="mt-1 block text-xs text-[#617169]">{formatDateTime(item.created_at)} / {authorName(item.uploaded_by_user_id)}</span>
+                    <span className="mt-1 block text-xs text-[#617169]"><DisplayValue value={formatDateTime(item.created_at)} /> / {authorName(item.uploaded_by_user_id)}</span>
                   </span>
                 </button>
               ))}
@@ -10022,7 +10024,7 @@ function SnagDetailPage({
                 <div key={event.id} className="rounded-md border border-[#d9ded6] bg-white p-3 text-sm">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-semibold text-[#0F3D2E]">{eventLabel(event.event_type)}</p>
-                    <p className="text-xs text-[#617169]">{formatDateTime(event.created_at)}</p>
+                    <p className="text-xs text-[#617169]"><DisplayValue value={formatDateTime(event.created_at)} /></p>
                   </div>
                   <p className="mt-1 text-xs text-[#617169]">{authorName(event.created_by_user_id)}</p>
                   {event.comment && <p className="mt-2 text-[#34413a]">{event.comment}</p>}
@@ -10059,7 +10061,7 @@ function DetailField({ label, value }: { label: string; value: React.ReactNode }
   return (
     <div>
       <p className="text-xs font-semibold uppercase text-[#617169]">{label}</p>
-      <p className="mt-1 text-[#34413a]">{value}</p>
+      <p className="mt-1 text-[#34413a]"><DisplayValue value={value} /></p>
     </div>
   );
 }

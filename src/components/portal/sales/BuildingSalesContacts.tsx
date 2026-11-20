@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue } from "@/components/portal/DisplayValue";
+
 import { useState } from "react";
 import type { Building, Organisation } from "@/lib/data/production";
 import { salesContactOptions } from "@/lib/sales/legal-workflow";
@@ -50,7 +52,7 @@ export function BuildingSalesContacts({ building, organisations, onNotice, reloa
         const org = organisations.find((item) => item.id === id);
         return <div key={type}>
           <dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{label}</dt>
-          <dd className="mt-1 font-semibold text-[#0F3D2E]">{org?.name ?? "Not selected"}</dd>
+          <dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={org?.name} /></dd>
           {org && (org.shared_system_email
             ? <dd className="mt-0.5 break-all text-xs text-[#617169]">{org.shared_system_email}</dd>
             : <dd className="mt-0.5 text-xs text-amber-800">Shared system email missing. <a className="underline" href={`/?screen=users#organisation-${org.id}`}>Edit organisation</a></dd>)}
@@ -58,12 +60,12 @@ export function BuildingSalesContacts({ building, organisations, onNotice, reloa
       })}
       <div>
         <dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Seller/SPV</dt>
-        <dd className="mt-1 font-semibold text-[#0F3D2E]">{seller || "Not configured"}</dd>
+        <dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={seller} /></dd>
         {!seller && <dd className="mt-0.5 text-xs text-amber-800">Required before instructions can be sent</dd>}
       </div>
       <div>
         <dt className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Agreed completion information</dt>
-        <dd className="mt-1 font-semibold text-[#0F3D2E]">{completion || "Contractual completion date to be confirmed"}</dd>
+        <dd className="mt-1 font-semibold text-[#0F3D2E]"><DisplayValue value={completion} /></dd>
       </div>
     </dl> : <div className="grid gap-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <div className="grid gap-3 lg:grid-cols-2">

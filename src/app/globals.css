@@ -157,7 +157,7 @@ textarea.field {
   box-shadow: 0 0 0 3px rgba(214, 162, 58, 0.22);
 }
 
-.gbp-input[data-disabled="true"] {
+.gbp-input[data-disabled="true"],.gbp-input:has(input:disabled) {
   cursor: not-allowed;
   background: #f1eee7;
   color: #8b968f;
@@ -190,6 +190,11 @@ textarea.field {
   cursor: not-allowed;
   color: #8b968f;
 }
+
+.pdf-upload-box { padding:18px; }
+.pdf-upload-file-info { display:grid; gap:6px; }
+.pdf-upload-file-actions { margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; }
+.pdf-upload-box:focus-within { outline:2px solid var(--bw-primary,#0f3d31); outline-offset:3px; }
 
 .primary,
 .secondary {

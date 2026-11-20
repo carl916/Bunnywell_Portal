@@ -80,7 +80,7 @@ function paymentTable(rows: Payment[]) {
   return `<table width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.5;"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-export function renderLegalEmailContent(snapshot: LegalSnapshot, kind: "authority" | "notice_authority", date: string, portalUrl: string) {
+export function renderLegalEmailContent(snapshot: LegalSnapshot, kind: "authority" | "notice_authority", date: string, portalUrl: string, presentation: "email" | "document" = "email") {
   const exchange = kind === "authority";
   const title = exchange ? "Authority to exchange" : "Authority to serve notice";
   const subtitle = `${snapshot.building.name} · Plot ${snapshot.plot}`;
@@ -91,7 +91,7 @@ export function renderLegalEmailContent(snapshot: LegalSnapshot, kind: "authorit
   if (exchange) details.push(["Reservation fee", `${emailMoney(snapshot.terms.reservation_fee)} (held by ${describeReservationFeeHolder(String(snapshot.terms.reservation_fee_holder ?? "")) === "-" ? "holder not recorded" : describeReservationFeeHolder(String(snapshot.terms.reservation_fee_holder))})`]);
   const approval = `Approved and issued by ${snapshot.approver.name} through Bunnywell.`;
   const text = ["Bunnywell Portal", title, subtitle, "", intro, "", "View sale file in Bunnywell Portal", portalUrl, "", "Sale details", ...details.map(([key, value]) => `${key}: ${value}`)];
-  let content = emailParagraph(intro) + emailPortalButton(portalUrl) + emailSection("Sale details", emailDetails(details));
+  let content = emailParagraph(intro) + (presentation === "email" ? emailPortalButton(portalUrl) : "") + emailSection("Sale details", emailDetails(details));
   if (exchange) {
     const commercial = commercialDetails(snapshot), payments = legalEmailPayments(snapshot);
     content += emailSection("Commercial terms", emailDetails(commercial)) + emailSection("Payment schedule", paymentTable(payments));
@@ -104,5 +104,5 @@ export function renderLegalEmailContent(snapshot: LegalSnapshot, kind: "authorit
     text.push("", "Authority validity", validity, explanation, "", closing);
   }
   text.push("", approval);
-  return { body: text.join("\n"), html: emailShell({ title, subtitle, content, approval }) };
+  return { body: text.join("\n"), html: presentation === "document" ? content + emailParagraph(approval) : emailShell({ title, subtitle, content, approval }) };
 }

@@ -53,3 +53,13 @@ node_modules/
 
 # Sensitive rental source workbooks must remain outside Git.
 **/*Rent_Arrears_Import*.xlsx
+
+# Private one-time integration migration exports, snapshots and file bytes.
+/tmp/selected-legacy-import/
+
+# Local staging snapshots, build output and private diagnostic artifacts
+/.next-*/
+/tmp/
+/artifacts/
+/.stage*/
+/.codex*/

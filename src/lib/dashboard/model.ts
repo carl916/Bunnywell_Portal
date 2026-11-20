@@ -94,8 +94,6 @@ export function deriveDashboard(input: DashboardInput): DashboardSnapshot {
       if (["reservation_rejected", "reservation_query_raised", "rejected"].includes(sale.workflow_status)) task("reservation_correct", "Correct and resubmit reservation", agent, sale.reservation_rejected_at, "Reservation returned", "submit_reservation", "sales-stage-reservation", {
         context: sale.reservation_rejection_reason ? { id: `${sale.id}:return`, text: sale.reservation_rejection_reason, at: sale.reservation_rejected_at ?? "", account: contextFor(events.find(e => /reservation_(rejected|query_raised)/.test(e.event_type)))?.account ?? null } : contextFor(),
       });
-      if (approved && !sale.commercial_approved_at && !["ready_for_exchange", "exchanged", "completion_pending"].includes(sale.workflow_status) && !exchanged)
-        task("commercial_review", "Approve commercial terms", developer, sale.reservation_approved_at, "Reservation approved", "approve_commercial_package", "sales-stage-exchange");
       if (available("legal") && approved && !exchanged) {
         const authority = exchangeAuthorityState(input.authorities.filter(e => e.sale_attempt_id === sale.id), events, sale.authority_requested_at, exchanged, now);
         const current = authority.current;

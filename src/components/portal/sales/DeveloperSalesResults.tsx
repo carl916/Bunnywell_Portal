@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue } from "@/components/portal/DisplayValue";
+
 import { useEffect, useMemo, type MouseEvent, type RefCallback } from "react";
 import { saleRecordUrl, salesReviewDestination, salesWorkSummary, selectDeveloperSalesRows, visibleSalesWork, type DeveloperSalesRow, type SalesOverviewFilters } from "@/lib/sales/developer-overview";
 import { formatGbp } from "@/lib/sales/currency";
@@ -46,10 +48,10 @@ export function DeveloperSalesResults({ rows, filters, onFilters, search, onOpen
             <td role="cell" className={styles.identity}><a className={styles.unit} href={unitHref} onClick={event => open(event, unitHref, row.unitId)}>Unit {row.unitNumber}</a><small>{row.buildingName}</small>
               {Boolean(unread?.get(row.unitId)) && <a className={styles.comments} href={`${unitHref}&conversation=${encodeURIComponent(row.destination.saleId ?? "")}`} onClick={event => open(event, `${unitHref}&conversation=${encodeURIComponent(row.destination.saleId ?? "")}`, row.unitId)}>{unread?.get(row.unitId)} unread comments</a>}
             </td>
-            <td role="cell" className={styles.position}><span className={styles.stage}>{saleStatusLabel(row.stage)}</span><small>{prices?.get(row.unitId) ? formatGbp(prices.get(row.unitId)!) : "Price not recorded"}</small>{stageAges?.get(row.unitId) && <small>{stageAges.get(row.unitId)} in stage</small>}</td>
+            <td role="cell" className={styles.position}><span className={styles.stage}>{saleStatusLabel(row.stage)}</span><small><DisplayValue value={formatGbp(prices?.get(row.unitId))} /></small>{stageAges?.get(row.unitId) && <small>{stageAges.get(row.unitId)} in stage</small>}</td>
             <td role="cell" className={styles.next}><p>{salesWorkSummary(actions) || row.warning || row.neutral}</p>{row.warning && salesWorkSummary(actions) && <p className={styles.mobileWarning}>{row.warning}</p>}{first && !(filters.work === "ours" && actions.every(item => item.responsibility.kind === "developer" && item.ours && item.canAct)) && <small>Action with {[...new Set(actions.map(item=>item.responsibility.label))].join(" / ")}{!first.canAct ? " · authorised colleague required" : ""}</small>}
             </td>
-            <td role="cell" className={styles.keyDate}><span className={row.keyDate?.warning ? styles.warning : undefined}>{row.keyDate?.label ?? "—"}</span>{row.keyDate && !row.keyDate.label.includes(row.keyDate.actual) && <small>{row.keyDate.actual}</small>}</td>
+            <td role="cell" className={styles.keyDate}><span className={row.keyDate?.warning ? styles.warning : undefined}><DisplayValue value={row.keyDate?.label} /></span>{row.keyDate && !row.keyDate.label.includes(row.keyDate.actual) && <small>{row.keyDate.actual}</small>}</td>
             <td role="cell" className={styles.primaryAction}>{displayError ? <button type="button" className={styles.review} disabled>Review unavailable</button> : <a className={styles.review} href={href} onClick={event => open(event, href, row.unitId)}>{actions.length > 1 ? `Review ${actions.length} actions` : first ? "Review action" : row.neutral === "Available for reservation" ? "Start reservation" : "Open sale"}</a>}</td>
           </tr>;
         })}</tbody>

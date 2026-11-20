@@ -1,0 +1,26 @@
+.invoice { border:1px solid var(--line); border-radius:6px; background:var(--surface-soft); padding:18px; margin-bottom:16px; display:grid; gap:16px; min-width:0; }
+.header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.header h2 { font-size:17px; }
+.reference { font-size:12px; color:var(--muted); margin-top:4px!important; overflow-wrap:anywhere; }
+.summary { display:grid; gap:16px 24px; }
+.summary h3 { font-size:12px; margin-bottom:8px; color:var(--muted); }
+.amounts { display:grid; gap:6px; font-size:12px; margin:0; }
+.amounts>div { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; gap:12px; }
+.amounts dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.amounts [data-total] { border-top:1px solid var(--line); padding-top:8px; margin-top:3px; font-weight:700; }
+.settlement { display:grid; gap:14px; }
+.hint { font-size:11px; color:var(--muted); margin-top:8px!important; }
+.form,.form fieldset,.review { display:grid; gap:14px; min-width:0; }
+.form fieldset { border:0; padding:0; margin:0; }
+.fields { display:grid; gap:12px; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.form>.actions,.form fieldset>.actions { margin:0; }
+.payment { border-top:1px solid var(--line); padding-top:16px; display:grid; gap:14px; }
+.history { border-top:1px solid var(--line); padding-top:12px; }
+.history>div { display:grid; gap:12px; padding-top:12px; }
+.paymentRow { display:grid; gap:8px; padding:12px; border:1px solid var(--line); border-radius:5px; font-size:12px; }
+.paymentRow details { display:grid; gap:10px; }
+.paymentRow details[open]>:not(summary) { margin-top:10px; }
+.readonly { font-size:12px; color:var(--muted); }
+@container (min-width:580px) { .summary { grid-template-columns:repeat(2,minmax(0,1fr)); }.fields { grid-template-columns:repeat(2,minmax(0,1fr)); }.invoiceFields { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr); } }
+@media(max-width:600px) { .invoice { padding:16px; }.amounts>div { gap:8px; }.header h2 { font-size:16px; } }

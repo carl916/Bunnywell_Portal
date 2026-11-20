@@ -10,6 +10,9 @@ export function PdfUploadBox({
   file,
   currentVersion,
   disabled,
+  required,
+  invalid,
+  descriptionId,
   onOpen,
   onFile,
   onClear,
@@ -24,6 +27,9 @@ export function PdfUploadBox({
   file: File | null;
   currentVersion?: UploadVersion | null;
   disabled?: boolean;
+  required?: boolean;
+  invalid?: boolean;
+  descriptionId?: string;
   onOpen?: () => void;
   onFile: (file: File | null) => void;
   onClear: () => void;
@@ -34,14 +40,14 @@ export function PdfUploadBox({
   multiple?: boolean;
 }) {
   if (file) {
-    return <div className="min-w-0 rounded-bw-card border border-[#9bb5a6] bg-[#EEF6F1] p-5" aria-live="polite">
+    return <div className="pdf-upload-box min-w-0 rounded-bw-card border border-[#9bb5a6] bg-[#EEF6F1] p-5" aria-live="polite">
       <div className="flex min-w-0 items-start gap-3">
         <FileCheck2 className="mt-1 shrink-0 text-[#0F3D2E]" size={24} aria-hidden />
-        <div className="min-w-0"><p className="font-bold text-[#0F3D2E] [overflow-wrap:anywhere]">{file.name}</p><p className="mt-1 text-sm text-[#617169]">{fileSizeLabel(file.size)}</p><p className="mt-2 text-sm font-semibold text-[#0F3D2E]">Selected – ready to submit</p></div>
+        <div className="pdf-upload-file-info min-w-0"><p className="font-bold text-[#0F3D2E] [overflow-wrap:anywhere]">{file.name}</p><p className="mt-1 text-sm text-[#617169]">{fileSizeLabel(file.size)}</p><p className="mt-2 text-sm font-semibold text-[#0F3D2E]">Selected – ready to submit</p></div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="pdf-upload-file-actions mt-4 flex flex-wrap gap-2">
         <label className={`secondary upload-action upload-target inline-flex items-center ${disabled ? "opacity-60" : "cursor-pointer"}`}>
-          Replace<input id={id} aria-label={label} className="sr-only" type="file" accept="application/pdf,.pdf" disabled={disabled} onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+          Replace<input id={id} aria-label={label} aria-required={required} aria-invalid={invalid} aria-describedby={descriptionId} className="sr-only" type="file" accept="application/pdf,.pdf" disabled={disabled} onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
         </label>
         <button type="button" className="secondary upload-action" disabled={disabled} onClick={onClear}>Remove</button>
       </div>
@@ -73,7 +79,7 @@ export function PdfUploadBox({
           ) : (
             <label className="secondary upload-action upload-target mt-3 inline-flex w-fit cursor-pointer items-center gap-2">
               Replace PDF
-              <input className="sr-only" aria-label={`Replace ${label}`} type="file" accept="application/pdf" onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
+              <input className="sr-only" aria-label={`Replace ${label}`} aria-required={required} aria-invalid={invalid} aria-describedby={descriptionId} type="file" accept="application/pdf" onChange={(event) => { onFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
             </label>
           )
         )}
@@ -83,7 +89,7 @@ export function PdfUploadBox({
 
   return (
     <label
-      className={`upload-target block rounded-bw-card border border-dashed p-5 text-center transition ${disabled ? "cursor-not-allowed border-[#d9ded6] bg-[#f4f6f3] opacity-70" : "cursor-pointer border-[#cdbd9d] bg-white hover:border-[#0F3D2E]"}`}
+      className={`pdf-upload-box upload-target block rounded-bw-card border border-dashed p-5 text-center transition ${disabled ? "cursor-not-allowed border-[#d9ded6] bg-[#f4f6f3] opacity-70" : "cursor-pointer border-[#cdbd9d] bg-white hover:border-[#0F3D2E]"}`}
       htmlFor={id}
       onDragOver={(event) => {
         if (disabled) return;
@@ -104,6 +110,9 @@ export function PdfUploadBox({
       <input
         id={id}
         aria-label={label}
+        aria-required={required}
+        aria-invalid={invalid}
+        aria-describedby={descriptionId}
         className="sr-only"
         type="file"
         accept="application/pdf"
@@ -114,4 +123,3 @@ export function PdfUploadBox({
     </label>
   );
 }
-

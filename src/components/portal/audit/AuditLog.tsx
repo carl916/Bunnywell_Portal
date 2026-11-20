@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue, isEmptyDisplayValue } from "@/components/portal/DisplayValue";
+
 import {
   ArrowRight,
   Building2,
@@ -366,7 +368,7 @@ function AuditDrawer({ event, context, onClose }: { event: AuditEvent; context: 
           <section className="mt-6">
             <h4 className="text-sm font-semibold text-[#26342d]">What changed</h4>
             {changes.length ? <div className="mt-2 overflow-hidden rounded-md border border-[#dce2dc]">
-              {changes.map((change, index) => <div key={`${change.field}-${index}`} className="grid gap-2 border-b border-[#e5e9e4] p-3 last:border-0 sm:grid-cols-[8rem_1fr] sm:gap-4"><p className="text-xs font-semibold text-[#617169]">{change.field}</p><div className="flex min-w-0 items-center gap-2 text-sm"><span className="min-w-0 break-words text-[#657169]">{formatAuditValue(change.previous, change.field.toLowerCase())}</span><ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#829087]" /><span className="min-w-0 break-words font-semibold text-[#26342d]">{formatAuditValue(change.next, change.field.toLowerCase())}</span></div></div>)}
+              {changes.map((change, index) => <div key={`${change.field}-${index}`} className="grid gap-2 border-b border-[#e5e9e4] p-3 last:border-0 sm:grid-cols-[8rem_1fr] sm:gap-4"><p className="text-xs font-semibold text-[#617169]">{change.field}</p><div className="flex min-w-0 items-center gap-2 text-sm"><span className="min-w-0 break-words text-[#657169]"><DisplayValue value={isEmptyDisplayValue(change.previous) ? null : formatAuditValue(change.previous, change.field.toLowerCase())} /></span><ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#829087]" /><span className="min-w-0 break-words font-semibold text-[#26342d]"><DisplayValue value={isEmptyDisplayValue(change.next) ? null : formatAuditValue(change.next, change.field.toLowerCase())} /></span></div></div>)}
             </div> : <p className="mt-2 rounded-md border border-[#dce2dc] bg-[#FAFBF9] p-3 text-sm text-[#435149]">{auditChangeSummary(event, changes)}</p>}
           </section>
 

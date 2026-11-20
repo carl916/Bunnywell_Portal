@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue } from "@/components/portal/DisplayValue";
+
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { CircleMinus, CirclePlus, ExternalLink, Pencil } from "lucide-react";
 import type { Building, BuildingFloor, RentalPortfolioStatus, Unit, UnitSaleStatus } from "@/lib/data/production";
@@ -409,7 +411,7 @@ export function UnitAllocationWorkspace({
                   <td className="border-b border-[#eef0eb] px-3 py-2.5"><input aria-label={`Select unit ${unit.unit_number}`} type="checkbox" checked={selectedIds.includes(unit.id)} onChange={() => toggleUnit(unit.id)} /></td>
                   <td className="border-b border-[#eef0eb] px-3 py-2.5 font-bold text-[#0F3D2E]">{unit.unit_number}</td>
                   {!buildingFilter && <td className="border-b border-[#eef0eb] px-3 py-2.5">{buildingById.get(unit.building_id)?.name ?? "Unknown"}</td>}
-                  <td className="border-b border-[#eef0eb] px-3 py-2.5">{unit.floor || "—"}</td>
+                  <td className="border-b border-[#eef0eb] px-3 py-2.5"><DisplayValue value={unit.floor} /></td>
                   <td className="border-b border-[#eef0eb] px-3 py-2.5">
                     <AllocationStatusActionCell
                       status={<span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${salesTone(unit.sale_status)}`}>{saleStatusLabel(unit.sale_status)}</span>}
@@ -446,7 +448,7 @@ export function UnitAllocationWorkspace({
             <article key={unit.id} className="rounded-bw-card border border-[#d9ded6] bg-white p-3">
               <div className="flex items-center justify-between gap-3">
                 <label className="flex items-center gap-2 font-bold text-[#0F3D2E]"><input aria-label={`Select unit ${unit.unit_number}`} type="checkbox" checked={selectedIds.includes(unit.id)} onChange={() => toggleUnit(unit.id)} />{unit.unit_number}</label>
-                <span className="text-xs text-[#617169]">{unit.floor || "No floor"}</span>
+                <span className="text-xs text-[#617169]"><DisplayValue value={unit.floor} /></span>
               </div>
               {!buildingFilter && <p className="mt-1 text-xs text-[#617169]">{buildingById.get(unit.building_id)?.name ?? "Unknown building"}</p>}
               <div className="mt-3 grid gap-3">

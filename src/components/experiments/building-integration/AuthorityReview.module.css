@@ -1,0 +1,35 @@
+.review { display: grid; gap: 18px; min-width: 0; }
+.email { display: grid; gap: 18px; min-width: 0; }
+.panel.panel { width: 100%; max-width: 880px; margin-inline: auto; padding: 0; gap: 0; overflow: hidden; }
+.panelHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.panelHeader h2 { margin: 0; }
+.panelHeader p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.panel > button { align-self: flex-start; margin: 22px; }
+.panel > [role="alert"] { margin: 18px 22px 0; }
+.panel .review { gap: 0; }
+.panel .email { padding: 22px; background: #fff; }
+.panel .confirmation { padding: 22px; background: var(--canvas); }
+.controlsTitle { margin: 0; font-size: 14px; line-height: 1.4; }
+.header { display: grid; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.header h3 { margin: 0; font-size: 17px; line-height: 1.4; }
+.recipients { display: grid; gap: 5px; margin: 0; font-size: 13px; line-height: 1.5; }
+.recipients > div { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 8px; }
+.recipients dt { color: var(--muted); }
+.recipients dd { margin: 0; overflow-wrap: anywhere; }
+.document { width: 100%; min-width: 0; overflow-wrap: anywhere; color: var(--ink); }
+.document p { margin: 0 0 12px !important; font-size: 14px !important; line-height: 1.6 !important; }
+.document h2 { margin: 20px 0 8px !important; font-size: 15px !important; line-height: 1.4 !important; }
+.document table { width: 100% !important; max-width: none; }
+.document th, .document td { padding-top: 8px !important; padding-bottom: 8px !important; }
+.document > div { margin-top: 18px !important; margin-bottom: 12px !important; padding: 12px !important; }
+.confirmation { display: grid; gap: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
+.confirmation p { margin: 0; }
+.confirmation label { margin: 0; }
+@container (max-width: 420px) {
+ .panelHeader, .panel .email, .panel .confirmation { padding: 18px; }
+ .panel > button { margin: 18px; }
+ .document table { table-layout: fixed; font-size: 12px !important; }
+ .document th, .document td { padding: 7px 4px !important; font-size: 12px !important; white-space: normal !important; overflow-wrap: anywhere; }
+ .document table:has(thead) th:first-child { width: 28%; }
+ .document p { font-size: 13px !important; }
+}

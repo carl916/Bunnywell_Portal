@@ -6,14 +6,14 @@ export function isCalendarDate(value: string) {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-// No existing business-day utility: use calendar arithmetic, independent of the
-// browser's timezone. Contract-specific holidays/calculations remain editable.
-export function addWorkingDays(value: string, count = 10) {
+// Shared calendar arithmetic, independent of the browser timezone. Callers may
+// supply their applicable holiday calendar; existing callers retain their policy.
+export function addWorkingDays(value: string, count = 10, holidays: readonly string[] = []) {
   if (!isCalendarDate(value)) return "";
   const date = new Date(`${value}T12:00:00Z`);
   while (count > 0) {
     date.setUTCDate(date.getUTCDate() + 1);
-    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) count--;
+    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6 && !holidays.includes(date.toISOString().slice(0, 10))) count--;
   }
   return date.toISOString().slice(0, 10);
 }

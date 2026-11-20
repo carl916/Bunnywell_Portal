@@ -1,9 +1,12 @@
 "use client";
 
+import { AuthorityTerms } from "./AuthorityTerms";
+import { DisplayValue } from "@/components/portal/DisplayValue";
+
 import { runAndRefresh, settleRefreshes } from "@/lib/sales/action-refresh";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { authorityStatus, authorityTerms, legalDateTime, resolveSalesRecipients, SalesRecipientError, type LegalEmail, type LegalSnapshot } from "@/lib/sales/legal-workflow";
+import { authorityStatus, legalDateTime, resolveSalesRecipients, SalesRecipientError, type LegalEmail, type LegalSnapshot } from "@/lib/sales/legal-workflow";
 import { canPerformSalesAction } from "@/lib/sales/permissions";
 import { PdfUploadBox, type UploadVersion } from "./PdfUploadBox";
 import { CompletionDocuments, type CompletionPackage } from "./CompletionDocuments";
@@ -30,7 +33,7 @@ type Preview = { kind: "authority" | "notice_authority"; date: string; to: strin
 type Run = (body: Record<string, unknown> | FormData, message: string, measurement?: SalesMeasurement) => Promise<boolean>;
 type Failure = { message: string; settingsUrl?: string };
 const localTime = (value: number) => { const date = new Date(value); return new Date(value - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
-const shortDate = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB") : "Not recorded";
+const shortDate = (value?: string | null) => value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB") : "—";
 
 async function headers() {
   const { data, error } = await createSupabaseBrowserClient().auth.getSession();
@@ -160,7 +163,7 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
       <h4 className="font-bold">Final confirmation and email preview</h4>
       <p className="mt-2 text-sm text-[#617169]">Preview only – this authority has not been issued.</p>
       {preview.kind === "authority" && <p className="mt-2 text-sm font-semibold">Valid until {legalDateTime(preview.date)}</p>}
-      <dl className="mt-3 grid gap-2 text-sm">{[["From", preview.from], ["To", preview.to.join(", ")], ["CC", preview.cc.join(", ") || "None"], ["Subject", preview.subject], ["Building", preview.snapshot.building.name], ["Plot", preview.snapshot.plot], ["Buyer", preview.snapshot.buyer]].map(([label, value]) => <div key={label} className="grid gap-1 sm:grid-cols-[6rem_1fr]"><dt className="font-semibold">{label}</dt><dd className="min-w-0 [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
+      <dl className="mt-3 grid gap-2 text-sm">{[["From", preview.from], ["To", preview.to.join(", ")], ["CC", preview.cc.join(", ")], ["Subject", preview.subject], ["Building", preview.snapshot.building.name], ["Plot", preview.snapshot.plot], ["Buyer", preview.snapshot.buyer]].map(([label, value]) => <div key={label} className="grid gap-1 sm:grid-cols-[6rem_1fr]"><dt className="font-semibold">{label}</dt><dd className="min-w-0 [overflow-wrap:anywhere]"><DisplayValue value={value} /></dd></div>)}</dl>
       <EmailBodyPreview body={preview.body} html={preview.html} />
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={approvedPreview} onChange={(event) => setApprovedPreview(event.target.checked)} />I have reviewed the email and recipients and approve issuing this authority.</label>
       <div className="mt-4 flex flex-wrap gap-2"><button className="secondary" disabled={busy} onClick={closePreview}>Cancel</button><button className="primary" disabled={busy || !approvedPreview} onClick={() => void run({ action: "send", kind: preview.kind, date: preview.date, token: preview.token, requestId: requestId.current }, preview.kind === "authority" ? "Authority to exchange issued." : "Authority to serve notice given.")}>{preview.kind === "authority" ? "Issue authority to exchange" : "Give authority to serve notice"}</button></div>
@@ -184,9 +187,9 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
           <p className="mt-3">{authority.issued ? "Issued" : "Prepared"} by {latestAuthority.snapshot.approver.name} on {legalDateTime(latestAuthority.issued_at)}</p>
           {latestAuthority.expires_at && <p className="mt-1">Valid until {legalDateTime(latestAuthority.expires_at)}</p>}
           <p className="mt-2">Email delivery: {latestAuthority.delivery_status.replaceAll("_", " ")}</p>
-          <p className="mt-1 [overflow-wrap:anywhere]">To: {latestAuthority.to_recipients.join(", ")} · CC: {latestAuthority.cc_recipients.join(", ") || "None"}</p>
+          <p className="mt-1 [overflow-wrap:anywhere]">To: {latestAuthority.to_recipients.join(", ")} · CC: <DisplayValue value={latestAuthority.cc_recipients.join(", ")} /></p>
         </div> : !exchanged && <p className="mt-1 text-sm">The developer reviews the agreed sale terms and issues time-limited authority.</p>}
-        <dl className="mt-4 divide-y divide-[#eef0eb]">{authorityTerms(latestAuthority ? latestAuthority.snapshot : snapshot).map(([label, value], index) => <div className="grid gap-1 py-2 text-sm sm:grid-cols-[13rem_1fr]" key={`${label}-${index}`}><dt className="text-[#617169]">{label}</dt><dd className="min-w-0 whitespace-pre-wrap font-medium [overflow-wrap:anywhere]">{value}</dd></div>)}</dl>
+        <AuthorityTerms snapshot={latestAuthority ? latestAuthority.snapshot : snapshot} />
         {exchanged && !latestAuthority && <p className="mt-3 text-sm">Exchange predates versioned authority records. Existing sale dates and approval history are retained.</p>}
         {!exchanged && canIssue && <div className="mt-4 grid gap-3">
           <label className="field-label">Authority expiry date and time (your local time)<input className="field max-w-md" type="datetime-local" value={expiry} onChange={(event) => { setExpiry(event.target.value); setExpiryEdited(true); setPreview(null); }} /></label>
@@ -194,10 +197,12 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
           {latestAuthority && !latestAuthority.revoked_at && !latestAuthority.replaced_by && <div className="mt-2 border-t pt-3"><label className="field-label">Revocation reason<textarea className="field" value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="danger-button mt-2" disabled={busy || !reason.trim()} onClick={() => void run({ action: "revoke_authority", emailId: latestAuthority.id, reason }, "Authority revoked. Its complete history is retained.")}>Revoke authority</button></div>}
         </div>}
       </li>
-      <li className="py-5"><h4 className="font-bold">3. Exchange confirmed</h4>{exchanged ? <p className="mt-2 text-sm">Actual exchange date: {shortDate(attempt.exchanged_at)} · Recorded by {actorLabel("exchange_recorded")}</p> : <>
+      <li className="py-5"><h4 className="font-bold">3. Exchange confirmed</h4>{exchanged ? <p className="mt-2 text-sm">Actual exchange date: <DisplayValue value={shortDate(attempt.exchanged_at)} /> · Recorded by {actorLabel("exchange_recorded")}</p> : <>
         <p className="mt-1 text-sm">The conveyancer confirms exchange against the current, unexpired authority.</p>
         {conveyancer && <div className="mt-3 grid gap-3"><label className="field-label">Actual exchange date<input className="field max-w-md" type="date" value={exchangeDate} max={new Date().toISOString().slice(0, 10)} onChange={(event) => setExchangeDate(event.target.value)} /></label>
-          <button className="primary w-fit" disabled={busy || !exchangeDate || authorityState !== "Authority issued"} onClick={() => void run({ action: "confirm_exchange", date: exchangeDate }, "Exchange confirmed.")}>Confirm exchange</button></div>}
+          <button className="primary w-fit" disabled={busy || !exchangeDate || authorityState !== "Authority issued"} aria-describedby={authorityState === "Authority expired" ? `exchange-authority-expired-${saleId}` : undefined} onClick={() => void run({ action: "confirm_exchange", date: exchangeDate }, "Exchange confirmed.")}>Confirm exchange</button>
+          {authorityState === "Authority expired" && <p id={`exchange-authority-expired-${saleId}`} className="text-sm text-amber-800" role="status">Authority to exchange has expired. Renewed authority is required before you can confirm exchange.</p>}
+        </div>}
       </>}</li>
       <li className="py-4 text-sm"><p>Exchange deposit: {context.deposit?.receipt ? `Received £${Number(context.deposit.receipt.received_amount).toLocaleString("en-GB", { minimumFractionDigits: 2 })} on ${shortDate(context.deposit.receipt.received_date)}.` : "Receipt confirmation outstanding."}</p><button type="button" className="mt-2 font-semibold underline" onClick={onManageDeposits}>Manage deposits</button></li>
     </ol> : <ol className="mt-5 divide-y divide-[#d9ded6]" aria-label="Completion tasks">
@@ -233,8 +238,8 @@ export function SalesLegalWorkflow({ saleId, stage, role, onNotice, onChanged, r
     {emails.length > 0 && <details className="mt-4 border-t border-[#d9ded6] py-4"><summary className="cursor-pointer font-bold">Instruction and email history ({emails.length})</summary><ol className="divide-y divide-[#d9ded6]">{emails.map((email) => <li key={email.id} className="py-4 text-sm">
       <p className="font-semibold">{email.kind === "authority" ? "Authority" : email.kind === "notice_authority" ? "Authority to serve notice" : "Historic completion instruction"} · Version {email.version} · {email.delivery_status}</p><p>Approved by {email.snapshot.approver.name} · {legalDateTime(email.issued_at)}</p>
       {email.kind === "authority" && <p>{authorityBadge(email, now)} · Valid until {email.expires_at && legalDateTime(email.expires_at)}</p>}
-      {email.revoked_at && <p>Revoked {legalDateTime(email.revoked_at)}{email.revocation_reason ? ` · ${email.revocation_reason}` : ""}</p>}{email.exchanged_at && <p>Actual exchange: {shortDate(email.exchanged_at)}</p>}
-      <p className="break-all">To: {email.to_recipients.join(", ")} · CC: {email.cc_recipients.join(", ") || "None"}</p>
+      {email.revoked_at && <p>Revoked {legalDateTime(email.revoked_at)}{email.revocation_reason ? ` · ${email.revocation_reason}` : ""}</p>}{email.exchanged_at && <p>Actual exchange: <DisplayValue value={shortDate(email.exchanged_at)} /></p>}
+      <p className="break-all">To: {email.to_recipients.join(", ")} · CC: <DisplayValue value={email.cc_recipients.join(", ")} /></p>
       <details className="mt-2"><summary className="cursor-pointer underline">View saved email and authorised terms</summary><p className="mt-2 break-all">From: {email.sending_address}</p><p>{email.subject}</p><EmailBodyPreview body={email.body} html={email.html_body} />{email.resend_message_id && <p className="mt-2 break-all">Resend message: {email.resend_message_id}</p>}</details>
       {canIssue && <div className="mt-3 flex flex-wrap gap-2">{!email.resend_message_id && !email.revoked_at && !email.replaced_by && <button className="secondary" disabled={busy} onClick={() => void run({ action: "retry_email", emailId: email.id }, "Email status reconciled.")}>Retry email</button>}{email.resend_message_id && <button className="secondary" disabled={busy} onClick={() => void run({ action: "refresh_delivery", emailId: email.id }, "Email delivery status refreshed.")}>Refresh delivery status</button>}</div>}
       {canIssue && !completed && (email.kind === "completion_instruction" || email.kind === "notice_authority") && !email.resend_message_id && !email.revoked_at && <div className="mt-3"><p>Check Resend before cancelling an uncertain send. Cancelling here cannot recall an email already sent.</p><label className="field-label mt-2">Cancellation reason<textarea className="field" value={reason} onChange={(event) => setReason(event.target.value)} /></label><button className="secondary mt-2" disabled={busy || !reason.trim()} onClick={() => void run({ action: email.kind === "notice_authority" ? "cancel_notice_authority" : "cancel_instruction", emailId: email.id, reason }, "Instruction cancelled. You can review and issue a replacement.")}>Cancel pending instruction</button></div>}
@@ -277,7 +282,7 @@ function NoticeArrangements({ saleId, attempt, document, editable, busy, run, ac
   if (!state.authorised) return <p className="mt-3 text-sm text-amber-800">Awaiting developer authority to serve notice</p>;
   return <div className="mt-3 min-w-0">
     {state.confirmed && <>
-      <dl className="grid gap-2 text-sm"><div><dt className="font-semibold">Notice issue date</dt><dd>{shortDate(attempt.completion_notice_issued_at)}</dd></div><div><dt className="font-semibold">Completion due date</dt><dd>{shortDate(attempt.contractual_completion_date)}</dd></div></dl>
+      <dl className="grid gap-2 text-sm"><div><dt className="font-semibold">Notice issue date</dt><dd><DisplayValue value={shortDate(attempt.completion_notice_issued_at)} /></dd></div><div><dt className="font-semibold">Completion due date</dt><dd><DisplayValue value={shortDate(attempt.contractual_completion_date)} /></dd></div></dl>
       <p className="mt-3 text-sm">{savedAt ? <>Confirmed by {actor} · {legalDateTime(savedAt)}</> : "Historical completion arrangements – confirmation details not recorded."}</p>
       <LegalDocument saleId={saleId} type="completion_correspondence" label="Notice PDF" document={document} editable={editable} busy={busy} run={run} />
       {editable && !correcting && <button className="secondary mt-3" disabled={busy} onClick={() => { setNoticeDate(attempt.completion_notice_issued_at || ""); setDueDate(attempt.contractual_completion_date || ""); setManualDueDate(true); setCorrecting(true); }}>Correct recorded dates</button>}

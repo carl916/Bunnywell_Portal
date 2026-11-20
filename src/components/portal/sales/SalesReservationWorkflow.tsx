@@ -1,4 +1,6 @@
 "use client";
+
+import { DisplayValue, EmptyValue } from "@/components/portal/DisplayValue";
 import { SaleFileHeader } from "./SaleFileHeader";
 import { SaleDeposits } from "./SaleDeposits";
 import { FinancialsTabs } from "./FinancialsTabs";
@@ -484,7 +486,7 @@ function FieldValue({ label, value }: { label: string; value: string | number | 
   return (
     <div className="min-w-0 border-b border-[#eef0eb] py-3">
       <span className="block text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">{label}</span>
-      <strong className="numeric-value mt-1 block whitespace-pre-line text-sm text-[#0F3D2E] [overflow-wrap:anywhere]">{value || "-"}</strong>
+      <strong className="numeric-value mt-1 block whitespace-pre-line text-sm text-[#0F3D2E] [overflow-wrap:anywhere]"><DisplayValue value={value} /></strong>
     </div>
   );
 }
@@ -495,7 +497,7 @@ function KeyValueList({ items }: { items: Array<{ label: string; value: ReactNod
       {items.map((item) => (
         <div key={item.label} className="grid gap-1 py-2.5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(8rem,0.8fr)_minmax(0,1.2fr)] sm:gap-4">
           <dt className="min-w-0 text-[#617169]">{item.label}</dt>
-          <dd className="numeric-value min-w-0 whitespace-pre-line font-bold text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-right">{item.value || "-"}</dd>
+          <dd className="numeric-value min-w-0 whitespace-pre-line font-bold text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-right"><DisplayValue value={item.value} /></dd>
         </div>
       ))}
     </dl>
@@ -507,7 +509,7 @@ function SaleMetadataStrip({ items }: { items: Array<{ label: string; value: Rea
     <dl className="mt-3 flex flex-wrap items-start gap-x-5 gap-y-2.5 border-t border-[#eef0eb] pt-3">
       {items.map((item, index) => (
         <div key={item.label} className={`min-w-0 sm:pr-5 ${index > 0 ? "sm:border-l sm:border-[#e2ded3] sm:pl-5" : ""}`}>
-          <dd className="numeric-value whitespace-pre-line text-[15px] font-semibold leading-snug text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-base">{item.value || "-"}</dd>
+          <dd className="numeric-value whitespace-pre-line text-[15px] font-semibold leading-snug text-[#0F3D2E] [overflow-wrap:anywhere] sm:text-base"><DisplayValue value={item.value} /></dd>
           <dt className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-[#728078]">{item.label}</dt>
         </div>
       ))}
@@ -521,8 +523,8 @@ function ApprovalEventHistory({ events }: { events: ApprovalHistoryEvent[] }) {
       {events.map((event) => (
         <li key={event.id} className={`grid min-w-0 gap-y-1 py-3 first:pt-0 last:pb-0 ${styles.approvalEventRow}`}>
           <strong className={`min-w-0 break-words font-semibold text-[#34413a] ${styles.approvalEventName}`}>{event.label}</strong>
-          <time className="numeric-value whitespace-nowrap text-[#617169]" dateTime={event.occurredAt ?? undefined}>{formatDateTime(event.occurredAt)}</time>
-          <span className="min-w-0 break-words text-[#617169]"><span className={`mr-1 ${styles.approvalEventSeparator}`} aria-hidden="true">·</span>{event.actor}</span>
+          <time className="numeric-value whitespace-nowrap text-[#617169]" dateTime={event.occurredAt ?? undefined}><DisplayValue value={formatDateTime(event.occurredAt)} /></time>
+          <span className="min-w-0 break-words text-[#617169]"><span className={`mr-1 ${styles.approvalEventSeparator}`} aria-hidden="true">·</span><DisplayValue value={event.actor} /></span>
         </li>
       ))}
     </ol>
@@ -728,9 +730,9 @@ function AgentInvoicePaymentSection({
           <span className="rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-2.5 py-1 text-xs font-bold text-[#617169]">{position.paymentStatus}</span>
         </div>
         <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Cash amount due</span><strong className="numeric-value">{money(position.cashAmountPayable)}</strong></div>
-          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payments received</span><strong className="numeric-value">{money(position.cashReceived)}</strong></div>
-          <div className="flex items-baseline justify-between gap-4 pt-1 font-bold text-[#0F3D2E]"><span>Outstanding</span><strong className="numeric-value text-lg">{money(position.outstandingBalance)}</strong></div>
+          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Cash amount due</span><strong className="numeric-value"><DisplayValue value={money(position.cashAmountPayable)} /></strong></div>
+          <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payments received</span><strong className="numeric-value"><DisplayValue value={money(position.cashReceived)} /></strong></div>
+          <div className="flex items-baseline justify-between gap-4 pt-1 font-bold text-[#0F3D2E]"><span>Outstanding</span><strong className="numeric-value text-lg"><DisplayValue value={money(position.outstandingBalance)} /></strong></div>
         </div>
       </div>
 
@@ -739,7 +741,7 @@ function AgentInvoicePaymentSection({
           <div>
             <h5 id="agent-fee-payments-heading" className="font-bold text-[#0F3D2E]">Payments</h5>
             <p className="mt-1 text-xs text-[#617169]">
-              {activeCashPayments.length} {activeCashPayments.length === 1 ? "payment" : "payments"} · {money(receivedAmount)} received
+              {activeCashPayments.length} {activeCashPayments.length === 1 ? "payment" : "payments"} · <DisplayValue value={money(receivedAmount)} /> received
               {voidedPayments.length > 0 && <span className="text-[#7a271a]"> · {voidedPayments.length} voided</span>}
             </p>
           </div>
@@ -766,17 +768,17 @@ function AgentInvoicePaymentSection({
             {sortedPayments.map((payment) => (
               <div key={payment.id} className={`py-2.5 text-sm ${payment.voided_at ? "text-[#617169]" : "text-[#34413a]"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-                  <span className="min-w-0">{formatDate(payment.paid_at)} · {paymentRecorderLabel(payment, profiles)}</span>
+                  <span className="min-w-0"><DisplayValue value={formatDate(payment.paid_at)} /> · {paymentRecorderLabel(payment, profiles)}</span>
                   <span className="flex flex-wrap items-center gap-2">
                     {payment.voided_at && <span className="text-xs font-bold uppercase tracking-[0.06em] text-[#7a271a]">Voided</span>}
-                    <strong className={`numeric-value ${payment.voided_at ? "line-through" : ""}`}>{money(payment.amount)}</strong>
+                    <strong className={`numeric-value ${payment.voided_at ? "line-through" : ""}`}><DisplayValue value={money(payment.amount)} /></strong>
                   </span>
                 </div>
                 {payment.notes && <p className="mt-1 text-xs text-[#617169]">{payment.notes}</p>}
                 {payment.voided_at && (
                   <div className="mt-2 border-t border-[#d9ded6] pt-2 text-xs text-[#617169]">
-                    <p><strong>Reason:</strong> {payment.void_reason ?? "No reason recorded"}</p>
-                    <p className="mt-1">Voided {formatDateTime(payment.voided_at)}</p>
+                    <p><strong>Reason:</strong> <DisplayValue value={payment.void_reason} /></p>
+                    <p className="mt-1">Voided <DisplayValue value={formatDateTime(payment.voided_at)} /></p>
                   </div>
                 )}
                 {canVoid && !payment.voided_at && payment.payment_source !== "reservation_fee" && (
@@ -2575,27 +2577,27 @@ export function SalesReservationWorkflow({
               <h4 className="font-bold text-[#0F3D2E]">Revenue view</h4>
               <p className="mt-1 text-sm text-[#617169]">Sales-route list-price baseline compared with the current forecast.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Baseline GDV</span><strong className="numeric-value text-right">{money(baselineGdv)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast revenue</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(forecastRevenue)}</strong></div>
-                <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value text-right">{money(forecastRevenue - baselineGdv)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Baseline GDV</span><strong className="numeric-value text-right"><DisplayValue value={money(baselineGdv)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast revenue</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(forecastRevenue)} /></strong></div>
+                <div className="flex justify-between gap-4"><span>Variance</span><strong className="numeric-value text-right"><DisplayValue value={money(forecastRevenue - baselineGdv)} /></strong></div>
               </div>
             </div>
             <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Cost / debt view</h4>
               <p className="mt-1 text-sm text-[#617169]">Core assumptions will be set in forecasting.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total development cost</span><strong className="numeric-value text-right">-</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total debt</span><strong className="numeric-value text-right">-</strong></div>
-                <div className="flex justify-between gap-4"><span>Net sales proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(netSalesProceeds)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total development cost</span><strong className="numeric-value text-right"><EmptyValue /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total debt</span><strong className="numeric-value text-right"><EmptyValue /></strong></div>
+                <div className="flex justify-between gap-4"><span>Net sales proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(netSalesProceeds)} /></strong></div>
               </div>
             </div>
             <div className={`rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4 ${styles.financialOverviewCard} ${styles.profitCard}`}>
               <h4 className="font-bold text-[#0F3D2E]">Profit view</h4>
               <p className="mt-1 text-sm text-[#617169]">Profitability will appear once scheme costs and debt have been added.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast profit</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Profit margin</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Return on cost</span><strong className="numeric-value text-right text-[#829188]">—</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Forecast profit</span><strong className="numeric-value text-right text-[#829188]"><EmptyValue /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Profit margin</span><strong className="numeric-value text-right text-[#829188]"><EmptyValue /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Return on cost</span><strong className="numeric-value text-right text-[#829188]"><EmptyValue /></strong></div>
                 <div className="flex justify-between gap-4"><span>Units with sale values</span><strong className="numeric-value text-right">{saleValuesCount} of {buildingUnits.length}</strong></div>
               </div>
             </div>
@@ -2622,7 +2624,7 @@ export function SalesReservationWorkflow({
                   <span className="text-[#617169]">&gt;</span>
                 </div>
                 <p className="numeric-value mt-2 text-3xl font-bold text-[#0F3D2E]">{stage.count}</p>
-                {stage.value !== null && <p className="numeric-value mt-1 text-sm text-[#617169]">{money(stage.value)}</p>}
+                {stage.value !== null && <p className="numeric-value mt-1 text-sm text-[#617169]"><DisplayValue value={money(stage.value)} /></p>}
               </button>
             ))}
           </div>
@@ -2692,9 +2694,9 @@ export function SalesReservationWorkflow({
                           {saleStatusLabel(unit.sale_status)}
                         </span>
                       </td>
-                      <td className="numeric-value border-b border-[#eef0eb] px-4 py-3 text-right">{money(unitSaleValue(unit))}</td>
+                      <td className="numeric-value border-b border-[#eef0eb] px-4 py-3 text-right"><DisplayValue value={money(unitSaleValue(unit))} /></td>
                       <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{nextActionForUnit(unit)}</td>
-                      <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]">{daysSince(saleStatusDate(unit, attempt))}</td>
+                      <td className="border-b border-[#eef0eb] px-4 py-3 text-[#34413a]"><DisplayValue value={daysSince(saleStatusDate(unit, attempt))} /></td>
                     </tr>
                   );
                 })}
@@ -2804,24 +2806,24 @@ export function SalesReservationWorkflow({
               <h4 className="font-bold text-[#0F3D2E]">Developer</h4>
               <p className="mt-1 text-sm text-[#617169]">Sale value, development-side deductions and net proceeds.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>List price</span><strong className="numeric-value text-right">{money(activeTerms?.list_price_at_offer ?? selectedContractValue)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value text-right">{money(selectedContractValue)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value text-right">{money(activeTerms?.parking_value ?? 0)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>List price</span><strong className="numeric-value text-right"><DisplayValue value={money(activeTerms?.list_price_at_offer ?? selectedContractValue)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedContractValue)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value text-right"><DisplayValue value={money(activeTerms?.parking_value ?? 0)} /></strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer contribution</span><strong className="numeric-value text-right">{activeDeveloperContributionDeductionLabel}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Solicitor fee</span><strong className="numeric-value text-right">{moneyDeduction(displaySolicitorFee)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent fee / invoice impact</span><strong className="numeric-value text-right">{moneyDeduction(selectedAgentInvoice.netAmount)}</strong></div>
-                <div className="flex justify-between gap-4"><span>Net developer proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(selectedDeveloperNet)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Solicitor fee</span><strong className="numeric-value text-right"><DisplayValue value={moneyDeduction(displaySolicitorFee)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent fee / invoice impact</span><strong className="numeric-value text-right"><DisplayValue value={moneyDeduction(selectedAgentInvoice.netAmount)} /></strong></div>
+                <div className="flex justify-between gap-4"><span>Net developer proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(selectedDeveloperNet)} /></strong></div>
               </div>
             </div>
             <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
               <h4 className="font-bold text-[#0F3D2E]">Agent</h4>
               <p className="mt-1 text-sm text-[#617169]">Forecast agent invoice after deductions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total agent fee</span><strong className="numeric-value text-right">{formatPercentValue(displayAgentFeePercent)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee base</span><strong className="numeric-value text-right">{money(selectedContractValue)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total net agent fee</span><strong className="numeric-value text-right">{money(selectedAgentInvoice.netAmount)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange tranche</span><strong className="numeric-value text-right">{formatPercentValue(displayExchangeAgentFeePercent)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion tranche</span><strong className="numeric-value text-right">{formatPercentValue(displayCompletionAgentFeePercent)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total agent fee</span><strong className="numeric-value text-right"><DisplayValue value={formatPercentValue(displayAgentFeePercent)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee base</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedContractValue)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Total net agent fee</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedAgentInvoice.netAmount)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange tranche</span><strong className="numeric-value text-right"><DisplayValue value={formatPercentValue(displayExchangeAgentFeePercent)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion tranche</span><strong className="numeric-value text-right"><DisplayValue value={formatPercentValue(displayCompletionAgentFeePercent)} /></strong></div>
                 <div className="flex justify-between gap-4"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionDeductionLabel}</strong></div>
               </div>
             </div>
@@ -2829,18 +2831,18 @@ export function SalesReservationWorkflow({
               <h4 className="font-bold text-[#0F3D2E]">Buyer</h4>
               <p className="mt-1 text-sm text-[#617169]">Payment schedule and buyer-facing contributions.</p>
               <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value text-right">{money(selectedContractValue)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value text-right">{money(displayReservationFee)}</strong></div>
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange deposit ({formatPercentValue(displayDepositStructure.exchangeDepositPercent)})</span><strong className="numeric-value text-right">{money(selectedExchangeDeposit)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedContractValue)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value text-right"><DisplayValue value={money(displayReservationFee)} /></strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange deposit (<DisplayValue value={formatPercentValue(displayDepositStructure.exchangeDepositPercent)} />)</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedExchangeDeposit)} /></strong></div>
                 {displayDepositStructure.secondDepositEnabled && (
-                  <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Further deposit ({formatPercentValue(displayDepositStructure.secondDepositPercent)})<span className="mt-1 block text-xs text-[#617169]">{timingDescription(displayDepositStructure.furtherDepositTiming, displayDepositStructure.secondDepositMonthsAfterExchange)}</span></span><strong className="numeric-value text-right">{money(selectedSecondDeposit)}</strong></div>
+                  <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Further deposit (<DisplayValue value={formatPercentValue(displayDepositStructure.secondDepositPercent)} />)<span className="mt-1 block text-xs text-[#617169]">{timingDescription(displayDepositStructure.furtherDepositTiming, displayDepositStructure.secondDepositMonthsAfterExchange)}</span></span><strong className="numeric-value text-right"><DisplayValue value={money(selectedSecondDeposit)} /></strong></div>
                 )}
-                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion balance ({formatPercentValue(displayDepositStructure.completionBalancePercent)})</span><strong className="numeric-value text-right">{money(selectedCompletionBalance)}</strong></div>
+                <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Completion balance (<DisplayValue value={formatPercentValue(displayDepositStructure.completionBalancePercent)} />)</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedCompletionBalance)} /></strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer contribution / cashback</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
                 <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution / cashback</span><strong className="numeric-value text-right">{activeAgentContributionLabel}</strong></div>
-                {(activeTerms?.parking_contribution_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right">{money(activeTerms?.parking_contribution_value ?? 0)}</strong></div>}
-                {(activeTerms?.parking_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value text-right">{money(activeTerms?.parking_value ?? 0)}</strong></div>}
-                <div className="flex justify-between gap-4"><span>Net cost to buyer</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(selectedBuyerNetCost)}</strong></div>
+                {(activeTerms?.parking_contribution_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right"><DisplayValue value={money(activeTerms?.parking_contribution_value ?? 0)} /></strong></div>}
+                {(activeTerms?.parking_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Parking value</span><strong className="numeric-value text-right"><DisplayValue value={money(activeTerms?.parking_value ?? 0)} /></strong></div>}
+                <div className="flex justify-between gap-4"><span>Net cost to buyer</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(selectedBuyerNetCost)} /></strong></div>
               </div>
             </div>
           </div>
@@ -2890,7 +2892,7 @@ export function SalesReservationWorkflow({
                               <option value="percent">%</option>
                             </select>
                           </div>
-                          {developerContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewDeveloperContributionAmount)}</span>}
+                          {developerContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: <DisplayValue value={money(previewDeveloperContributionAmount)} /></span>}
                         </label>
                         <label className="field-label">
                           Agent contribution
@@ -2905,7 +2907,7 @@ export function SalesReservationWorkflow({
                               <option value="percent">%</option>
                             </select>
                           </div>
-                          {agentContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: {money(previewAgentContribution)}</span>}
+                          {agentContributionValueType === "percent" && <span className="mt-1 text-xs text-[#617169]">Equivalent: <DisplayValue value={money(previewAgentContribution)} /></span>}
                         </label>
                       </div>
                       <div className="mt-3"><AdditionalConditionsEditor conditions={additionalSpecialConditions} onChange={setAdditionalSpecialConditions} disabled={!commercialModelEditable} /></div>
@@ -2924,13 +2926,13 @@ export function SalesReservationWorkflow({
                     {!showAdvancedDealSetup ? (
                       <div className="text-sm text-[#34413a]">
                         <div className={styles.setupSummary}>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value">{formatPercentValue(previewAgentFeePercent, 4)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value">{formatPercentValue(previewExchangeAgentFeePercent, 4)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value">{formatPercentValue(previewCompletionAgentFeePercent, 4)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(previewReservationFee)}</strong></div>
-                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
-                          {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Further deposit</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
-                          <div className="flex justify-between gap-3"><span>Completion balance</span><strong className="numeric-value">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Total agent fee</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewAgentFeePercent, 4)} /></strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange fee</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewExchangeAgentFeePercent, 4)} /></strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Completion fee</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewCompletionAgentFeePercent, 4)} /></strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Reservation fee</span><strong className="numeric-value"><DisplayValue value={money(previewReservationFee)} /></strong></div>
+                          <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Exchange deposit</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewDepositStructure.exchangeDepositPercent)} /></strong></div>
+                          {previewDepositStructure.secondDepositEnabled && <div className="flex justify-between gap-3 border-b border-[#e8e5dc] pb-2"><span>Further deposit</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewDepositStructure.secondDepositPercent)} /></strong></div>}
+                          <div className="flex justify-between gap-3"><span>Completion balance</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(previewDepositStructure.completionBalancePercent)} /></strong></div>
                         </div>
                       </div>
                     ) : (
@@ -2943,7 +2945,7 @@ export function SalesReservationWorkflow({
                         <label className="field-label">Completion fee %<input className="field" inputMode="decimal" value={completionAgentFeePercent} onChange={(event) => setCompletionAgentFeePercent(event.target.value)} disabled={!commercialModelEditable} /></label>
                         </div>
                         <div className={`mt-3 rounded-bw-inset px-3 py-2 text-sm ${previewAgentFeeStructure.isValid ? "bg-[#eaf6ee] text-[#18794e]" : "bg-[#fff8e7] text-[#7a5416]"}`} role="status" aria-live="polite" data-testid="agent-fee-validation">
-                          {!invalidAgentFeeInput && <p className="numeric-value font-semibold">{formatPercentValue(previewExchangeAgentFeePercent, 4)} + {formatPercentValue(previewCompletionAgentFeePercent, 4)} = {formatPercentValue(previewAgentFeeSum, 4)}{previewAgentFeeStructure.isValid && <CheckCircle2 className="ml-2 inline-block" size={15} aria-label="Valid fee split" />}</p>}
+                          {!invalidAgentFeeInput && <p className="numeric-value font-semibold"><DisplayValue value={formatPercentValue(previewExchangeAgentFeePercent, 4)} /> + <DisplayValue value={formatPercentValue(previewCompletionAgentFeePercent, 4)} /> = <DisplayValue value={formatPercentValue(previewAgentFeeSum, 4)} />{previewAgentFeeStructure.isValid && <CheckCircle2 className="ml-2 inline-block" size={15} aria-label="Valid fee split" />}</p>}
                           {!previewAgentFeeStructure.isValid && <p>{invalidAgentFeeInput ? previewAgentFeeStructure.error : `Must equal total agent fee of ${formatPercentValue(previewAgentFeePercent, 4)}.`}</p>}
                         </div>
                       </fieldset>
@@ -2979,9 +2981,9 @@ export function SalesReservationWorkflow({
                         </label>
                         <div className={`mt-3 border-t py-3 text-sm ${previewDepositStructure.isValid ? "border-[#d9ded6] text-[#34413a]" : "rounded-bw-inset border-[#D6A23A] bg-[#fff8e7] px-3 text-[#5c4a1f]"}`} role="status" data-testid="payment-schedule-summary">
                           <div className={styles.feeRow}>
-                            <div>Exchange deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.exchangeDepositPercent)}</strong></div>
-                            {previewDepositStructure.secondDepositEnabled && <div>Further deposit<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.secondDepositPercent)}</strong></div>}
-                            <div>Completion balance<strong className="numeric-value block">{formatPercentValue(previewDepositStructure.completionBalancePercent)}</strong></div>
+                            <div>Exchange deposit<strong className="numeric-value block"><DisplayValue value={formatPercentValue(previewDepositStructure.exchangeDepositPercent)} /></strong></div>
+                            {previewDepositStructure.secondDepositEnabled && <div>Further deposit<strong className="numeric-value block"><DisplayValue value={formatPercentValue(previewDepositStructure.secondDepositPercent)} /></strong></div>}
+                            <div>Completion balance<strong className="numeric-value block"><DisplayValue value={formatPercentValue(previewDepositStructure.completionBalancePercent)} /></strong></div>
                           </div>
                           {previewDepositStructure.isValid && <p className="mt-2 border-t border-[#e8e5dc] pt-2 font-semibold">Total 100% <CheckCircle2 className="ml-1 inline-block text-[#18794e]" size={15} aria-label="Valid payment schedule" /></p>}
                           <p className="mt-1 text-xs">{previewDepositStructure.error ?? "Reservation fee is separate from the 100% payment schedule."}</p>
@@ -2996,12 +2998,12 @@ export function SalesReservationWorkflow({
                 <div className="rounded-bw-card border border-[#e2ded3] bg-white p-4">
                   <h4 className="font-bold text-[#0F3D2E]">Live preview</h4>
                   <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net before</span><strong className="numeric-value text-right">{money(selectedDeveloperNet)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net after</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(modelDeveloperNet)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer difference</span><strong className="numeric-value text-right">{money(modelDeveloperNet - selectedDeveloperNet)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice before</span><strong className="numeric-value text-right">{money(selectedExchangeInvoice.expectedPayableAmount)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice after</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(previewInvoice.expectedPayableAmount)}</strong></div>
-                    <div className="flex justify-between gap-4"><span>Exchange invoice difference</span><strong className="numeric-value text-right">{money(previewInvoice.expectedPayableAmount - selectedExchangeInvoice.expectedPayableAmount)}</strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net before</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedDeveloperNet)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer net after</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(modelDeveloperNet)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer difference</span><strong className="numeric-value text-right"><DisplayValue value={money(modelDeveloperNet - selectedDeveloperNet)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice before</span><strong className="numeric-value text-right"><DisplayValue value={money(selectedExchangeInvoice.expectedPayableAmount)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Exchange invoice after</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(previewInvoice.expectedPayableAmount)} /></strong></div>
+                    <div className="flex justify-between gap-4"><span>Exchange invoice difference</span><strong className="numeric-value text-right"><DisplayValue value={money(previewInvoice.expectedPayableAmount - selectedExchangeInvoice.expectedPayableAmount)} /></strong></div>
                   </div>
                 </div>
                 <div className="rounded-bw-card border border-[#e2ded3] bg-white p-4">
@@ -3009,12 +3011,12 @@ export function SalesReservationWorkflow({
                   <p className="mt-1 text-sm text-[#617169]">Forecast impact across {forSaleUnits.length} For Sale units.</p>
                   <div className="mt-4 grid gap-2 text-sm text-[#34413a]">
                     <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Applies to</span><strong className="numeric-value text-right">{forSaleUnits.length} For Sale units</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Current GDV</span><strong className="numeric-value text-right">{money(forSaleCurrentGdv)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Proposed GDV</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(forSaleProposedGdv)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>GDV difference</span><strong className="numeric-value text-right">{money(forSaleProposedGdv - forSaleCurrentGdv)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Current forecast net proceeds</span><strong className="numeric-value text-right">{money(forSaleCurrentNet)}</strong></div>
-                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Proposed forecast net proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]">{money(forSaleProposedNet)}</strong></div>
-                    <div className="flex justify-between gap-4"><span>Forecast difference</span><strong className="numeric-value text-right">{money(forSaleProposedNet - forSaleCurrentNet)}</strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Current GDV</span><strong className="numeric-value text-right"><DisplayValue value={money(forSaleCurrentGdv)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Proposed GDV</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(forSaleProposedGdv)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>GDV difference</span><strong className="numeric-value text-right"><DisplayValue value={money(forSaleProposedGdv - forSaleCurrentGdv)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Current forecast net proceeds</span><strong className="numeric-value text-right"><DisplayValue value={money(forSaleCurrentNet)} /></strong></div>
+                    <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Proposed forecast net proceeds</span><strong className="numeric-value text-right text-[#0F3D2E]"><DisplayValue value={money(forSaleProposedNet)} /></strong></div>
+                    <div className="flex justify-between gap-4"><span>Forecast difference</span><strong className="numeric-value text-right"><DisplayValue value={money(forSaleProposedNet - forSaleCurrentNet)} /></strong></div>
                   </div>
                   <p className="mt-3 text-xs text-[#617169]">Estimate based on current For Sale units.</p>
                 </div>
@@ -3103,8 +3105,8 @@ export function SalesReservationWorkflow({
                 {activeRejectionReason && <p className="mt-2 text-sm">Reservation returned: {activeRejectionReason}</p>}
                 <div className="mt-3"><KeyValueList items={[
                   { label: "Buyer", value: buyerDisplay(activeAttempt) },
-                  { label: "Buyer solicitor", value: activeAttempt?.buyer_solicitor_name || "Not recorded" },
-                  { label: "Reservation date", value: activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Not recorded" },
+                  { label: "Buyer solicitor", value: activeAttempt?.buyer_solicitor_name },
+                  { label: "Reservation date", value: formatDate(activeAttempt?.reservation_date) },
                 ]} /></div>
                 {visibleReservationVersion && <button className="secondary mt-3" onClick={() => void openDocumentVersion(visibleReservationVersion)}>View reservation form</button>}
               </div>}
@@ -3117,7 +3119,7 @@ export function SalesReservationWorkflow({
                         <strong className="block">Reservation rejected</strong>
                         <span>{activeRejectionReason || "Developer rejected the reservation pack. Update and resubmit."}</span>
                         {activeAttempt?.reservation_rejected_at && (
-                          <span className="mt-1 block text-xs font-semibold uppercase">Rejected {formatDateTime(activeAttempt.reservation_rejected_at)} by {rejectionByName}</span>
+                          <span className="mt-1 block text-xs font-semibold uppercase">Rejected <DisplayValue value={formatDateTime(activeAttempt.reservation_rejected_at)} /> by {rejectionByName}</span>
                         )}
                       </div>
                     )}
@@ -3128,7 +3130,7 @@ export function SalesReservationWorkflow({
                       <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
                         <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Developer contribution</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
                         <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Agent contribution</span><strong className="numeric-value text-right">{activeAgentContributionLabel}</strong></div>
-                        {(activeTerms?.parking_contribution_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right">{money(activeTerms?.parking_contribution_value ?? 0)}</strong></div>}
+                        {(activeTerms?.parking_contribution_value ?? 0) > 0 && <div className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Parking contribution</span><strong className="numeric-value text-right"><DisplayValue value={money(activeTerms?.parking_contribution_value ?? 0)} /></strong></div>}
                         {activeSpecialConditions.length > 0 ? activeSpecialConditions.map((condition, index) => (
                           <div key={`${condition}-${index}`} className="flex justify-between gap-4 border-b border-[#eadfbf] pb-2"><span>Additional condition</span><strong className="text-right">{condition}</strong></div>
                         )) : <div className="flex justify-between gap-4"><span>Additional condition</span><strong>-</strong></div>}
@@ -3195,10 +3197,10 @@ export function SalesReservationWorkflow({
                       <FieldValue label="Buyer email" value={activeAttempt?.buyer_email} />
                       <FieldValue label="Buyer phone" value={activeAttempt?.buyer_phone} />
                       <FieldValue label="Buyer solicitor" value={activeAttempt?.buyer_solicitor_name} />
-                      <FieldValue label="Reservation date" value={activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing"} />
+                      <FieldValue label="Reservation date" value={formatDate(activeAttempt?.reservation_date)} />
                       <FieldValue label="Submitted date and time" value={formatDateTime(activeAttempt?.reservation_submitted_at)} />
                       <FieldValue label="Submitted by" value={submittedByName} />
-                      <FieldValue label="Uploaded reservation form" value={reservationVersion?.file_name ?? "Missing"} />
+                      <FieldValue label="Uploaded reservation form" value={reservationVersion?.file_name} />
                     </div>
                     <div className="mt-4">
                       <PdfUploadBox
@@ -3219,13 +3221,13 @@ export function SalesReservationWorkflow({
                     <h5 className="font-bold text-[#0F3D2E]">Developer review</h5>
                     <span className="mt-2 inline-flex rounded-full border border-[#d9ded6] bg-[#F7F5EF] px-3 py-1 text-xs font-bold uppercase text-[#617169]">Awaiting developer approval</span>
                     <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value">{money(selectedContractValue)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value">{money(displayReservationFee)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee holder</span><strong>{describeReservationFeeHolder(displayReservationFeeHolder)}</strong></div>
-                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payment schedule</span><strong className="text-right">{displayedPaymentSchedule.map((row) => row.label).join(", ")}</strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Contract price</span><strong className="numeric-value"><DisplayValue value={money(selectedContractValue)} /></strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee</span><strong className="numeric-value"><DisplayValue value={money(displayReservationFee)} /></strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Fee holder</span><strong><DisplayValue value={describeReservationFeeHolder(displayReservationFeeHolder)} /></strong></div>
+                      <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Payment schedule</span><strong className="text-right"><DisplayValue value={displayedPaymentSchedule.map((row) => row.label).join(", ")} /></strong></div>
                       <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Developer-funded incentives</span><strong className="numeric-value text-right">{activeDeveloperContributionLabel}</strong></div>
                       <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent-funded incentives</span><strong className="numeric-value text-right">{activeAgentContributionLabel}</strong></div>
-                      <div className="flex justify-between gap-4"><span>Special conditions</span><strong className="text-right">{activeSpecialConditions.length ? activeSpecialConditions.join(", ") : "-"}</strong></div>
+                      <div className="flex justify-between gap-4"><span>Special conditions</span><strong className="text-right"><DisplayValue value={activeSpecialConditions.join(", ")} /></strong></div>
                     </div>
                     {!activeAttempt?.reservation_date && (
                       <label className="field-label mt-4">
@@ -3233,6 +3235,7 @@ export function SalesReservationWorkflow({
                         <input className="field" type="date" max={todayDate} value={reservationDate} onChange={(event) => setReservationDate(event.target.value)} disabled={!reservationCanBeReviewed} />
                       </label>
                     )}
+                    {reservationCanBeReviewed && approvalBlocked && <p className="mt-4 text-sm text-amber-800">Complete the buyer details, reservation date and uploaded reservation form before approving.</p>}
                     <div className="mt-4 flex flex-wrap justify-end gap-2">
                       {reservationCanBeReviewed && (
                         <>
@@ -3267,7 +3270,7 @@ export function SalesReservationWorkflow({
                     <div className="mt-4">
                       <KeyValueList items={[
                         { label: "Buyer", value: buyerDisplay(activeAttempt) },
-                        { label: "Reservation date", value: activeAttempt?.reservation_date ? formatDate(activeAttempt.reservation_date) : "Missing" },
+                        { label: "Reservation date", value: formatDate(activeAttempt?.reservation_date) },
                         { label: "Contract price", value: money(selectedContractValue) },
                         { label: "Reservation fee", value: money(displayReservationFee) },
                         { label: "Fee holder", value: describeReservationFeeHolder(displayReservationFeeHolder) },
@@ -3389,13 +3392,13 @@ export function SalesReservationWorkflow({
                     <div className="rounded-md bg-white p-4">
                       <h5 className="font-bold text-[#0F3D2E]">Expected Exchange invoice</h5>
                       <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value">{formatPercentValue(displayExchangeAgentFeePercent)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value">{money(previewInvoice.netAmount)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value">{money(previewInvoice.vatAmount)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected gross fee</span><strong className="numeric-value">{money(activeInvoice?.expected_gross_amount ?? previewInvoice.grossAmount)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee credit already held</span><strong className="numeric-value">{moneyDeduction(activeInvoice?.reservation_fee_deduction ?? previewInvoice.reservationFeeDeduction)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution deduction</span><strong className="numeric-value">{moneyDeduction(activeInvoice?.agent_contribution_deduction ?? previewInvoice.agentContributionDeduction)}</strong></div>
-                        <div className="flex justify-between gap-4"><span>Expected cash amount payable</span><strong className="numeric-value text-[#0F3D2E]">{money(expectedPayableAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(displayExchangeAgentFeePercent)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value"><DisplayValue value={money(previewInvoice.netAmount)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value"><DisplayValue value={money(previewInvoice.vatAmount)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected gross fee</span><strong className="numeric-value"><DisplayValue value={money(activeInvoice?.expected_gross_amount ?? previewInvoice.grossAmount)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reservation fee credit already held</span><strong className="numeric-value"><DisplayValue value={moneyDeduction(activeInvoice?.reservation_fee_deduction ?? previewInvoice.reservationFeeDeduction)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agent contribution deduction</span><strong className="numeric-value"><DisplayValue value={moneyDeduction(activeInvoice?.agent_contribution_deduction ?? previewInvoice.agentContributionDeduction)} /></strong></div>
+                        <div className="flex justify-between gap-4"><span>Expected cash amount payable</span><strong className="numeric-value text-[#0F3D2E]"><DisplayValue value={money(expectedPayableAmount)} /></strong></div>
                       </div>
                     </div>
 
@@ -3404,10 +3407,10 @@ export function SalesReservationWorkflow({
                       {agentInvoiceVersion ? (
                         <>
                           <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong>{activeInvoice?.invoice_reference ?? "-"}</strong></div>
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong>{formatDate(activeInvoice?.invoice_date)}</strong></div>
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value">{money(activeInvoice?.gross_amount)}</strong></div>
-                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value">{money(invoiceVariance)}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong><DisplayValue value={activeInvoice?.invoice_reference} /></strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong><DisplayValue value={formatDate(activeInvoice?.invoice_date)} /></strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value"><DisplayValue value={money(activeInvoice?.gross_amount)} /></strong></div>
+                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value"><DisplayValue value={money(invoiceVariance)} /></strong></div>
                           </div>
                           <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(agentInvoiceVersion)}>Open invoice PDF</button>
                           {exchangeAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={exchangeAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
@@ -3494,10 +3497,10 @@ export function SalesReservationWorkflow({
                     <div className="rounded-md bg-white p-4">
                       <h5 className="font-bold text-[#0F3D2E]">Expected Completion invoice</h5>
                       <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value">{formatPercentValue(displayCompletionAgentFeePercent)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value">{money(completionInvoicePreview.netAmount)}</strong></div>
-                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value">{money(completionInvoicePreview.vatAmount)}</strong></div>
-                        <div className="flex justify-between gap-4"><span>Expected gross fee</span><strong className="numeric-value text-[#0F3D2E]">{money(completionAgentInvoice?.expected_gross_amount ?? completionInvoicePreview.grossAmount)}</strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Agreed fee</span><strong className="numeric-value"><DisplayValue value={formatPercentValue(displayCompletionAgentFeePercent)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected net fee</span><strong className="numeric-value"><DisplayValue value={money(completionInvoicePreview.netAmount)} /></strong></div>
+                        <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Expected VAT</span><strong className="numeric-value"><DisplayValue value={money(completionInvoicePreview.vatAmount)} /></strong></div>
+                        <div className="flex justify-between gap-4"><span>Expected gross fee</span><strong className="numeric-value text-[#0F3D2E]"><DisplayValue value={money(completionAgentInvoice?.expected_gross_amount ?? completionInvoicePreview.grossAmount)} /></strong></div>
                       </div>
                     </div>
 
@@ -3506,10 +3509,10 @@ export function SalesReservationWorkflow({
                       {completionAgentInvoiceVersion ? (
                         <>
                           <div className="mt-3 grid gap-2 text-sm text-[#34413a]">
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong>{completionAgentInvoice?.invoice_reference ?? "-"}</strong></div>
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong>{formatDate(completionAgentInvoice?.invoice_date)}</strong></div>
-                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value">{money(completionAgentInvoice?.gross_amount)}</strong></div>
-                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value">{money(completionInvoiceVariance)}</strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Reference</span><strong><DisplayValue value={completionAgentInvoice?.invoice_reference} /></strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Invoice date</span><strong><DisplayValue value={formatDate(completionAgentInvoice?.invoice_date)} /></strong></div>
+                            <div className="flex justify-between gap-4 border-b border-[#eef0eb] pb-2"><span>Uploaded invoice total</span><strong className="numeric-value"><DisplayValue value={money(completionAgentInvoice?.gross_amount)} /></strong></div>
+                            <div className="flex justify-between gap-4"><span>Variance from expected gross fee</span><strong className="numeric-value"><DisplayValue value={money(completionInvoiceVariance)} /></strong></div>
                           </div>
                           <button className="secondary mt-4" type="button" onClick={() => void openDocumentVersion(completionAgentInvoiceVersion)}>Open Completion invoice PDF</button>
                           {completionAgentInvoiceVersions.length > 1 && <DocumentVersionHistory versions={completionAgentInvoiceVersions} onOpen={(version) => void openDocumentVersion(version)} />}
@@ -3653,17 +3656,17 @@ export function SalesReservationWorkflow({
 
                   return (
                     <div key={attempt.id} className="rounded-md border border-[#e2ded3] bg-white p-3 text-sm">
-                      <p className="font-semibold text-[#34413a]">Attempt {attempt.attempt_number} ended {formatDate(attempt.fallen_through_at)}</p>
+                      <p className="font-semibold text-[#34413a]">Attempt {attempt.attempt_number} ended <DisplayValue value={formatDate(attempt.fallen_through_at)} /></p>
                       <button className="mt-2 text-xs underline" onClick={() => { setConversationTarget({ unit: selectedUnit.id, sale: attempt.id }); setConversationIntent("open"); }}>Open this transaction’s comments</button>
-                      <p className="mt-1 text-[#617169]">{attempt.fall_through_reason ?? "No reason recorded."}</p>
+                      <p className="mt-1 text-[#617169]"><DisplayValue value={attempt.fall_through_reason} /></p>
                       <dl className="mt-3 grid gap-2 border-t border-[#eef0eb] pt-3 sm:grid-cols-3">
                         <div>
                           <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Buyer</dt>
-                          <dd className="mt-1 whitespace-pre-line font-semibold text-[#34413a]">{buyerDisplay(attempt)}</dd>
+                          <dd className="mt-1 whitespace-pre-line font-semibold text-[#34413a]"><DisplayValue value={buyerDisplay(attempt)} /></dd>
                         </div>
                         <div>
                           <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Reservation date</dt>
-                          <dd className="mt-1 font-semibold text-[#34413a]">{attempt.reservation_date ? formatDate(attempt.reservation_date) : "Not recorded"}</dd>
+                          <dd className="mt-1 font-semibold text-[#34413a]"><DisplayValue value={formatDate(attempt.reservation_date)} /></dd>
                         </div>
                         <div>
                           <dt className="text-xs font-semibold uppercase tracking-wide text-[#617169]">Reservation form</dt>
@@ -3672,7 +3675,7 @@ export function SalesReservationWorkflow({
                               <button className="font-semibold text-[#0F3D2E] underline underline-offset-2" type="button" onClick={() => void openDocumentVersion(reservationFormVersion)}>
                                 {reservationFormVersion.file_name}
                               </button>
-                            ) : "Not available"}
+                            ) : <EmptyValue />}
                           </dd>
                         </div>
                       </dl>

@@ -31,6 +31,7 @@ export type WorkSale = {
   exchanged_at: string | null; completed_at: string | null; legal_completed_at: string | null; redacted_at: string | null;
   authority_requested_at: string | null; completion_authority_requested_at: string | null; completion_authority_given_at: string | null;
   completion_arrangements_confirmed_at: string | null; completion_legacy_stage: "authority" | "arrangements" | null;
+  completion_service_date?: string | null; completion_basis?: 'on_notice'|'fixed_date'|null; completion_deadline_reason?: string|null;
   completion_notice_issued_at: string | null; contractual_completion_date: string | null; created_at: string;
 };
 export type WorkDocument = {

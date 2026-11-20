@@ -163,8 +163,8 @@ test("approved Reservation uses a structured, responsive event history", () => {
   assert.match(approvedPanel, /styles\.approvalHistoryCard/);
   assert.match(eventHistory, /styles\.approvalEventRow/);
   assert.match(eventHistory, /styles\.approvalEventName/);
-  assert.match(eventHistory, /<time[^>]*>\{formatDateTime\(event\.occurredAt\)\}<\/time>/);
-  assert.match(eventHistory, /styles\.approvalEventSeparator[^>]*aria-hidden="true">·<\/span>\{event\.actor\}/);
+  assert.match(eventHistory, /<time[^>]*><DisplayValue value=\{formatDateTime\(event\.occurredAt\)\} \/><\/time>/);
+  assert.match(eventHistory, /styles\.approvalEventSeparator[^>]*aria-hidden="true">·<\/span><DisplayValue value=\{event\.actor\} \/>/);
   assert.match(workflowStyles, /@container approval-history \(min-width: 30rem\)[\s\S]*grid-template-columns:\s*minmax\(8rem, 0\.9fr\) minmax\(8\.25rem, 1fr\) minmax\(0, 1\.1fr\)/);
   assert.doesNotMatch(approvedPanel, /Reservation submitted on|approved on|formatNarrativeDateTime/);
 });

@@ -1,0 +1,34 @@
+Bunnywell Portal exchange/completion refinements — 20 November 2026
+
+Status
+Implemented on the current staging branch. No deployment, live migration, provider send or live sale mutation was performed.
+
+Reconciliation
+Imported the manifest-verified staging source from tmp/snag-refinements-20261120/app (deployment snapshot dpl_GTKiohY3KUZDFFcwEtr8h3JnBKiz). This includes the prior notification, portal-polish and snagging refinements. The snapshot is not a Git commit. Existing local DisplayValue/AuthorityTerms work was retained. Reconciliation inventory and copies of replaced files are in artifacts/exchange-completion-refinements-20261120/reconciliation.json and before/.
+Staging build flags are conditional in next.config.ts, the production home route remains available outside staging, and the existing production Vercel cron configuration is preserved.
+
+Focused files and behaviour
+- CoreSales.tsx, ExchangeWorkspace.tsx: suppress the redundant issue panel for recorded authority; retain progression, historical correspondence and corrections; compact deposit link. Staging-only, administrator/developer-only delivery diagnostics are collapsed by default.
+- core-commands.ts, sales-email-delivery.ts, api/sales/legal/route.ts: status refresh reads the saved worker result only. Both the current command and staging compatibility API cannot wake a send. No new resend action was added. Worker provider polling retains acceptance when confirmation is unavailable; diagnostics log provider HTTP status server-side. Bounced, failed and delivered responses remain distinct.
+- activity-actors.ts, server.ts, sale-details.ts: use a permitted profile display name when the saved label is a generic account role, without replacing a known historical person's name.
+- NoticeDateFields.tsx, notice-contract.ts, completion-notice.ts, england-wales-holidays.json: reuse the shared working-day arithmetic, with the GOV.UK England/Wales holiday snapshot (2019–2028). Require an explicitly confirmed service/deemed-service date; calculate the building's working-day period (default 10). Fixed-date agreements are separate. Override/correction reasons are mandatory as applicable; historical dates are not replaced based on today's date. Outside holiday coverage a verified reasoned override is required.
+- SetupBuildingForms.tsx, operations.ts: notice period and contractual service guidance live with existing building sale defaults and use the existing authorised save/audit path.
+- workflow-upload.ts, CoreSales.tsx: warn on clear other-unit or unexpected-document filenames; require explicit confirmation, without rejecting a legitimate file based on its name. Storage scope and the existing notice registration transaction are preserved. Replacing a PDF preserves saved dates.
+- ExtendedSales.tsx, extended-sales.ts, CompletionWorkspace.tsx: corrections use the same contractual date form; saved service date, basis and agreement/override reason are visible.
+- notification-email.ts: persisted event dates, actors, purchaser, old/new deadlines and document filename/version where available; UK dates and one CTA for grouped messages. Missing fields are omitted. Existing branding, recipient eligibility, five-minute batching and deduplication remain in place.
+- 20261120122359_exchange_completion_refinements.sql: building defaults and saved service fields; command validation; transactional reason/service audit including service-only corrections; immutable event detail projections for emails. Existing legal role/building gates, locks, replay identities and history remain authoritative.
+- tests/exchange-completion-refinements.test.mjs and the Node test loader; scripts/diagnostics/exchange-completion-email-previews.mjs.
+
+401 finding
+The literal error is created after GET https://api.resend.com/emails/{provider_id} returns a non-success HTTP status. The prior staging evidence records HTTP 401 from that provider lookup with an already accepted provider ID. It is not an application-session or database-permission 401 and is not proof of failed delivery. The provider credential was not inspected or changed; the exact account-side reason for its refusal remains for the staging provider administrator to verify. Refresh does not contact the provider; the existing scheduled worker performs polling and backoff. Carl-only To and empty Cc/Bcc remain enforced at the provider boundary; intended recipients remain metadata.
+
+Verification
+- 43 existing authority, exchange deposit, completion package/workflow, notification Stage 3 and command-boundary tests passed.
+- 9 focused tests passed, including actual PostgreSQL/PGlite migration execution; weekends, Easter, Christmas/substitute holidays and year boundaries; custom building periods; strict service-date ordering; override reasons; fixed dates; notice replay; corrected dates and service-only audit; persisted email context; filename hints; generic actor labels; read-only refresh; provider 401/503, accepted, bounced, failed and delivered outcomes; authority suppression/history; and current Carl-only/production-fail-closed configuration.
+- TypeScript passed. Targeted ESLint passed.
+- Initial Turbopack build passed. A subsequent build encountered Windows cache-junction/permission errors. Final local Next.js Webpack production build passed after allowing access to its generated build directory.
+- 16 browser-rendered email layouts checked at 390px and 1366px, with no horizontal overflow and exactly one CTA. All eight email examples were visually inspected, including grouped updates, exchange, date change, notice, statement upload/replacement, draft account and legal completion. Screenshots and generated HTML are in the artifact directory. These are Chromium previews, not Gmail/Outlook inbox tests.
+
+Remaining staging verification
+Apply the new migration together with this application release to staging, then exercise the actual browser issue/capture/exchange and completion journey, including building-default save/reload, notice override/replacement/correction, keyboard/mobile behaviour and filename acknowledgement. Verify real account display names and inbox delivery after the provider administrator resolves or explains status-read authorisation. No remote schema advisers or live workflow mutation tests were run in this task.
+Existing snapshot migrations include previously documented local/applied version mappings: do not treat reconciliation as a request to replay that historical migration backlog.

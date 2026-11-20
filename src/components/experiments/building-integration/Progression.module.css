@@ -1,0 +1,56 @@
+.steps { margin: 8px 0 22px; }
+.steps ol { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--line); gap: 4px; }
+.steps li { min-width: 0; }
+.steps button { display: flex; align-items: flex-start; gap: 9px; width: 100%; height: 100%; min-height: 76px; padding: 13px 10px; border: 0; border-bottom: 3px solid transparent; color: var(--muted); background: transparent; text-align: left; cursor: pointer; }
+.steps button svg { flex-shrink: 0; margin-top: 2px; }
+.steps button strong { display: block; font-size: 13px; line-height: 1.4; font-weight: 600; }
+.steps button small { display: block; margin-top: 5px; font-size: 11px; line-height: 1.4; }
+.steps button[data-stage=complete] { color: var(--green); }
+.steps button[aria-current=step] { color: var(--ink); background: var(--surface-soft); border-bottom-color: var(--gold); }
+.steps button:focus-visible, .record :is(button,a,summary):focus-visible, .form :is(input,button,textarea):focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+.record { display: grid; gap: 18px; margin-bottom: 22px; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: white; min-width: 0; overflow-wrap: anywhere; }
+.record h2, .record h3, .record p { margin: 0; }
+.record h2 { font-size: 18px; line-height: 1.35; }
+.record h3 { font-size: 15px; }
+.record details { padding-top: 14px; border-top: 1px solid var(--line); }
+.record summary { cursor: pointer; color: var(--green); font-size: 13px; font-weight: 600; }
+.record details > :not(summary) { margin-top: 16px; }
+.recordHeader { display: flex; align-items: flex-start; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.success { border-color: #b8d0c2; background: #f4f8f5; }
+.milestoneTitle { display: flex; gap: 13px; align-items: center; }
+.milestoneTitle svg { color: var(--green); flex-shrink: 0; }
+.milestoneTitle h2 { font-size: 24px; }
+.meta { font-size: 12px; line-height: 1.55; color: var(--muted); }
+
+.required { color: var(--muted); font-weight: 400; }
+.fieldError { margin: 0; color: #9d3028; font-size: 12px; line-height: 1.5; font-weight: 400; }
+.uploadField { display: grid; gap: 8px; }
+.uploadLabel { font-size: 12px; font-weight: 500; }
+.empty { color: var(--muted, #617169); font-weight: 400; }
+.fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 17px 28px; margin: 0; }
+.fields > div { min-width: 0; }
+.fields dt { color: var(--muted); font-size: 11px; line-height: 1.5; margin-bottom: 5px; }
+.fields dd { margin: 0; font-size: 13px; font-weight: 550; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.body { white-space: pre-wrap; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.form { display: flex; flex-direction: column; align-items: stretch; gap: 18px; padding: 22px; }
+.form > :is(h2,p) { margin: 0; }
+.form > button { align-self: flex-start; margin-top: 4px; }
+.form > div:empty { display: none; }
+.form label:has(> input[type=date]), .form label:has(> input[type=datetime-local]) { width: min(100%, 290px); }
+.form label:has(input[type=checkbox]) { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; font-size: 13px; line-height: 1.6; cursor: pointer; }
+.form input[type=checkbox] { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; accent-color: var(--green); }
+.form > div:has(> button) { margin-top: 4px; margin-bottom: 0; }
+.dateFields { display: grid; grid-template-columns: repeat(2,minmax(0,290px)); gap: 18px; }
+.documents { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; align-items: stretch; }
+.document { display: flex; flex-direction: column; align-items: stretch; gap: 16px; min-width: 0; padding: 22px; overflow-wrap: anywhere; }
+.document > :is(p,h2,div) { margin-top: 0; margin-bottom: 0; }
+.document > div:first-child { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+.document > div:has(> button) { margin-top: 4px; }
+.document > details { margin-top: auto; width: 100%; }
+.document .file { display: flex; gap: 10px; align-items: flex-start; }
+.file svg { flex-shrink: 0; color: var(--muted); }
+.file p { margin: 0; min-width: 0; font-size: 13px; line-height: 1.5; }
+.document .fields { gap: 12px 18px; }
+@container (max-width: 610px) { .documents { grid-template-columns: 1fr; } .steps ol { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@container (max-width: 420px) { .fields, .dateFields { grid-template-columns: 1fr; } .record, .document, .form { padding: 18px; } .steps button { padding: 10px 7px; } }

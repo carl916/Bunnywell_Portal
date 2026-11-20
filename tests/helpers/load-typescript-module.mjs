@@ -18,6 +18,8 @@ export function loadTypescriptModule(filename, { overrides = {}, exports: extraE
     const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
     const require = (name) => {
       if (Object.hasOwn(overrides, name)) return overrides[name];
+      // The test adapter executes server modules in Node, outside the RSC bundler.
+      if (name === "server-only") return {};
       if (name.endsWith(".module.css")) {
         return new Proxy({}, { get: (_, key) => key === "__esModule" ? false : String(key) });
       }

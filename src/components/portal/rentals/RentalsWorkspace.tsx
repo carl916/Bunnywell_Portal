@@ -1,4 +1,6 @@
 "use client";
+
+import { DisplayValue } from "@/components/portal/DisplayValue";
 import { UnitOpenObserver } from "@/components/portal/audit/UnitOpenObserver";
 import { markUnitOpenIntent } from "@/lib/audit/unit-open";
 
@@ -72,7 +74,7 @@ function formatDate(value?: string | null) {
 }
 
 function formatLongDate(value?: string | null) {
-  if (!value) return "Not recorded";
+  if (!value) return "—";
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
 }
 
@@ -92,7 +94,7 @@ function rentMovementText(movement?: { amount: number; percentage: number | null
 }
 
 function ordinal(day?: number | null) {
-  if (!day) return "Not recorded";
+  if (day == null) return "—";
   const suffix = day % 10 === 1 && day % 100 !== 11 ? "st" : day % 10 === 2 && day % 100 !== 12 ? "nd" : day % 10 === 3 && day % 100 !== 13 ? "rd" : "th";
   return `${day}${suffix}`;
 }
@@ -116,7 +118,7 @@ function SectionHeading({ eyebrow, title, description, action }: { eyebrow: stri
 }
 
 function PerformanceMetric({ label, value, detail, tone = "normal" }: { label: string; value: string; detail?: string; tone?: "normal" | "negative" }) {
-  return <div className="min-w-0 px-3 py-3 sm:px-4"><p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{label}</p><p className={`numeric-value mt-1 text-xl font-bold ${tone === "negative" ? "text-[#8d382d]" : "text-[#0F3D2E]"}`}>{value}</p>{detail && <p className="mt-1 text-xs leading-relaxed text-[#6b7770]">{detail}</p>}</div>;
+  return <div className="min-w-0 px-3 py-3 sm:px-4"><p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{label}</p><p className={`numeric-value mt-1 text-xl font-bold ${tone === "negative" ? "text-[#8d382d]" : "text-[#0F3D2E]"}`}><DisplayValue value={value} /></p>{detail && <p className="mt-1 text-xs leading-relaxed text-[#6b7770]">{detail}</p>}</div>;
 }
 
 function TenancyForm({ tenancy, unit, lettingAgents, isAdmin, onCancel, onSaved, onNotice }: {
@@ -242,7 +244,7 @@ function RentalFile({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#D6A23A]">Rental file</p>
           <h2 className="mt-1 text-2xl font-bold text-[#0F3D2E]">Unit {unit.unit_number}</h2>
-          <p className="text-sm text-[#617169]">{building?.name} / {unit.floor ?? "No floor"}</p>
+          <p className="text-sm text-[#617169]">{building?.name} / <DisplayValue value={unit.floor} /></p>
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded-full border border-[#bfd8df] bg-[#eef8fa] px-3 py-1 text-xs font-bold text-[#315f6a]">{unit.rental_portfolio_status === "active" ? "Rental portfolio" : "Exited rental portfolio"}</span>
             {unit.rental_portfolio_status === "active" && <span className={`rounded-full border px-3 py-1 text-xs font-bold ${occupancyBadge(occupied)}`}>{occupied ? "Occupied" : "Void"}</span>}
@@ -268,12 +270,12 @@ function RentalFile({
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-xl font-bold text-[#0F3D2E]">Current tenancy</h3><p className="mt-1 text-sm text-[#617169]">The unit remains occupied until an actual tenancy end is recorded.</p></div><button className="secondary" onClick={() => setEditingTenancyId(current.id)}>Edit</button></div>
         <dl className="mt-5 divide-y divide-[#e6e9e4] rounded-bw-card border border-[#dfe3dd] bg-[#fbfcfa] px-4">
           <div className="py-4"><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Tenant</dt><dd className="mt-1 text-lg font-semibold text-[#26342d]">{current.tenant_name}</dd></div>
-          <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Tenancy</dt><dd className="mt-1 font-semibold text-[#34413a]">{formatLongDate(current.tenancy_start_date)} – ongoing</dd><dd className="mt-1 text-sm text-[#617169]">Fixed term: {formatLongDate(current.fixed_term_end_date)}</dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Rent</dt><dd className="numeric-value mt-1 text-lg font-semibold text-[#34413a]">{formatGbp(current.monthly_rent)} pcm</dd><dd className="mt-1 text-sm text-[#617169]">Due: {ordinal(current.rent_due_day)}</dd></div></div>
-          <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Deposit</dt><dd className="numeric-value mt-1 font-semibold text-[#34413a]">{current.deposit_amount === null ? "Not recorded" : formatGbp(current.deposit_amount)}</dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Letting agent</dt><dd className="mt-1 font-semibold text-[#34413a]">{lettingAgent?.name ?? "Not recorded"}</dd></div></div>
+          <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Tenancy</dt><dd className="mt-1 font-semibold text-[#34413a]"><DisplayValue value={formatLongDate(current.tenancy_start_date)} /> – ongoing</dd><dd className="mt-1 text-sm text-[#617169]">Fixed term: <DisplayValue value={formatLongDate(current.fixed_term_end_date)} /></dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Rent</dt><dd className="numeric-value mt-1 text-lg font-semibold text-[#34413a]"><DisplayValue value={formatGbp(current.monthly_rent)} /> pcm</dd><dd className="mt-1 text-sm text-[#617169]">Due: <DisplayValue value={ordinal(current.rent_due_day)} /></dd></div></div>
+          <div className="grid gap-4 py-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Deposit</dt><dd className="numeric-value mt-1 font-semibold text-[#34413a]"><DisplayValue value={formatGbp(current.deposit_amount)} /></dd></div><div><dt className="text-xs font-bold uppercase tracking-[0.08em] text-[#617169]">Letting agent</dt><dd className="mt-1 font-semibold text-[#34413a]"><DisplayValue value={lettingAgent?.name} /></dd></div></div>
         </dl>
         {(current.source_reference || current.notes) && <div className="mt-4 grid gap-3 text-sm text-[#617169] sm:grid-cols-2">{current.source_reference && <div><p className="text-xs font-bold uppercase tracking-[0.06em]">Source / reference</p><p className="mt-1 break-words">{current.source_type.replace(/_/g, " ")} · {current.source_reference}</p></div>}{current.notes && <div><p className="text-xs font-bold uppercase tracking-[0.06em]">Notes</p><p className="mt-1 whitespace-pre-line">{current.notes}</p></div>}</div>}
       </> : unit.rental_portfolio_status === "exited" ? <div className="rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-6"><h3 className="text-xl font-bold text-[#0F3D2E]">Exited rental portfolio</h3><p className="mt-2 text-sm text-[#617169]">Current occupancy is not tracked for exited units. Historical tenancy records remain available and editable.</p><button className="secondary mt-4" onClick={() => setTab("history")}>View tenancy history</button></div> : <div className="rounded-bw-card border border-[#ead8a7] bg-[#fffaf0] p-6"><h3 className="text-xl font-bold text-[#765a18]">Void</h3><p className="mt-2 text-sm text-[#617169]">{metrics.currentVoid?.days !== null ? `No active tenancy. ${metrics.currentVoid?.days ?? 0} current void days since ${formatDate(metrics.currentVoid?.startDate)}.` : next ? `No active tenancy yet. The first recorded tenancy starts ${formatDate(next.tenancy_start_date)}.` : "No tenancy has been recorded for this rental unit."}</p><button className="primary mt-4" onClick={() => setEditingTenancyId("new")}>Add tenancy</button></div>}
-      {next && <div className="mt-5 rounded-bw-card border border-[#bfd8df] bg-[#f4fbfc] p-4"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold uppercase text-[#315f6a]">Next tenancy</p><h4 className={`mt-1 font-bold text-[#0F3D2E] ${isRealTenantName(next.tenant_name) ? "" : "opacity-60"}`}>{next.tenant_name}</h4><p className="mt-1 text-sm text-[#617169]">Starts {formatDate(next.tenancy_start_date)} · {formatGbp(next.monthly_rent)} per month</p></div><button className="secondary" onClick={() => setEditingTenancyId(next.id)}>Edit</button></div></div>}
+      {next && <div className="mt-5 rounded-bw-card border border-[#bfd8df] bg-[#f4fbfc] p-4"><div className="flex justify-between gap-3"><div><p className="text-xs font-bold uppercase text-[#315f6a]">Next tenancy</p><h4 className={`mt-1 font-bold text-[#0F3D2E] ${isRealTenantName(next.tenant_name) ? "" : "opacity-60"}`}>{next.tenant_name}</h4><p className="mt-1 text-sm text-[#617169]">Starts <DisplayValue value={formatDate(next.tenancy_start_date)} /> · <DisplayValue value={formatGbp(next.monthly_rent)} /> per month</p></div><button className="secondary" onClick={() => setEditingTenancyId(next.id)}>Edit</button></div></div>}
     </section>}
 
     {!editingTenancyId && tab === "current" && <RentPerformancePanel
@@ -307,12 +309,12 @@ function RentalFile({
                 <button className="text-sm font-semibold text-[#0F3D2E] underline" onClick={() => setEditingTenancyId(tenancy.id)}>Edit</button>
               </div>
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Tenancy</dt><dd className="mt-1 text-[#34413a]">{formatDate(tenancy.tenancy_start_date)} – {formatDate(tenancy.tenancy_end_date)}</dd></div>
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Fixed-term end</dt><dd className="mt-1 text-[#34413a]">{formatDate(tenancy.fixed_term_end_date)}</dd></div>
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Monthly rent</dt><dd className="numeric-value mt-1 text-[#34413a]">{formatGbp(tenancy.monthly_rent)}</dd></div>
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Rent change</dt><dd className={`numeric-value mt-1 ${movementColour(latestChange?.amount)}`}>{rentMovementText(latestChange)}</dd></div>
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Void before</dt><dd className="numeric-value mt-1 text-[#34413a]">{voidDaysBefore === null ? "—" : `${voidDaysBefore} days`}</dd></div>
-                <div><dt className="text-xs font-bold uppercase text-[#617169]">Letting agent</dt><dd className="mt-1 text-[#34413a]">{organisations.find((item) => item.id === tenancy.letting_agent_organisation_id)?.name ?? "—"}</dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Tenancy</dt><dd className="mt-1 text-[#34413a]"><DisplayValue value={formatDate(tenancy.tenancy_start_date)} /> – <DisplayValue value={formatDate(tenancy.tenancy_end_date)} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Fixed-term end</dt><dd className="mt-1 text-[#34413a]"><DisplayValue value={formatDate(tenancy.fixed_term_end_date)} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Monthly rent</dt><dd className="numeric-value mt-1 text-[#34413a]"><DisplayValue value={formatGbp(tenancy.monthly_rent)} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Rent change</dt><dd className={`numeric-value mt-1 ${movementColour(latestChange?.amount)}`}><DisplayValue value={rentMovementText(latestChange)} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Void before</dt><dd className="numeric-value mt-1 text-[#34413a]"><DisplayValue value={voidDaysBefore === null ? null : `${voidDaysBefore} days`} /></dd></div>
+                <div><dt className="text-xs font-bold uppercase text-[#617169]">Letting agent</dt><dd className="mt-1 text-[#34413a]"><DisplayValue value={organisations.find((item) => item.id === tenancy.letting_agent_organisation_id)?.name} /></dd></div>
               </dl>
             </article>;
           })}
@@ -325,13 +327,13 @@ function RentalFile({
               const hasArrears = state === "ended" && arrearsTenancyIds.has(tenancy.id);
               return <tr key={tenancy.id} className="bg-white">
                 <td className={`border-b border-[#eef0eb] px-3 py-3 font-semibold ${isRealTenantName(tenancy.tenant_name) ? "" : "text-[#89928d]"}`}>{tenancy.tenant_name}<span className={`mt-1 block text-xs font-normal ${hasArrears ? "text-[#8A6A22]" : "text-[#617169]"}`}>{tenancyHistoryStatusLabel(state, hasArrears)}</span></td>
-                <td className="border-b border-[#eef0eb] px-3 py-3">{formatDate(tenancy.tenancy_start_date)}</td>
-                <td className="border-b border-[#eef0eb] px-3 py-3">{formatDate(tenancy.fixed_term_end_date)}</td>
-                <td className="border-b border-[#eef0eb] px-3 py-3">{formatDate(tenancy.tenancy_end_date)}</td>
-                <td className="numeric-value border-b border-[#eef0eb] px-3 py-3">{formatGbp(tenancy.monthly_rent)}</td>
-                <td className={`numeric-value border-b border-[#eef0eb] px-3 py-3 ${movementColour(latestChange?.amount)}`}>{rentMovementText(latestChange)}</td>
-                <td className="numeric-value border-b border-[#eef0eb] px-3 py-3">{voidDaysBefore === null ? "—" : `${voidDaysBefore} days`}</td>
-                <td className="border-b border-[#eef0eb] px-3 py-3">{organisations.find((item) => item.id === tenancy.letting_agent_organisation_id)?.name ?? "—"}</td>
+                <td className="border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={formatDate(tenancy.tenancy_start_date)} /></td>
+                <td className="border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={formatDate(tenancy.fixed_term_end_date)} /></td>
+                <td className="border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={formatDate(tenancy.tenancy_end_date)} /></td>
+                <td className="numeric-value border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={formatGbp(tenancy.monthly_rent)} /></td>
+                <td className={`numeric-value border-b border-[#eef0eb] px-3 py-3 ${movementColour(latestChange?.amount)}`}><DisplayValue value={rentMovementText(latestChange)} /></td>
+                <td className="numeric-value border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={voidDaysBefore === null ? null : `${voidDaysBefore} days`} /></td>
+                <td className="border-b border-[#eef0eb] px-3 py-3"><DisplayValue value={organisations.find((item) => item.id === tenancy.letting_agent_organisation_id)?.name} /></td>
                 <td className="border-b border-[#eef0eb] px-3 py-3"><button className="text-sm font-semibold text-[#0F3D2E] underline" onClick={() => setEditingTenancyId(tenancy.id)}>Edit</button></td>
               </tr>;
             })}</tbody>
@@ -589,11 +591,11 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
         />
         <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><Home className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Longest recorded void</h4></div>
-          {attention.longestVoid ? <div className="mt-3"><p className="text-xl font-bold text-[#0F3D2E]">Unit {attention.longestVoid.unit.unit_number} · {attention.longestVoid.period.days} days</p><p className="mt-1 text-sm text-[#617169]">{formatDate(attention.longestVoid.period.startDate)} – {formatDate(attention.longestVoid.period.endDate)}</p><p className="mt-2 text-sm font-semibold text-[#34413a]">Estimated loss: {attention.longestVoid.period.estimatedLoss === null ? "Unknown" : formatGbp(attention.longestVoid.period.estimatedLoss)}</p></div> : <p className="mt-3 text-sm text-[#617169]">No recorded void periods in this reporting period.</p>}
+          {attention.longestVoid ? <div className="mt-3"><p className="text-xl font-bold text-[#0F3D2E]">Unit {attention.longestVoid.unit.unit_number} · {attention.longestVoid.period.days} days</p><p className="mt-1 text-sm text-[#617169]"><DisplayValue value={formatDate(attention.longestVoid.period.startDate)} /> – <DisplayValue value={formatDate(attention.longestVoid.period.endDate)} /></p><p className="mt-2 text-sm font-semibold text-[#34413a]">Estimated loss: {attention.longestVoid.period.estimatedLoss === null ? "Unknown" : formatGbp(attention.longestVoid.period.estimatedLoss)}</p></div> : <p className="mt-3 text-sm text-[#617169]">No recorded void periods in this reporting period.</p>}
         </article>
         <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><TrendingDown className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Largest current rent reduction</h4></div>
-          {attention.largestRentReduction ? <div className="mt-3"><p className="text-xl font-bold text-[#8d382d]">Unit {attention.largestRentReduction.unit.unit_number} · {rentMovementText(attention.largestRentReduction.movement)}</p><p className="mt-1 text-sm text-[#617169]">First achieved {formatGbp(attention.largestRentReduction.firstRent)} · current {formatGbp(attention.largestRentReduction.currentRent)}</p></div> : <p className="mt-3 text-sm text-[#617169]">No occupied unit is below its first achieved rent.</p>}
+          {attention.largestRentReduction ? <div className="mt-3"><p className="text-xl font-bold text-[#8d382d]">Unit {attention.largestRentReduction.unit.unit_number} · <DisplayValue value={rentMovementText(attention.largestRentReduction.movement)} /></p><p className="mt-1 text-sm text-[#617169]">First achieved <DisplayValue value={formatGbp(attention.largestRentReduction.firstRent)} /> · current <DisplayValue value={formatGbp(attention.largestRentReduction.currentRent)} /></p></div> : <p className="mt-3 text-sm text-[#617169]">No occupied unit is below its first achieved rent.</p>}
         </article>
         <article className="rounded-bw-card border border-[#d9ded6] p-4">
           <div className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Upcoming fixed-term dates</h4></div>
@@ -626,12 +628,12 @@ export function RentalsWorkspace({ role, buildings, buildingFloors, units, build
               {!buildingId && <td className="border-b border-[#eef0eb] px-3 py-3">{buildings.find((building) => building.id === unit.building_id)?.name}</td>}
               <td className="border-b border-[#eef0eb] px-3 py-3"><span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${occupancyBadge(Boolean(active))}`}>{active ? "Occupied" : "Void"}</span></td>
               <td className="border-b border-[#eef0eb] px-3 py-3"><RentRiskAttentionBadge risk={rentRisk} /></td>
-              <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 font-semibold">{metrics.currentRent === null ? "—" : formatGbp(metrics.currentRent)}</td>
-              <td className={`numeric-value border-b border-[#eef0eb] px-3 py-3 ${movementColour(metrics.currentVsFirstRent?.amount)}`}>{rentMovementText(metrics.currentVsFirstRent)}</td>
-              <td className="border-b border-[#eef0eb] px-3 py-3">{active ? <><span className="block font-medium">Since {formatDate(active.tenancy_start_date)}</span><span className={`block max-w-[12rem] truncate text-xs ${isRealTenantName(active.tenant_name) ? "text-[#617169]" : "text-[#98a09b]"}`}>{active.tenant_name}</span></> : "—"}</td>
+              <td className="numeric-value border-b border-[#eef0eb] px-3 py-3 font-semibold"><DisplayValue value={formatGbp(metrics.currentRent)} /></td>
+              <td className={`numeric-value border-b border-[#eef0eb] px-3 py-3 ${movementColour(metrics.currentVsFirstRent?.amount)}`}><DisplayValue value={rentMovementText(metrics.currentVsFirstRent)} /></td>
+              <td className="border-b border-[#eef0eb] px-3 py-3">{active ? <><span className="block font-medium">Since <DisplayValue value={formatDate(active.tenancy_start_date)} /></span><span className={`block max-w-[12rem] truncate text-xs ${isRealTenantName(active.tenant_name) ? "text-[#617169]" : "text-[#98a09b]"}`}>{active.tenant_name}</span></> : <DisplayValue />}</td>
               <td className="numeric-value border-b border-[#eef0eb] px-3 py-3">{metrics.tenancyCount}</td>
-              <td className="numeric-value border-b border-[#eef0eb] px-3 py-3"><span className="block">{metrics.voidDays} days</span>{metrics.estimatedVoidLoss !== null && metrics.estimatedVoidLoss > 0 && <span className="block text-xs text-[#617169]">{formatGbp(metrics.estimatedVoidLoss)} est.</span>}</td>
-              <td className="border-b border-[#eef0eb] px-3 py-3 text-[#617169]">{nextEventText(metrics)}</td>
+              <td className="numeric-value border-b border-[#eef0eb] px-3 py-3"><span className="block">{metrics.voidDays} days</span>{metrics.estimatedVoidLoss !== null && metrics.estimatedVoidLoss > 0 && <span className="block text-xs text-[#617169]"><DisplayValue value={formatGbp(metrics.estimatedVoidLoss)} /> est.</span>}</td>
+              <td className="border-b border-[#eef0eb] px-3 py-3 text-[#617169]"><DisplayValue value={nextEventText(metrics)} /></td>
             </tr>;
           })}</tbody>
         </table></div>

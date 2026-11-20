@@ -1,5 +1,7 @@
 "use client";
 
+import { DisplayValue } from "@/components/portal/DisplayValue";
+
 import { AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "lucide-react";
 import {
   deriveTenancyRentRisk,
@@ -13,7 +15,7 @@ import {
 } from "@/lib/rentals/rent-risk";
 
 function formatDate(value?: string | null) {
-  if (!value) return "Not recorded";
+  if (!value) return "—";
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
     .format(new Date(value));
 }
@@ -49,7 +51,7 @@ export function RentRiskAttentionBadge({ risk }: { risk?: UnitRentRisk }) {
 function RiskMetric({ label, value, detail, tone = "normal" }: { label: string; value: string; detail?: string; tone?: "normal" | "attention" }) {
   return <div className="min-w-0 p-3 sm:p-4">
     <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">{label}</p>
-    <p className={`mt-1 text-xl font-bold ${tone === "attention" ? "text-[#8d382d]" : "text-[#0F3D2E]"}`}>{value}</p>
+    <p className={`mt-1 text-xl font-bold ${tone === "attention" ? "text-[#8d382d]" : "text-[#0F3D2E]"}`}><DisplayValue value={value} /></p>
     {detail && <p className="mt-1 text-xs leading-relaxed text-[#6b7770]">{detail}</p>}
   </div>;
 }
@@ -80,7 +82,7 @@ export function PortfolioRentRiskSection({
         <div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-[#617169]" /><h4 className="font-bold text-[#34413a]">Rent risk</h4></div>
         <p className="mt-1 text-sm text-[#617169]">Management signals from material agent reports, not a live rent account.</p>
       </div>
-      {lastImport && <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">Data through {formatDate(lastImport.data_as_of)}</span>}
+      {lastImport && <span className="rounded-full border border-[#d9ded6] bg-white px-2.5 py-1 text-xs font-semibold text-[#617169]">Data through <DisplayValue value={formatDate(lastImport.data_as_of)} /></span>}
     </div>
     {loading ? <p className="mt-4 text-sm text-[#617169]" role="status">Loading rent-risk data…</p> : <>
       <dl className="mt-4 grid grid-cols-2 divide-x divide-y divide-[#dfe6e1] overflow-hidden rounded-bw-card border border-[#d9ded6] bg-white lg:grid-cols-4 lg:divide-y-0">
@@ -145,8 +147,8 @@ export function RentPerformancePanel({
     <div className="mt-4 rounded-bw-card border border-[#d9ded6] bg-[#fbfcfa] p-4">
       <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#617169]">Current position</p>
       {currentEpisode ? <>
-        <p className="numeric-value mt-1 text-2xl font-bold text-[#0F3D2E]">Latest reported arrears {formatReportedArrears(currentEpisode.latest_reported_amount)}</p>
-        <p className="mt-1 text-sm text-[#617169]">As at {formatDate(currentEpisode.last_reported_at)} · source: <span title={currentEpisode.source_reference}>{sourceLabel(currentEpisode.source_reference)}</span></p>
+        <p className="numeric-value mt-1 text-2xl font-bold text-[#0F3D2E]">Latest reported arrears <DisplayValue value={formatReportedArrears(currentEpisode.latest_reported_amount)} /></p>
+        <p className="mt-1 text-sm text-[#617169]">As at <DisplayValue value={formatDate(currentEpisode.last_reported_at)} /> · source: <span title={currentEpisode.source_reference}>{sourceLabel(currentEpisode.source_reference)}</span></p>
         <p className="mt-2 text-sm font-semibold text-[#34413a]">{currentEpisode.owner_action_required ? "Owner decision requested" : "Agent handling · no owner decision currently requested"}</p>
       </> : <div className="mt-2 flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#286348]" /><p className="text-sm text-[#617169]">No open arrears episode is reported for the current tenancy.</p></div>}
       <p className="mt-3 text-xs leading-relaxed text-[#6b7770]">Reported balances may have changed since the source date. Robinson Jackson’s rent account remains the definitive current position.</p>
@@ -169,7 +171,7 @@ export function RentPerformancePanel({
             <summary className="cursor-pointer list-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0F3D2E]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-bold text-[#0F3D2E]">{formatDate(episode.first_reported_at)} · {formatReportedArrears(episode.initial_reported_amount)}</p>
+                  <p className="font-bold text-[#0F3D2E]"><DisplayValue value={formatDate(episode.first_reported_at)} /> · <DisplayValue value={formatReportedArrears(episode.initial_reported_amount)} /></p>
                   <p className="mt-1 text-sm text-[#617169]">{episode.management_summary}</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold ${episode.intervention_level === "action_required" ? "border-[#e5b9b2] bg-[#fff3f1] text-[#8d382d]" : episode.intervention_level === "watch" ? "border-[#e3c77b] bg-[#fff8e8] text-[#765a18]" : "border-[#d9ded6] bg-[#f4f5f2] text-[#617169]"}`}>{interventionLabel(episode.intervention_level)}</span>
@@ -177,8 +179,8 @@ export function RentPerformancePanel({
             </summary>
             <dl className="mt-4 grid gap-3 border-t border-[#e4e8e2] pt-4 text-sm sm:grid-cols-2">
               <div><dt className="text-xs font-bold uppercase text-[#617169]">Outcome</dt><dd className="mt-1 text-[#34413a]">{rentRiskStatusLabel(episode.status)}{episode.resolution_basis ? ` · ${episode.resolution_basis.replace(/_/g, " ")}` : ""}</dd></div>
-              <div><dt className="text-xs font-bold uppercase text-[#617169]">Latest reported arrears</dt><dd className="numeric-value mt-1 text-[#34413a]">{formatReportedArrears(episode.latest_reported_amount)} as at {formatDate(episode.last_reported_at)}</dd></div>
-              <div><dt className="text-xs font-bold uppercase text-[#617169]">Peak reported arrears</dt><dd className="numeric-value mt-1 text-[#34413a]">{formatReportedArrears(episode.maximum_reported_amount)}</dd></div>
+              <div><dt className="text-xs font-bold uppercase text-[#617169]">Latest reported arrears</dt><dd className="numeric-value mt-1 text-[#34413a]"><DisplayValue value={formatReportedArrears(episode.latest_reported_amount)} /> as at <DisplayValue value={formatDate(episode.last_reported_at)} /></dd></div>
+              <div><dt className="text-xs font-bold uppercase text-[#617169]">Peak reported arrears</dt><dd className="numeric-value mt-1 text-[#34413a]"><DisplayValue value={formatReportedArrears(episode.maximum_reported_amount)} /></dd></div>
               <div><dt className="text-xs font-bold uppercase text-[#617169]">Evidence</dt><dd className="mt-1 text-[#34413a]">{eventCount} material event{eventCount === 1 ? "" : "s"} · source <span className="break-all" title={episode.source_reference}>{sourceLabel(episode.source_reference)}</span></dd></div>
             </dl>
           </details>;

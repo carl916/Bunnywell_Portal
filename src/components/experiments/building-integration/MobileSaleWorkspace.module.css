@@ -1,0 +1,43 @@
+.header, .markerAnchor, .spacer, .mobileBack { display:none; }
+.globalLabel { display:none; }
+.globalNavigation { display:none; }
+
+/* Scoped to the integrated workspace; the standalone prototype is untouched. */
+@media (max-width:1023px) {
+  .desktopSidebar, .desktopHeader, .workspace[data-sale-workspace=true] .desktopBreadcrumbs,
+  .workspace[data-sale-workspace=true] .desktopBackRow { display:none; }
+  .workspace[data-collapsed][data-sale-workspace] .workspaceContent { margin-left:0; }
+  .workspace .globalMenu { display:flex; width:auto; min-height:44px; padding:8px; gap:7px; align-items:center; font-size:12px; }
+  .globalLabel { display:inline; }
+  .workspace .breadcrumbRow { min-height:52px; height:auto; align-items:center; justify-content:space-between; gap:12px; padding:4px 12px; }
+  .mobileBack { display:flex; align-items:center; min-height:44px; gap:6px; color:var(--green); font-size:12px; }
+  .globalNavigation { display:block; padding:12px 18px; border-bottom:1px solid var(--line); background:#fff; }
+  .markerAnchor { display:block; position:relative; height:0; flex:none; }
+  .markerAnchor>span { position:absolute; top:64px; height:1px; width:1px; pointer-events:none; }
+  .spacer { display:block; flex:none; overflow-anchor:none; }
+  .header { position:sticky; top:0; z-index:30; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 10px; padding:12px 14px; background:var(--ink); color:#fff; box-shadow:0 4px 12px #1b3b2510; overflow-anchor:none; }
+  .identification { min-width:0; }
+  .identification strong { display:block; font-size:16px; line-height:1.4; overflow-wrap:anywhere; font-weight:650; }
+  .identification strong>span { color:var(--line-strong); padding:0 2px; }
+  .identification p { color:var(--line); font-size:12px; line-height:1.5; overflow-wrap:anywhere; margin-top:3px; }
+  .status { align-self:start; margin-top:1px; max-width:110px; padding:4px 8px; background:var(--sage); color:var(--ink); border-radius:20px; font-size:10px; line-height:1.5; font-weight:700; text-align:center; overflow-wrap:anywhere; }
+  .controls { grid-column:1 / -1; display:flex; gap:8px; min-width:0; }
+  .controls button { display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; border-radius:6px; padding:8px 10px; font-size:13px; font-weight:650; line-height:1.35; }
+  .pageControl { flex:1; min-width:0; text-align:left; color:var(--ink); background:#fff; border:1px solid #fff; }
+  .pageControl>span { flex:1; overflow-wrap:anywhere; }
+  .infoControl { flex:none; color:#fff; background:#ffffff0a; border:1px solid #ffffff60; }
+  .header .controls button:focus-visible { outline-color:var(--gold); }
+  .header[data-compact=true] { padding-block:7px; gap:5px; }
+  .header[data-compact=true] .identification { grid-column:1 / -1; }
+  .header[data-compact=true] .identification strong { font-size:13px; }
+  .header[data-compact=true] .identification p, .header[data-compact=true] .status { display:none; }
+  .menu { position:fixed; inset:auto; margin:0; padding:14px 10px; border:1px solid var(--line); border-radius:10px; color:var(--ink); background:#fff; box-shadow:0 12px 32px #0f3d3130; overflow:auto; overscroll-behavior:contain; }
+  .menu::backdrop { background:#0f3d311a; }
+  .menu .navigation { margin:0; gap:12px; }
+  .menu .navigation>div+div { border-top:1px solid var(--line); padding-top:12px; }
+  .menu .navigation h2 { font-size:10px; margin-bottom:5px; }
+  .menu .navigation a { min-height:48px; padding:10px; font-size:14px; }
+  .menu .navigation a>span { flex:1; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .menu .navigation small { margin:0; font-size:11px; color:var(--muted); white-space:nowrap; }
+  .workspace[data-sale-workspace=true] main :is(h1,button,input,textarea,summary,[tabindex],section[id]):not(dialog *) { scroll-margin-top:calc(var(--mobile-sale-header-height, 140px) + 12px); }
+}
