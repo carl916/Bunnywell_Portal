@@ -1,0 +1,37 @@
+Reservation corrections — staging completion, 19 November 2026
+
+Staging: https://staging.bunnywell.co.uk
+Deployment: dpl_A3t34JjqgCDB3ZyXF8a4C21SCnsv (preview environment)
+Source: tmp/reservation-corrections-20261119/app
+Baseline: tmp/reservation-form-ux-20261119/app
+Evidence: artifacts/reservation-corrections-20261119
+
+Return to sale now requires an active reservation with a recorded developer approval timestamp and approver, and an approved pre-exchange workflow status. Draft/no reservation, submitted, awaiting approval, queried, rejected, exchanged and completed reservations do not expose the action. Both the legacy completion timestamp and the legal completion timestamp block returning a unit. The database checks the current row while holding its existing lock, independently of PDF presence or populated buyer details.
+
+The Corrections and exceptions disclosure remains collapsed by default and disappears when there is no permitted action. It uses the existing card and field styles with 18px gaps, separate checkbox spacing and a processing state. A native confirmation dialog explicitly states that the current sale attempt will end, a new attempt will be created, buyer contacts and active documents will be redacted, and audit history will be retained. Reason and checkbox remain required. The integrated backend now also requires confirmed=true as a JSON boolean.
+
+The rejection path was inspected and left unchanged. Rejection keeps the active attempt available for correction, leaves the unit For sale, records the reason, and resets commercial confirmation. Revise reservation retains the entered buyer details and supports PDF replacement and resubmission. This recovery path was exercised through developer approval on both the local candidate and deployed staging.
+
+The previous inconsistency was that both the disclosure and the return helper accepted pre-approval states. The context also omitted approval metadata. The correction reads the real approval fields and restricts the existing helper; it does not infer approval from a document. Existing active approved/pre-exchange staging records had approval metadata, so no backfill was needed. The schema also contains both completed_at and legal_completed_at; both are now respected.
+
+Backend changes are limited to definitions of return_pre_exchange_unit_for_sale and workspace_sale_operation. No tables, columns, policies, approval contracts, PDF submission contracts or rejection contracts were changed. Existing service-role execution permissions, building access checks, transaction boundaries, idempotency receipts, buyer/document redaction, terms supersession and audit creation remain in place.
+
+Staging-only migrations:
+20261119141104_reservation_return_requires_approval.sql
+20261119141355_reservation_return_completion_guard.sql
+
+Verification:
+- Next.js production build and TypeScript passed.
+- 24 database state/permission cases passed, including all forbidden states, four approved pre-exchange status aliases, missing approval metadata, all exchange/completion dates, inactive sale, blank reason, missing/false/string confirmation, replacement creation and idempotent replay. All temporary SQL state changes and successful SQL return simulations were rolled back. Anonymous/authenticated direct RPC grants remain unavailable.
+- New COR-01 and COR-02 test units exercised submit -> reject -> revise -> resubmit -> approve -> return, using local and deployed staging respectively. Both replacement attempts opened as empty, editable drafts.
+- Browser checks verified disabled controls, dialog cancellation, successful confirmation and replay, plus spacing and overflow at 1366px and 390px. No browser JavaScript errors were observed.
+- The deployed staging browser passed 22 visibility cases covering states, approval metadata, exchange/completion dates, inactive attempts, and admin/developer/sales-agent/conveyancer presentations. These checks substituted read responses, blocked business writes, and made zero business changes; backend permission enforcement was tested separately.
+- Each ended test attempt retained two redacted PDF version rows and exactly one return audit event. Buyer contact fields were cleared and one fresh active attempt exists per test unit.
+- Hashes of all pre-existing sale attempts and commercial term rows were identical before and after this work. Existing test journeys were preserved.
+- Database security advisor findings remained at the previous 102 findings, with no new findings.
+- Both production aliases still point to dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. No production deployment or database operation was performed.
+
+Boundaries retained:
+The existing staging enrollment and role/building permission restrictions remain. Existing legal safeguards can require withdrawal of an active exchange authority before ending a sale; that legal workflow was not redesigned. Exchanged/completed cancellation processes and unrelated exception actions were not exercised end-to-end in this task. Boundary visibility checks use controlled, read-only state responses and database rollback tests rather than exchanging or completing existing customer/test sales.
+
+Implementation.patch and source-manifest.json record the exact three application files and two migration files. Browser reports and screenshots, database verification, and final data/deployment checks are in the evidence directory. The isolated staging source preserves unrelated work in the root checkout.

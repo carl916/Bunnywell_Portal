@@ -1,0 +1,158 @@
+Bunnywell Portal — Setup integration audit, 18 November 2026
+
+Status: audit complete; full Setup integration remains unfinished. A narrow
+session-restoration correction is prepared and tested locally, not deployed.
+Work has stopped before database changes, as explicitly requested. Staging
+still serves dpl_68kZ3ezy8hjDAQnuDSJxs179u996. Production was not changed.
+
+Architecture findings
+
+The restoration introduced a second application entry point within the same
+Next.js deployment. /workspace mounts ConnectedWorkspace, with the accepted
+sidebar, navigation state and shared session. /setup mounts ProductionPortalApp,
+with the old horizontal header, its own session lifecycle, loading state,
+building context and data access. They use the same Supabase project and browser
+client factory, but do not share a mounted application/session owner.
+
+The proxy redirects workspace Setup/building-settings URLs to /setup. The
+workspace navigation and legacy setTab implementation use location.assign when
+crossing this boundary. A staging browser trace confirmed a new document in
+both directions. This is a substantive integration regression, not just styling.
+
+The login flash has two causes: the full reload reinitialises authentication;
+ConnectedWorkspace renders its sign-in form while session is initially null,
+before getUser has finished validating the persisted session. Delaying Auth in
+the browser reproduced the flash with valid credentials. No invalid account or
+permission failure was required.
+
+The isolated correction distinguishes restoring, verified and unavailable
+states. Sign-in appears only after a definitive missing/rejected session.
+Transient Auth failures offer retry without treating the user as signed out.
+An additional lifecycle defect was fixed: a stored INITIAL_SESSION rejected by
+getUser could previously return without settling restoration. Existing
+invalidation, token refresh and principal-verification checks are preserved.
+No CSS hiding or artificial application delay was added.
+
+This correction does not remove the two-shell architecture. That requires the
+full Setup replacement and compatibility redirects described below.
+
+Database/backend findings
+
+The live staging project is vxkpvdtrldwwqiddoyof. Its latest recorded migration
+is 20261118143432 staging_workspace. The restoration deployment's changed-file
+manifest contains application changes, including reopening older API routes,
+and no deployed SQL migrations. No later restoration/rollback migration appears
+in the ledger. This does not prove that every historical manual SQL change is
+absent; no pre-restoration snapshot of every policy/function was available.
+
+There is local source-history drift: the integrated source's migration directory
+contains 20261118134435_staging_workspace.sql, while the restoration folder
+contains three older 20260828–20260830 allocation migrations. Its .vercelignore
+excludes /supabase and /scripts, and the deployment manifest excludes them.
+These local directories must not be treated as interchangeable migration
+histories or used as an instruction to replay old migrations.
+
+The integrated database still has service-role-only workspace_setup_context,
+workspace_setup_operation and workspace_setup_receipt. Setup actor validation
+requires an active admin/developer and matching server actor context. Commands
+use transactional writes, request receipts and stale-record checks. But their
+business contract remains tied to test_entities: fictional confirmations,
+test-prefixed building names, example.invalid account creation and operational
+test roles. New units become for_sale and receive a baseline sale automatically.
+Those semantics do not implement ordinary Setup or its unreleased-unit default.
+
+The restored UI disables that command path on hosted staging and uses older
+browser Supabase mutations and /api routes instead. Existing RLS and API role
+checks still apply; this audit did not establish a role bypass. However, these
+paths bypass the integrated command's transactional/idempotent safeguards.
+For example, legacy Sales defaults use separate requests to upsert defaults,
+delete the payment schedule, insert its replacement and cascade eligible sales.
+A partial failure can leave a partial save. Existing domain helpers preserve
+established sale terms, but positive-write integrity was not exercised here.
+
+Snag write eligibility and staging sale correspondence capture still depend on
+the private registration tables. All 4 current buildings and all 129 non-redacted
+sale attempts remain enrolled. An ordinary building created by the restored
+direct-write form is not registered by that creation path; later integrated
+Snag/correspondence operations may therefore reject it. This is a code-path
+conflict, not an observed loss of the existing journeys.
+
+The relevant live policies restrict Setup writes to setup administrators.
+Normal users do not receive service-role access. Existing validated allocation
+RPCs, save_portal_user_access and portal_audit_page remain available for reuse.
+Sales contact routing must remain distinct from building access assignments;
+the current test save_team action couples the two for sales/conveyancer roles.
+
+Security advisors were captured as baseline evidence. They include existing
+search_path/grant and Auth configuration warnings; their existence alone does
+not establish a new exploit introduced by this restoration. No unrelated
+security-policy change was made during the audit.
+
+No schema, migration, RLS, business-record, allocation or account-access changes
+were made during this work. Browser audit writes were blocked; the legacy page
+attempted /api/auth/activity on mount, which the audit intercepted. Signing in
+for verification naturally creates Auth session/audit activity. No email,
+invitation, seeding, cleanup, reset or destructive operation was performed.
+
+Required continuation and approval boundary
+
+The concrete proposed backend scope is in
+docs/setup-integration-backend-proposal-2026-11-18.txt. It replaces the staging
+Setup test-only contract while retaining transactional protections, permission
+checks and the correspondence capture safeguards. It does not roll back newer
+schema or relax RLS. It has NOT been implemented as or applied as a migration.
+
+After that boundary is approved, integrate the following into ConnectedWorkspace:
+- Buildings, lifecycle/PC/access requests, delivery team and structure: named
+  reads/commands with exact building/record ownership and stale-write checks.
+- Sales defaults and contacts: shared commercial rules; atomic defaults saves;
+  preserve reserved/exchanged/completed terms and explicit unit overrides;
+  separate contact-routing fields from access assignments.
+- Unit allocation: reuse the validated sales/rental allocation RPCs, with the
+  selected building enforced before command execution and refreshed projections.
+- Audit: reuse portal_audit_page, retaining cursor/filter semantics.
+- Users/access/organisations: shared validated user-management services and
+  save_portal_user_access, including residents and access requests; global scope
+  explicitly labelled, selected building retained for navigation.
+
+Keep these in the existing sidebar, breadcrumbs, mobile navigation and building
+context. Convert /setup and old screen URLs to compatibility redirects into
+/workspace; retain invitation/recovery handling through a dedicated auth flow.
+Retire the legacy application mount and test Setup UI only after replacements
+cover their functionality. Remove redundant routes/helpers after checking all
+consumers. Do not delete shared Sales domain components or unrelated work.
+
+No Setup feature has yet been newly integrated or intentionally retired in this
+audit phase. No legacy portal code has yet been removed. The accepted Sales,
+Snags and Dashboard interfaces have not been redesigned.
+
+Validation and limits
+
+- Staging browser audit reproduced both document reloads and the login flash.
+- Local candidate optimized build and TypeScript checks passed.
+- 19 automated lifecycle/session tests passed, including principal replacement,
+  refresh coalescing, sign-out races, rejected sessions and transient errors.
+- Local browser checks passed: delayed valid restoration without sign-in flash;
+  retry after Auth rate limiting; invalid session reaches sign-in safely;
+  repeated Sales/Snags/Dashboard navigation preserves document/building; 390px
+  and 1366px layouts have no horizontal overflow. No page errors or attempted
+  business writes occurred in the candidate checks.
+- 14 staging read-permission checks passed: admin allowed, contractor/resident
+  denied Setup/configuration/allocation, missing building denied, anonymous and
+  invalid credentials denied. This is not exhaustive per-role/per-building
+  authorization coverage.
+- No positive building save, allocation change, invitation, sale progression,
+  direct nested integrated Setup refresh or full integrated Setup mobile journey
+  was verified. Those await the approved backend and frontend integration.
+- No claim is made that Sales, Snags or Rentals writes are regression-free;
+  only the recorded navigation/read boundaries were checked in this phase.
+
+Reviewable work and evidence
+
+Candidate source: tmp/setup-integration-audit-20261118/app
+Patch: artifacts/setup-integration-audit-20261118/session-correction.patch
+Tests/scripts: tmp/setup-integration-audit-20261118/
+Browser reports/screenshots: artifacts/setup-integration-audit-20261118/
+Live function definitions, policies, migration ledger and advisor snapshots are
+in that evidence directory. Original deployed source and unrelated dirty main
+checkout files were left intact. No new Vercel deployment or alias change was made.

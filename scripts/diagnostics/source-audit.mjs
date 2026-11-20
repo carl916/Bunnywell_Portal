@@ -1,4 +1,5 @@
 import fs from 'node:fs';import cp from 'node:child_process';
+fs.mkdirSync('artifacts/source-audit-20261120',{recursive:true});
 const git=(args,cwd=process.cwd())=>{const r=cp.spawnSync('git',args,{cwd,encoding:'utf8',maxBuffer:32*1024*1024});if(r.status!==0)throw Error('git '+args[0]+' failed: '+r.stderr);return r.stdout.trimEnd()};
 const worktrees=git(['worktree','list','--porcelain']).split('\n\n').filter(Boolean).map(block=>Object.fromEntries(block.split('\n').map(line=>{const i=line.indexOf(' ');return i<0?[line,true]:[line.slice(0,i),line.slice(i+1)]})));
 const branches=git(['for-each-ref','--format=%(refname:short)','refs/heads']).split('\n').map(branch=>{let merged=false;try{git(['merge-base','--is-ancestor',branch,'staging']);merged=true}catch{}const unique=merged?[]:git(['log','--format=%h %s','staging..'+branch]).split('\n').filter(Boolean);return {branch,merged,unique,remoteBranches:git(['branch','-r','--contains',branch])}});

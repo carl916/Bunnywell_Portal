@@ -1,0 +1,31 @@
+Bunnywell Portal — Authority preview layout refinement
+19 November 2026
+
+Scope
+The developer opens the existing authority preview, receives the existing rendered email content from the preview API, reviews it, and uses the existing confirmation and capture controls. This change refines that presentation only.
+
+Implementation
+- The authority panel has a maximum outer width of 880px and is centred in the existing sale task area. Its email and controls sections share that width. Navigation, progression steps and Sale Information retain their existing sizing.
+- The panel header contains the existing authority-state value as a subtle badge. The floating Not yet issued paragraph was removed. The progression indicator retains its existing status.
+- The white email region contains the subject, recipients and unchanged rendered document. A separate beige footer contains Review and capture, the confirmation checkbox, staging safeguard and action buttons.
+- Approved and issued by [user] through Bunnywell is part of the outgoing email template, not internal audit metadata. It remains inside the email. Email preview / Proposed email content for review labels distinguish this proposed wording from an already-issued record.
+- Existing email generation, recipients, validity calculation, capture handlers, permissions, audit logging and database contracts are unchanged. No migration is required.
+
+Validation
+- Optimised Next.js build and TypeScript checks passed.
+- Local browser checks passed at 2560x1440, 1920x1080, 1440x900, 1366x768, 1024x768, 768x1024, 390x844 and 320x740.
+- Measured panel widths: 880, 880, 804, 730, 428, 720, 362 and 292px respectively. Every panel was centred, without horizontal overflow. The document uses natural page height. Email and portal controls have distinct backgrounds and matching edges.
+- The real staging fixture's current Test captured state was checked. Read-only response fixtures checked Not yet issued, Issued, Expired, Revoked and Replaced before and during preview. Status uses the existing authority-state calculation and refresh behaviour.
+- The exact email document HTML returned by the existing preview API was rendered. Renderer checks also confirmed matching substantive tables/paragraphs and identical plain text for outgoing email versus document presentation, including the approval attribution.
+- Confirmation enables capture; clearing confirmation disables it. Cancel and reopening the preview work and reset confirmation. No browser runtime errors were observed.
+- Browser tests allowed only context reads and preview generation. They did not execute capture, alter stored authorities or send email. Live delivery remains deliberately untested in staging; this UI-only refinement did not rerun the previously tested persistence journey.
+
+Source and evidence
+Baseline: tmp/authority-review-20261119/app
+Updated staging snapshot: tmp/authority-preview-layout-20261119/app
+Four changed presentation files: AuthorityReview.module.css, CoreSales.tsx, ExchangeWorkspace.tsx and Progression.module.css.
+Evidence: artifacts/authority-preview-layout-20261119 (screenshots, browser reports, renderer checks, implementation patch and source manifest).
+Release verification
+Deployed to https://staging.bunnywell.co.uk using Vercel Preview deployment dpl_EZaMQiEihHDbgnfRxRjfxHQAu8g2 (READY, fra1).
+The same eight viewport checks and status/confirmation/cancel checks passed on the staging alias, with identical measured widths and no browser runtime errors. See staging-browser.json.
+Production aliases portal.bunnywell.co.uk and defects.bunnywell.co.uk were checked before and after release and both remain on dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. No production deployment or database operation was performed.

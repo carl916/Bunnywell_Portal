@@ -68,7 +68,8 @@ test('returned reservation records current reason and return age; historical fai
 });
 test('commercial approval is not duplicated after the reservation satisfied it',()=>{
   const f=fixture({sales:[{...sale,exchanged_at:null,workflow_status:'approved'}]});assert.ok(!kinds(f).includes('commercial_review'));
-  f.sales[0].commercial_approved_at=null;assert.equal(kinds(f).filter(k=>k==='commercial_review').length,1);
+  // Reservation approval establishes terms; the retired commercial hand-off must not return.
+  f.sales[0].commercial_approved_at=null;assert.equal(kinds(f).filter(k=>k==='commercial_review').length,0);
 });
 test('direct authority clears stale request; exact expiry is retained and 48-hour warning used',()=>{
   const f=fixture({sales:[{...sale,workflow_status:'approved',exchanged_at:null,authority_requested_at:'2026-10-01T12:00:00Z'}],authorities:[{id:'auth-1',sale_attempt_id:sale.id,kind:'authority',version:1,issued_at:'2026-10-02T12:00:00Z',expires_at:'2026-10-09T12:00:00Z',sent_at:'2026-10-02T12:00:00Z',delivery_status:'sent'}]});

@@ -1,0 +1,66 @@
+Bunnywell Portal — reservation submission completion
+19 November 2026
+
+Released to staging only
+https://staging.bunnywell.co.uk
+Deployment: dpl_BL9q3dFtwHu4sEkJkoNChbQiRStP
+Preview: https://bunnywell-portal-eqfghv41e-carl-gilbert-s-projects.vercel.app
+Staging database: vxkpvdtrldwwqiddoyof
+
+Result
+
+The integrated Reservation page now submits entered details, commercial-terms confirmation and the selected signed PDF through one Submit reservation action. Save reservation PDF and Save draft have been removed from this workflow. The shared styled upload surface still provides Replace and Remove before submission.
+
+The form explains missing buyer/contact/solicitor/date details, unchecked terms and missing PDF. File checks cover PDF name/type/signature and the existing 2 MiB workflow limit. Submission displays a processing state and blocks repeat clicks. Failed requests retain the entered details and selected file; uncertain retries reuse their submission reference.
+
+After submission, the existing Reservation record, Reservation form and Review reservation presentation are retained. The upload editor is hidden. Reviewers can explicitly return a reservation for revision with a reason; permitted submitters then select Revise reservation. Saved details remain visible while it awaits revision. A revised PDF becomes a new version only when the revision is submitted successfully. Approved reservations retain the existing approval and correction rules; this change adds no permission to silently replace or reopen an approved reservation.
+
+Existing saved drafts remain readable and can be submitted with their existing saved PDF. The underlying legacy draft command remains for compatibility and existing test journeys, although no new Save draft action is offered in this workflow. Historic PDF access, current-version approval, submission metadata and audit events use the existing contracts.
+
+Backend and integrity
+
+The implementation extends the integrated workspace upload service and reuses workspace_reservation_file, workspace_reservation_command, commercial-term calculation and payment-schedule generation. The unused standalone reservation upload branch was removed. Notice and invoice workflows retain their existing paths.
+
+Two service-only RPCs coordinate uploads: workspace_reservation_upload and workspace_reservation_submit. They use the existing private operation_receipts table. There are no new tables, RLS changes, bulk data updates, resets or deletions of existing test data.
+
+A database transaction was necessary to commit the PDF version, reservation details, commercial terms, submission status and audit events together. The previous independent calls could leave only one half persisted. Storage bytes are uploaded first to a unique, tracked path; finalization verifies the stored object and runs the existing file-registration and reservation commands within one transaction. The same sale lock resolves commit versus cancellation before cleanup. A lost successful response returns the committed receipt and never deletes the submitted PDF. Identical retries are idempotent.
+
+Applied staging migrations:
+20261119084121_reservation_single_submission
+20261119084504_reservation_submission_result
+20261119084659_reservation_upload_recovery
+
+The latter two correct a result-variable ambiguity found by testing and complete interrupted-upload recovery. Existing reservation RPCs were not rewritten. New RPC execution is restricted to service_role with verified actor and sale scope. Supabase security advisory comparison found no new or changed findings; existing findings remain.
+
+Recovery limitation
+
+Storage and PostgreSQL cannot share a native transaction. Known failed attempts are cancelled under the database lock and their staged file is removed. If the outcome or deletion cannot be confirmed, the intent remains durably tracked and is not presented as submitted. A subsequent attempt for the same actor/sale cleans aborted paths and cancels abandoned prepared intents older than one hour. No background cleanup job was added; an abandoned upload can therefore remain stored until that actor retries or an operator performs scoped cleanup. Existing submitted/approved versions are never cleanup targets.
+
+Verification
+
+- Optimized Next.js build and TypeScript validation passed.
+- Ten reservation validation tests and five coordinator recovery tests passed.
+- Full browser journey passed on the final staging deployment: required-field gating, PDF selection/removal, no intermediate save, injected failed request with retained inputs, retry, read-only submitted record, explicit reasoned revision, replacement/resubmission, approval, reload and version-history display.
+- Desktop (1366 px) and mobile (390 px) checks passed without horizontal overflow. Screenshots were reviewed.
+- Staging API checks passed: concurrent identical retries return the original receipt, approved records reject replacement submissions, spoofed PDF signatures are rejected, and residents cannot submit.
+- A compatibility draft with saved details and a saved PDF was submitted and approved on staging without selecting/re-uploading the PDF; its version remained 1.
+- SQL verification confirmed three new journey fixtures approved with two stored PDF versions each, plus the compatibility draft approved with its original PDF. Approval and audit rules are inherited from the existing command.
+- An actual SQL failure during initial verification rolled back submission and removed the staged PDF. Storage outage, unknown database outcome and lost-success-response cases were additionally tested through controlled coordinator fault injection; staging infrastructure was not deliberately taken offline.
+
+The full browser journey used the admin account. A separate sales-agent-to-developer browser handoff, every historical reservation, and downstream exchange/completion/payment journeys were not re-executed in this targeted change. Their existing permission and data contracts were retained.
+
+Data preservation and review records
+
+Verification used a newly created staging building, Reservation verification 2026-11-19, with units RSV-01 through RSV-04. These are retained for review. Existing records were not used for destructive testing. Outside this building, counts remained 130 sale attempts, 130 terms records, 129 registered test journeys and 41 registered test entities. The latest existing sale/terms update remained 08:32:02 UTC, before this task's first database writes at 08:41. Existing test-journey and test-entity digests matched the prior baseline.
+
+Production was not modified. Both portal.bunnywell.co.uk and defects.bunnywell.co.uk still point to dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. No production database was queried or changed.
+
+Source and evidence
+
+Source: C:/GitHub/Bunnywell_Portal/tmp/reservation-single-submit-20261119/app
+Evidence: C:/GitHub/Bunnywell_Portal/artifacts/reservation-single-submit-20261119
+The evidence directory contains implementation.patch, source-manifest.json, final-verification.json, browser-verification.json, api-verification.json, legacy-draft-verification.json, advisory-comparison.json and screenshots.
+
+The source was based on the previous integrated Setup staging release. Unrelated changes in the root working tree were left intact. The manifest and patch contain nine changed/added source files and the three migration files.
+
+If a frontend rollback is needed, the pre-change staging deployment was dpl_J3e8JZm82Uec7LntYSSGr85rP9EU. The backend additions are additive and retain the previous contracts. Do not delete receipt history or PDF versions as part of a frontend rollback.

@@ -1,0 +1,48 @@
+Staging Setup restoration — 18 November 2026
+
+Restored the original portal Setup screens supplied in the reference screenshots:
+Buildings (lifecycle, delivery team, sales defaults and contacts, floors/units/areas),
+Unit allocation, Audit log, and Users & access with the original organisation and
+account forms. Hosted staging no longer exposes integration test-record controls
+or accepts its integration-only Setup commands. Existing records were retained.
+
+The restored Setup lives at /setup. Existing workspace Setup/building-settings
+links redirect there and retain the building context. Dashboard, sales and snags
+navigation returns to the current workspace. Allocation links include the exact
+sale attempt. Original authentication, role checks and configured floor ordering
+remain in use. The original Rentals links remain available from the Setup shell.
+Invite/reset links return to the original password-setup handler at /setup.
+
+Deployed source:
+C:/GitHub/Bunnywell_Portal/tmp/staging-setup-restore-20261118/app
+This is based on the existing isolated staging release source, not the unrelated
+modified main checkout. Source changes are recorded in:
+artifacts/staging-setup-restore-20261118/setup-restore.patch
+artifacts/staging-setup-restore-20261118/changed-files.json
+artifacts/staging-setup-restore-20261118/deploy-manifest.json
+
+Deployment: dpl_68kZ3ezy8hjDAQnuDSJxs179u996
+Preview: https://bunnywell-portal-k186bwb4c-carl-gilbert-s-projects.vercel.app
+Staging: https://staging.bunnywell.co.uk/setup?screen=setup_buildings
+Project: prj_4s8vIyfrGh9DSGJcixTU5slevr5P
+Target: preview; functions region: fra1
+Supabase project: vxkpvdtrldwwqiddoyof
+Prior staging deployment (rollback): dpl_5HyhYofqQDb3dQLon9fjAsJ9jeip
+Production aliases portal.bunnywell.co.uk and defects.bunnywell.co.uk remain on
+dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+
+Verification:
+- 32 focused tests passed: Setup UI, structural-unit safety, commercial allocation,
+  redirects/API allowlist/environment guard, exact sale links, disabled test commands.
+- Local optimized build and Vercel preview build passed, including TypeScript.
+- Authenticated candidate browser checks passed: original four Setup screens,
+  edit/cancel panels, add-user form, workspace navigation, configured floor order,
+  exact sale links, and 390/768/1366-pixel layouts; no page errors or failed requests.
+- API permission checks passed for existing admin, contractor and resident accounts,
+  including anonymous denial and disabled integration test administration.
+- Browser verification used existing records and edit/cancel only. Account invites
+  and positive business writes were not submitted during verification.
+
+Evidence is under artifacts/staging-setup-restore-20261118/, including candidate
+screenshots, verification.json, api-permissions.json, and staging-smoke.json.
+No schema migrations or record cleanup were performed.

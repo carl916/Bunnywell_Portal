@@ -1,0 +1,17 @@
+.next-hosted
+*.tsbuildinfo
+/supabase
+/scripts
+node_modules
+.env*
+
+/tmp
+/artifacts
+/docs
+/tests
+/test-results
+/.git
+/.github
+/.codex*
+/.stage*
+/.next*

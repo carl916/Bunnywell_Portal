@@ -1,0 +1,83 @@
+STAGING FRANKFURT ROLLOUT — 18 NOVEMBER 2026
+
+Status: DEPLOYED AND VERIFIED
+URL: https://staging.bunnywell.co.uk/workspace
+Candidate: https://bunnywell-portal-b9wfju6bm-carl-gilbert-s-projects.vercel.app
+Deployment: dpl_5HyhYofqQDb3dQLon9fjAsJ9jeip (READY; Preview; fra1)
+Production remains dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W (iad1).
+
+CLI repair
+The Windows sandbox blocked CLI package/auth writes and used temporary paths
+that changed between commands. Installed pinned Vercel CLI 66.2.0 under the
+Git-ignored .vercel/cli-runtime folder and used stable .vercel/cli-auth storage.
+Installation/login required execution outside the sandbox; the user completed
+the Vercel device login. No tokens were printed or copied into deployment source.
+
+Deployment
+Copied and verified the exact existing staging source (272 hashes). Used explicit
+Preview target, --regions fra1, existing project ID and team, and a distinct
+preview branch metadata value codex/staging-region-20261118. The source was not
+changed. The deployed source manifest matches all 272 previous source hashes.
+The CLI commit metadata refers to the containing checkout, not an exact Git
+commit of the isolated release; the source manifests establish provenance.
+Sensitive Preview database variables are omitted from local pulls; deployment
+uses their existing hosted values. Live config confirms staging Supabase
+vxkpvdtrldwwqiddoyof. No environment variables or shared project settings changed.
+
+Confirmed region and production protection
+Shared project default: serverlessFunctionRegion=iad1,
+resourceConfig.functionDefaultRegions=[iad1], fluid=true. The inspected project
+settings matched before and after, including production branch main.
+Production portal.bunnywell.co.uk and defects.bunnywell.co.uk both still resolve
+to the original production deployment. Only staging.bunnywell.co.uk was assigned
+to the candidate after checks. The actual staging API response chains are
+lhr1::fra1, confirmed for read, command-context and operations-context endpoints.
+
+Measurements: total HTTP elapsed milliseconds, medians
+Endpoint | Before iad1 | After fra1 | Reduction
+worklist | 1129 | 489 | 57%
+record | 879 | 308 | 65%
+core_context | 2191 | 618 | 72%
+extended_sales_context | 1987 | 519 | 74%
+activity | 876 | 362 | 59%
+completion | 1293 | 413 | 68%
+sale-context | 1499 | 349 | 77%
+comments | 1088 | 323 | 70%
+sale-details | 1314 | 397 | 70%
+snags | 2264 | 829 | 63%
+snag_context | 1014 | 306 | 70%
+
+Method: the same script, staging account, database and HAR-selected requests;
+one warmup and three measured serial rounds for each of 11 endpoint kinds.
+44/44 before requests returned 200 in iad1. Candidate and final staging-domain
+runs each returned 44/44 successful requests in fra1. All snag-list responses
+were empty. Measurements were collected from the same execution host.
+These sequential runs are indicative, not randomized simultaneous A/B tests.
+The substantial consistent reduction with byte-identical application source
+supports regional placement as a major cause of staging-specific latency.
+Header wait and total times are retained in the JSON evidence. Browser rendering
+time was not separately benchmarked; do not present these as page-render times.
+
+Functional verification
+Existing read-only browser checks passed: existing-account login; Exchange,
+Deposits, Commercial Terms and Completion navigation; back/forward; Overview,
+Comments and Activity; panel close/scroll restoration; 320–1366px layouts;
+dashboard, snags, building settings and setup. No browser page errors observed.
+Role checks passed: admin allowed; contractor denied sales/setup; resident
+denied internal workspace; anonymous denied. No business mutations tested.
+
+Follow-up
+Application code, database schema, permissions and business data were unchanged.
+Keep deployment-level --regions fra1 and actual-header verification in future
+staging releases; the shared default intentionally remains iad1. Avoid a blind
+API redeploy that inherits the old effective deployment region. Remaining
+application inefficiencies are documented in the original investigation; no
+caching or frontend changes were introduced.
+
+Rollback: reassign only staging.bunnywell.co.uk to dpl_3ZaBoy7hxGCNnU7CccrbhzkhaesA.
+No database rollback is required for this region-only rollout.
+
+Evidence directory: artifacts/staging-region-performance-20261118
+before-redeploy.json; candidate-fra1.json; after-staging-fra1.json;
+project-before.json; project-after.json; candidate-manifest.json;
+candidate-roles.json; browser-candidate/verification.json; rollout-result.json

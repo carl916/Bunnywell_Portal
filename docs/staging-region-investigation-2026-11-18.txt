@@ -1,0 +1,199 @@
+FOLLOW-UP: staging was subsequently deployed and verified in fra1 on 18 November 2026.
+See staging-region-rollout-2026-11-18.txt for the completed rollout and before/after results.
+The original investigation below records the earlier, pre-deployment state.
+
+BUNNYWELL STAGING PERFORMANCE INVESTIGATION — 18 NOVEMBER 2026
+
+Outcome
+The regional mismatch is confirmed and remains unresolved in the deployed service.
+No hosting settings, aliases, application source, schema or business data were
+changed by this investigation. Authenticated read sampling signs in normally but
+does not submit business mutations. An isolated Frankfurt redeployment is the
+recommended next action; do not change the shared project's Functions setting.
+
+Confirmed evidence
+* Staging alias resolves to dpl_3ZaBoy7hxGCNnU7CccrbhzkhaesA, project
+  prj_4s8vIyfrGh9DSGJcixTU5slevr5P (bunnywell-portal), target staging, iad1.
+* Production portal resolves to dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W in the same
+  project, target production, iad1. Its source commit is 87ffc9b52884f83c91253858d16fa0fe03b5c8af.
+* Integration resolves to dpl_6LV8JNvVtXeRt1Qo7KjwH1quoEg6, separate project
+  prj_YMaQDDgEtACwTijrmmh1SxQwsfe5, target production, fra1.
+* Supabase confirms both staging vxkpvdtrldwwqiddoyof and integration
+  mmwzhzziqvjbsphrkbqr are ACTIVE_HEALTHY in eu-central-1.
+* Both Vercel projects report Next.js and Node 24.x. Their deployed package and
+  lockfile hashes match. Staging PostgreSQL is 17.6.1.127; integration is
+  17.11.0.019. These are distinct databases/populations, not a controlled A/B.
+* HAR execution chains are lhr1::iad1 for staging and lhr1::fra1 for integration.
+  lhr1 is the ingress region, not the function execution region.
+* All 44 fresh staging samples returned 200 with lhr1::iad1. Every sampled snag
+  list had zero rows. This confirms actual execution, not just configured intent.
+
+Configuration diagnosis and limits
+The MAIN CHECKOUT is not the current staging release. It has numerous pre-existing
+uncommitted changes, which were left untouched. Root vercel.json contains crons
+only, with no region. Historical config/vercel.staging-legal-region.json and
+config/vercel.staging-register-region.json specify iad1 globally and fra1 for
+one legacy /api/sales route each. Those do not target /workspace/read,
+/workspace/command or /workspace/operations.
+
+The exact current staging source is tmp/staging-release-20261118/app.
+All 272 local source-file SHA1 hashes matched Vercel's deployed source manifest.
+Its vercel.json ALREADY specifies regions:[fra1], crons:[], Git deployment
+disabled and outputDirectory:.next-hosted. The deployed vercel.json was fetched
+independently from Vercel and confirms this. next.config.ts fixes .next-hosted
+and the staging workspace feature flags. There is no missing fra1 edit to make.
+
+Therefore the confirmed configuration fault is that the submitted/effective
+deployment region does not reflect the uploaded source configuration. A deployment
+submission override or a submission path that does not apply the file's region
+is the leading explanation. The original creation payload and raw effective
+project settings were not available, so the precise mechanism is NOT proven.
+Do not assert that someone selected iad1 in the dashboard merely because iad1
+is Vercel's default.
+
+The project custom-environment API returned an empty list and limit zero. The
+legacy API target name staging is NOT a configured Custom Environment. Its
+application guard explicitly requires VERCEL_ENV=preview. Integration is a
+production deployment of a different project. Integration also has SSO protection
+enabled for all deployments, while the shared project reports SSO disabled;
+there is no evidence this explains staging's slower authenticated API responses.
+CPU, memory, Fluid Compute and effective project region were not exposed by the
+connector's reduced project response; parity for these remains unverified.
+
+Safe resolution
+1. Use the exact verified staging source in a clean deployment directory. Keep
+   the shared project's production settings and root repository config unchanged.
+2. Authenticate a supported Vercel CLI and verify team
+   team_x65ctL8Fot37UcabAkdh8f72 and project prj_4s8vIyfrGh9DSGJcixTU5slevr5P.
+   Verify Preview variables resolve to staging Supabase, including the existing
+   branch scope where applicable. Never copy Production variables into Preview.
+3. Create an unaliased PREVIEW candidate with explicit deployment-level
+   --regions fra1, using the existing staging config and output directory.
+   Do not use --prod, promote, or a shared project-region update. Do not treat
+   --environment=staging as valid: there is no such Custom Environment here.
+   The CLI's --regions is documented as a per-deployment option:
+   https://vercel.com/docs/cli/deploy#regions
+4. Require READY, confirm candidate metadata and authenticated response headers
+   for read, command-context and operations-context routes all show fra1.
+   Check /workspace/read?kind=config identifies vxkpvdtrldwwqiddoyof. Run the
+   sampler below on the candidate and the existing iad1 deployment with identical
+   account, records and request order, preferably alternating warmed rounds.
+5. Check empty snags, worklist, sale navigation, Comments/Activity and permission
+   denial behavior. Compare response content/roles, not just timings.
+6. Only after those checks, assign staging.bunnywell.co.uk to the candidate.
+   Recheck the staging alias, function regions and production deployment ID.
+   Rollback is reassignment of staging to dpl_3ZaBoy7hxGCNnU7CccrbhzkhaesA;
+   no database rollback should be necessary for a region-only deployment.
+7. Make this region flag and region verification a required staging release step.
+   Keep any staging-only deployment config out of production's release path.
+
+Why this was not deployed in this investigation
+The available create_deployment connector has no deployment-level regions input.
+It exposes projectSettings.serverlessFunctionRegion, but the API documentation
+does not establish that using that field here is free of shared-settings impact
+(projectSettings is described as saved for subsequent deployments). It was not
+used as a substitute. A CLI fallback was attempted, but initialisation failed
+with filesystem permission errors creating its local auth configuration; no
+authenticated CLI deployment was available. No approval was rejected and no
+production-affecting workaround was attempted. A functioning authenticated CLI
+or a deployment API supporting explicit deployment-level configuration is needed
+to finish the rollout. The expected performance improvement is not yet verified.
+
+Measurements (milliseconds; medians)
+Endpoint                 HAR staging  HAR integration  Fresh staging headers
+Empty snags                     2126             1094                   2105
+Snag context                    1160              384                    877
+Sales worklist                  2033              672                    975
+Sale record                     1601              569                    955
+Sale details                    2277              478                   1407
+Core context                    2989              777                   1831
+Extended sales context          2791              555                   1633
+Sale overview context           1930              573                   1110
+Activity                        1606              452                   1110
+Comments                        1198              305                   1104
+Completion                      2505              589                   1303
+
+HAR methodology: successful /workspace/* requests only; canceled/status-zero
+entries excluded (three in each recording); standard median averages the two
+middle values for even counts. Some supplied summary numbers differ from the
+attached recordings; the figures above are recomputed directly. Counts are small
+(1–6 per endpoint), and sale-details/contexts may cover different sections.
+Fresh sampling: one warmup round, then three serial measured rounds per endpoint,
+same staging account and the first successful HAR request for each endpoint.
+This samples one section per endpoint kind, not every Exchange/Completion view.
+44/44 requests succeeded. Fresh timings come from this execution host and are
+not directly comparable to Chrome timings or proof of an improvement.
+The empty snag-list total was 2106ms. The other fresh total times differ from
+header time by approximately 0–3ms, except snag context (938ms total, 877ms
+headers). HAR downloads are similarly tiny except snag context (~81ms staging).
+Header wait includes network, queue/cold-start and server processing: it is NOT
+an isolated database query time. No Server-Timing breakdown or browser rendering
+trace was collected. No post-change measurements exist because no region change
+was made. A HAR alone cannot attribute time to React rendering.
+
+Application review, ranked by likely impact (shared by both environments)
+1. Many sequential server/database round trips amplify regional latency.
+   viewer performs getUser then workspace_access_context; the read handler checks
+   access again before returning. core_context first loads completion data and
+   checks access, then fetches test context, sale, documents and emails in series.
+   extended_sales_context similarly loads completion and eligibility before its
+   section reads. Keep all permissions and final access checks. After colocating,
+   measure and parallelise only independent reads after authorization succeeds.
+2. Empty Snags loads full reference dimensions before knowing it is empty.
+   server.ts snags() calls building(), loadDashboardInput(workspace-snags), then
+   fetches snags again and areas. Dashboard input loads units, floors,
+   organisations and building relationships even for zero snags. Sales/rentals
+   reads are already excluded in workspace-snags mode. Consider an authorized
+   empty-list fast path before expensive dimensions; preserve completeness/error
+   semantics and building isolation. This is more valuable than caching emptiness.
+3. Client-side request waterfalls delay first sale display. The selected record
+   gates mounting section readers; SaleDetails mounts ExtendedSales only after
+   details/core data are ready. Reservation details and core context themselves
+   already start concurrently. Independent section context could start earlier
+   within the same authorized sale boundary. Do not fetch every section eagerly.
+4. Duplicate snag_context: SnagControls and SnagRegisterRows independently call
+   useOperationContext with the same building and null snag ID. The hook has no
+   deduplication. The register table mounts even with zero rows, so it fetches
+   permissions it cannot use. Share one parent-owned context or avoid the table
+   context when there are no visible rows. Keep context required to create a snag
+   available even when the building has no snags; removing ALL context is wrong.
+5. Existing caching should be preserved. createRecordRead deduplicates in-flight
+   reads and reuses data for 30 seconds. Stores are keyed by identity, role,
+   access revision, building, unit and sale. Worklist caching, retained sale
+   state, visited section trees and discussion stores already reduce repeat
+   navigation reads and clear on access/session changes. Comments and Activity
+   prefetch is deliberately delayed until visible record data is ready; selecting
+   the tab starts its read immediately. Mobile hidden panels do not prefetch.
+   HTTP responses are private/no-store, appropriate for authorized mutable data.
+   There is no evidence supporting a new cross-request reference-data cache now.
+
+Architecture equivalence
+Both source manifests contain 272 files; 258 hashes match exactly. In particular
+workspace route handlers, core/extended command handlers, projections, sale
+details/context, dashboard reads, snag controls/rows and record stores match.
+The 14 differing files are recorded in the evidence manifest and primarily cover
+staging environment flags, origins, guard allowlists and proxy/client wiring.
+Both take optimized hosted workspace read paths. The server.ts difference adapts
+hostedIntegration to hostedWorkspace without changing the query sequence.
+This is application-path equivalence, NOT proof of identical database functions,
+indexes, statistics, row counts or plans. No schema investigation/change was
+justified before resolving the regional mismatch.
+
+Artifacts and rerun
+scripts/diagnostics/staging-region-performance.mjs
+artifacts/staging-region-performance-20261118/har-summary.json
+artifacts/staging-region-performance-20261118/before.json
+artifacts/staging-region-performance-20261118/source-manifests.json
+
+From the repository root, after a candidate exists:
+node scripts/diagnostics/staging-region-performance.mjs --sample --label=after --origin=https://CANDIDATE.vercel.app --expect-region=fra1
+Use the actual bunnywell-portal candidate URL; the script rejects unrelated hosts,
+verifies staging database identity, allows only GET or the three named context
+POST actions, and saves timings/statuses/region IDs without tokens or payloads.
+It uses existing local test credentials without printing them. HAR-only analysis:
+node scripts/diagnostics/staging-region-performance.mjs
+
+References
+https://vercel.com/docs/functions/configuring-functions/region
+https://vercel.com/docs/cli/deploy
+https://vercel.com/docs/rest-api/deployments/create-a-new-deployment

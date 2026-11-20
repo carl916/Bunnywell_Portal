@@ -1,0 +1,53 @@
+Proposed staging-only backend change — NOT APPLIED
+
+Purpose: support genuine Setup through the current workspace command boundary,
+without reviving legacy browser writes or representing ordinary accounts and
+buildings as fictional test records in the user workflow.
+
+Target project: vxkpvdtrldwwqiddoyof only. Production is excluded.
+
+1. Revise public.workspace_setup_context(uuid) and
+   public.workspace_setup_operation(uuid,uuid,text,uuid,jsonb), using their live
+   definitions as the baseline. Remove test_entities membership as the authority
+   for ordinary Setup records, fictional confirmations/name prefixes and the
+   test-user preparation branch from ordinary administration. Resolve permitted
+   records through authenticated actor/role and exact building ownership instead.
+   Keep service-role-only execution, active actor validation, fixed search paths,
+   request-id conflict detection, operation receipts, row locks, expected-version
+   checks and the existing transactional defaults cascade.
+
+2. Extend that transactional contract for the missing lifecycle/access-request
+   toggle, separate sales-contact routing and unit structure fields, including
+   parking. Preserve PC validation, configured floor ordering and cross-building
+   checks. New units start not_released/not_in_portfolio. Do not automatically
+   start sales or alter existing reserved/exchanged/completed records. Reuse the
+   existing allocation and user-access RPCs rather than reimplement their rules.
+
+3. Preserve all existing test_entities, test_journeys, receipts and audit rows.
+   When creating a new staging building through the ordinary command, maintain
+   the private compatibility registration needed by existing Snag eligibility
+   and sale-capture triggers. Treat that registration as an environment safeguard,
+   never as user permissions or an instruction to create fictional accounts.
+   Do not disable capture, enable external correspondence, seed old records or
+   change the current Sales/Snags command contracts as a shortcut.
+
+4. Keep account creation/invitation in validated server-side Auth services;
+   persist profile/building/unit access with save_portal_user_access. Replace
+   test-account-only egress rules only in the dedicated ordinary account path,
+   with role/organisation/assignment validation. No test-account UI or automatic
+   account creation on page mount. Do not send invitations during verification.
+
+This proposal does not require table resets, backfills, deleting journeys,
+changing RLS policies or replaying old migrations. It changes function behavior
+and server contracts, so it requires the database-change checkpoint requested
+in the user's brief. Exact migration SQL and regression tests remain to be
+implemented and reviewed against this scope before application.
+
+Validation after approval: exercise transaction rollback, retry idempotency,
+stale-version rejection, cross-building denial, protected sale-term inheritance,
+normal new-unit defaults and preserved correspondence capture in isolated tests.
+Staging persistence/allocation checks also change business records: use only
+explicitly agreed existing test records and reversible fields, record before/
+after values, and restore them. Do not use existing live-style sale journeys for
+destructive tests. Complete the shared-shell UI and candidate verification before
+switching the staging alias. Retain the previous deployment for rollback.

@@ -1,0 +1,48 @@
+Snagging UI refinements — staging completion, 20 November 2026
+
+Deployment
+https://staging.bunnywell.co.uk
+READY, Preview, fra1; deployment dpl_GTKiohY3KUZDFFcwEtr8h3JnBKiz.
+Preview: https://bunnywell-portal-dptek5xze-carl-gilbert-s-projects.vercel.app
+Framework: Next.js 16.2.7. Hosted build duration: approximately 52 seconds.
+Source label codex/snag-refinements-20261120 is an isolated CLI snapshot, not a Git commit.
+Production portal.bunnywell.co.uk and defects.bunnywell.co.uk remain on dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+
+Source
+Verified the live staging baseline dpl_HMskLLtL81T8jZXvDvSnoLozJ3qE against its archived manifest, then extracted an isolated working copy:
+C:\GitHub\Bunnywell_Portal\tmp\snag-refinements-20261120\app
+Seven files changed or added; 323 existing files are byte-for-byte unchanged.
+The unrelated dirty root checkout was preserved. No database or permission changes.
+The exact source archive SHA256 is 110188565142254574ea5c326f9c15df8bbcd57e8033c4781cb2faa2c216cddd.
+
+UI
+Main images use their natural aspect ratio, capped at 75vh/900px and available width. No crop or stretch. The existing portrait renders at 432 x 576 on a 1366 x 768 laptop, compared with the previous 300px image height. At 1920 x 1000 it renders at 563 x 750. The description sits immediately alongside where space permits and below on mobile. Annotated-image preference, other evidence and the authenticated full-size viewer remain unchanged.
+Action buttons have 10px gaps, 44px minimum height, consistent padding and clear primary/secondary styling. The existing card remains to contain the conditional action form, with 16px after its heading. Mobile buttons wrap cleanly.
+Table proportions reserve 184px for Actions, 96px for 72px evidence thumbnails, 116px for Raised, 12% for Trade and 19% for Status. The flexible identity column uses the remaining width. Long statuses remain readable. The existing compact row layout remains below 1100px of available table width, including the 1366px laptop with sidebar open.
+
+Navigation
+All detail links originating from the register carry an allowlisted snagList query containing building, search, status, source, responsibility, exact unit if supplied, sort and original page. It is query state, never a page-limited ID array or external return URL.
+Detail navigation rereads the full authorised building list through the existing authenticated API. That API already reads across backend pagination. Both the register and navigation use the same selectSnags helper before the register slices 20-row pages. Stable snag IDs resolve neighbours. Default floor/unit order comes from the unchanged API; the new sort selector also offers oldest/newest raised, with stable ID tie-breaking.
+The same list context survives further chevrons, reloads, new-tab links and Back to snags. The breadcrumb also returns to that context. There is no new global state.
+Previous/next use icon-only buttons with accessible names and tooltips. Boundaries hide the corresponding button. Direct links without valid same-building context hide both. Missing/deleted/no-longer-matching records show a list-navigation notice instead of choosing an arbitrary neighbour. Read failures hide controls and retain the return route. Saves and window focus trigger a fresh list read; obsolete requests are aborted. Existing detail access checks remain authoritative if a record changes between read and click.
+
+Verification
+11 automated tests passed: six focused navigation tests plus five existing snag regressions.
+Navigation covers default order, both pagination directions, first/last, removed and permission-excluded IDs, changed status, empty results, combined search/unit/status/source/responsibility filters, ascending/descending sort, deterministic ties, non-mutating sorting, multiple record hops, query round-trip, direct links, foreign-building and malformed context.
+Regression checks cover annotated evidence selection, workflow permissions and required fields, thumbnail concurrency/cancellation, legacy large-photo processing and safety bounds, and visible-thumbnail retry.
+Local Next.js production build and TypeScript passed. Targeted ESLint checks passed. Hosted build READY.
+Local and hosted Chromium browser checks passed at 1920, 1366 x 768, 768 and 390px: list/detail overflow, portrait aspect ratio, action layout, combined LG01/open/date-sort navigation, reload and Back restoration, unfiltered page-1/page-2 navigation both ways, first/last controls, full-size viewer, and direct-link fallback. No page errors.
+Landscape and square rendering passed at desktop/mobile using intercepted image fixtures with visible borders. These fixtures were not uploaded or saved to staging.
+Existing actions/confirmation handlers and permission modules were unchanged; no workflow mutations were submitted during this UI verification.
+
+Resolved verification failures
+Initial local builds encountered Windows sandbox directory permissions and an edit-script text-encoding error. After correcting encoding and running the build outside the sandbox, compilation and TypeScript passed. The browser runner initially needed its installed Chromium path and a corrected dashboard-link selector. A return-URL assertion was corrected to compare query values rather than parameter ordering. No outstanding application failures were found.
+
+Limits
+Direct links intentionally have no chevrons. Navigation inherits the existing complete-building read limits and makes a fresh list read per detail navigation; no new server pagination or database architecture was introduced. If the current record leaves the filter, users return to the preserved list. Browser verification used Chromium; other browser engines were not exercised. Landscape/square checks used image fixtures rather than modifying real evidence. Workflow mutation paths were covered by unchanged-source checks and regression tests, not newly submitted live actions.
+
+Artifacts
+C:\GitHub\Bunnywell_Portal\artifacts\snag-refinements-20261120
+staging-source.zip, source-manifest.json, implementation.patch, verification-source.zip,
+automated-tests.txt, deployment-verification.json, browser-verification.json, and hosted/browser-verification.json.
+Local and hosted screenshots cover lists, detail pages, action sections and image-shape fixtures.

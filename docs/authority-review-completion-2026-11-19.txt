@@ -1,0 +1,43 @@
+Bunnywell Portal — Authority to Exchange refinement
+Completed 19 November 2026. Staging only.
+
+Deployment
+- https://staging.bunnywell.co.uk
+- Vercel preview dpl_Fd27LLh2UHrKaiD1ycFCpjZGWoDL (fra1).
+- Isolated source: tmp/authority-review-20261119/app, based on the previously deployed reservation-corrections staging source.
+- Reviewable changes and hashes: artifacts/authority-review-20261119/implementation.patch and source-manifest.json.
+- Production aliases portal.bunnywell.co.uk and defects.bunnywell.co.uk still point to dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. No production database, deployment or configuration was modified.
+
+Authority review
+- Removed the obsolete commercial-approval hand-off beneath Exchange steps and from the corresponding worklist projection. Reservation approval establishes the terms; authority issuance still has its existing authorisation checks.
+- Compact document presentation uses the existing email content renderer. All substantive paragraphs, tables, commercial conditions, payment schedule, expiry wording and approver attribution are retained. The email branding/navigation shell is omitted only from the portal review.
+- Preview fills the available content width and grows with the page. The 440px iframe and its nested scrolling are removed. To/Cc recipients are visible above the document.
+- Condensed the Not yet issued presentation; removed the duplicate card heading while reviewing. Existing progression steps and surrounding layout remain.
+- Repeated integration-test labels are removed from the preview and cleaned only for display in saved correspondence. Stored subjects, bodies, capture labels and authority snapshots remain intact.
+- The staging banner remains. The final checkbox requires review of content and recipients; the action explicitly says Capture authority · no email, beside a no-email explanation. A synchronous in-flight guard and existing request idempotency prevent duplicate captures.
+- New captured email links point to the staging sale file rather than the former integration hostname.
+
+Commercial terms and data integrity
+- Reservation has View commercial terms and a developer/admin-only Amend commercial terms action. Amend opens the existing commercial editor; no parallel editor or submission service was added.
+- Submitted reservations stay locked. Approved, active, unexchanged reservations can be amended by a developer/admin with an explicit reason and confirmation. Backend checks enforce role, actor, scope, approval metadata, sale state, current terms and defaults.
+- Approved amendments create a new existing unit_sale_terms version, retaining original commercial values and approval metadata on the previous version. Audit records contain the reason, actor, before/after terms and before/after payment schedules. The original reservation PDF and approval record are preserved.
+- The current schedule continues to use the existing save operation. The schema permits only one schedule row per sale/sequence; previous schedules are preserved in the amendment audit rather than adding a second schedule schema.
+- An unwithdrawn authority, including an expired one, blocks amendment. The developer must explicitly withdraw it using the existing action, then amend and issue a fresh authority. Existing stored authority content is never rewritten. Stale signed previews are rejected if terms or recipients change.
+- Existing invoice or deposit-receipt records block this amendment route, preventing silent recalculation of recorded financial work. Those cases require a separately reviewed financial correction; no new financial correction workflow was introduced here.
+- One staging migration, 20261119143503_authority_review_commercial_amendments, updates the existing workspace_sale_operation function and restricts three legacy commercial-save function overloads to service_role. Those legacy entry points previously permitted direct client calls; the integrated server is now the required entry point. No tables, columns, existing data or authority records were migrated.
+
+Verification
+- Final Next.js production build and TypeScript checks passed.
+- Compared document and email rendering for exchange authority and authority to serve notice: identical full plain text; every substantive HTML paragraph and table preserved; user-provided HTML escaped.
+- Full browser journeys against staging data, first locally and then on the deployed staging alias: signed reservation submission, approval, amendment, stale-preview rejection, review at 1366px and 390px, mobile capture, idempotent retry, blocked amendment, explicit withdrawal, second amendment and fresh capture. A separate 1366x768 desktop browser check also completed capture through the UI and returned to the saved record with earlier versions. No browser runtime errors, horizontal overflow, iframe or independent document scroll area.
+- Backend transaction tests verified missing confirmation/reason/approval, submitted, exchanged/completed states, outstanding authority, stale terms, actor binding, invoice protection, successful versioning/audit and denial of direct anon/authenticated helper execution. All simulated state changes were rolled back.
+- An authorised conveyancer was denied commercial amendment and retained the optional authority request after withdrawal. Requests while an authority remains active are still rejected. These permission/request checks were rolled back.
+- All five new authority records are captured_test with sent_at null and the original capture-only storage labels. The original and reissued snapshots retain their respective prices and history.
+- Hash checks confirmed every pre-existing sale attempt (138), commercial terms row (136), authority (66), document (147), PDF version (196) and building (5) was unchanged. Verification added a dedicated building, two fictional organisations and two units, AUTH-01/AUTH-02; it did not delete or reset existing journeys.
+- Screenshots and machine-readable checks are in artifacts/authority-review-20261119.
+
+Limits and existing inconsistencies
+- Real email delivery was intentionally not exercised; staging remains capture-only. No production flows were tested or changed.
+- Optional authority requests were checked at the database workflow/permission level; the complete browser journey exercised direct developer issuance without a request.
+- The shared notice-authority renderer was regression checked, but the full post-exchange completion journey was not rerun for this targeted change.
+- Testing found that existing reservation approval can succeed when contract price is absent; actual authority persistence still rejects a non-positive/missing agreed price. This pre-existing reservation rule was not changed in this UI refinement. Test commercial prices were explicitly entered before successful capture.

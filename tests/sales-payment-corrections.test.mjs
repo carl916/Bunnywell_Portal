@@ -217,7 +217,7 @@ test("recorder identity is snapshotted and immutable with a legacy display fallb
 
 test("payment history is compact and summarises active receipts and voids", () => {
   assert.match(workflowSource, /receivedAmount = activeCashPayments\.reduce/);
-  assert.match(workflowSource, /\{money\(receivedAmount\)\} received/);
+  assert.match(workflowSource, /<DisplayValue value=\{money\(receivedAmount\)\} \/> received/);
   assert.match(workflowSource, /paymentRecorderLabel\(payment, profiles\)/);
   assert.match(workflowSource, />Void payment<\/button>/);
 });

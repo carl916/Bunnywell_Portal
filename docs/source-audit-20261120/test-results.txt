@@ -1,0 +1,16 @@
+Final reconciled suite: 704 tests, 695 passed, 9 failed.
+Previous origin/staging baseline: 655 tests, 646 passed, 9 failed.
+The failed test names are identical in both runs.
+
+✖ register reads complete scoped compact sources and returns private nonfinancial data
+✖ one approved document and one current query produce the precise replacement destination
+✖ colleague replacement moves responsibility without undoing the sibling approval
+✖ related current document reviews group into a single compact action
+✖ unallocated responsibility is not assigned to Other teams; neutral inventory stays in All teams
+✖ dependency order wins over event age and date/deposit tasks do not drive responsibility
+✖ operational pages inherit global context instead of owning building filters
+✖ Agent Fees applies the shared global building scope
+✖ missing and unresolved configured organisations stay unallocated even with sale/relationship allocations
+
+Full local outputs: artifacts/source-audit-20261120/final-tests.txt and baseline-tests.txt.
+TypeScript passed. Targeted suites: 95/95 and 97/97.

@@ -1,0 +1,60 @@
+Bunnywell snag list and record — staging completion, 20 November 2026
+
+Result
+Updated https://staging.bunnywell.co.uk using the existing integrated staging workspace and shared controls. Production was not deployed or changed.
+Deployment: dpl_BU7U8GNAQcTdvcXQNdYRmNiKy7iH (READY, Preview, fra1).
+Preview: https://bunnywell-portal-qwosiqhs0-carl-gilbert-s-projects.vercel.app
+Database: vxkpvdtrldwwqiddoyof (staging).
+
+Source and preservation
+The live staging baseline was dpl_7XDzpupvVY9b9ejaNfT9CZu922EJ. Its archived integrated source was verified against its manifest before editing.
+Working source: C:\GitHub\Bunnywell_Portal\tmp\snags-20261120\app
+The existing dirty root checkout was not used as a deployment source or overwritten.
+codex/snags-20261120 is a deployment snapshot label, not a Git commit or claimed merge.
+Unchanged file hashes cover staging restrictions, notification and operation modules, upload validation, unit ordering, configuration and dependencies; see source-manifest.json.
+The portal.bunnywell.co.uk and defects.bunnywell.co.uk aliases remained on dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+
+Thumbnail root cause and repair
+Regression: Tap drip, Flat LG01, Kitchen, Forum House.
+Snag: c579a5f4-5f67-47e3-8d3b-ebd3ae2746cc
+Photo: 54dbb2c6-45cd-43f5-8e8c-761f02dd1dd6
+The list response already recognised this evidence ID. The record used the original image directly. The annotated legacy JPEG was 4,525,030 bytes, exceeding the server thumbnail generator's 4 MiB read cap, so the thumbnail endpoint returned 503. The client disconnected its visibility observer before the fetch succeeded and swallowed the failure, leaving a generic icon without recovery.
+Legacy image reads now have a bounded 20 MiB cap; the existing 4 MiB new-upload limit remains unchanged. Existing origin, redirect, timeout, input-pixel and image-output safeguards remain. The actual Tap drip image now produces an authenticated 128px WebP with HTTP 200.
+List and record selection share an annotated-image-first comparator. The list includes the evidence type and does not expose media URLs. Private evidence still requires exact building/snag/photo access; full-size previews receive fresh signed URLs.
+Thumbnail requests have a shared concurrency limit of three, cancel queued/unmounted work, and load visible rows plus a small prefetch margin. Failed reads automatically retry, can recover on connection restoration, and offer Retry photo after failures. No evidence and failed photo loads have different visible states. Successful visible images are not deferred again by native lazy loading.
+
+List and record changes
+The list retains a table when its own available width is sufficient. Below 1100px of list width it uses compact rows, accounting for the sidebar: title/location together, thumbnail alongside, full status/trade/date wrapping below, and Details plus permitted actions retained.
+Records keep their existing title, show Flat/unit and room prominently (or the recorded communal location), and keep status/raised/deadline compact. The annotated main photo comes directly after the header, preserves its full aspect ratio, and opens full size. Description uses adjacent space where available or follows the photo; a record without an image uses that space for its description. Other images/videos remain accessible. The visible internal UUID was removed.
+Comments & activity stays on the right on desktop and follows main content on mobile. Ordinary comments retain their separate composer.
+Workflow controls appear only for permitted actions. Mark On Wall offers Supply requested information first and Close snag second. Selecting an action opens only its relevant fields. Information responses show the original question next to response/attachment controls. Authorised allocation, priority and deadline controls remain separately available, including on closed records without workflow actions.
+
+Staging database changes
+20261120104854_snag_information_response_history: prevents the same information response from appearing as both a photo-added comment and a status-change comment. The photo-added history entry is generic; the action carries the response once.
+20261120105521_snag_information_response_evidence: allows answer_snag_info through the existing authorised media-intent path, so a response can include private evidence. The missing action in that path was discovered by exercising the real staging form.
+Both migrations use guarded replacements of the existing function definitions and preserve other permissions, required-comment/evidence checks, status transitions, grants and upload limits.
+Database advisor comparison found no new findings.
+
+Verification
+- Local production Next.js build and TypeScript passed; hosted Vercel build READY.
+- Five automated tests passed: evidence preference; role/status/action requirements; queue concurrency and cancellation; >4 MiB legacy thumbnail and safety bounds; visible-row automatic retry without another intersection plus unmount cancellation.
+- Browser: 1920x1080 wide desktop, 1366x768 with sidebar open, 1024x900 intermediate and 390x844 mobile. No horizontal overflow. Drawer handles kept readable Carpentry and its complete Rejected back to contractor status without date overlap. Wide desktop retained the table; narrower available widths used compact rows.
+- Tap drip: loaded on first visible view without scrolling, remained loaded after scrolling away/back, and loaded after returning from its record. Full-size photo loaded. At 1366x768 the complete main photo was inside the initial viewport. Closed record had no empty workflow panel; permitted allocation remained accessible.
+- Mark On Wall, LG08 Kitchen: primary Supply requested information, secondary Close snag, original question "Where is the mark?" visible. Its existing title, needs_more_info status and question were left unchanged.
+- Private media checks: authenticated thumbnail 200 with private, no-store; signed preview 200; public object access denied; anonymous thumbnail 401; incorrect snag 404; incorrect building 403. No evidence URLs in the list response.
+
+Information-request test
+Created and exercised [E2E 2026-11-20] Information response verification in the recorded communal area Test room on roof, Forum House.
+Test snag: 089fc79f-b002-4847-a9ee-cfb56e7ff914
+Question: Where exactly is the test mark, and can you attach a closer photo?
+Response: Staging verification response: the test mark is inside the red rectangle; the closer photo is attached.
+An empty response was blocked. The original question was visible. A response and private image attachment saved together, changing needs_more_info to open. The response text occurred in exactly one history event. The attachment loaded in the full-size viewer. An ordinary comment saved independently. The test record was subsequently closed through the normal UI and retained for audit; its closed state has no workflow panel. Existing [E2E...] titles were not renamed.
+
+Artifacts
+C:\GitHub\Bunnywell_Portal\artifacts\snags-20261120
+before-list-1366.jpg / after-list-1366.jpg: narrow list comparison with sidebar open.
+before-record-1366.jpg / after-record-1366.jpg: Tap drip record comparison.
+Additional list and record captures cover 1920, 1024 and 390 widths; Mark On Wall, information fields, first-load thumbnail and the test history/private preview are also captured.
+before-thumbnail-trace.json, staging-thumbnail-trace.json, http-verification.json, browser-verification.json and automated-tests.txt contain verification evidence.
+staging-source.zip, implementation.patch and source-manifest.json preserve the exact integrated source and applied migrations. verification-source.zip contains the checks.
+Source archive SHA256: 534c45a9a6227b20fc931a2cf7ce256d6e54f7f3ddd6ae973944add4e1a7f9dc

@@ -1,0 +1,75 @@
+Bunnywell email notifications — Stage 3 staging completion
+20 November 2026
+
+DEPLOYMENT
+Staging: https://staging.bunnywell.co.uk
+Tested deployment: dpl_CXzZ9VEwJqzsuWfYgdv6ZdXa2MSA
+Preview: https://bunnywell-portal-j84cn52ef-carl-gilbert-s-projects.vercel.app
+Project: prj_4s8vIyfrGh9DSGJcixTU5slevr5P; Preview environment, fra1.
+Database: vxkpvdtrldwwqiddoyof.
+Baseline: dpl_uLPVdcGAF2xBAEQtRgDKkqvhiad9; archive SHA-256 ca665c51f2ea57a176850c21ad13824c1e5e0cfdda4f5dd342f8e6fcdb133ea2.
+The staging alias had no intervening deployment. Work used the matching isolated source, not the unrelated dirty checkout. Source label codex/email-notifications-stage3-20261120 is a CLI snapshot label, not a verified Git commit.
+Production portal/defects aliases remain dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. Production legal sending code outside the added staging branch and the snag digest remain unchanged.
+Live sends below were exercised on dpl_ChpwJfDsDAhG4JALYVuaTm3upMjD. The final deployment adds only a fail-closed host/Preview check for missing environment flags; the routine renderer, dispatcher, formal issue flow and provider payload are unchanged. The final alias was rechecked using the same saved emails and normal manual retry/check, without another provider submission. The live-send source is retained separately.
+
+MIGRATIONS
+- 20261120090014_email_notifications_stage3
+- 20261120091023_email_notifications_stage3_protocol_lock
+- 20261120091456_email_notifications_stage3_delivery_polling
+The first migration was inactive on application. The existing cron job was briefly disabled, the staging alias switched, and Stage 3 activated at 2026-11-20T09:03:24.579631Z with no outstanding worker lease or pending batches. The protocol check is atomic with the lease claim. One sales scheduler remains active: job 2, bunnywell-sales-capture-staging, every minute. The unrelated retention job remains unchanged.
+No historical capture or legal correspondence was backfilled into delivery.
+
+DELIVERY LEFT ENABLED
+The server resolves intended recipients/content first, then redirects at the provider boundary to exactly carl@accoladeproperties.co.uk, with empty Cc/Bcc and safe Reply-To. Routine windows remain keyed by intended user + sale attempt, and eligibility is rechecked before release. Formal issue is immediate across staging sales, independently of routine enrolment.
+Captures and provider delivery records are separate. Immutable payloads and original batch/message identities protect retries. Uncertain sends older than 23 hours require reconciliation. New sends take priority over status polling; unauthorised status lookups back off for an hour.
+Settings version 24: ordinary comments OFF, mentions ON, all other saved selections preserved. Settings remain system-wide across all buildings.
+
+REAL INBOX TESTS — ALL TIMES UTC, 20 NOVEMBER 2026
+Routine subject (two differently labelled copies):
+[STAGING] Email capture verification 2026-11-19 · Unit 102 — Sale update
+- Intended Carl Gilbert / Developer: submitted 09:10:01.029815; provider accepted 09:10:01.284227. Reservation submission + explicit mention.
+- Intended Jon (notification test) / Sales Agent: submitted 09:10:01.413641; provider accepted 09:10:01.575876. Explicit mention only.
+Browsers closed at 09:04:28.068; fixed deadlines were 09:09:22.155568 and 09:09:26.392372. The unattended 09:10 scheduler tick sent both. The ordinary comment generated no recipient item.
+
+Formal subject:
+[STAGING] Authority to Exchange – Authority review verification 2026-11-19 – AUTH-01
+- Clicked Issue test copy to Carl at 09:10:37.050; submitted 09:10:37.523809; provider accepted 09:10:37.712137.
+- Header retains the intended Authority review conveyancer and copied Authority review sales agent. Original formal wording and trusted staging links are preserved. This existing authority template has no file attachment; attachment preservation was separately verified with a stub provider.
+- Staging audit shows Carl as the actual destination and explicitly says intended recipients were not served. Original legal sent_at/provider ID remain unset; the separate delivery record holds the actual provider receipt.
+
+All three have one provider submission each. Manual legal retry/check retained the same identity and did not resend. Provider acceptance is verified. Delivery-status retrieval returns HTTP 401 using the existing staging credential, so confirmed delivery and inbox receipt remain UNVERIFIED. No delivered status was inferred.
+
+VERIFICATION
+38 automated tests pass: the existing 28 plus 10 Stage 3 scenarios, executing actual domain SQL commands/scheduled transitions and a stub mail provider. Next.js production build and deployed Preview succeeded.
+Desktop/mobile settings, all 49 controls, reload persistence, two-building scope, an empty role row, independent mentions, unauthorised updates, overlapping roles, current-access suppression, legal issue outside routine enrolment, original To/Cc/Bcc, attachments, immutable retries, and old-worker rejection passed.
+On staging, links in the accepted emails preserved the exact sale/comment through sign-in at 1440px and 390px; an agent lacking building access could not see the comment. Formal preview/issue and the actual-destination audit were checked on desktop/mobile. Email HTML and plain text were compared to captures and visually inspected. Ended-sale links retain the original UUID; existing redaction rules may make that sale unavailable, and they never select the replacement buyer.
+
+17-EVENT COVERAGE (PASS; automated command/transition evidence unless live is stated)
+| Stable event ID | Verified coverage |
+| --- | --- |
+| reservation_submitted | Submit, resubmit; retry/draft/failure boundaries. Live submission included. |
+| reservation_approved | Existing authorised approval command and duplicate retry retained. |
+| reservation_queried | Query and reject commands; rejected permission and retries. |
+| exchange_authority_requested | Initial/renewed requests; no-op request; issue is separate. |
+| exchange_authority_expired | Unattended tick; repeat ticks; revocation, supersession and exchange suppress expiry. |
+| exchange_authority_revoked | Authorised revocation command; original authority identity. |
+| unit_exchanged | Conveyancer exchange command; repeated confirmation. |
+| notice_authority_requested | Request command; repeated request; formal issue separate. |
+| contractual_completion_date_changed | Notice submission, correction, unchanged dates and A→B→A. |
+| completion_documents_uploaded | Current-file uploads and replacements through completion upload command. |
+| completion_document_queried | Current-version query; identical query retry. |
+| completion_documents_approved | Second current approval only; queried/replaced versions; competing approvals and retries. |
+| unit_legally_completed | Authorised legal completion; repeated confirmation. |
+| handover_completed | Successful handover insertion through existing completion trigger. |
+| sale_fallen_through | Real return-to-market command; ended/redacted attempt and exact old-sale link. |
+| comment_added | Existing producer; ordinary comments off; visibility/access rechecks and overlap. Live quiet comment verified. |
+| comment_mentioned | Existing insert/edit producers; independent toggle, overlap, exact ID links. Live two-person mention. |
+
+EVIDENCE
+Directory: artifacts/email-notifications-stage3-20261120
+- source-manifest.json and implementation.patch: exact source/provenance and changes.
+- staging-source.zip: SHA-256 53b38c6163179d72528a618de8efcf60e95b00fa6b1edca4c0a6ca3251a96785. Includes the application snapshot plus all applied migrations.
+- verification-source.zip, automated-tests.txt: test sources and results.
+- database-evidence.json, delivery-verification.json: intended/actual recipients, immutable payloads, timings, one submission per message, final settings and scheduler state.
+- preview-browser.json, deployed-browser-verification.json and PNGs: Setup, issue/audit, access checks and exact links.
+- routine-carl-email.txt/html/png, routine-jon-email.txt/html/png, formal-email.txt/html/png: redacted examples. Synthetic addresses are identified as test data; Carl remains shown as the actual destination.

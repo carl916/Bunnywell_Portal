@@ -7,7 +7,7 @@ import { parsePercentInput } from "../src/lib/sales/percentages.ts";
 import { validateAgentFeeStructure } from "../src/lib/sales/agent-fees.ts";
 import { loadTypescriptModule } from "./helpers/load-typescript-module.mjs";
 
-const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
+const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8") + readFileSync("src/lib/sales/reservation-terms.ts", "utf8");
 const refreshSource = readFileSync("src/lib/sales/action-refresh.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
 const workflowStyles = readFileSync("src/components/portal/sales/SalesReservationWorkflow.module.css", "utf8");

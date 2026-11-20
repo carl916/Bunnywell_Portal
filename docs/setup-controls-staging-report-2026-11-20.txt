@@ -1,0 +1,125 @@
+Bunnywell Setup controls — staging implementation and verification
+20 November 2026
+
+STATUS
+Implemented and deployed to staging. Database and automated verification passed.
+Browser verification and screenshots are incomplete because Computer Use stopped
+when it could not establish the current Chrome URL safely.
+
+BASELINE AND RELEASE
+Confirmed staging.bunnywell.co.uk was serving dpl_CXzZ9VEwJqzsuWfYgdv6ZdXa2MSA,
+labelled codex/email-notifications-stage3-20261120. This superseded the Stage 2
+deployment quoted in the request. The Stage 3 archive matched its recorded SHA-256
+53b38c6163179d72528a618de8efcf60e95b00fa6b1edca4c0a6ca3251a96785, and all listed
+source files matched their recorded hashes before work began.
+
+Final staging deployment: dpl_7XDzpupvVY9b9ejaNfT9CZu922EJ
+Staging: https://staging.bunnywell.co.uk
+Preview: https://bunnywell-portal-fgb5w8rzq-carl-gilbert-s-projects.vercel.app
+Source label: codex/setup-controls-20261120 (CLI snapshot label, not a Git commit).
+Project: prj_4s8vIyfrGh9DSGJcixTU5slevr5P; Preview environment; runtime region fra1.
+Database: vxkpvdtrldwwqiddoyof (Bunnywell Portal Staging).
+Migration: 20261120092849_delivery_team_assignment_restore.
+The migration connector's confirmation expired twice. With explicit user approval,
+the migration was applied through SQL and recorded in schema_migrations in the
+same transaction, guarded against an intervening change to the baseline function.
+
+Both production aliases, portal.bunnywell.co.uk and defects.bunnywell.co.uk, remain
+on dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. The unrelated dirty checkout was not changed.
+Implementation source: tmp/setup-controls-20261120/app.
+
+ROOT CAUSE
+Delivery team generates a candidate assignment ID on save. The database command
+looked up and upserted by that ID, while staging also enforces a unique tuple of
+building_id, organisation_id and role_on_project across active AND inactive rows.
+Re-selecting an earlier organisation therefore attempted a duplicate insert.
+Database logs confirm tuple-uniqueness failures at 08:56:12 and 08:56:22 UTC.
+The original operation was already transactional; the identity lookup was wrong.
+The global Setup notice also survived navigation to unrelated tabs.
+
+ASSIGNMENT FIX
+The command now finds the existing unique assignment tuple and reactivates that
+record, or inserts only for a first assignment. It locks the building before
+reading the current holder, switches the two single-holder roles atomically and
+returns the actual assignment ID. Failures roll back the outgoing deactivation.
+Unchanged saves do not update the row or add an audit-history entry. Supporting
+trades and other multiple-holder roles retain other organisations.
+New clients send the observed holder ID and timestamp to reject stale replacements.
+Existing submission receipts still make duplicate requests idempotent.
+Tuple uniqueness, both active-holder indexes, the existing administrator check,
+service_role-only function execution, and building read permissions are preserved.
+Success refreshes Setup reference/building data, used by Delivery team and Overview.
+
+FEEDBACK AND LAYOUT
+Success messages use the actual database outcome, including both organisation
+names on replacements. Failed replacements name the attempted organisation and
+the holder retained after rollback; database details remain in server logs.
+Success notices sit within the active building section, expire after five seconds
+and are hidden immediately when the tab, panel or building changes. Errors use
+the portal's error colour and an alert role, and remain until retry or navigation.
+Email notifications remounts on building change to discard local feedback.
+
+All seven building tabs use shared spacing and widths. Building details has paired
+desktop fields, a mobile stack and separation around Notes and Save. Lifecycle
+groups the 220px PC date, confirmation and calculated dates, with a separate
+resident-access checkbox and explanation. Delivery team pairs role/organisation
+and lays out current role, organisation and its labelled Remove button together.
+Sales setup, Sales contacts and Structure share field spacing; Structure pairs
+related fields on desktop and stacks them on mobile. Overview sections are spaced.
+The notification matrix retains its system-wide event-by-role model, uses 13px
+event text, 16px visible checkboxes, reduced row padding, 44px click targets and
+visible keyboard focus. Mobile labels still identify each role alongside its event.
+
+VERIFIED
+10 automated tests passed, executing the real migration and server operation code:
+- Restore, replace, restore, remove, re-add and unchanged save; record/history reuse.
+- Failure after outgoing deactivation: prior assignment and audit remain unchanged.
+- Concurrent stale saves, duplicate requests, developer-representative replacement.
+- Multiple supporting trades, stale removal, role validation and actor authorization.
+- Database uniqueness, safe failure responses and logging of unexpected raw errors.
+Next.js build and TypeScript passed locally; the final Vercel build also passed.
+
+Live staging database regression passed on disposable records:
+- Complete restore/replace/remove/re-add/no-op sequence.
+- A deliberate primary-key failure after outgoing deactivation left the prior row
+  and history unchanged, and returned a specific safe failure message.
+- Two independent RPC saves launched concurrently: one committed, one was rejected
+  as stale, and exactly one active holder remained.
+- Concurrent duplicate requests generated one audit event; multiple trades remained.
+All disposable buildings, organisations and submission receipts were removed.
+Security and performance advisors returned no new findings compared with baseline.
+
+The final staging URL returns HTTP 200; unauthenticated operations return HTTP 401.
+Saved notification preferences remain at version 24, including comments off and
+mentions on. Notification delivery, scheduler, renderer and legal-email source files
+are byte-for-byte unchanged from Stage 3; no email-delivery behaviour was edited.
+
+FORUM HOUSE FINAL STATE
+After the user explicitly approved the alternative to normal controls, Benchmark
+was restored through the same transactional save command. A fresh database read
+confirmed:
+- Main contractor: Benchmark Construction; original record
+  3a7dee95-c71c-43ae-804b-705555c352c2 reactivated, with original created_at retained.
+- Developer representative: Airey Miller; record and timestamp unchanged.
+- Total assignment-record count unchanged. Grove remains inactive.
+
+NOT YET VERIFIED
+The requested Forum House sequence through normal portal controls has not run.
+Delivery team and Overview have not been checked in the browser after reload.
+Immediate removal-feedback clearing on navigation to Email notifications, all
+seven tabs at laptop/mobile widths, and keyboard/visual matrix behaviour remain
+unverified in a browser. No Delivery team, Lifecycle or Email notifications
+screenshots were captured. Computer Use stopped this turn because it could not
+determine the current browser URL confidently enough to enforce its safety policy.
+
+EVIDENCE
+artifacts/setup-controls-20261120/source-manifest.json — provenance and file hashes.
+artifacts/setup-controls-20261120/staging-source.zip — complete final source snapshot.
+artifacts/setup-controls-20261120/implementation.patch — changes from live baseline.
+artifacts/setup-controls-20261120/verification-source.zip — reproducible regression code.
+artifacts/setup-controls-20261120/automated-tests.txt — 10 passing tests.
+artifacts/setup-controls-20261120/staging-database-regression.json — live RPC evidence.
+artifacts/setup-controls-20261120/forum-house-restoration.json — approved final restoration.
+artifacts/setup-controls-20261120/database-evidence.json — constraints, privileges and settings.
+artifacts/setup-controls-20261120/deployment-build.txt — final Vercel build output.
+artifacts/setup-controls-20261120/http-verification.json — final deployed HTTP checks.

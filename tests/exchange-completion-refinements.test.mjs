@@ -34,7 +34,7 @@ test('migration validates contractual dates transactionally, preserves duplicate
  // Load the actual Setup command so its guarded definition patch is exercised.
  for(const table of ['building_floors','areas'])await f.db.exec('create table if not exists public.'+table+'(id uuid)');
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120092849_delivery_team_assignment_restore.sql','utf8'));
- await f.db.exec(fs.readFileSync('supabase/migrations/20261120111156_routine_email_occurrence.sql','utf8'));
+ await f.db.exec(fs.readFileSync('supabase/migrations/20261120111212_routine_email_occurrence.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120122359_exchange_completion_refinements.sql','utf8'));
  for(const [service,days] of [['2026-12-18',10],['2026-04-02',1],['2026-11-20',5]]){
   const r=await f.db.query('select workspace_commands.notice_deadline($1::date,$2)::text value',[service,days]);assert.equal(r.rows[0].value,noticeDeadline(service,days));

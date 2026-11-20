@@ -58,7 +58,7 @@ test('migration preserves catalog properties, helper definitions, ACLs, OID and 
   await assert.rejects(f.rpc('can_access_sale',{p_sale_id:f.ids.sale,p_user_id:f.ids.developer}),/permission denied/);
   await f.owner();
   await f.db.exec(readFileSync('docs/sale-workflow-context/rollback.sql','utf8'));
-  assert.equal((await f.catalog()).find(x => x.signature === properties.signature).definition,f.original.definition);
+  assert.equal((await f.catalog()).find(x => x.signature === properties.signature).definition.replace(/\r\n/g,'\n'),f.original.definition.replace(/\r\n/g,'\n'));
   assert.deepEqual((await f.catalog()).map(x => x.signature === properties.signature ? {...x,definition:properties.definition} : x),extraAcl);
 });
 

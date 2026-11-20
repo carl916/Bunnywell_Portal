@@ -14,7 +14,7 @@ import { calculateAgentInvoicePreview } from "../src/lib/sales/commercial-model.
 
 const refreshSource = readFileSync("src/lib/sales/action-refresh.ts", "utf8");
 const workflowSource = readFileSync("src/components/portal/sales/SalesReservationWorkflow.tsx", "utf8");
-const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8");
+const routeSource = readFileSync("src/app/api/sales/reservations/route.ts", "utf8") + readFileSync("src/lib/sales/reservation-terms.ts", "utf8");
 const setupSource = readFileSync("src/components/portal/ProductionPortalApp.tsx", "utf8");
 const globalStylesSource = readFileSync("src/app/globals.css", "utf8");
 const gbpInputSource = readFileSync("src/components/portal/sales/GbpInput.tsx", "utf8");

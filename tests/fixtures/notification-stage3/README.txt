@@ -1,0 +1,1 @@
+Schema-only test baseline captured for the accepted notification Stage 3 staging implementation on 2026-11-20. These files contain table definitions and stored functions, not database rows or credentials. Tests apply the repository migrations and use synthetic identities. App modules are loaded from the current src tree, never a temporary source snapshot.

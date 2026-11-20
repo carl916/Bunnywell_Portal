@@ -1,0 +1,124 @@
+Bunnywell sales email notifications — Stage 2 completion
+Verified on staging, 20 November 2026. All times below are UTC.
+
+Deployment and source
+Staging: https://staging.bunnywell.co.uk
+Setup: https://staging.bunnywell.co.uk/workspace?view=setup&tab=email-notifications
+Tested deployment: dpl_uLPVdcGAF2xBAEQtRgDKkqvhiad9
+Preview: https://bunnywell-portal-ew16cs1oq-carl-gilbert-s-projects.vercel.app
+Vercel project: prj_4s8vIyfrGh9DSGJcixTU5slevr5P; Preview environment, Frankfurt (fra1).
+Database: vxkpvdtrldwwqiddoyof. No production migration, job or alias change.
+The starting alias still served Stage 1 deployment dpl_Ek7SRenrUn5iv8AhXJHAnWugi14c.
+Implementation used its matching source snapshot and preserved the deployed work.
+The established workflow uploads a CLI source snapshot, tests Preview, then assigns
+the staging alias. The label codex/email-notifications-stage2-20261119 is NOT a verified Git commit.
+The unrelated dirty main checkout was not used as the application source.
+Source: tmp/email-notifications-stage2-20261119/app
+Archive: artifacts/email-notifications-stage2-20261119/staging-source.zip
+SHA-256: ca665c51f2ea57a176850c21ad13824c1e5e0cfdda4f5dd342f8e6fcdb133ea2
+source-manifest.json records each source hash; implementation.patch records changes.
+
+Applied staging migrations
+20261119172934_email_notifications_stage2_queue.sql
+20261119172939_email_notifications_stage2_scheduler.sql
+Local filenames match the hosted migration ledger. The queue migration adds private
+event, explicit-tag ledger, batch, batch-item, capture, lease and worker-run tables.
+It moves the existing notification context behind a service-only wrapper and wraps
+the existing reservation command without replacing its business validation.
+The scheduler migration adds pg_net, a Vault-backed credential and request records.
+Both migrations initially left dispatch disabled. Activation: 2026-11-19T17:37:43.621808+00:00.
+Existing tags were recorded without backfilling historical email events.
+
+Unattended scheduler and capture protection
+Staging pg_cron job 2, bunnywell-sales-capture-staging, runs * * * * *.
+It calls workspace_commands.dispatch_notification_tick(), which sends an
+authenticated POST to the fixed staging /workspace/notification-dispatch route.
+The dedicated credential is a Preview-only Vercel Secret and staging Vault secret;
+it is not included in source, screenshots or evidence. Vercel's cron array stays
+empty because this release uses a Preview deployment.
+The route requires the staging environment guards and a constant-time bearer check.
+The worker's fetch boundary permits only the staging queue RPC; recipient resolution
+retains its separate narrow Stage 1 context RPC. No mail-provider client is imported.
+Captures are constrained to delivery_status=captured_test and external_delivery=false.
+Only enrolled test journeys can enqueue and remain eligible at capture time.
+All test captures used this scheduler; no browser or manual dispatcher initiated them.
+No external email provider was contacted by this feature or its tests. Formal legal
+correspondence and the snag digest remain on their existing, unchanged paths.
+
+Timed proof through normal portal controls
+Test sale: da27491f-0dd0-4a25-8b83-169527ba1130; Email capture verification 2026-11-19, Unit 101.
+Ordinary comment roles were empty, explicit mentions enabled, approval roles all on.
+Greg and Jon used the Comments picker; Carl used Approve reservation.
+Greg's mention committed: 2026-11-20T07:45:18.115754+00:00
+Jon's mention committed:  2026-11-20T07:46:19.677593+00:00
+Approval committed:       2026-11-20T07:48:21.529583+00:00
+All test browsers closed: 2026-11-20T07:48:22.507Z
+
+Recipient     Batch due                         Scheduled capture                   Items
+Carl          2026-11-20T07:50:18.115754+00:00   2026-11-20T07:51:00.694623+00:00   3
+Conveyancer   2026-11-20T07:53:21.529583+00:00   2026-11-20T07:54:00.498181+00:00   1
+
+Carl's deadline remains exactly five minutes after the first eligible mention.
+The second mention and approval did not move it. His capture contains the approval
+first and the two comments, each identified as a mention. The conveyancer's window
+starts with approval and contains only approval. Greg and Jon also receive one
+approval-only capture because Sales Agents was enabled and they had sale access.
+The unmentioned ordinary comment created zero recipient items.
+The one-minute scheduler captures on its next tick after each fixed deadline.
+
+Additional verification
+- Preview and staging Setup: all 49 checkbox controls visible; saved empty roles
+  survive reload and appear unchanged across two buildings. Tested at 1440, 768,
+  390 and 320px, with no horizontal overflow. Keyboard focus/Space work.
+- Searchable @ picker: keyboard selection, touch selection/removal, explicit IDs
+  saved, tagged names visible composing and reading. Forged/ineligible IDs rejected.
+- A further live UI check saved an explicit tag while mention emails were off.
+  The in-portal mention row was preserved and scheduled fanout produced zero email
+  recipients. Final settings are restored to comments off / mentions on.
+- Actual captured links use the trusted staging /workspace building/unit/sale/comment
+  route. Signed-out desktop and mobile users return to the exact highlighted comment.
+- A comment eligible through both role and mention rules produced one captured item,
+  marked as a mention. Separate sale attempts remained in separate batches.
+- A queued explicit mention lost its recipient's building access before the deadline.
+  The normal read API returned 403; the due batch was suppressed with no capture.
+- Deployed comment and approval retries returned the same results. The deployed
+  capture replay returned the existing result; a second overlapping claim was refused.
+- PostgreSQL tests cover exact cutoff boundaries while earlier batches are pending,
+  multiple sale attempts on one unit, expired-lease recovery, edits/new tags only once,
+  fabricated legal inbox rows, inactive users, visibility, current settings, individual
+  item removal, empty suppression, failed commands and privilege restrictions.
+- 28 automated tests pass. TypeScript and production builds pass. Changed/new-file
+  lint has no errors; the pre-existing proxy unused-import warning remains.
+- No duplicate batch captures; every capture has external_delivery=false. New queue
+  tables have RLS and no browser or direct service-role table grants. The service RPC
+  is the only queue API. Advisor INFO notices for no-policy private tables are expected.
+
+The first rehearsal intentionally remains in the audit trail. Its approval was
+rejected by the existing optimistic version check because comments advance the sale
+revision. It produced no approval receipt or event. The successful timed proof above
+refreshed the approval view before approval; no business transition was forced.
+
+Stage 3 entry point
+Call workspace_commands.enqueue_notification(event_id, stable_source_key, sale_id,
+comment_id?, newly_added_mentions?) from the same transaction as each successful
+authorised workflow transition. Expand its explicit three-event allowlist and the
+renderer for the remaining 14 catalogue events; keep the stable identifiers and
+existing saved overrides. Do not enqueue from mutable-state polling or synthetic
+sale_mention_notifications rows. Keep the sale attempt UUID as the batching key.
+The worker uses Stage 1's selection function on transaction-time audience facts and
+resolveEmailNotificationRecipients again immediately before capture. The database
+rechecks the current context/revision and exact remaining items at the capture boundary.
+Persistent event/source identities, per-recipient items, fixed windows, expiring lease
+and unique batch capture identities should remain the common path for future events.
+Real delivery is outside this stage. If added later, preserve capture-only staging and
+use provider idempotency/reconciliation principles from the existing sales-legal path.
+
+Evidence
+database-evidence.json: committed event/due/capture times, scheduler HTTP/run records,
+recipient reasons, capture identities and permissions; email addresses redacted.
+final-verification.json: assertions for the successful timed run and actual links.
+carl-captured-email.txt/.html/.png and conveyancer-captured-email.txt/.html/.png:
+redacted examples of each requested recipient's actual captured email.
+preview-browser.json, staging-browser.json, screenshots and tests.txt: UI/test results.
+Verification scripts: tmp/email-notifications-stage2-20261119/ (fixture credentials
+are ignored locally and excluded from the source archive and evidence).

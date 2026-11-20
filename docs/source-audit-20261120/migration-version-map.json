@@ -1,0 +1,27 @@
+[
+  {
+    "local": "20261118143432_staging_workspace.sql",
+    "applied": "20261118143432_staging_workspace.sql",
+    "same": true
+  },
+  {
+    "local": "20261119141104_reservation_return_requires_approval.sql",
+    "applied": "20261119141145_reservation_return_requires_approval.sql",
+    "same": true
+  },
+  {
+    "local": "20261119141355_reservation_return_completion_guard.sql",
+    "applied": "20261119141417_reservation_return_completion_guard.sql",
+    "same": true
+  },
+  {
+    "local": "20261120111156_routine_email_occurrence.sql",
+    "applied": "20261120111212_routine_email_occurrence.sql",
+    "same": true
+  },
+  {
+    "local": "20261120111341_audit_pagination_totals.sql",
+    "applied": "20261120111400_audit_pagination_totals.sql",
+    "same": true
+  }
+]

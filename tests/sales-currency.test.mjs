@@ -23,9 +23,9 @@ test("GBP parser clears optional values and preserves zero", () => {
   assert.equal(rawGbpInputValue("£0"), "0");
 });
 
-test("GBP parser strips invalid characters and discards pence for whole-pound fields", () => {
+test("GBP parser accepts GBP prefix, preserves pence and rejects invalid text", () => {
   assert.equal(parseGbpInput("GBP 45,110,229"), 45110229);
-  assert.equal(parseGbpInput("£5,000.99"), 5000);
+  assert.equal(parseGbpInput("£5,000.99"), 5000.99);
   assert.equal(parseGbpInput("abc"), null);
 });
 

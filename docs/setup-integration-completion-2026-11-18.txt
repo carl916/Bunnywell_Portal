@@ -1,0 +1,145 @@
+Bunnywell Portal — Setup integration completion, 18 November 2026
+
+Deployed: https://staging.bunnywell.co.uk
+Deployment: dpl_J3e8JZm82Uec7LntYSSGr85rP9EU (preview environment, fra1)
+Staging database: vxkpvdtrldwwqiddoyof
+Production application and database were not changed. Both production domains,
+portal.bunnywell.co.uk and defects.bunnywell.co.uk, still resolve to
+dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+
+This completion report supersedes the pending status in the earlier audit and
+backend proposal. The approved corrections have now been applied to staging.
+
+Architecture
+
+The restored Setup was a second application entry point inside the same Next.js
+deployment. /setup mounted the legacy portal with a separate session lifecycle,
+building state and horizontal navigation. Crossing to /workspace used a full
+document reload. The workspace also rendered sign-in before persisted-session
+verification finished, which caused the login flash.
+
+Setup now mounts inside ConnectedWorkspace alongside Sales, Snags and Dashboard.
+It shares the sidebar, breadcrumbs, mobile navigation, building context, session
+and command boundary. Internal navigation retains the same document. /setup and
+legacy screen URLs redirect into the shared workspace; no legacy portal is mounted.
+Nested Setup URLs retain their building and panel on refresh.
+
+Authentication distinguishes restoration, verified access, transient failure and
+definitive rejection. Rate limits offer retry; invalid sessions reach sign-in.
+No cosmetic delay or CSS concealment was used. Dirty forms warn before navigation.
+
+Backend
+
+The audit found no restoration migration in the staging ledger. The regression
+reopened old browser/API write paths while the newer transactional Setup contract
+still required fictional/test records. There was no complete historical policy
+snapshot to prove the absence of every earlier manual change.
+
+The following approved migrations were applied only to staging:
+20261118183909_setup_workspace_integration
+20261118184934_setup_lifecycle_consistency
+20261118185826_setup_command_audit
+
+They update Setup context/commands for ordinary administration, lifecycle
+consistency and transactional audit events. No tables were reset or reseeded;
+no older migrations were replayed; no RLS policies were changed.
+
+The command boundary retains active actor/role checks, service-role-only RPC
+execution, exact building ownership, record locking, expected-version checks,
+request receipts and retry conflict detection. Allocation and user access reuse
+the existing validated RPCs. Commercial defaults save atomically and retain
+established sale terms. New units start unreleased and outside the rental
+portfolio, without automatically starting a sale.
+
+Ordinary Setup no longer asks users to create fictional/test records. Existing
+private staging registration remains for Snag eligibility and correspondence
+capture, including ordinary new buildings. Existing test journeys are retained.
+Sales contact routing is separate from user/building access. Account creation
+and invitations use a bounded, validated server Auth path.
+
+Functionality and cleanup
+
+Integrated features: building details; floor/unit/area structure and configured
+floor ordering; unit types, size and parking; lifecycle/PC/access-request settings;
+delivery team; commercial defaults and deposit timing; sales contacts; unit sales
+availability and rental participation; audit streams/filtering/pagination; users,
+organisations, role/building/flat access, account status and access-request review;
+invitation/password recovery handling.
+
+Removed the legacy ProductionPortalApp mount, duplicate BuildingControls and
+SetupControls, their obsolete WiderViews exports, and the old admin user route.
+Legacy admin/allocation mutation routes are blocked at the workspace boundary.
+The public access-request endpoint remains for resident onboarding. Shared domain
+helpers and unrelated services remain where needed; this was not a repository-wide
+deletion of every historical file.
+
+Destructive unit and organisation deletion are not exposed in the new Setup UI;
+empty-floor and unused-area removal retain backend safeguards. Unit commercial
+workflow remains in Sales. Approving a new resident request requires first creating
+or inviting its account; approval merges access for an existing resident. These
+are explicit limitations rather than claims of identical legacy feature coverage.
+
+Accepted Sales, Snags and Dashboard interfaces were not redesigned.
+
+Validation
+
+- Optimized application build and TypeScript checks passed.
+- 19 automated lifecycle/session tests passed.
+- Local, preview and deployed staging browser checks passed for every Setup
+  section, ordinary account form, repeated module navigation, nested refresh and
+  390px/1366px layouts. No page errors or failed network responses were recorded.
+- Deployed session tests passed: delayed verification without sign-in flash,
+  rate-limit retry without re-entering credentials, invalid-session rejection,
+  preserved building context and no unexpected business writes during navigation.
+- A staging building note was saved through Setup, verified after refresh, and
+  restored. The deployed audit endpoint shows the resulting command history.
+- TEST-C rental participation was exercised and its original status restored.
+  The initial direct cleanup write was rejected by the protected-allocation guard;
+  a scoped database restoration completed and its audit event was retained.
+  Automatic approval review rejected a rerun that would only prepare cleanup SQL.
+  Subsequent verification used rollback-only allocation tests and read-only status
+  checks. Final TEST-C status remains for_sale / not_in_portfolio.
+- Rollback-only staging SQL tests passed for ordinary building/floor/unit creation,
+  private compatibility registration, new-unit defaults, parking, idempotence,
+  conflicting retries, stale versions, cross-building denial, sales and rental
+  allocation, lifecycle calculations and contacts. All test transactions rolled back.
+- A rollback-only defaults test preserved established commercial terms and rejected
+  reallocation of an exchanged unit.
+- Account API tests passed: ordinary account creation without an invitation, exact
+  flat access, resident-type/access edit and deactivation. Only that newly generated
+  verification account was removed; existing accounts were retained.
+- Admin Setup reads succeeded; contractor/resident reads and writes were denied;
+  anonymous/invalid sessions and unknown buildings were denied. These are sampled
+  role checks, not exhaustive testing of every account and permission combination.
+- All deployed audit streams passed. Security advisors show no new/changed findings
+  relative to the captured baseline; pre-existing advisories remain.
+
+Preservation evidence
+
+Before/after counts AND complete-row digests match for:
+129 test journeys; 41 test entity registrations; 130 sale attempts; 130 sale terms.
+Existing test building notes and TEST-C allocation are restored. Verification
+audit/receipt and normal Auth activity are retained, rather than erased.
+No production mutation, staging reset, reseed or journey deletion was performed.
+
+Limits: real invitation/reset/reminder delivery was not exercised, so no verification
+emails were sent. Existing reservations/exchanges/completions were not progressed;
+their data and protection rules were checked without disturbing their journeys.
+Destructive actions and every possible role/state combination were not exercised.
+
+Review and rollback
+
+The shared checkout contained unrelated changes, so the release was built from
+the isolated staging source at tmp/setup-integration-20261118/app. The unrelated
+root source was not overwritten. The reviewed delta is recorded in
+artifacts/setup-integration-20261118/implementation.patch; source-manifest.json
+records file hashes and the migration files, named to match the applied ledger.
+Browser/API results, screenshots, preservation hashes and release verification
+are in artifacts/setup-integration-20261118/. Test scripts are in the matching
+tmp/setup-integration-20261118/ directory.
+
+Previous staging deployment retained: dpl_68kZ3ezy8hjDAQnuDSJxs179u996.
+An application rollback can reassign only staging.bunnywell.co.uk to that version.
+It would restore the old dual-shell UI and does not undo database functions.
+Pre-change SQL definitions are retained in the working evidence for a separately
+reviewed function rollback if needed; no rollback is currently required.

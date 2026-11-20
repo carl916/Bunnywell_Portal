@@ -1,0 +1,22 @@
+Reservation entry form UX refinement — 19 November 2026
+
+Changes
+- Removed the permanent Before submitting checklist.
+- Added subtle required-field asterisks and a small Fields marked * are required note.
+- Kept the buyer name/company alternative with the short Name or company required hint. Required markers and accessible required states reflect which alternative is still needed.
+- Marked the terms confirmation and reservation PDF as required.
+- Added field-level feedback after fields are used, with invalid-value and description associations for assistive technology. PDF selection errors appear beneath the upload surface.
+- Removed No reservation form uploaded while entering a new draft.
+- Retained the existing form grid, upload surface, typography, disabled-submit rules and submission flow.
+
+Validation and backend
+The shared validator now exposes the same errors by field for inline presentation. Its existing flat error list and all validation conditions are preserved, including person OR company, date checks, PDF and commercial-terms confirmation. Submission services and database migrations are byte-identical to the previous release. No business records were created, changed or deleted for this refinement.
+
+Verification
+Optimized Next.js build and TypeScript passed. All ten existing reservation validation tests passed. Authenticated browser checks at 390 px and 1366 px verified the initial clean state, required labels, invalid email/date/PDF feedback, person-only and company-only buyers, commercial-terms/PDF gating and file removal. Draft read responses were controlled for these UI checks and business-write endpoints were blocked. Screenshots were inspected; no horizontal overflow was found.
+
+Release
+Staging-only deployment: dpl_DyWGKmff3e8qquBWcykoJuFw12EN
+Source: C:/GitHub/Bunnywell_Portal/tmp/reservation-form-ux-20261119/app
+Evidence and source patch: C:/GitHub/Bunnywell_Portal/artifacts/reservation-form-ux-20261119
+The root working tree's unrelated changes were preserved. Production remains on its existing deployment.

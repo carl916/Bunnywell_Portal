@@ -1,0 +1,141 @@
+Bunnywell Portal — staging changes, 20 November 2026
+
+STATUS
+Both requested sets of code changes are implemented and deployed to staging.
+Responsive visual verification and screenshots remain incomplete: Computer Use
+stopped when it could not determine the Gmail Chrome window URL confidently
+enough to enforce its safety policy. No further UI input was attempted.
+
+DEPLOYMENT AND SOURCE
+https://staging.bunnywell.co.uk
+Final deployment: dpl_HMskLLtL81T8jZXvDvSnoLozJ3qE, READY, Preview, fra1.
+Preview: https://bunnywell-portal-cvus2tks7-carl-gilbert-s-projects.vercel.app
+Started from the live codex/snags-20261120 snapshot, dpl_BU7U8GNAQcTdvcXQNdYRmNiKy7iH,
+which superseded the setup-controls source cited in the attachment. Verified its
+archive SHA256 and every source-file hash before editing.
+Source: C:\GitHub\Bunnywell_Portal\tmp\portal-polish-20261120\app
+Label codex/portal-polish-20261120 identifies a CLI snapshot, not a Git commit.
+The unrelated dirty root checkout was preserved. Production portal and defects
+aliases remain dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+
+PORTAL CHANGES
+- Sales setup: permanent controls use an unchanged two-column grid in both
+  deposit states. Reservation fee holder sits beside Reservation fee. Further
+  deposit has its own checkbox row, a grouped conditional section for percentage
+  and timing, and a separate Save sales defaults action row. Calculation and
+  timing code is unchanged.
+- Users & access: Users, Organisations and Access requests are reachable at the
+  top. The system-wide organisation directory shows name, type and main contact,
+  includes organisations without linked users, supports search and pagination,
+  and opens the existing authorised edit/create flows.
+- User forms: Back, heading, sections, Save and account actions are separated.
+  Building access uses labelled checkbox targets. Developer has no building
+  selector; Developer representative retains it. Both retain Save spacing.
+- Residents: exactly four user-level resident choices; no per-flat Access type
+  selector. One labelled row per flat, building included, Remove beside the
+  selector, Add flat below, Save separated. Already-selected flats are disabled
+  elsewhere and duplicate selections are rejected when composing assignments.
+- Shared pagination covers live Sales, Snags, Users, Organisations, Unit allocation
+  and Audit log. It shows actual ranges/totals, single-page and empty states.
+  Audit filtering now happens before cursor pagination and has an exact total.
+- Unit allocation overrides the generic 30% first-column rule with a 52px
+  selection column. Unit/floor follows immediately. Headers and data use the
+  same columns. On narrow widths, table columns remain available in a scrollable
+  wrapper rather than inheriting the Sales table's hidden-column rules.
+- Shared operation form spacing applies across Setup and operational workspaces;
+  actions align vertically and remain separated when conditional fields disappear.
+
+RESIDENT DATA AND ACCESS
+profiles.resident_type stores the user-level relationship classification.
+user_unit_access.access_type stores the relationship label for a unit assignment.
+The database permits multiple labels on the same user/unit, including legacy
+Representative. Effective unit access uses assignment membership; neither type
+field is a role permission switch or a routine sales notification selector.
+Database/source inspection found the type values in saving, access-request
+approval, profile display and audit history, with no type-dependent RLS policy.
+
+The UI groups legacy rows into one flat selector. Saving retains ALL existing
+access-type rows for each retained flat, including Representative, even if the
+user-level type changes. New flats use the selected user-level resident type.
+Removing a flat omits all assignments for that flat, preserving the others.
+A live transaction exercised unchanged save, legacy Representative plus a second
+label, adding a flat and removing a flat; assertions passed and the entire test
+was rolled back. Existing user data was not left changed.
+
+ROUTINE EMAIL
+Traced renderNotificationEmail through dispatch capture, delivery re-render,
+redirectStagingEmail and the final JSON payload submitted to Resend.
+The old routine template depended on a semantic main element for its card, while
+the staging header was injected outside that layout. It also repeated labels as
+sentences and included a redundant staging footer.
+
+The new routine template uses the delivered Authority email's table approach,
+warm #f6f1e7 background, centred 640px white card, Bunnywell Portal branding,
+dark-green headings and 24px card padding with outer mobile gutters. The staging
+recipient block occupies a row in the same centred table. Formal email markup
+and its existing wrapper behaviour are unchanged.
+
+Subject and hidden inbox preview describe only that recipient's selected items.
+Large batches use counts. Recorded workflow event types distinguish submitted
+from resubmitted and queried from rejected; safe wording is used when unavailable.
+Comments retain original wording and paragraph breaks. Workflow sections precede
+comments, with one green primary action and a secondary link per other distinct
+destination. Mention-only emails make View comment primary. Plain text has the
+same content and link order. No redundant routine staging footer remains.
+
+Unchanged files/hashes cover permissions, dispatcher, five-minute batching,
+delivery/retry logic, provider-address safeguards and formal email templates.
+Final payload assertions enforce only carl@accoladeproperties.co.uk, empty Cc/Bcc,
+safe Reply-To, [STAGING], intended-recipient details and exact comment URLs.
+Notification settings remain at version 24.
+
+VERIFICATION
+- Eight automated tests passed, including actual server-rendered user forms for
+  Developer, Developer representative and Resident; four resident choices;
+  unique displayed flats; legacy assignment preservation; identical permanent
+  deposit grid markup in both states; pagination boundaries; recipient-specific
+  email cases; long comment escaping/preservation; provider boundary rejection.
+- Local Next.js build and TypeScript passed. Final hosted Vercel build is READY.
+- Live API: 11 organisations, including 5 with no linked users; 36 users; Forum
+  House 63 units; audit total 1481 at verification, no overlap between pages,
+  no-match search returns empty results; anonymous Setup request returns 401.
+- Security advisors show no changed findings after the two small migrations.
+- Gmail connector confirmed the delivered Authority reference's actual HTML
+  contains the same table width and warm background.
+
+NOT VERIFIED VISUALLY
+No claim is made that desktop/mobile Gmail rendering passed. Single, mention,
+mixed and long examples were checked as generated HTML/text and provider payloads,
+not visually rendered previews. The requested 390px, 1366x768 and wide-desktop
+screen review, deposit save/reopen through UI, select-all/bulk-action UI checks,
+and screenshots remain outstanding after Computer Use stopped.
+
+DATABASE MIGRATIONS
+Applied 20261120111212_routine_email_occurrence: exposes the existing workflow
+event type in batch context; leaves access checks, event categories and timing.
+Applied 20261120111400_audit_pagination_totals: filtered count before cursor and
+server-side search; retains the existing administrator gate and array response.
+CLI-generated local filenames and applied versions are mapped in source-manifest.
+
+EVIDENCE
+C:\GitHub\Bunnywell_Portal\artifacts\portal-polish-20261120
+source-manifest.json, staging-source.zip, implementation.patch, verification-source.zip,
+automated-tests.txt, api-verification.json, resident-rollback-test.sql,
+deployment-verification.json, mixed-example-actions.json, email-*.html and .txt.
+delivery-verification.json and delivered-mixed.html/.txt record the fresh result.
+
+FRESH MIXED EXAMPLE — DELIVERED
+Subject: [STAGING] Email capture verification 2026-11-19 · Unit 103 — Reservation submitted and 1 mention
+Sent/accepted: 20 November 2026, 11:24:01 UK time (UTC).
+Gmail receipt: 11:24:01 UTC; INBOX, UNREAD, CATEGORY_UPDATES.
+https://mail.google.com/mail/u/?authuser=carl%40accoladeproperties.co.uk#all/1a1f8b2febfe50e5
+One new batch, one provider submission, only carl@accoladeproperties.co.uk.
+Reservation and comment were submitted through the normal portal HTTP endpoints
+on the existing synthetic Unit 103 fixture, not by inserting queue records.
+The comment was authored by Greg (notification test) and explicitly mentioned Carl.
+Batch opened 11:18:07.340514, deadline 11:23:07.340514: exactly 300,000 milliseconds.
+The unattended 11:24 scheduler tick submitted it; no manual early flush was used.
+Gmail's received HTML and plain text exactly match the final provider payload after
+normalising line endings. Its inbox snippet starts with the property and event
+summary. This verifies actual inbox delivery and content, not client visual layout.
+The synthetic reservation remains awaiting approval and its test comment is retained.

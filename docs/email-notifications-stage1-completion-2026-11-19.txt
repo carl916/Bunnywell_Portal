@@ -1,0 +1,175 @@
+Bunnywell Portal — Email notifications Stage 1
+19 November 2026
+
+LIVE AND TESTED
+https://staging.bunnywell.co.uk/workspace?view=setup&tab=email-notifications
+Vercel deployment: dpl_Ek7SRenrUn5iv8AhXJHAnWugi14c (READY)
+Preview: https://bunnywell-portal-ev75tb48z-carl-gilbert-s-projects.vercel.app
+Environment: preview. Region: fra1. Remote build completed in 50 seconds.
+Vercel project: bunnywell-portal / prj_4s8vIyfrGh9DSGJcixTU5slevr5P
+Team: carl-gilbert-s-projects
+Database: vxkpvdtrldwwqiddoyof (staging)
+Migration applied: 20261119164807_email_notifications_stage1
+
+SOURCE AND RELEASE WORKFLOW
+The main checkout is on staging, with unrelated uncommitted changes. It is not
+the exact application serving the staging domain. The deployed portal is the
+integrated Next.js workspace at /workspace, with Setup mounted in the shared
+ConnectedWorkspace session, navigation and building context.
+
+The starting deployment was dpl_EZaMQiEihHDbgnfRxRjfxHQAu8g2, built by the existing
+CLI snapshot workflow from tmp/authority-preview-layout-20261119/app and labelled
+codex/authority-preview-layout-20261119. Vercel supplied no Git commit for it.
+The connected repository is carl916/Bunnywell_Portal; its production branch is main.
+
+This release follows that staging workflow: copy the exact deployed source,
+implement in the copy, build a Vercel Preview, verify it, then assign only the
+staging.bunnywell.co.uk alias. Source label: codex/email-notifications-stage1-20261119
+(deployment metadata, not a claim that a remote Git branch was pushed).
+Source: tmp/email-notifications-stage1-20261119/app
+Full source archive, hashes and implementation patch:
+artifacts/email-notifications-stage1-20261119/
+
+Both production aliases, portal.bunnywell.co.uk and defects.bunnywell.co.uk,
+remain on dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W. No production database was accessed.
+Rollback application target: dpl_EZaMQiEihHDbgnfRxRjfxHQAu8g2. The additive settings
+schema can remain if reverting the application; no existing delivery path uses it.
+
+IMPLEMENTATION
+Setup has an Email notifications tab with all 16 requested event rows, the three
+recipient-role checkboxes, one Save changes action, and a separate Mentioned in
+a comment switch. All requested defaults are present. Ordinary comments default
+to no roles; mentions default on. The recipient label is People tagged in the comment.
+The screen explicitly states that settings are system-wide, apply across every
+building, and take effect when delivery is connected.
+
+One private singleton configuration stores role overrides, the mention switch,
+version and audit attribution. One SQL event catalogue defines stable identifiers,
+labels and defaults. Missing event overrides inherit catalogue defaults; explicit
+empty arrays stay empty. Saves merge known submitted rows, preserving omitted
+rows when an older client encounters a newer catalogue. Unknown event identifiers,
+unknown roles, duplicate roles and malformed settings are rejected.
+
+The existing verified workspace session and workspace_commands.setup_actor enforce
+active admin/developer settings administration, including the verified audit actor.
+Only service_role can execute the public settings/selection RPCs; the private
+table has no direct client access. Saves are atomic, version checked, idempotent
+by request ID, and recorded in the Setup audit stream with before/after values.
+
+Server entry point:
+src/lib/workspace/email-notifications-server.ts
+resolveEmailNotificationRecipients(eventId, saleId, commentId?)
+
+It loads current persisted preferences and trusted candidate facts from the
+service-only workspace_email_notification_context RPC. Candidate access reuses
+can_access_sale, sales_building_access and sale_discussion_access. Both ordinary
+comments and mentions require visibility of the exact stored comment on that sale.
+Inactive users, blank addresses, unavailable/redacted sales and mismatched comments
+are excluded or rejected. Explicit tags come from the stored comment mention_ids.
+Building sales-contact addresses do not grant portal access or become user recipients.
+
+Developers includes admin and developer profiles, following the existing internal
+Sales role convention. Developer representatives do not gain Sales access. The
+current schema stores one profile role per user. The selection contract accepts
+multiple role memberships and deduplicates by user ID; it does not introduce a new
+multi-role administration model. Results retain saleId, commentId, eventIds and
+reasons, combining ordinary-comment and mention eligibility into one user item.
+No send, queue insertion, trigger or batch scheduler is connected in Stage 1.
+
+VERIFICATION
+- 25 focused automated checks passed, including 13 new PostgreSQL/selection checks.
+  Covered every default, empty selections, retries, conflicting retries, stale
+  versions, future events, omitted rows, invalid payloads, role permissions,
+  private RPC/table access, two-building eligibility, independent mentions,
+  comment visibility, multi-role overlap, duplicate candidates, inactive users,
+  redacted sales and wrong-sale comments. Existing Sales access and legal-email
+  renderer checks also passed.
+- Next.js optimized build and TypeScript passed; focused ESLint passed. The Windows
+  sandbox blocked prerender directory creation on the first local builds; running
+  the same build outside that sandbox passed. The Vercel build passed independently.
+- Real browser tests passed locally, on the deployed Preview, and on staging itself
+  at 1440, 768, 390 and 320 pixels. Screenshots were visually reviewed. All 49 controls
+  were available without horizontal overflow. Labels, focus and keyboard activation
+  were checked; no browser runtime errors or unexpected failing responses occurred.
+- Saved an empty reservation-approved selection, reloaded, opened two building
+  contexts, and verified the same saved version and choices. The existing building
+  selector retained the tab. Mention off/on changes survived reload independently.
+  Test choices were restored to the requested defaults through the same save path.
+- Deployed anonymous updates returned 401. Wrong-origin updates and contractor
+  settings reads/updates returned 403. The live database independently denied an
+  active Sales Agent actor's settings read/update through the service RPC boundary.
+- The actual server resolver was exercised against five staging buildings. Eligible
+  user sets differed with existing building access; every result was unique.
+- A transaction-only staging comment tagged an eligible agent while ordinary
+  comments were off and mentions on. It resolved to one mention recipient with the
+  comment ID preserved. Deactivation removed that user; a wrong-sale comment was
+  rejected. All fixture writes rolled back. The comment is absent and the original
+  account is active after rollback. No external message was generated.
+- Security advisors showed no new warning attributable to the change. The private
+  table is deliberately deny-by-default; its RLS-without-policy informational
+  notice is expected, matching existing workspace private tables. Its data is only
+  reached through the validated service RPCs. Existing unrelated warnings remain.
+- No error/fatal runtime logs were found for the tested deployment during the
+  verification window. This is a bounded check, not ongoing monitoring.
+
+DELIVERY SAFEGUARDS
+The existing proxy, staging environment checks, exact-sale command egress guards,
+capture-only legal-email command, legacy send route, rendering, and digest sender
+are unchanged from the baseline source. The Vercel cron array remains empty.
+workspace_capture_legal_email still records captured_test and sent=false, requires
+an enrolled test journey, and keeps test-labelled correspondence. No mail-provider
+request, account invitation or legal capture was executed during verification.
+
+STAGE 2 HANDOFF
+1. Mentions: reuse sale_comments.mention_ids, sale_comment_write validation and
+   sale_mention_notifications identities. Existing notification rows also support
+   in-app mentions; do not repurpose or disable that inbox using email preferences.
+   Current staging commands.ts always passes p_mentions:[] and command-fetch.ts
+   explicitly permits only empty mentions. Connect a validated tag picker and
+   narrowly update that command boundary. Use the stored comment ID when enqueuing.
+   Some legal workflow requests generate in-app notification rows independently
+   of explicit tags; map these to their workflow events, not comment_mentioned.
+
+2. Reservation approval: connect the committed approval event from
+   workspace_reservation_command (core-commands.ts) to reservation_approved.
+   Reuse its transaction, actor/access checks, stale-version handling and request
+   receipts. The inspected approval path has no outbound approval email sender.
+   Do not add a browser-side send or replay notifications on command retries.
+   Submission uses the existing reservation submission commands; hook the committed
+   workflow event once, including resubmission, rather than every upload/draft save.
+
+3. Existing legal mail: src/app/api/sales/legal/route.ts sends through Resend with
+   sales_legal_prepare_email, sales_legal_dispatch, immutable saved HTML/text and
+   the sales-legal/<emailId> idempotency key, including uncertain-delivery retry.
+   Reuse these delivery/reconciliation principles, src/lib/email/layout.ts and
+   src/lib/sales/legal-email.ts. Existing resolveSalesRecipients routes legal
+   correspondence to a conveyancer organisation's shared_system_email, optionally
+   CC'ing the sales-agent organisation. That is distinct from configurable portal
+   user alerts: replace it for new workflow alerts, while deliberately deciding
+   whether formal legal correspondence continues to require its existing recipients.
+   The legacy /api/sales/legal sender is blocked by the staging workspace proxy.
+
+4. Five-minute batching: there is no existing sales batch outbox/dispatcher.
+   Add a durable transactional outbox keyed by source event and recipient, with
+   explicit claims, retries and provider idempotency. Group per recipient over
+   five minutes; combine comment_added/comment_mentioned by recipient + saleId +
+   commentId, retaining mention prominence. Recheck current settings, sale access
+   and comment visibility before dispatch so revoked access cannot leak content.
+   Do not infer events by periodically diffing mutable sale snapshots.
+
+5. Snag digest: src/lib/digests/snag-digest.ts and /api/cron/snag-digest contain
+   layout, run-receipt, enable/disable, recipient-allowlist and dry-run examples.
+   Its daily 07:30 London digest_runs key is not a five-minute sales outbox, and
+   its sender lacks per-item provider idempotency. Reuse the safeguards/patterns,
+   not its schedule or recipient resolver. Keep staging capture routing enforced
+   server-side when introducing any new transport or cron endpoint.
+
+6. Links: portal-url.ts currently emits legacy screen=sales/conversation links;
+   the staging proxy redirects / to /workspace. Stage 2 needs current workspace
+   building/unit/sale/comment deep links, with sign-in preserving the destination.
+   Retain the trusted configured-origin validation, but update/test the path builder
+   for this integrated application before sending new notifications.
+
+Evidence: artifacts/email-notifications-stage1-20261119/
+Verification scripts: tmp/email-notifications-stage1-20261119/
+Automated tests: tests/email-notifications-stage1.test.mjs
