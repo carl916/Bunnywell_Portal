@@ -1,4 +1,4 @@
-Final reconciled suite: 704 tests, 695 passed, 9 failed.
+Final reconciled suite: 705 tests, 696 passed, 9 failed.
 Previous origin/staging baseline: 655 tests, 646 passed, 9 failed.
 The failed test names are identical in both runs.
 
@@ -14,3 +14,7 @@ The failed test names are identical in both runs.
 
 Full local outputs: artifacts/source-audit-20261120/final-tests.txt and baseline-tests.txt.
 TypeScript passed. Targeted suites: 95/95 and 97/97.
+
+After release fixes: 10/10 focused tests pass, including the live-discovered
+building_sale_defaults key regression and authenticated-RPC denial. TypeScript
+passes. Full rerun: artifacts/source-audit-20261120/post-release-fix-tests.txt.

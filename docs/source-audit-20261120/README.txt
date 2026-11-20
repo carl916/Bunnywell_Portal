@@ -19,15 +19,15 @@ compared its complete SQL with the staging migration-history entry: identical
 after line-ending normalization. Four other local migrations had identical SQL
 but different timestamps; filenames now match their actual applied staging
 versions (see migration-version-map.json). They must not be replayed.
-The new exchange_completion_refinements migration remains unapplied remotely.
+The refinement and verifier-boundary migrations were applied to staging as
+20261120133511 and 20261120133747. Their local filenames match applied history.
 
 Preservation
 branch-inventory.json records every initial branch tip, remote containment and
-commits absent from the original local staging history. Six local-only branches
-need remote preservation: building-workspace-contracts, notice-read-only-context,
+commits absent from the original local staging history. Six formerly local-only branches were preserved remotely: building-workspace-contracts, notice-read-only-context,
 p1-integration-review, sales-team-work-tidy, wider-workspace-integration and
 experiment/sales-workspace-redesign. Their original local refs remain intact.
-Planned archive refs use codex/archive-20261120/<original-name-with-dashes>.
+Verified archive refs use codex/archive-20261120/<original-name-with-dashes>.
 The accepted workspace descendants are represented by the newer deployed source;
 the sales-team-work-tidy change also has its accepted staging variant 315be1f.
 Do not blindly merge old snapshots over the newer implementation.
@@ -68,17 +68,9 @@ the final reconciled count and the unresolved baseline failures. This is not a
 claim that the entire legacy suite is green or that live browser workflows passed.
 
 Publication status
-Local commits are complete. GitHub archival/staging pushes and the staging release
-are pending explicit approval. Automatic approval review rejected exporting the
-six local histories because they may contain private historical source/artifacts.
-No push, new deployment, remote migration or alias change occurred during this audit.
-Production portal and defects aliases were both verified against unchanged
-dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W.
+GitHub preservation was explicitly approved and completed. All 55 local branch
+tips are reachable from remote refs; six dedicated archive refs retain local-only
+histories. The earlier automatic approval block was resolved by user approval.
 
-Release sequence after approval
-Push archive refs and staging without force; deploy the exact committed source to
-the existing Vercel project prj_4s8vIyfrGh9DSGJcixTU5slevr5P in preview/fra1.
-Apply only the new refinement migration to staging project vxkpvdtrldwwqiddoyof,
-record its actual applied version, verify permissions/advisers and workflow smoke
-checks, then assign only staging.bunnywell.co.uk. Record the deployed Git SHA and
-verify both production aliases remain unchanged. Do not replay historical SQL.
+See release-verification.txt for the deployed application revision, migrations,
+browser checks and final production-alias comparison.

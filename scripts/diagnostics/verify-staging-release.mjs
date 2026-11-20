@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import dotenv from 'dotenv';
+import {chromium,expect as baseExpect} from '@playwright/test';
+const expect=baseExpect.configure({timeout:45000});
+const env=dotenv.config({path:'.env.local',quiet:true}).parsed;
+const origin=process.env.REVIEW_ORIGIN;
+assert(['https://bunnywell-portal-ik1i16csb-carl-gilbert-s-projects.vercel.app','https://staging.bunnywell.co.uk'].includes(origin));
+const scope=JSON.parse(fs.readFileSync('artifacts/email-notifications-stage3-20261120/real-formal.json')).scope;
+const out='artifacts/source-audit-20261120';
+const browser=await chromium.launch({headless:true,executablePath:'C:/Users/carlg/AppData/Local/ms-playwright/chromium-1228/chrome-win64/chrome.exe'});
+const page=await browser.newPage({viewport:{width:1366,height:900}});page.setDefaultTimeout(45000);
+const errors=[],failed=[],checks=[];let phase='sign-in';
+page.on('pageerror',e=>errors.push(e.message));
+page.on('response',async r=>{if(r.url().startsWith(origin+'/workspace/')&&r.status()>=400){const body=await r.json().catch(()=>({}));failed.push({path:new URL(r.url()).pathname,status:r.status(),action:r.request().postDataJSON()?.action,error:body.error});}});
+try{
+ const response=await page.goto(origin+'/');assert.equal(response.status(),200);
+ await page.getByLabel('Email',{exact:true}).fill(env.PLAYWRIGHT_ADMIN_EMAIL);
+ await page.getByLabel('Password',{exact:true}).fill(env.PLAYWRIGHT_ADMIN_PASSWORD);
+ await page.getByRole('button',{name:'Sign in',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Open Forum House',exact:true})).toBeVisible();checks.push('Root redirects to workspace; authenticated building list loads');
+ phase='notification-settings';await page.goto(origin+'/workspace?view=setup&tab=email-notifications');
+ await expect(page.getByRole('heading',{name:'Email notifications',exact:true})).toBeVisible();
+ await expect(page.getByRole('checkbox',{name:'Mentioned in a comment',exact:true})).toBeChecked();
+ checks.push('Saved notification settings load through authenticated API');
+ phase='building-defaults';await page.goto(origin+'/workspace?'+new URLSearchParams({view:'setup',tab:'buildings',building:scope.buildingId,panel:'defaults'}));
+ await expect(page.getByLabel('Completion notice period (working days)',{exact:true})).toHaveValue('10');
+ await expect(page.getByLabel('Contractual service / deemed-service provisions',{exact:true})).toBeVisible();checks.push('New notice default fields load from staging schema');
+ phase='exchange';await page.goto(origin+'/workspace?'+new URLSearchParams({view:'sale',building:scope.buildingId,unit:scope.unitId,sale:scope.saleId,section:'exchange',task:'authority'}));
+ const details=page.locator('details[aria-label="Staging email delivery"]');await expect(details).toBeVisible();
+ assert.equal(await details.getAttribute('open'),null);await details.locator('summary').click();
+ await expect(details).toContainText('Actual destination: carl@accoladeproperties.co.uk');
+ const result=page.waitForResponse(r=>r.url().endsWith('/workspace/command')&&r.request().postDataJSON()?.action==='refresh_legal_delivery');
+ await details.getByRole('button',{name:'Refresh delivery status',exact:true}).first().click();
+ assert.equal((await result).status(),200);await expect(page.getByText('Saved delivery status refreshed. No email was sent.',{exact:true})).toBeVisible();
+ assert.equal(await page.getByRole('button',{name:'Review exchange authority',exact:true}).count(),0);
+ checks.push('Issued authority has no redundant review button; diagnostics are collapsed and refresh is read-only');
+ for(const width of [1366,390]){await page.setViewportSize({width,height:900});await page.screenshot({path:out+'/release-exchange-'+width+'.png',fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+ checks.push('Exchange page fits desktop and mobile widths');
+ assert.deepEqual(failed,[]);assert.deepEqual(errors,[]);
+ fs.writeFileSync(out+'/smoke-'+(origin.includes('staging.bunnywell')?'alias':'preview')+'.json',JSON.stringify({origin,checks,failed,errors},null,2));console.log(JSON.stringify({checks,failed,errors}));
+}catch(e){await page.screenshot({path:out+'/release-smoke-failure.png',fullPage:true});fs.writeFileSync(out+'/smoke-failure.json',JSON.stringify({phase,message:e.message,errors,failed},null,2));console.error('Smoke failed at '+phase+': '+e.message);process.exitCode=1;}finally{await browser.close();}

@@ -1,0 +1,76 @@
+Staging release verification — 20 November 2026
+
+Released application commit: 52f2e2967e3944321e724dfbb1172f2819a1cde4
+Deployment: dpl_6v1JJ3eWCDptMkHWjhEzDz9Fn1CG
+Environment: preview, Frankfurt (fra1)
+Project: prj_4s8vIyfrGh9DSGJcixTU5slevr5P
+Verified live alias: https://staging.bunnywell.co.uk
+Preview: https://bunnywell-portal-ik1i16csb-carl-gilbert-s-projects.vercel.app
+
+Preservation completed
+The reconciled staging branch and six archive branches were pushed without force.
+Every one of the 55 local branch tips is reachable from a remote branch. Archive
+names and hashes are listed in preserved-branches.json; original
+local branches/worktrees remain intact. The edited cleanup workbook and private
+temporary artifacts remain local and backed up; they were not uploaded.
+
+Release corrections
+The first remote build compiled but could not package its custom output folder.
+17d7ba1 aligns Vercel outputDirectory with Next's .next-hosted distDir, preserving
+the existing production cron configuration.
+Live smoke checks then exposed use of the generic id-sorted reader on
+building_sale_defaults, whose primary key is building_id. 52f2e29 uses a shared,
+building-scoped single-row read in core context, corrections and notice upload.
+A regression test exercises the actual Supabase request builder for configured,
+missing and unavailable defaults.
+
+Staging database changes
+Applied only to vxkpvdtrldwwqiddoyof:
+- 20261120133511_exchange_completion_refinements
+- 20261120133747_preserve_legal_action_verifier_boundary
+The second migration preserves the previously service-only legal RPC boundary
+after introducing its wrapper. Both migration filenames match applied history.
+Direct authenticated and anonymous execution of sales_legal_action is denied;
+service_role execution is allowed. Notice submission also remains service-only.
+Security adviser finding counts match the recorded pre-release baseline. Existing
+adviser findings remain; this release is not a clean-security-audit certification.
+Verified live holiday calculations: 18 Dec 2026 + 10 working days = 6 Jan 2027;
+2 Apr 2026 + 1 working day = 7 Apr 2026. Setup's persisted-defaults function includes
+the new notice fields. No historical migration backlog was replayed.
+
+Verification
+Next's remote production build and TypeScript passed.
+Final Node suite: 705 tests, 696 passed, 9 failed. The nine failed test names are
+identical to the previous origin/staging baseline; see test-results.txt.
+Focused refinement tests: 10/10 passed, including SQL migration execution,
+transactional corrections/replay, permission checks and the defaults read fix.
+
+Authenticated browser checks passed on BOTH preview and live staging alias:
+- Root redirects to workspace and the building list loads.
+- Saved notification settings load through the authenticated API.
+- New notice defaults load from the staging database into Setup.
+- Issued authority history remains, with no redundant review button.
+- Delivery diagnostics start collapsed and retain Carl-only destination metadata.
+- Refresh delivery status succeeds and returns the saved read-only result.
+- Exchange page fits 1366px and 390px widths; no failed workspace requests or
+  browser runtime errors were observed.
+The delivery table had 15 records before and after verification, all accepted;
+refresh did not create another delivery. Provider-confirmed delivery was not
+established and the earlier status-read authorization issue remains separately
+documented. No resend or workflow email was triggered by these checks.
+This release smoke test did not perform a new sale, issue a new authority or
+upload a new notice. Those transaction paths have the focused automated coverage
+above; this is not a claim of a complete new live sale lifecycle test.
+
+Production unchanged
+Both portal.bunnywell.co.uk and defects.bunnywell.co.uk still resolve to
+dpl_63zzZzc3KFqbZjcmyCa6Jm8AfS5W, identical to the pre-release baseline.
+No production database migration or production deployment was performed.
+
+Evidence
+Local artifacts/source-audit-20261120 contains verified remote branch hashes,
+build logs, database checks, test output, preview/alias smoke JSON and screenshots.
+The reusable browser check is scripts/diagnostics/verify-staging-release.mjs;
+it requires existing local test credentials and the prior synthetic fixture scope.
+This report and verification script are a documentation-only follow-up to the
+released application revision above; they do not alter deployed application code.

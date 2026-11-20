@@ -1,0 +1,36 @@
+{
+  "archives": [
+    {
+      "source": "codex/building-workspace-contracts",
+      "remote": "refs/heads/codex/archive-20261120/codex-building-workspace-contracts",
+      "sha": "89b81ab21241b06aa49d2cf939f183dd4ae782df"
+    },
+    {
+      "source": "codex/notice-read-only-context",
+      "remote": "refs/heads/codex/archive-20261120/codex-notice-read-only-context",
+      "sha": "64264400ac0770db46e1e596b19a328a664c82c1"
+    },
+    {
+      "source": "codex/p1-integration-review",
+      "remote": "refs/heads/codex/archive-20261120/codex-p1-integration-review",
+      "sha": "918641a5b5c0f1ec2de3c39324d50b12a001d46d"
+    },
+    {
+      "source": "codex/sales-team-work-tidy",
+      "remote": "refs/heads/codex/archive-20261120/codex-sales-team-work-tidy",
+      "sha": "cde878d8ec88a1aafda3d6e5a8c68245bc4a004e"
+    },
+    {
+      "source": "codex/wider-workspace-integration",
+      "remote": "refs/heads/codex/archive-20261120/codex-wider-workspace-integration",
+      "sha": "7acee2a4bf81cae0f620ec36e0123eabab15499c"
+    },
+    {
+      "source": "experiment/sales-workspace-redesign",
+      "remote": "refs/heads/codex/archive-20261120/experiment-sales-workspace-redesign",
+      "sha": "1df4bac80588491bc3fba47966c9854fb33b4c10"
+    }
+  ],
+  "localBranchesAudited": 55,
+  "branchesWithoutRemoteContainment": []
+}
