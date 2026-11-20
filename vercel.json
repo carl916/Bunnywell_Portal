@@ -1,4 +1,5 @@
 {
+  "outputDirectory": ".next-hosted",
   "crons": [
     {
       "path": "/api/cron/completion-uploads",
