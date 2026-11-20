@@ -7,6 +7,7 @@ import {useContextPanelLayout} from "./useContextPanelLayout";
 import {SnagRegisterRows} from "./SnagRegisterRows";
 import {SnagRecordEvidence} from "./SnagRecordEvidence";
 import snagStyles from "./Snags.module.css";
+import overviewStyles from "./BuildingOverview.module.css";
 
 
 import {useEffect,useRef,useState} from "react";
@@ -22,13 +23,13 @@ export function BuildingOverview({snapshot,onList}:{snapshot:PortalSnapshot;onLi
  const role=snapshot.scope.role,items=snapshot.overview?.items.filter(i=>i.module==="snags")||[];
  const snagReady=snapshot.overview?.sources.find(s=>s.key==="snags")?.state==="ready";
  return <><Heading title="Your building at a glance" description="Building position and routes into your team's work."/>
- <div className={s.dashboardGrid}>{moduleAllowed(role,"sales")&&<section className={s.card}><h2>Sales</h2><div className={s.stageCounts}>{Object.entries(snapshot.counts.stages).map(([stage,count])=><button key={stage} onClick={()=>go({view:"worklist",building:snapshot.building.id,stage})}>{label(stage)} <strong>{count}</strong></button>)}</div>
+ <div className={`${s.dashboardGrid} ${overviewStyles.panels}`}>{moduleAllowed(role,"sales")&&<section className={s.card}><h2>Sales</h2><div className={s.stageCounts}>{Object.entries(snapshot.counts.stages).map(([stage,count])=><button key={stage} onClick={()=>go({view:"worklist",building:snapshot.building.id,stage})}>{label(stage)} <strong>{count}</strong></button>)}</div>
  {(["ours","others","unallocated"] as const).map(q=><p key={q}><LocalLink values={{view:"worklist",building:snapshot.building.id,queue:q}}>{queueLabel(q)}</LocalLink> · {snapshot.counts[q]?snapshot.counts[q]!.actions+" actions across "+snapshot.counts[q]!.sales+" sales":"Unavailable"}</p>)}
  <p className={s.meta}>A sale may appear in both teams&apos; counts. {snapshot.counts.distinctSales??"Unavailable"} distinct sales with actions. Historical fee obligations are included separately from current unit stages.</p>
- <button className={s.primary} onClick={onList}>Open sales worklist</button></section>}
+ <button className={`${s.primary} ${overviewStyles.open}`} onClick={onList}>Open sales worklist</button></section>}
  {moduleAllowed(role,"snags")&&<section className={s.card}><h2>Snags & defects</h2>{snapshot.overview?.summaries.filter(x=>["developer_snags","resident_defects"].includes(x.key)).map(x=><p key={x.key}>{x.label} · <strong>{x.value??"Unavailable"}</strong></p>)}
  {(["ours","others","unallocated"] as const).map(q=>{const selected=items.filter(i=>q==="unallocated"?isUnallocatedWork(i):matchesWorkTeam(i,q));return <p key={q}><LocalLink values={{view:"snags",building:snapshot.building.id,queue:q}}>{queueLabel(q)}</LocalLink> · {snagReady?(snapshot.overview?.queues?.[q]?.actions??selected.length)+" actions across "+(snapshot.overview?.queues?.[q]?.records??new Set(selected.map(i=>i.recordKey)).size)+" records":"Unavailable"}</p>})}
- <LocalLink className={s.primary} values={{view:"snags",building:snapshot.building.id}}>Open snags register</LocalLink></section>}</div>
+ <LocalLink className={`${s.primary} ${overviewStyles.open}`} values={{view:"snags",building:snapshot.building.id}}>Open snags register</LocalLink></section>}</div>
  <section className={s.card}><h2>Needs attention</h2><p className={s.meta}>A small selection from the same worklist rules. Open a module for all records.</p>
  {snapshot.rows.filter(r=>r.actions.some(a=>a.queue==="ours")).slice(0,2).map(r=><LocalLink key={r.saleId} className={s.taskRow} values={actionValues(r,r.actions.find(a=>a.queue==="ours")!)}><strong>{r.unitNumber}</strong><span>{r.actions.find(a=>a.queue==="ours")?.title}</span></LocalLink>)}
  {items.filter(i=>matchesWorkTeam(i,"ours")&&i.destination?.snagId).slice(0,2).map(i=><LocalLink className={s.taskRow} key={i.id} values={{view:"snag",building:snapshot.building.id,snag:i.destination!.snagId!}}><strong>{i.reference}</strong><span>{i.action}</span></LocalLink>)}
@@ -69,12 +70,21 @@ export function SnagWorkspace({session,building,snagId,onIdentity,writable=false
  if(!data)return <><Heading title="Loading snag"/><Notice>No previous record is displayed.</Notice></>;
  const saved=(m:string)=>{setNotice(m);setOlder([]);setMore(null);setRefresh(v=>v+1)};
  const events=[...data.events,...older],notes=events.filter(e=>e.comment),shown=view==="comments"?notes:events;
- return <div className={s.saleLayout}><div className={s.saleTask}><header className={snagStyles.recordHeader}><Heading title={data.snag.title} eyebrow="Snags / Record"/><p className={snagStyles.recordLocation}>{data.snag.unit_id?"Flat "+data.snag.unitLabel:data.snag.unitLabel} · {data.snag.areaLabel}</p><div className={snagStyles.recordMetadata}><Badge>{label(data.snag.status)}</Badge><span>Raised {date(data.snag.created_at)}</span>{data.snag.sla_due_date&&<span>Due {date(data.snag.sla_due_date)}</span>}</div></header>
- <SnagRecordEvidence session={session} building={building} data={data}/>
- {notice&&<Notice>{notice}</Notice>}{writable&&<SnagControls session={session} building={building} snagId={snagId} refresh={refresh} informationQuestion={data.informationQuestion} onSaved={saved}/>}
+ return <div className={`${s.saleLayout} ${snagStyles.recordLayout}`}><div className={s.saleTask}>
+ <header className={snagStyles.recordHeader}>
+   <h1 tabIndex={-1}>{data.snag.title}</h1>
+   <div className={snagStyles.recordSummary}>
+     <p className={snagStyles.recordLocation}>{data.snag.unit_id?"Flat "+data.snag.unitLabel:data.snag.unitLabel} · {data.snag.areaLabel}</p>
+     <div className={snagStyles.recordMetadata}><Badge>{label(data.snag.status)}</Badge><span>Raised {date(data.snag.created_at)}</span>{data.snag.sla_due_date&&<span>Due {date(data.snag.sla_due_date)}</span>}</div>
+   </div>
+ </header>
+ <SnagRecordEvidence session={session} building={building} data={data}>
+   {notice&&<Notice>{notice}</Notice>}
+   {writable&&<SnagControls session={session} building={building} snagId={snagId} refresh={refresh} informationQuestion={data.informationQuestion} onSaved={saved}/>}
+ </SnagRecordEvidence>
  </div>
  <aside className={s.contextPanel} id="sale-context-panel" ref={panel}><header className={s.contextHeader}><h2 id="sale-context-heading" tabIndex={-1}>Comments & activity</h2><p>{data.snag.unitLabel} · {data.snag.title}</p></header><div className={s.drawerTabs}>{["comments","activity"].map(v=><button key={v} aria-pressed={v===view} onClick={()=>setView(v)}>{label(v)}</button>)}</div>
  <div className={s.contextMessages} tabIndex={0} role="region" aria-label={view==="comments"?"Snag comments":"Snag activity"}>{!shown.length&&<p>No {view} in this page of history.</p>}{shown.map(e=><article className={s.comment} key={e.id}><div><strong>{e.actor_name||"Recorded actor"} · {label(e.event_type)}</strong>{view==="activity"&&<p>{e.old_value?label(e.old_value)+" → ":""}{label(e.new_value||"")}</p>}{e.comment&&<p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{e.comment}</p>}<small>{date(e.created_at)}</small></div></article>)}
  {(more??data.moreEvents)&&<button className={s.button} onClick={async()=>{try{const last=events.at(-1)!;const next=await stagingRead<SnagDetail>(session,"snag",{building,snag:snagId,before:last.created_at+"|"+last.id});setOlder(v=>[...v,...next.events]);setMore(next.moreEvents)}catch(e){setLoadError((e as Error).message)}}}>Load older history</button>}{loadError&&<Notice>{loadError}</Notice>}</div>
- {writable?<SnagComposer session={session} building={building} snagId={snagId} onSaved={saved}/>:(<div className={s.contextComposer}><label className={s.field}>Comment<textarea aria-label="Snag comment" disabled placeholder="Comments are read-only in this staging review."/></label><button className={s.button} disabled>Send comment</button></div>)}</aside></div>;
+ {writable?<SnagComposer session={session} building={building} snagId={snagId} onSaved={saved}/>:(<div className={`${s.contextComposer} ${snagStyles.commentComposer}`}><label className={s.field}>Comment<textarea aria-label="Snag comment" disabled placeholder="Comments are read-only in this staging review."/></label><button className={s.button} disabled>Send comment</button></div>)}</aside></div>;
 }

@@ -4,7 +4,7 @@ import type {Session} from "@/lib/experiments/building-integration/reader";
 import type {ProductionSnag,Area,BuildingFloor,Unit} from "@/lib/data/production";
 import {sortUnitsByBuildingFloorOrder} from "@/lib/units/commercial-allocation";
 import {useOperationContext,useOperation,OperationError,FormFields,EvidencePicker} from "./OperationsForms";
-import {Notice} from "./TaskWorkspace";
+import {date,Notice} from "./TaskWorkspace";
 import {permittedSnagActions} from "@/lib/workspace/snag-actions";
 import styles from "./Snags.module.css";
 import s from "../sales-workspace/Workspace.module.css";
@@ -16,8 +16,22 @@ export function SnagControls({session,building,snagId,refresh=0,informationQuest
  const {data,error}=useOperationContext<Context>(session,{action:"snag_context",scope:{buildingId:building,snagId:snagId??null}},snagId?refresh:0);
  if(error)return <OperationError error={error}/>;
  if(!data)return <Notice>Loading authorised snag actions…</Notice>;
- if(!data.editable)return null;
- return data.snag?<SnagActions key={data.snag.id+":"+data.snag.updated_at} session={session} building={building} data={data} informationQuestion={informationQuestion} onSaved={onSaved}/>:data.role!=="contractor"?<NewSnag session={session} building={building} data={data} onSaved={onSaved}/>:null;
+ if(!data.snag){
+  return data.editable&&data.role!=="contractor"?<NewSnag session={session} building={building} data={data} onSaved={onSaved}/>:null;
+ }
+ const snag=data.snag;
+ const trade=data.trades.find(item=>item.id===snag.trade_id);
+ return <>
+  <section className={styles.metadataSection} aria-label="Allocation details">
+   <h2>Allocation &amp; details</h2>
+   <dl className={styles.metadataList}>
+    <div><dt>Trade</dt><dd>{trade?.name||(snag.trade_id?"Unavailable":"Not assigned")}</dd></div>
+    <div><dt>Priority</dt><dd>{snag.priority_code||"Not assigned"}</dd></div>
+    <div><dt>Deadline</dt><dd>{snag.sla_due_date?date(snag.sla_due_date):"Not set"}</dd></div>
+   </dl>
+  </section>
+  {data.editable&&<SnagActions key={snag.id+":"+snag.updated_at} session={session} building={building} data={data} informationQuestion={informationQuestion} onSaved={onSaved}/>}
+ </>;
 }
 function NewSnag({session,building,data,onSaved}:{session:Session;building:string;data:Context;onSaved:Props["onSaved"]}){
  const [open,setOpen]=useState(false),[unit,setUnit]=useState(""),[area,setArea]=useState(""),[title,setTitle]=useState(""),[description,setDescription]=useState(""),[trade,setTrade]=useState(""),[org,setOrg]=useState(data.teams.find(t=>t.role==="main_contractor")?.id||""),[file,setFile]=useState<File|null>(null);
@@ -46,7 +60,22 @@ function SnagActions({session,building,data,informationQuestion,onSaved}:{sessio
  const {busy,error,run}=useOperation(session,onSaved),actions=permittedSnagActions(data.role,String(snag.status),data.editable),action=actions.find(a=>a.id===selected);
  function select(id:string){setSelected(id);setComment("");setFile(null);}
  return <>
- {actions.length>0&&<section className={`${s.card} ${styles.actionCard}`} aria-label="Snag actions"><h2>Snag actions</h2><div className={styles.actions}>{actions.map((a,index)=><button key={a.id} type="button" className={index===0?s.primary:s.button} disabled={busy} aria-expanded={selected===a.id} aria-controls="snag-action-form" onClick={()=>select(a.id)}>{a.label}</button>)}</div>
+ {dev&&<section className={styles.inlineAllocation} aria-label="Snag allocation">
+  <p className={styles.assignedOrganisation}>Assigned to: <strong>{data.teams.find(team=>team.id===snag.assigned_to_organisation_id)?.name||"Unallocated"}</strong></p>
+  <details className={styles.allocation}>
+   <summary>Edit allocation, priority and deadline</summary>
+   <OperationError error={!action?error:undefined}/>
+   <FormFields busy={busy}>
+    <AssignmentFields data={data} org={org} trade={trade} onOrg={setOrg} onTrade={setTrade}/>
+    <div className={s.documentGrid}>
+     <label className={s.field}>Priority<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="">Not assigned</option>{["P1","P2","P3"].map(v=><option key={v}>{v}</option>)}</select></label>
+     <label className={s.field}>Due date<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
+    </div>
+    <button type="button" className={s.button} onClick={()=>void run({action:"assign_snag",scope,payload:{expected:snag.updated_at,organisationId:org||null,tradeId:trade||null,priority:priority||null,due:due?due+"T12:00:00Z":null,comment:""}},"Snag allocation and deadline saved.")}>Save allocation</button>
+   </FormFields>
+  </details>
+ </section>}
+ {actions.length>0&&<section className={styles.actionCard} aria-label="Snag actions"><h2>Snag actions</h2><div className={styles.actions}>{actions.map((a,index)=><button key={a.id} type="button" className={index===0?s.primary:s.button} disabled={busy} aria-expanded={selected===a.id} aria-controls="snag-action-form" onClick={()=>select(a.id)}>{a.label}</button>)}</div>
  {action&&<form id="snag-action-form" className={styles.actionForm} onSubmit={e=>{e.preventDefault();void run({action:action.id,scope,payload:{expected:snag.updated_at,comment}},action.success,action.media?file:null).then(result=>{if(result)select("")})}}>
  <OperationError error={error}/><FormFields busy={busy}><h3>{action.label}</h3>
  {action.id==="answer_snag_info"&&<div className={styles.informationQuestion}><strong>Information requested</strong><p>{informationQuestion||"The original question was not recorded. Review the activity for context."}</p></div>}
@@ -54,13 +83,10 @@ function SnagActions({session,building,data,informationQuestion,onSaved}:{sessio
  {action.media&&<><p className={s.meta}>{action.requiredMedia?"Attach evidence to save.":"Attach a photo or video if it helps explain this action (optional)."}</p><EvidencePicker id={"snag-evidence-"+snag.id} file={file} onFile={setFile} disabled={busy}/></>}
  <div className={styles.actions}><button className={s.primary} disabled={busy||(action.requiredComment&&!comment.trim())||(action.requiredMedia&&!file)}>{busy?"Saving…":action.id==="answer_snag_info"?"Send response":action.id==="add_snag_media"?"Save evidence":"Confirm "+action.label.toLowerCase()}</button><button type="button" className={s.button} onClick={()=>select("")}>Cancel</button></div></FormFields></form>}
  </section>}
- {dev&&<section className={s.card} aria-label="Snag allocation"><details className={styles.allocation}><summary>Allocation, priority and deadline</summary><OperationError error={!action?error:undefined}/><FormFields busy={busy}><AssignmentFields data={data} org={org} trade={trade} onOrg={setOrg} onTrade={setTrade}/>
- <div className={s.documentGrid}><label className={s.field}>Priority<select value={priority} onChange={e=>setPriority(e.target.value)}><option value="">Not assigned</option>{["P1","P2","P3"].map(v=><option key={v}>{v}</option>)}</select></label><label className={s.field}>Due date<input type="date" value={due} onChange={e=>setDue(e.target.value)}/></label></div>
- <button type="button" className={s.button} onClick={()=>void run({action:"assign_snag",scope,payload:{expected:snag.updated_at,organisationId:org||null,tradeId:trade||null,priority:priority||null,due:due?due+"T12:00:00Z":null,comment:""}},"Snag allocation and deadline saved.")}>Save allocation</button></FormFields></details></section>}
  </>;
 }
 export function SnagComposer({session,building,snagId,onSaved}:Props){
  const {data}=useOperationContext<Context>(session,{action:"snag_context",scope:{buildingId:building,snagId:snagId??null}}),[comment,setComment]=useState(""),{busy,error,run}=useOperation(session,onSaved);
  if(!data?.editable)return <div className={s.contextComposer}><p className={s.meta}>Comments are unavailable for this integration record.</p></div>;
- return <form className={s.contextComposer} onSubmit={e=>{e.preventDefault();void run({action:"snag_comment",scope:{buildingId:building,snagId},payload:{comment}},"Comment added.").then(r=>{if(r)setComment("")})}}><OperationError error={error}/><label className={s.field}>Comment<textarea aria-label="Snag comment" maxLength={5000} disabled={busy} value={comment} onChange={e=>setComment(e.target.value)}/></label><button className={s.primary} disabled={busy||!comment.trim()}>{busy?"Sending…":"Send comment"}</button></form>;
+ return <form className={`${s.contextComposer} ${styles.commentComposer}`} onSubmit={e=>{e.preventDefault();void run({action:"snag_comment",scope:{buildingId:building,snagId},payload:{comment}},"Comment added.").then(r=>{if(r)setComment("")})}}><OperationError error={error}/><label className={s.field}>Comment<textarea aria-label="Snag comment" maxLength={5000} disabled={busy} value={comment} onChange={e=>setComment(e.target.value)}/></label><button className={s.primary} disabled={busy||!comment.trim()}>{busy?"Sending…":"Send comment"}</button></form>;
 }

@@ -59,16 +59,31 @@
 .nextActions { font-size:12px; color:var(--muted); margin-top:8px; }
 .nextActions summary { cursor:pointer; }
 .nextActions p { padding-top:6px; }
-.recordHeader { margin-bottom:20px; }
-.recordHeader>div { margin-bottom:8px; }
-.recordLocation { font-size:21px; font-weight:650; color:var(--ink); line-height:1.4; margin:6px 0 12px; }
+.recordHeader { display:grid; gap:6px; margin-bottom:14px; overflow-wrap:anywhere; }
+.recordHeader h1 { font-size:clamp(25px,2vw,34px); font-weight:600; line-height:1.18; letter-spacing:-.035em; }
+.recordSummary { display:flex; align-items:center; flex-wrap:wrap; gap:6px 18px; }
+.recordLocation { font-size:clamp(18px,1.5vw,21px); font-weight:650; line-height:1.4; }
 .recordMetadata { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:13px; color:var(--muted); }
 .recordMetadata>span[class*="badge"] { white-space:normal; font-size:13px; }
-.recordEvidence { padding:18px; container-type:inline-size; }
-.photoDescription { display:grid; gap:20px; }
+.recordLayout .recordEvidence { padding:clamp(12px,1.2vw,18px); container:snag-evidence / inline-size; }
+.photoDescription { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:18px; }
+.recordDetails { display:grid; gap:14px; min-width:0; align-content:start; container:snag-details / inline-size; }
+.recordDetails > section { min-width:0; }
+.metadataSection,.recordDetails .actionCard { border-top:1px solid var(--line); padding-top:12px; }
+.metadataList { display:grid; gap:5px; margin:8px 0 0; font-size:13px; }
+.metadataList > div { display:grid; grid-template-columns:5rem minmax(0,1fr); gap:12px; align-items:baseline; }
+.metadataList dt { color:var(--muted); }
+.metadataList dd { margin:0; overflow-wrap:anywhere; }
+.assignedOrganisation { font-size:13px; overflow-wrap:anywhere; }
+.inlineAllocation .allocation summary { padding-block:6px; font-size:13px; font-weight:500; }
+.recordDetails .actionCard h2 { margin-bottom:10px; }
+.recordDetails .actions { gap:8px; }
+.recordDetails .actions > button { max-width:100%; }
+.recordLayout .commentComposer { display:grid; gap:12px; }
+.commentComposer > button { justify-self:start; }
 .recordPhoto { margin:0; min-width:0; }
 .photoOpen { display:block; width:fit-content; max-width:100%; text-align:left; border-radius:6px; overflow:hidden; border:1px solid var(--line); background:var(--surface-soft); }
-.photoOpen img { display:block; width:auto; height:auto; max-width:100%; max-height:min(75vh,900px); object-fit:contain; }
+.photoOpen img { display:block; width:auto; height:auto; max-width:100%; max-height:60svh; object-fit:contain; }
 .photoOpen>span { display:block; padding:9px 12px; font-size:13px; color:var(--green); text-decoration:underline; background:white; }
 .recordPhoto figcaption { color:var(--muted); font-size:12px; margin-top:8px; overflow-wrap:anywhere; }
 .recordDescription p { white-space:pre-wrap; overflow-wrap:anywhere; font-size:15px; line-height:1.65; margin-top:8px; }
@@ -82,7 +97,37 @@
 .informationQuestion p { margin-top:8px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .mediaError { padding:24px; border:1px solid var(--line); border-radius:6px; }
 .mediaError p { margin-bottom:12px; }
-@container (min-width:620px) { .photoDescription { display:flex; align-items:flex-start; } .photoDescription>.recordPhoto { flex:0 1 auto; max-width:calc((100% - 20px) * .66); } .recordDescription { flex:1; min-width:180px; } }
+@container snag-evidence (min-width:440px) {
+ .photoDescription { grid-template-columns:fit-content(53%) minmax(0,1fr); }
+ .photoDescription > .recordPhoto figcaption { contain:inline-size; }
+}
+@container snag-details (min-width:22rem) {
+ .metadataList { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+ .metadataList > div { display:block; }
+}
+@container snag-details (max-width:35rem) {
+ .recordDetails fieldset > div:has(select) { grid-template-columns:minmax(0,1fr); }
+}
+@container snag-evidence (min-width:440px) and (max-width:620px) {
+ .photoDescription { grid-template-columns:fit-content(45%) minmax(0,1fr); }
+ .recordDetails .actionCard > .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; }
+ .recordDetails .actionCard > .actions > button { padding:8px; white-space:normal; }
+}
+@media (min-width:1024px) {
+ main:has(.recordLayout) { padding-block-start:12px; }
+ main:has(.recordLayout) > footer { min-height:36px; padding-block:8px; }
+ .recordHeader { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 18px; }
+ .recordLayout .recordEvidence:last-child { margin-bottom:0; }
+ .photoDescription .photoOpen > span { padding-block:6px; }
+ .photoDescription .recordPhoto figcaption { margin-top:4px; }
+ .recordLayout:has(.recordHeader) { grid-template-columns:minmax(0,1fr) clamp(250px,20vw,320px); gap:clamp(16px,1.5vw,24px); }
+ /* Leave room for the workspace header, caption, full-size link and footer. */
+ .photoDescription .photoOpen img { max-height:clamp(15rem,calc(100svh - 27rem),56rem); }
+}
+@media (min-width:1024px) and (max-height:800px) {
+ .recordDetails { gap:10px; }
+ .metadataSection,.recordDetails .actionCard { padding-top:10px; }
+}
 @media(max-width:1100px) { .filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @container snag-register (max-width:1100px) {
  .table,.table tbody { display:block; }
