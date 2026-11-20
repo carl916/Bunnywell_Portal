@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createClient} from '@supabase/supabase-js';
 import {loadTypescriptModule} from './helpers/load-typescript-module.mjs';
 import {stage3Database} from './helpers/notification-stage3-database.mjs';
 const {noticeDeadline,noticeValidation,noticeFilenameWarnings}=loadTypescriptModule('src/lib/sales/notice-contract.ts');
@@ -35,7 +36,10 @@ test('migration validates contractual dates transactionally, preserves duplicate
  for(const table of ['building_floors','areas'])await f.db.exec('create table if not exists public.'+table+'(id uuid)');
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120092849_delivery_team_assignment_restore.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120111212_routine_email_occurrence.sql','utf8'));
- await f.db.exec(fs.readFileSync('supabase/migrations/20261120122359_exchange_completion_refinements.sql','utf8'));
+ await f.db.exec(fs.readFileSync('supabase/migrations/20261120133511_exchange_completion_refinements.sql','utf8'));
+ await f.db.exec(fs.readFileSync('supabase/migrations/20261120133747_preserve_legal_action_verifier_boundary.sql','utf8'));
+ const acl=await f.db.query("select has_function_privilege('authenticated','public.sales_legal_action(uuid,text,jsonb,uuid)','execute') direct,has_function_privilege('service_role','public.sales_legal_action(uuid,text,jsonb,uuid)','execute') server");
+ assert.deepEqual(acl.rows[0],{direct:false,server:true});
  for(const [service,days] of [['2026-12-18',10],['2026-04-02',1],['2026-11-20',5]]){
   const r=await f.db.query('select workspace_commands.notice_deadline($1::date,$2)::text value',[service,days]);assert.equal(r.rows[0].value,noticeDeadline(service,days));
  }
@@ -118,4 +122,18 @@ test('current staging provider boundary is Carl-only and production configuratio
  const mail=redirectStagingEmail({subject:'Contracts exchanged',text:'Event text',html:'<p>Event text</p>'},{to:['intended@example.invalid'],cc:['copied@example.invalid'],bcc:[]},'Portal <test@example.invalid>');
  assert.deepEqual(mail.to,['carl@accoladeproperties.co.uk']);assert.deepEqual(mail.cc,[]);assert.deepEqual(mail.bcc,[]);assert.match(mail.text,/intended@example.invalid/);
  assert.throws(()=>requireStagingEmailConfiguration({VERCEL:'1',VERCEL_ENV:'production',RESEND_API_KEY:'not-a-real-key'}),/configuration/);
+});
+
+// Exercise the actual Supabase request builder against the defaults table's key.
+test('notice defaults use a scoped single-row read without an id-column sort',async()=>{
+ const {readBuildingNoticeTerms}=loadTypescriptModule('src/lib/workspace/reads.ts');
+ for(const mode of ['configured','missing','unavailable']){
+  const client=createClient('https://fixture.invalid','test-key',{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:async input=>{
+   const url=new URL(typeof input==='string'?input:input.url||input.href);
+   assert.equal(url.pathname,'/rest/v1/building_sale_defaults');assert.equal(url.searchParams.get('building_id'),'eq.building-1');assert.equal(url.searchParams.get('order'),null);
+   return new Response(JSON.stringify(mode==='configured'?[{notice_working_days:5,notice_service_provision:'Contract clause 12'}]:mode==='missing'?[]:{message:'Database unavailable'}),{status:mode==='unavailable'?503:200,headers:{'content-type':'application/json'}});
+  }}});
+  if(mode==='unavailable')await assert.rejects(readBuildingNoticeTerms(client,'building-1'),/notice defaults could not be loaded/);
+  else assert.deepEqual(await readBuildingNoticeTerms(client,'building-1'),mode==='configured'?{notice_working_days:5,notice_service_provision:'Contract clause 12'}:null);
+ }
 });

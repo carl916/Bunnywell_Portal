@@ -9,7 +9,7 @@ import {canPerformSalesAction} from "@/lib/sales/permissions";
 import {validId} from "@/lib/experiments/building-contracts/contracts";
 import type {RecordScope} from "@/lib/experiments/building-integration/completion-boundary";
 import {completion,check,ReadError,type Viewer} from "./server";
-import {rows} from "./reads";
+import {rows,readBuildingNoticeTerms} from "./reads";
 import {coreSalesEnabled,hostedStaging,stagingEnabled} from "./staging";
 import {coreCommandFetch} from "./core-fetch";
 export const coreActions=new Set(["core_context","refresh_legal_delivery","save_reservation_draft","save_reservation","approve_reservation","query_reservation","reject_reservation","request_authority","preview_capture","capture_authority","confirm_exchange","request_notice_authority","confirm_completion"]);
@@ -25,7 +25,7 @@ export async function coreCommand(v:Viewer,p:Record<string,unknown>,scope:Record
   const documents=await rows<Record<string,unknown>>(v.client,"unit_sale_documents","id,document_type,status,approved_version_id,unit_sale_document_versions!unit_sale_document_versions_document_id_fkey(id,is_current,redacted_at,file_name)",q=>q.eq("sale_attempt_id",scope.saleId).is("redacted_at",null).is("superseded_at",null).in("document_type",["reservation_form","completion_correspondence","completion_statement","draft_statement_of_account"]));
   const emails=await rows<Record<string,unknown>>(v.client,"sale_legal_emails","id,kind,version,delivery_status,sent_at,expires_at,revoked_at,replaced_by",q=>q.eq("sale_attempt_id",scope.saleId));
   const deliveries=hostedStaging&&stagingEnabled()&&['admin','developer'].includes(v.profile.role)?await rpc('workspace_legal_test_delivery',{}):[];
-  const [defaults]=await rows<{notice_working_days:number;notice_service_provision:string}>(v.client,'building_sale_defaults','notice_working_days,notice_service_provision',q=>q.eq('building_id',scope.buildingId));
+  const defaults=await readBuildingNoticeTerms(v.client,scope.buildingId);
   const [unit]=await rows<{unit_number:string}>(v.client,'units','unit_number',q=>q.eq('id',scope.unitId).eq('building_id',scope.buildingId));
   return {asOf:new Date().toISOString(),enrolled:test?.enrolled===true,sale,documents,emails,deliveries,unitNumber:unit?.unit_number,noticeTerms:{workingDays:defaults?.notice_working_days??10,serviceProvision:defaults?.notice_service_provision||''}};
  }

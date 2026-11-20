@@ -3,6 +3,12 @@ import type { DashboardInput } from "@/lib/dashboard/types";
 import { readComplete } from "@/lib/dashboard/pagination";
 import { feePortfolioFromSales } from "@/lib/sales/fee-portfolio-data";
 type Query = ReturnType<ReturnType<SupabaseClient["from"]>["select"]>;
+// Defaults use building_id as their primary key, not the paginated tables' id.
+export async function readBuildingNoticeTerms(client:SupabaseClient,buildingId:string) {
+ const {data,error}=await client.from('building_sale_defaults').select('notice_working_days,notice_service_provision').eq('building_id',buildingId).maybeSingle();
+ if(error)throw Error('Building notice defaults could not be loaded.');
+ return data as {notice_working_days:number;notice_service_provision:string}|null;
+}
 export async function rows<T>(client:SupabaseClient, table:string, columns:string, filter:(q:Query)=>Query = q=>q):Promise<T[]> {
  return readComplete<T>(async(from,to)=>{const r=await filter(client.from(table).select(columns,{count:"exact"})).order("id").range(from,to);return {...r,data:r.data as T[]|null}});
 }

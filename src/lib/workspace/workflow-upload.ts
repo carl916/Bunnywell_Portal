@@ -1,5 +1,5 @@
 import {noticeValidation,noticeFilenameWarnings} from '@/lib/sales/notice-contract';
-import {rows} from './reads';
+import {rows,readBuildingNoticeTerms} from "./reads";
 import {invoiceInputs,saleService} from "./extended-sales";
 import {createHash} from "node:crypto";
 import {createSupabaseServiceRoleClient} from "@/lib/supabase/admin";
@@ -37,7 +37,7 @@ export async function workflowUpload(request:Request){
   return submitReservationPdf(client,scope,v.profile.id,p,file,bytes);
  }
  if(!invoice){
-  const [defaults]=await rows<{notice_working_days:number;notice_service_provision:string}>(v.client,'building_sale_defaults','notice_working_days,notice_service_provision',q=>q.eq('building_id',scope.buildingId));
+  const defaults=await readBuildingNoticeTerms(v.client,scope.buildingId);
   const [unit]=await rows<{unit_number:string}>(v.client,'units','unit_number',q=>q.eq('id',scope.unitId).eq('building_id',scope.buildingId));
   if(noticeFilenameWarnings(file.name,unit?.unit_number||'').length&&p.filenameMismatchConfirmed!==true)throw new ReadError('Review and confirm the filename mismatch.',400);
   if(!p.expectedVersionId){

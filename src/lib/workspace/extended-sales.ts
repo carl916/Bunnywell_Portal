@@ -6,7 +6,7 @@ import {expectedMilestoneInvoice,milestoneInvoiceAmounts} from "@/lib/sales/agen
 import {validId} from "@/lib/experiments/building-contracts/contracts";
 import type {RecordScope} from "@/lib/experiments/building-integration/completion-boundary";
 import {completion,check,ReadError,type Viewer} from "./server";
-import {rows} from "./reads";
+import {rows,readBuildingNoticeTerms} from "./reads";
 import {coreSalesEnabled} from "./staging";
 import {coreCommandFetch} from "./core-fetch";
 export const saleOperations=["save_commercial","return_for_sale","approve_agent_invoice","query_agent_invoice","record_agent_payment","void_agent_payment","revoke_authority","cancel_notice_authority","confirm_exchange_deposit","correct_exchange_deposit_date","record_further_receipt","correct_further_receipt","void_further_receipt","confirm_further_deadline","correct_completion_dates"];
@@ -53,7 +53,7 @@ export async function extendedSalesCommand(v:Viewer,p:Fields,scope:RecordScope){
   const [sale]=await rows<Fields>(v.client,"unit_sale_attempts","id,is_active,workflow_status,reservation_approved_at,reservation_approved_by_user_id,exchanged_at,completed_at,legal_completed_at,completion_arrangements_confirmed_at,completion_notice_issued_at,completion_service_date,completion_basis,completion_deadline_reason,contractual_completion_date,updated_at",q=>q.eq("id",scope.saleId));
   if(["reservation","exchange","completion"].includes(section)){
    const emails=await rows<Fields>(v.client,"sale_legal_emails","id,kind,version,delivery_status,revoked_at,replaced_by",q=>q.eq("sale_attempt_id",scope.saleId));
-   const [defaults]=await rows<Fields>(v.client,'building_sale_defaults','notice_working_days,notice_service_provision',q=>q.eq('building_id',scope.buildingId));
+   const defaults=await readBuildingNoticeTerms(v.client,scope.buildingId);
    return {...test,sale,emails,noticeTerms:{workingDays:defaults?.notice_working_days??10,serviceProvision:defaults?.notice_service_provision||''}};
   }
   const inputs=await rpc("workspace_reservation_inputs",bounds);
