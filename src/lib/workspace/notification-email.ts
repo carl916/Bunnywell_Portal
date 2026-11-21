@@ -1,9 +1,20 @@
-import type {NotificationContext} from './email-notifications';
+import {selectEmailNotificationRecipients,type NotificationContext} from './email-notifications';
 import {escapeHtml as escape} from '../email/layout';
 
 export type QueuedEvent={details?:Record<string,unknown>|null;id:string;eventId:string;occurredAt:string;occurrence?:string|null;label?:string;commentId:string|null;audience:NotificationContext;current:NotificationContext|null;comment:{body:string;author:string;version:number;createdAt:string}|null};
 export type NotificationBatch={batchId:string;recipientId:string;saleId:string;buildingId:string;unitId:string;building:string;unit:string;email:string;recipientName?:string;recipientRole?:string;openedAt:string;dueAt:string;revision:string;enrolled:boolean;events:QueuedEvent[]};
 export type EligibleItem={eventId:string;reasons:string[]};
+
+export function eligibleNotificationItems(batch:NotificationBatch):EligibleItem[]{
+ if(!batch.enrolled)return [];
+ return batch.events.flatMap(event=>{
+  if(!event.current)return [];
+  const initial=selectEmailNotificationRecipients(event.audience,event.eventId).find(r=>r.userId===batch.recipientId);
+  const current=selectEmailNotificationRecipients(event.current,event.eventId).find(r=>r.userId===batch.recipientId);
+  const reasons=initial?.eventIds.filter(id=>current?.eventIds.includes(id))??[];
+  return reasons.length?[{eventId:event.id,reasons}]:[];
+ });
+}
 const portalOrigin='https://staging.bunnywell.co.uk';
 export function notificationLink(batch:NotificationBatch,commentId?:string|null,section='reservation'){
  const query=new URLSearchParams({view:'sale',building:batch.buildingId,unit:batch.unitId,sale:batch.saleId,section});
@@ -60,6 +71,7 @@ function eventDetails(event:QueuedEvent){
   if(typeof d.fileName==='string'&&!/[\x00-\x1f/\\]/.test(d.fileName))add('Filename',d.fileName);
   if(d.versionNumber)add('Version',String(d.versionNumber));
  }
+ add('Reason',d.reason);
  add(event.eventId==='completion_documents_uploaded'?'Uploaded by':event.eventId==='contractual_completion_date_changed'&&d.noticeRecorded!==true?'Updated by':'Recorded by',d.actor);
  return lines.join('\n');
 }

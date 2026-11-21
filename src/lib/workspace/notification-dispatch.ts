@@ -4,8 +4,7 @@ import {randomUUID,timingSafeEqual} from 'node:crypto';
 import {createSupabaseServiceRoleClient} from '@/lib/supabase/admin';
 import {hostedStaging,stagingEnabled,stagingOrigin} from './staging';
 import {selectEmailNotificationRecipients,type NotificationContext} from './email-notifications';
-import {resolveEmailNotificationRecipients} from './email-notifications-server';
-import {renderNotificationEmail,type NotificationBatch,type EligibleItem} from './notification-email';
+import {eligibleNotificationItems,renderNotificationEmail,type NotificationBatch} from './notification-email';
 
 export function dispatchAuthorised(header:string|null){
  const secret=process.env.SALES_NOTIFICATION_DISPATCH_SECRET;
@@ -45,14 +44,7 @@ export async function dispatchNotifications(){
   while(Date.now()<deadline&&result.captured+result.suppressed<100){
    const batch=await command('next_batch') as NotificationBatch|null;
    if(!batch)break;
-   const items:EligibleItem[]=[];
-   for(const event of batch.events){
-    if(!batch.enrolled||!event.current)continue;
-    const initial=selectEmailNotificationRecipients(event.audience,event.eventId).find(r=>r.userId===batch.recipientId);
-    const current=(await resolveEmailNotificationRecipients(event.eventId,batch.saleId,event.commentId)).find(r=>r.userId===batch.recipientId);
-    const reasons=initial?.eventIds.filter(id=>current?.eventIds.includes(id))||[];
-    if(reasons.length)items.push({eventId:event.id,reasons});
-   }
+   const items=eligibleNotificationItems(batch);
    const response=await command('capture',{batchId:batch.batchId,revision:batch.revision,items,mail:renderNotificationEmail(batch,items)});
    if(response.status==='captured')result.captured++;else if(response.status==='suppressed')result.suppressed++;
   }

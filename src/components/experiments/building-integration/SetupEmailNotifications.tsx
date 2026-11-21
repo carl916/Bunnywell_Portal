@@ -32,8 +32,8 @@ function EmailNotificationForm({ session, initial, reload }: { session: Session;
   return <section className={s.card} aria-labelledby="email-notifications-title">
     <h2 id="email-notifications-title">Email notifications</h2>
     <p className={styles.scope}><strong>System-wide · All buildings</strong></p>
-    <p role="note">Staging: all events are connected for enrolled test sales. Each intended recipient’s updates are grouped for five minutes, then a labelled test copy is sent only to carl@accoladeproperties.co.uk. Formal legal emails are issued immediately across all staging sales and use the same redirect.</p>
-    <p>Choose which portal roles receive each workflow notification. Recipients must already have access to the sale. Clear all three boxes to switch off role-based emails for an event.</p>
+    <p role="note">Staging test copies go only to carl@accoladeproperties.co.uk and identify the intended recipient. Formal legal emails keep their separate issue workflow.</p>
+    <p>Choose which portal roles receive each sales notification. Each event is queued immediately for eligible users with access to that sale, including the person who acted. Clear all roles to switch off role-based emails for an event.</p>
     <SetupForm onSubmit={event => {
       event.preventDefault();
       void run({ action: 'save_email_notifications', payload: {

@@ -11,32 +11,16 @@ const tomorrow=()=>new Date(Date.now()+86400000).toISOString().slice(0,10);
 async function fixture(t){const f=await stage3Database();t.after(()=>f.db.close());await f.activate();return f;}
 async function count(f,id){return (await f.events()).filter(e=>e.event_id===id).length;}
 async function tick(f){const w=crypto.randomUUID();await f.worker(w,'claim');await f.worker(w,'release');}
-async function prepareReservation(f){
- await f.rows("update unit_sale_attempts set workflow_status='draft',updated_at=clock_timestamp() where id=$1",[f.ids.sale]);
- await f.rows("update units set sale_status='for_sale' where id=$1",[f.ids.unit]);
- const doc=(await f.rows("insert into unit_sale_documents(sale_attempt_id,document_type,status) values($1,'reservation_form','uploaded') returning id",[f.ids.sale]))[0];
- const v=(await f.rows("insert into unit_sale_document_versions(document_id,version_number,file_name) values($1,1,'reservation.pdf') returning id",[doc.id]))[0];return v.id;
-}
-async function reservation(f,action,version,payload={},request=crypto.randomUUID(),user='developer'){
- const [a]=await f.rows('select updated_at from unit_sale_attempts where id=$1',[f.ids.sale]);
- const [terms]=await f.rows('select to_jsonb(t) value from unit_sale_terms t where sale_attempt_id=$1 and is_current',[f.ids.sale]);
- await f.service(user);
- const args={p_building:f.ids.building,p_unit:f.ids.unit,p_sale:f.ids.sale,p_actor:f.ids[user],p_request:request,p_action:action,p_expected:a.updated_at,
-  p_payload:{buyerPersonName:'Synthetic buyer',buyerEmail:'buyer@example.invalid',buyerPhone:'02000000000',buyerSolicitorName:'Test solicitor',reservationDate:today(),reservationTermsChecked:true,versionId:version,...payload},
-  p_expected_terms:terms?.value??null,p_expected_defaults:null,p_terms:{contract_price:250000,exchange_deposit_percent:10,completion_balance_percent:90},p_schedule:[{sequenceNo:1,paymentStage:'exchange',percentOfContractPrice:10},{sequenceNo:2,paymentStage:'completion',percentOfContractPrice:90}]};
- const result=await f.rpc('workspace_reservation_command',args);return {result,args};
-}
-
 test('real reservation commands: submit, query, resubmit, reject, approval; retries and failed/draft commands',async t=>{
- const f=await fixture(t),version=await prepareReservation(f);
- await reservation(f,'save_reservation_draft',version);assert.equal((await f.events()).length,0);
- await assert.rejects(reservation(f,'save_reservation',version,{buyerEmail:''}),/required/);assert.equal((await f.events()).length,0);
- const submitted=await reservation(f,'save_reservation',version);await f.rpc('workspace_reservation_command',submitted.args);assert.equal(await count(f,'reservation_submitted'),1);
- await assert.rejects(reservation(f,'query_reservation',version,{reason:'query'},crypto.randomUUID(),'agent'),/developers/);
- const query=await reservation(f,'query_reservation',version,{reason:'Please revise'});await f.rpc('workspace_reservation_command',query.args);assert.equal(await count(f,'reservation_queried'),1);
- await reservation(f,'save_reservation',version);assert.equal(await count(f,'reservation_submitted'),2);
- await reservation(f,'reject_reservation',version,{reason:'Incorrect details'});assert.equal(await count(f,'reservation_queried'),2);
- await reservation(f,'save_reservation',version);await reservation(f,'approve_reservation',version);assert.equal(await count(f,'reservation_approved'),1);
+ const f=await fixture(t),version=await f.prepareReservation();
+ await f.reservation('save_reservation_draft',version);assert.equal((await f.events()).length,0);
+ await assert.rejects(f.reservation('save_reservation',version,{payload:{buyerEmail:''}}),/required/);assert.equal((await f.events()).length,0);
+ const submitted=await f.reservation('save_reservation',version);await f.rpc('workspace_reservation_command',submitted.args);assert.equal(await count(f,'reservation_submitted'),1);
+ await assert.rejects(f.reservation('query_reservation',version,{payload:{reason:'query'},user:'agent'}),/developers/);
+ const query=await f.reservation('query_reservation',version,{payload:{reason:'Please revise'}});await f.rpc('workspace_reservation_command',query.args);assert.equal(await count(f,'reservation_queried'),1);
+ await f.reservation('save_reservation',version);assert.equal(await count(f,'reservation_submitted'),2);
+ await f.reservation('reject_reservation',version,{payload:{reason:'Incorrect details'}});assert.equal(await count(f,'reservation_queried'),2);
+ await f.reservation('save_reservation',version);await f.reservation('approve_reservation',version);assert.equal(await count(f,'reservation_approved'),1);
 });
 
 test('real legal commands and scheduled expiry cover exchange, completion and handover events',async t=>{

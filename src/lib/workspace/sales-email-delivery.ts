@@ -2,8 +2,7 @@ import 'server-only';
 import {randomUUID} from 'node:crypto';
 import {createSupabaseServiceRoleClient} from '@/lib/supabase/admin';
 import {hostedStaging,stagingEnabled,stagingOrigin} from './staging';
-import {selectEmailNotificationRecipients} from './email-notifications';
-import {renderNotificationEmail,type NotificationBatch,type EligibleItem} from './notification-email';
+import {eligibleNotificationItems,renderNotificationEmail,type NotificationBatch,type EligibleItem} from './notification-email';
 import {redirectStagingEmail,requireStagingEmailConfiguration,submitStagingEmail,type OriginalMail,type IntendedRecipients,type ProviderPayload} from './staging-email';
 
 type Delivery={id:string;kind:'routine'|'legal';source_id:string;recipient_id:string;original_mail:OriginalMail;intended:IntendedRecipients;context:NotificationBatch|null;provider_id:string|null;provider_payload:ProviderPayload|null;first_attempt_at:string|null};
@@ -37,16 +36,10 @@ export async function deliverSalesEmails(id?:string,limit=20){
     await command('result',{id:d.id,status,providerId:d.provider_id,...(!response.ok?{error:`Provider status unavailable (${response.status}).`}:{})});
     if(status==='delivered')summary.delivered++;continue;
    }
-   let mail=d.original_mail,intended=d.intended;const items:EligibleItem[]=[];
+   let mail=d.original_mail,intended=d.intended;let items:EligibleItem[]=[];
    if(d.kind==='routine'&&d.context){
     const batch=d.context;
-    for(const event of batch.events){
-     if(!batch.enrolled||!event.current)continue;
-     const initial=selectEmailNotificationRecipients(event.audience,event.eventId).find(r=>r.userId===batch.recipientId);
-     const current=selectEmailNotificationRecipients(event.current,event.eventId).find(r=>r.userId===batch.recipientId);
-     const reasons=initial?.eventIds.filter(x=>current?.eventIds.includes(x))||[];
-     if(reasons.length)items.push({eventId:event.id,reasons});
-    }
+    items=eligibleNotificationItems(batch);
     mail=renderNotificationEmail(batch,items);
     intended={to:[{email:batch.email,name:batch.recipientName,role:batch.recipientRole}],cc:[],bcc:[]};
    }

@@ -37,10 +37,31 @@ export async function stage3Database(){
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120090014_email_notifications_stage3.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120091023_email_notifications_stage3_protocol_lock.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120091456_email_notifications_stage3_delivery_polling.sql','utf8'));
+ await f.db.exec(`
+  alter table workspace_commands.notification_events add column details jsonb;
+  alter table public.unit_sale_workflow_events add column if not exists actor_name text;
+ `);
  async function activate(){await f.owner();await f.db.exec('update workspace_commands.notification_dispatch_state set enabled=true,activated_at=clock_timestamp(),stage3_active=true,delivery_enabled_at=clock_timestamp()');}
  async function rows(sql,args=[]){await f.owner();return (await f.db.query(sql,args)).rows;}
  async function events(){return rows('select event_id,source_key,sale_id,id from workspace_commands.notification_events order by sequence');}
  async function worker(id,action,payload={}){await f.service();return f.rpc('workspace_notification_worker',{p_worker:id,p_action:action,p_payload:{protocol:3,...payload}});}
  async function delivery(id,action,payload={}){await f.service();return f.rpc('workspace_sales_email_delivery',{p_worker:id,p_action:action,p_payload:payload});}
- return {...f,activate,rows,events,worker,delivery};
+ async function prepareReservation(sale = f.ids.sale, unit = f.ids.unit) {
+  await rows("update unit_sale_attempts set workflow_status='draft',updated_at=clock_timestamp() where id=$1",[sale]);
+  await rows("update units set sale_status='for_sale' where id=$1",[unit]);
+  const [doc]=await rows("insert into unit_sale_documents(sale_attempt_id,document_type,status) values($1,'reservation_form','uploaded') returning id",[sale]);
+  const [version]=await rows("insert into unit_sale_document_versions(document_id,version_number,file_name) values($1,1,'reservation.pdf') returning id",[doc.id]);
+  return version.id;
+ }
+ async function reservation(action,version,{payload={},request=crypto.randomUUID(),user='developer',sale=f.ids.sale,unit=f.ids.unit}={}) {
+  const [attempt]=await rows('select updated_at from unit_sale_attempts where id=$1',[sale]);
+  const [terms]=await rows('select to_jsonb(t) value from unit_sale_terms t where sale_attempt_id=$1 and is_current',[sale]);
+  await f.service(user);
+  const args={p_building:f.ids.building,p_unit:unit,p_sale:sale,p_actor:f.ids[user],p_request:request,p_action:action,p_expected:attempt.updated_at,
+   p_payload:{buyerPersonName:'Synthetic buyer',buyerEmail:'buyer@example.invalid',buyerPhone:'02000000000',buyerSolicitorName:'Test solicitor',reservationDate:new Date().toISOString().slice(0,10),reservationTermsChecked:true,versionId:version,...payload},
+   p_expected_terms:terms?.value??null,p_expected_defaults:null,p_terms:{contract_price:250000,exchange_deposit_percent:10,completion_balance_percent:90},p_schedule:[{sequenceNo:1,paymentStage:'exchange',percentOfContractPrice:10},{sequenceNo:2,paymentStage:'completion',percentOfContractPrice:90}]};
+  const result=await f.rpc('workspace_reservation_command',args);
+  return {result,args};
+ }
+ return {...f,activate,rows,events,worker,delivery,prepareReservation,reservation};
 }
