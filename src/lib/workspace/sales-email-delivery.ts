@@ -21,9 +21,12 @@ export async function deliverSalesEmails(id?:string,limit=20){
   const {data,error}=await client.rpc('workspace_sales_email_delivery',{p_worker:worker,p_action:action,p_payload:payload});
   if(error)throw Error(`Sales delivery ${action} failed (${error.code}).`);return data;
  }
- const summary={accepted:0,delivered:0,failed:0,suppressed:0};const deadline=Date.now()+20000;
+ const summary={accepted:0,delivered:0,retryPending:0,failed:0,reconciliationRequired:0,suppressed:0};
+ const deadline=Date.now()+20000;
+ let poll=true;
  for(let i=0;i<limit&&Date.now()<deadline;i++){
-  const d=await command('claim',{id}) as Delivery|null;if(!d)break;
+  const d=await command('claim',{id,poll}) as Delivery|null;if(!d)break;
+  if(d.provider_id)poll=false;
   try{
    const config=requireStagingEmailConfiguration(process.env);
    if(d.provider_id){
@@ -55,9 +58,14 @@ export async function deliverSalesEmails(id?:string,limit=20){
   }catch(error){
    // Treat a timeout/transport ambiguity as unknown. The immutable payload and
    // original identity are retried only inside Resend's safe idempotency window.
-   const message=error instanceof Error?error.message:'Delivery unavailable.';
+   const detail=error instanceof Error?error.message:'';
+   const message=/^(Staging delivery configuration|Unsafe staging|Provider submission failed \(\d+\)|Sales delivery [a-z_]+ failed \([\dA-Z]+\)\.)/.test(detail)
+    ? detail : 'Provider or delivery worker unavailable.';
    const definiteFailure=message.startsWith('Staging delivery configuration')||message.startsWith('Unsafe')||/Provider submission failed \((?:4\d\d)\)/.test(message)&&!message.includes('(409)');
-   await command('result',{id:d.id,status:d.provider_id?'accepted':definiteFailure?'failed':'unknown',providerId:d.provider_id,error:message}).catch(()=>{});summary.failed++;
+   const saved=await command('result',{id:d.id,status:d.provider_id?'accepted':definiteFailure?'failed':'unknown',providerId:d.provider_id,error:message});
+   if(saved.status==='retry_pending')summary.retryPending++;
+   if(saved.status==='failed')summary.failed++;
+   if(saved.status==='reconciliation_required')summary.reconciliationRequired++;
   }
  }
  return summary;

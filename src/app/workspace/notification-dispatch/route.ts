@@ -4,5 +4,5 @@ export const maxDuration=60;
 export async function POST(request:Request){
  if(!dispatchAuthorised(request.headers.get('authorization')))return Response.json({error:'Unauthorised dispatcher.'},{status:401});
  try{return Response.json(await dispatchNotifications(),{headers:{'Cache-Control':'no-store'}});}
- catch{console.error('Staging notification capture failed; pending work will retry.');return Response.json({error:'Capture will retry on the next scheduled run.'},{status:503});}
+ catch{console.error('Staging notification worker could not finish.');return Response.json({error:'Pending notifications will be checked on the next scheduled run.'},{status:503});}
 }

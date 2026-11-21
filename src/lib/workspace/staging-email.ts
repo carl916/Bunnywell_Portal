@@ -18,9 +18,17 @@ function person(value:IntendedPerson){
 export function requireStagingEmailConfiguration(env:Record<string,string|undefined>){
  const from=env.SALES_FROM_EMAIL||env.DIGEST_FROM_EMAIL;
  if(env.NEXT_PUBLIC_SUPABASE_URL!=='https://vxkpvdtrldwwqiddoyof.supabase.co'||env.NEXT_PUBLIC_WORKSPACE_STAGING!=='1'||
-  env.NEXT_PUBLIC_WORKSPACE_INTEGRATION==='1'||env.SALES_STAGING_DELIVERY_ENABLED!=='1'||env.SALES_STAGING_DELIVERY_TO!==stagingDeliveryAddress||
-  (env.VERCEL&&(env.VERCEL_ENV!=='preview'||env.VERCEL_PROJECT_ID!=='prj_4s8vIyfrGh9DSGJcixTU5slevr5P'))||!env.RESEND_API_KEY||!from)
-  throw Error('Staging delivery configuration is unavailable; capture retained.');
+  env.NEXT_PUBLIC_WORKSPACE_INTEGRATION==='1'||
+  (env.VERCEL&&(env.VERCEL_ENV!=='preview'||env.VERCEL_PROJECT_ID!=='prj_4s8vIyfrGh9DSGJcixTU5slevr5P')))
+  throw Error('Staging delivery configuration refused this deployment.');
+ const missing=[
+  env.SALES_STAGING_DELIVERY_ENABLED!=='1'&&'SALES_STAGING_DELIVERY_ENABLED',
+  env.SALES_STAGING_DELIVERY_TO!==stagingDeliveryAddress&&'SALES_STAGING_DELIVERY_TO',
+  !env.RESEND_API_KEY&&'RESEND_API_KEY',
+  !from&&'SALES_FROM_EMAIL or DIGEST_FROM_EMAIL',
+ ].filter(Boolean);
+ if(missing.length||!env.RESEND_API_KEY||!from)
+  throw Error('Staging delivery configuration requires '+missing.join(', ')+'.');
  return {key:env.RESEND_API_KEY,from};
 }
 export function redirectStagingEmail(mail:OriginalMail,intended:IntendedRecipients,from:string):ProviderPayload{
