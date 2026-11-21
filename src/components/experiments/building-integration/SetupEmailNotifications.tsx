@@ -6,10 +6,27 @@ import { useSetupRead, SetupForm } from './SetupShared';
 import { FormFields, OperationError, useOperation } from './OperationsForms';
 import { Notice } from './TaskWorkspace';
 import {SetupFeedback,useSetupFeedback} from './SetupFeedback';
+import {SetupSnagEmailNotifications} from './SetupSnagEmailNotifications';
 import s from '../sales-workspace/Workspace.module.css';
 import styles from './SetupEmailNotifications.module.css';
 
 export default function SetupEmailNotifications({ session }: { session: Session }) {
+  const [section, setSection] = useState<'sales' | 'snags'>('sales');
+  function open(next: typeof section) {
+    if (next !== section && window.dispatchEvent(new Event('workspace-before-leave', { cancelable: true }))) {
+      setSection(next);
+    }
+  }
+  return <>
+    <div className={styles.sections} role="group" aria-label="Notification settings">
+      <button type="button" className={s.button} aria-pressed={section === 'sales'} onClick={() => open('sales')}>Sales</button>
+      <button type="button" className={s.button} aria-pressed={section === 'snags'} onClick={() => open('snags')}>Snagging</button>
+    </div>
+    {section === 'sales' ? <SalesEmailNotifications session={session} /> : <SetupSnagEmailNotifications session={session} />}
+  </>;
+}
+
+function SalesEmailNotifications({ session }: { session: Session }) {
   const [refresh, setRefresh] = useState(0);
   const { data, error } = useSetupRead<EmailNotificationSettings>(session, 'email-notifications', {}, refresh);
   if (error) return <Notice>{error} <button className={s.button} onClick={() => setRefresh(value => value + 1)}>Retry settings</button></Notice>;

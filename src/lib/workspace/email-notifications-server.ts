@@ -5,13 +5,22 @@ import { ReadError, type Viewer } from './server';
 import { operationsFetch } from './operations-fetch';
 import { moduleAllowed, stagingEnabled, stagingOrigin } from './staging';
 import { selectEmailNotificationRecipients, type EmailNotificationSettings, type NotificationContext } from './email-notifications';
+import type { SnagNotificationSettings } from './snag-notification-settings';
 
-export async function emailNotificationSettings(viewer: Viewer): Promise<EmailNotificationSettings> {
+async function loadSettings<T>(viewer: Viewer, rpc: 'workspace_email_notification_settings' | 'workspace_snag_notification_settings'): Promise<T> {
   if (!moduleAllowed(viewer.profile.role, 'setup')) throw new ReadError('System-wide settings require Setup administration access.');
   const client = createSupabaseServiceRoleClient(operationsFetch(viewer.profile.id, {}, true), viewer.profile.id);
-  const result = await client.rpc('workspace_email_notification_settings', { p_actor: viewer.profile.id });
+  const result = await client.rpc(rpc, { p_actor: viewer.profile.id });
   if (result.error) throw new ReadError('Email notification settings could not be loaded.', 503);
   return result.data;
+}
+
+export function emailNotificationSettings(viewer: Viewer) {
+  return loadSettings<EmailNotificationSettings>(viewer, 'workspace_email_notification_settings');
+}
+
+export function snagEmailNotificationSettings(viewer: Viewer) {
+  return loadSettings<SnagNotificationSettings>(viewer, 'workspace_snag_notification_settings');
 }
 
 /** Stage 2 entry point. Selection only: no mail provider, outbox or delivery side effects. */

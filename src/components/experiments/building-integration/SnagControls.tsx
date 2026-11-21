@@ -1,11 +1,12 @@
 "use client";
-import {useRef,useState} from "react";
+import {useId,useRef,useState} from "react";
 import type {Session} from "@/lib/experiments/building-integration/reader";
 import type {ProductionSnag,Area,BuildingFloor,Unit} from "@/lib/data/production";
 import {sortUnitsByBuildingFloorOrder} from "@/lib/units/commercial-allocation";
 import {useOperationContext,useOperation,OperationError,FormFields,EvidencePicker} from "./OperationsForms";
 import {Notice} from "./TaskWorkspace";
 import {permittedSnagActions} from "@/lib/workspace/snag-actions";
+import {hostedStaging} from "@/lib/workspace/staging";
 import styles from "./Snags.module.css";
 import s from "../sales-workspace/Workspace.module.css";
 export type SnagContext={editable:boolean;role:string;units:Pick<Unit,"id"|"building_id"|"unit_number"|"floor">[];floors:BuildingFloor[];areas:Area[];trades:{id:string;name:string}[];teams:{id:string;name:string;role:string}[];snag:ProductionSnag|null};
@@ -60,7 +61,53 @@ function SnagActions({session,building,data,informationQuestion,onSaved}:{sessio
  </>;
 }
 export function SnagComposer({session,building,snagId,onSaved}:Props){
- const {data}=useOperationContext<Context>(session,{action:"snag_context",scope:{buildingId:building,snagId:snagId??null}}),[comment,setComment]=useState(""),{busy,error,run}=useOperation(session,onSaved);
+ const scope={buildingId:building,snagId:snagId??null};
+ const {data}=useOperationContext<Context>(session,{action:"snag_context",scope});
+ const [comment,setComment]=useState("");
+ const [mentions,setMentions]=useState<string[]>([]);
+ const [showMentions,setShowMentions]=useState(false);
+ const {busy,error,run}=useOperation(session,onSaved);
+ const mentionId=useId();
  if(!data?.editable)return <div className={s.contextComposer}><p className={s.meta}>Comments are unavailable for this integration record.</p></div>;
- return <form className={s.contextComposer} onSubmit={e=>{e.preventDefault();void run({action:"snag_comment",scope:{buildingId:building,snagId},payload:{comment}},"Comment added.").then(r=>{if(r)setComment("")})}}><OperationError error={error}/><label className={s.field}>Comment<textarea aria-label="Snag comment" maxLength={5000} disabled={busy} value={comment} onChange={e=>setComment(e.target.value)}/></label><button className={s.primary} disabled={busy||!comment.trim()}>{busy?"Sending…":"Send comment"}</button></form>;
+ return <form className={s.contextComposer} onSubmit={event=>{
+  event.preventDefault();
+  const payload=mentions.length?{comment,mentions}:{comment};
+  void run({action:"snag_comment",scope,payload},"Comment added.").then(result=>{
+   if(result){setComment("");setMentions([]);setShowMentions(false);}
+  });
+ }}>
+  <OperationError error={error}/>
+  <label className={s.field}>Comment<textarea aria-label="Snag comment" maxLength={5000} disabled={busy}
+    value={comment} onChange={event=>setComment(event.target.value)}/></label>
+  {hostedStaging&&snagId&&<>
+   <button type="button" className={s.button} aria-expanded={showMentions} aria-controls={mentionId} disabled={busy}
+    onClick={()=>setShowMentions(value=>!value)}>
+    Mention people{mentions.length>0&&` (${mentions.length})`}
+   </button>
+   <div id={mentionId} hidden={!showMentions}>
+    {showMentions&&<SnagMentionPicker session={session} building={building} snagId={snagId} disabled={busy}
+      selected={mentions} onChange={setMentions}/>}
+   </div>
+  </>}
+  <button className={s.primary} disabled={busy||!comment.trim()}>{busy?"Sending…":"Send comment"}</button>
+ </form>;
+}
+
+function SnagMentionPicker({session,building,snagId,disabled,selected,onChange}:{
+ session:Session;building:string;snagId:string;disabled:boolean;selected:string[];onChange:(ids:string[])=>void;
+}){
+ const {data,error}=useOperationContext<{id:string;name:string;role:string}[]>(session,{
+  action:"snag_mention_candidates",scope:{buildingId:building,snagId},
+ });
+ if(error)return <OperationError error={error}/>;
+ if(!data)return <p role="status" className={s.meta}>Loading people with access…</p>;
+ if(!data.length)return <p className={s.meta}>There are no people to mention on this snag.</p>;
+ return <fieldset className={styles.mentionOptions} disabled={disabled}>
+  <legend>Notify up to 10 people</legend>
+  {data.map(person=><label key={person.id}>
+    <input type="checkbox" checked={selected.includes(person.id)} disabled={selected.length>=10&&!selected.includes(person.id)}
+     onChange={event=>onChange(event.target.checked?[...selected,person.id]:selected.filter(id=>id!==person.id))}/>
+    <span>{person.name} <small>{person.role.replaceAll("_"," ")}</small></span>
+  </label>)}
+ </fieldset>;
 }

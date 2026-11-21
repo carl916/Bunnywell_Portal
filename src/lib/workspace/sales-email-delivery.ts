@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {createSupabaseServiceRoleClient} from '@/lib/supabase/admin';
 import {hostedStaging,stagingEnabled,stagingOrigin} from './staging';
 import {eligibleNotificationItems,renderNotificationEmail,type NotificationBatch,type EligibleItem} from './notification-email';
-import {redirectStagingEmail,requireStagingEmailConfiguration,submitStagingEmail,type OriginalMail,type IntendedRecipients,type ProviderPayload} from './staging-email';
+import {readStagingEmailStatus,redirectStagingEmail,requireStagingEmailConfiguration,stagingEmailFailure,submitStagingEmail,type OriginalMail,type IntendedRecipients,type ProviderPayload} from './staging-email';
 
 type Delivery={id:string;kind:'routine'|'legal';source_id:string;recipient_id:string;original_mail:OriginalMail;intended:IntendedRecipients;context:NotificationBatch|null;provider_id:string|null;provider_payload:ProviderPayload|null;first_attempt_at:string|null};
 export async function deliverSalesEmails(id?:string,limit=20){
@@ -29,12 +29,9 @@ export async function deliverSalesEmails(id?:string,limit=20){
   try{
    const config=requireStagingEmailConfiguration(process.env);
    if(d.provider_id){
-    const response=await fetch('https://api.resend.com/emails/'+encodeURIComponent(d.provider_id),{headers:{Authorization:`Bearer ${config.key}`},redirect:'error',signal:AbortSignal.timeout(10000)});
-    const data=await response.json().catch(()=>({})) as {last_event?:string};
-    const status=response.ok&&['delivered','bounced','complained','failed'].includes(data.last_event||'')?data.last_event!:'accepted';
-    if(!response.ok)console.warn('sales-email provider status lookup unavailable',{deliveryId:d.id,httpStatus:response.status});
-    await command('result',{id:d.id,status,providerId:d.provider_id,...(!response.ok?{error:`Provider status unavailable (${response.status}).`}:{})});
-    if(status==='delivered')summary.delivered++;continue;
+    const status=await readStagingEmailStatus(d.provider_id,config.key);
+    await command('result',{id:d.id,providerId:d.provider_id,...status});
+    if(status.status==='delivered')summary.delivered++;continue;
    }
    let mail=d.original_mail,intended=d.intended;let items:EligibleItem[]=[];
    if(d.kind==='routine'&&d.context){
@@ -51,11 +48,8 @@ export async function deliverSalesEmails(id?:string,limit=20){
   }catch(error){
    // Treat a timeout/transport ambiguity as unknown. The immutable payload and
    // original identity are retried only inside Resend's safe idempotency window.
-   const detail=error instanceof Error?error.message:'';
-   const message=/^(Staging delivery configuration|Unsafe staging|Provider submission failed \(\d+\)|Sales delivery [a-z_]+ failed \([\dA-Z]+\)\.)/.test(detail)
-    ? detail : 'Provider or delivery worker unavailable.';
-   const definiteFailure=message.startsWith('Staging delivery configuration')||message.startsWith('Unsafe')||/Provider submission failed \((?:4\d\d)\)/.test(message)&&!message.includes('(409)');
-   const saved=await command('result',{id:d.id,status:d.provider_id?'accepted':definiteFailure?'failed':'unknown',providerId:d.provider_id,error:message});
+   const failure=stagingEmailFailure(error);
+   const saved=await command('result',{id:d.id,...failure,status:d.provider_id?'accepted':failure.status,providerId:d.provider_id});
    if(saved.status==='retry_pending')summary.retryPending++;
    if(saved.status==='failed')summary.failed++;
    if(saved.status==='reconciliation_required')summary.reconciliationRequired++;

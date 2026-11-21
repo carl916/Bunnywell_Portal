@@ -17,9 +17,9 @@ export function emailCallout(title: string, text: string) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:26px;border-collapse:collapse;background:#fff8e7;border-left:3px solid #d49a2d;"><tr><td style="padding:18px;"><p style="margin:0 0 8px;color:#0f3d2e;font-size:15px;font-weight:700;line-height:1.5;">${escapeHtml(title)}</p><p style="margin:0;font-size:14px;line-height:1.6;">${escapeHtml(text)}</p></td></tr></table>`;
 }
 
-export function emailPortalButton(url: string) {
+export function emailPortalButton(url: string, label = "View sale file in Bunnywell Portal", linkText = "open the sale file in your browser") {
   const href = escapeHtml(url);
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 10px;border-collapse:separate;"><tr><td align="center" bgcolor="#0f3d2e" style="background:#0f3d2e;border-radius:6px;mso-padding-alt:14px 20px;"><a href="${href}" target="_blank" style="display:inline-block;padding:14px 20px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.4;font-weight:700;text-decoration:none;border:1px solid #0f3d2e;border-radius:6px;mso-padding-alt:0;">View sale file in Bunnywell Portal</a></td></tr></table><p style="margin:0 0 24px;font-size:12px;line-height:1.6;color:#637067;">Or <a href="${href}" target="_blank" style="color:#0f3d2e;text-decoration:underline;">open the sale file in your browser</a>.</p>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 10px;border-collapse:separate;"><tr><td align="center" bgcolor="#0f3d2e" style="background:#0f3d2e;border-radius:6px;mso-padding-alt:14px 20px;"><a href="${href}" target="_blank" style="display:inline-block;padding:14px 20px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.4;font-weight:700;text-decoration:none;border:1px solid #0f3d2e;border-radius:6px;mso-padding-alt:0;">${escapeHtml(label)}</a></td></tr></table><p style="margin:0 0 24px;font-size:12px;line-height:1.6;color:#637067;">Or <a href="${href}" target="_blank" style="color:#0f3d2e;text-decoration:underline;">${escapeHtml(linkText)}</a>.</p>`;
 }
 
 export function emailShell({ title, subtitle, content, approval }: { title: string; subtitle: string; content: string; approval: string }) {

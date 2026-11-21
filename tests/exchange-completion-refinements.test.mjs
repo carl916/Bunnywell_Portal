@@ -88,9 +88,10 @@ test('status refresh is read-only and rejects unauthorised roles',async()=>{
  calls=[];await assert.rejects(coreCommand({profile:{id:'agent',role:'sales_agent'}},{action:'refresh_legal_delivery'},scope),/administrator/);assert.equal(calls.length,0);
 });
 test('accepted deliveries only GET provider status, including 401, failure, bounce and unavailable responses',async()=>{
+ const stagingEmail=loadTypescriptModule('src/lib/workspace/staging-email.ts');
  for(const response of [{status:200,event:'delivered'},{status:200,event:'bounced'},{status:200,event:'failed'},{status:401},{status:503}]){
   const commands=[],http=[];
-  const {deliverSalesEmails}=loadTypescriptModule('src/lib/workspace/sales-email-delivery.ts',{overrides:{'server-only':{},'./staging':{hostedStaging:true,stagingEnabled:()=>true,stagingOrigin:'https://fixture.invalid'},'./staging-email':{requireStagingEmailConfiguration:()=>({key:'test',from:'test'}),submitStagingEmail:()=>{throw Error('Unexpected provider POST')}},'@/lib/supabase/admin':{createSupabaseServiceRoleClient:()=>({rpc:async(_name,args)=>{commands.push(args);return {data:args.p_action==='claim'?{id:'delivery',provider_id:'accepted-id'}:{},error:null}}})}}});
+  const {deliverSalesEmails}=loadTypescriptModule('src/lib/workspace/sales-email-delivery.ts',{overrides:{'server-only':{},'./staging':{hostedStaging:true,stagingEnabled:()=>true,stagingOrigin:'https://fixture.invalid'},'./staging-email':{...stagingEmail,requireStagingEmailConfiguration:()=>({key:'test',from:'test'}),submitStagingEmail:()=>{throw Error('Unexpected provider POST')}},'@/lib/supabase/admin':{createSupabaseServiceRoleClient:()=>({rpc:async(_name,args)=>{commands.push(args);return {data:args.p_action==='claim'?{id:'delivery',provider_id:'accepted-id'}:{},error:null}}})}}});
   const prior=global.fetch;global.fetch=async(url,options)=>{http.push({url,options});return new Response(JSON.stringify({last_event:response.event}),{status:response.status})};
   try{await deliverSalesEmails('delivery',1)}finally{global.fetch=prior}
   assert.equal(http.length,1);assert.equal(http[0].options.method,undefined);assert(http[0].url.endsWith('/emails/accepted-id'));

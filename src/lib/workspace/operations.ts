@@ -32,11 +32,21 @@ export async function operationsBody(request:Request){
  if(Number(request.headers.get("content-length"))>48000)throw new ReadError("Request too large.",413);
  const raw=await request.text();if(raw.length>48000)throw new ReadError("Request too large.",413);
  const p=fields(JSON.parse(raw)),action=String(p.action),v=await viewer(request);await check(v);
- if(action==="snag_context"||snagActions.has(action)){
+ if(action==="snag_context"||action==="snag_mention_candidates"||snagActions.has(action)){
   const {buildingId,snagId}=snagScope(p),client=snagClient(v,buildingId,snagId);
   const args:Fields={p_building:buildingId,p_snag:snagId};
-  if(action!=="snag_context"){if(!validId(String(p.requestId)))throw new ReadError("Submission reference required.",400);Object.assign(args,{p_action:action,p_request:p.requestId,p_payload:fields(p.payload??{})});}
-  const r=await client.rpc(action==="snag_context"?"workspace_snag_context":"workspace_snag_operation",args);
+  const rpc=action==="snag_context"?"workspace_snag_context":
+   action==="snag_mention_candidates"?"workspace_snag_mention_candidates":"workspace_snag_operation";
+  if(rpc==="workspace_snag_operation"){
+   if(!validId(String(p.requestId)))throw new ReadError("Submission reference required.",400);
+   const payload=fields(p.payload??{});
+   const mentions=payload.mentions;
+   if(action==="snag_comment"&&mentions!==undefined&&(!Array.isArray(mentions)||mentions.length>10||
+      new Set(mentions).size!==mentions.length||mentions.some(id=>typeof id!=="string"||!validId(id))))
+    throw new ReadError("Choose up to 10 distinct people to mention.",400);
+   Object.assign(args,{p_action:action,p_request:p.requestId,p_payload:payload});
+  }
+  const r=await client.rpc(rpc,args);
   if(r.error)throw new ReadError(r.error.message,400);return r.data;
  }
  if(!["admin","developer"].includes(v.profile.role))throw new ReadError("Setup administration is unavailable for this role.");
@@ -49,10 +59,11 @@ export async function operationsBody(request:Request){
   throw new ReadError(r.error.message,400);
  }return r.data;};
  if(action==="setup_context")return rpc("workspace_setup_context");
- if(action==="save_email_notifications"){
+ if(action==="save_email_notifications"||action==="save_snag_notifications"){
   if(!validId(String(p.requestId)))throw new ReadError("Submission reference required.",400);
   const payload=fields(p.payload);
-  return rpc("workspace_save_email_notifications",{p_request:p.requestId,p_payload:payload});
+  return rpc(action==="save_email_notifications"?"workspace_save_email_notifications":"workspace_save_snag_notifications",
+   {p_request:p.requestId,p_payload:payload});
  }
  if(!setupActions.has(action)||!validId(String(p.requestId))||!validId(String(p.targetId)))throw new ReadError("Setup operation, record and submission reference required.",400);
  const payload=fields(p.payload??{}),requestId=String(p.requestId),targetId=String(p.targetId);

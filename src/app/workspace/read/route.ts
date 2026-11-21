@@ -1,5 +1,5 @@
 import {setupContext,setupPeople,setupAllocation,setupAudit} from "@/lib/workspace/setup-read";
-import {emailNotificationSettings} from "@/lib/workspace/email-notifications-server";
+import {emailNotificationSettings,snagEmailNotificationSettings} from "@/lib/workspace/email-notifications-server";
 import {operationsEnabled} from "@/lib/workspace/operations";
 import {saleDetails} from "@/lib/workspace/sale-details";
 import {saleContext} from '@/lib/workspace/sale-context';
@@ -17,6 +17,7 @@ export async function GET(request:Request){
  let result:unknown;
  if(kind==="setup-context")result=await setupContext(v);
  else if(kind==="email-notifications")result=await emailNotificationSettings(v);
+ else if(kind==="snag-email-notifications")result=await snagEmailNotificationSettings(v);
  else if(kind==="setup-people")result=await setupPeople(v);
  else if(kind==="setup-allocation")result=await setupAllocation(v,id);
  else if(kind==="setup-audit")result=await setupAudit(v,p);

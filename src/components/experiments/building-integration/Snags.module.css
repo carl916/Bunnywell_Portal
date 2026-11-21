@@ -6,6 +6,10 @@
 .assignment>button { margin-left:auto; }
 .assignmentEdit { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
 .assignmentEdit label { flex:1; min-width:min(220px,100%); }
+.mentionOptions { display:grid; gap:3px; max-height:190px; overflow:auto; margin:8px 0; padding:8px 12px; border:1px solid var(--line); border-radius:6px; }
+.mentionOptions label { display:flex; align-items:center; gap:8px; min-height:34px; }
+.mentionOptions input[type=checkbox] { appearance:auto; width:16px; min-height:16px; height:16px; padding:0; }
+.mentionOptions small { color:var(--muted); }
 .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 .evidence { display:flex; flex-direction:column; gap:10px; margin-block:16px; min-width:0; }
 .createForm .evidence { margin:0; }

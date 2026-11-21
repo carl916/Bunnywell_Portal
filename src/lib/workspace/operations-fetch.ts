@@ -1,7 +1,7 @@
 import {stagingProject} from "./staging";
 const origin="https://"+stagingProject+".supabase.co";
-const setupRpc=new Set(["workspace_setup_context","workspace_setup_operation","workspace_setup_receipt","get_unit_allocation_sale_workflows","workspace_email_notification_settings","workspace_save_email_notifications"]);
-const snagRpc=new Set(["workspace_snag_context","workspace_snag_operation","workspace_snag_media"]);
+const setupRpc=new Set(["workspace_setup_context","workspace_setup_operation","workspace_setup_receipt","get_unit_allocation_sale_workflows","workspace_email_notification_settings","workspace_save_email_notifications","workspace_snag_notification_settings","workspace_save_snag_notifications"]);
+const snagRpc=new Set(["workspace_snag_context","workspace_snag_operation","workspace_snag_media","workspace_snag_mention_candidates"]);
 export function operationsFetch(actor:string,scope:{buildingId?:string;snagId?:string|null;accountId?:string;requestId?:string;email?:string;mediaPath?:string}={},service=false):typeof fetch{
  return async(input,options)=>{
   const u=new URL(typeof input==="string"?input:input instanceof URL?input.href:input.url),method=(options?.method||(input instanceof Request?input.method:"GET")).toUpperCase();

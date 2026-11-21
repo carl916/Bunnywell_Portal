@@ -37,10 +37,6 @@ export async function stage3Database(){
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120090014_email_notifications_stage3.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120091023_email_notifications_stage3_protocol_lock.sql','utf8'));
  await f.db.exec(fs.readFileSync('supabase/migrations/20261120091456_email_notifications_stage3_delivery_polling.sql','utf8'));
- await f.db.exec(`
-  alter table workspace_commands.notification_events add column details jsonb;
-  alter table public.unit_sale_workflow_events add column if not exists actor_name text;
- `);
  async function activate(){await f.owner();await f.db.exec('update workspace_commands.notification_dispatch_state set enabled=true,activated_at=clock_timestamp(),stage3_active=true,delivery_enabled_at=clock_timestamp()');}
  async function rows(sql,args=[]){await f.owner();return (await f.db.query(sql,args)).rows;}
  async function events(){return rows('select event_id,source_key,sale_id,id from workspace_commands.notification_events order by sequence');}

@@ -11,6 +11,14 @@ const { eligibleNotificationItems: eligible, renderNotificationEmail: render } =
 const { redirectStagingEmail, submitStagingEmail } = loadTypescriptModule('src/lib/workspace/staging-email.ts');
 const migration = name => readFileSync(globSync(`supabase/migrations/*_${name}.sql`)[0], 'utf8');
 
+async function applyImmediateSales(f) {
+  await f.db.exec(`
+    alter table workspace_commands.notification_events add column details jsonb;
+    alter table public.unit_sale_workflow_events add column if not exists actor_name text;
+  `);
+  await f.db.exec(migration('immediate_sales_notifications'));
+}
+
 async function capture(f, worker) {
   const result = [];
   for (let event; (event = await f.worker(worker, 'next_event'));) {
@@ -32,7 +40,8 @@ test('submitted reservations, approval by an eligible recipient and tagged comme
   const f = await stage3Database();
   t.after(() => f.db.close());
   await f.activate();
-  await f.db.exec(migration('staging_notification_delivery_reliability') + migration('immediate_sales_notifications'));
+  await f.db.exec(migration('staging_notification_delivery_reliability'));
+  await applyImmediateSales(f);
   const secondDeveloper = crypto.randomUUID();
   await f.rows("insert into profiles(id,email,full_name,role) values($1,'other-developer@example.test','Other developer','developer')", [secondDeveloper]);
   await f.rows("delete from user_building_access where user_id in ($1,$2)", [f.ids.outsider, f.ids.revoked]);
@@ -109,7 +118,7 @@ test('outstanding historical envelopes keep their schedule and never absorb new 
   });
   await f.worker(priorWorker, 'release');
   const [prior] = await f.rows('select id,due_at from workspace_commands.notification_batches');
-  await f.db.exec(migration('immediate_sales_notifications'));
+  await applyImmediateSales(f);
   await f.reservation('approve_reservation', version);
   const worker = crypto.randomUUID();
   await f.worker(worker, 'claim');

@@ -42,9 +42,28 @@ export function redirectStagingEmail(mail:OriginalMail,intended:IntendedRecipien
 export async function submitStagingEmail(payload:ProviderPayload,key:string,idempotencyKey:string,transport:typeof fetch=fetch){
  // Validate again immediately before HTTP; never accept an already-redirected
  // payload with a hidden Cc/Bcc, third-party Reply-To or a changed destination.
- if(JSON.stringify(payload.to)!==JSON.stringify([stagingDeliveryAddress])||payload.cc.length||payload.bcc.length||payload.reply_to!==stagingDeliveryAddress||!payload.subject.startsWith('[STAGING] ')||!idempotencyKey.startsWith('staging-sales/'))throw Error('Unsafe staging send rejected.');
+ if(JSON.stringify(payload.to)!==JSON.stringify([stagingDeliveryAddress])||payload.cc.length||payload.bcc.length||payload.reply_to!==stagingDeliveryAddress||!payload.subject.startsWith('[STAGING] ')||!/^staging-(sales|snags)\//.test(idempotencyKey))throw Error('Unsafe staging send rejected.');
  const response=await transport('https://api.resend.com/emails',{method:'POST',redirect:'error',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','Idempotency-Key':idempotencyKey},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
  const result=await response.json().catch(()=>({})) as {id?:string};
  if(!response.ok||!result.id)throw Error(`Provider submission failed (${response.status}).`);
  return result.id;
+}
+
+export async function readStagingEmailStatus(id:string,key:string){
+ const response=await fetch('https://api.resend.com/emails/'+encodeURIComponent(id),{
+  headers:{Authorization:`Bearer ${key}`},redirect:'error',signal:AbortSignal.timeout(10000),
+ });
+ if(!response.ok)return {status:'accepted',error:`Provider status unavailable (${response.status}).`};
+ const data=await response.json().catch(()=>({})) as {last_event?:string};
+ const terminal=['delivered','bounced','complained','failed'];
+ return {status:data.last_event&&terminal.includes(data.last_event)?data.last_event:'accepted'};
+}
+
+export function stagingEmailFailure(error:unknown){
+ const detail=error instanceof Error?error.message:'';
+ const message=/^(Staging delivery configuration|Unsafe staging|Provider submission failed \(\d+\)|(?:Sales|Snagging) delivery [a-z_]+ failed \([\dA-Z]+\)\.)/.test(detail)
+  ?detail:'Provider or delivery worker unavailable.';
+ const definite=message.startsWith('Staging delivery configuration')||message.startsWith('Unsafe')
+  ||/Provider submission failed \((?:4\d\d)\)/.test(message)&&!message.includes('(409)');
+ return {status:definite?'failed':'unknown',error:message};
 }
