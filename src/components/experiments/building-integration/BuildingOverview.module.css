@@ -1,0 +1,18 @@
+.panels > section {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.panels > section:only-child {
+  grid-column: 1 / -1;
+}
+
+.panels > section > :is(div, p) + p {
+  margin-top: 0;
+}
+
+.panels > section > .open {
+  align-self: flex-start;
+  margin-top: auto;
+}

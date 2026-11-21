@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- short-lived authorised media must bypass public image caches. */
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState,type ReactNode} from "react";
 import type {Session} from "@/lib/experiments/building-integration/reader";
 import type {SnagDetail} from "@/lib/workspace/types";
 import {compareSnagEvidence} from "@/lib/workspace/snag-evidence";
@@ -11,11 +11,14 @@ import s from "../sales-workspace/Workspace.module.css";
 import styles from "./Snags.module.css";
 
 const safeMedia=(url:string)=>{try{return new URL(url).origin===stagingOrigin?url:""}catch{return ""}};
-export function SnagRecordEvidence({session,building,data}:{session:Session;building:string;data:SnagDetail}){
+export function SnagRecordEvidence({session,building,data,children}:{session:Session;building:string;data:SnagDetail;children:ReactNode}){
  const photos=[...data.photos].sort(compareSnagEvidence),main=photos.find(p=>p.media_type!=="video");
- return <><section className={`${s.card} ${styles.recordEvidence}`} aria-label="Snag photo and description"><div className={main?styles.photoDescription:styles.descriptionOnly}>
+ return <><section className={`${s.card} ${styles.recordEvidence}`} aria-label="Snag photo and description"><div className={main?styles.photoDescription:undefined}>
  {main&&<RecordPhoto key={main.id} session={session} building={building} snagId={data.snag.id} photo={main} main/>}
- <div className={styles.recordDescription}><h2>Description</h2><p>{data.snag.description||"No description recorded."}</p></div></div></section>
+ <div className={styles.recordDetails}>
+   <section className={styles.recordDescription}><h2>Description</h2><p>{data.snag.description||"No description recorded."}</p></section>
+   {children}
+ </div></div></section>
  {photos.some(p=>p.id!==main?.id)&&<section className={s.card}><details className={styles.additionalEvidence}><summary>Additional photos & videos ({photos.length-(main?1:0)})</summary><div className={s.documentGrid}>{photos.filter(p=>p.id!==main?.id).map(photo=><RecordPhoto key={photo.id} session={session} building={building} snagId={data.snag.id} photo={photo}/>)}</div></details></section>}
  </>;
 }
