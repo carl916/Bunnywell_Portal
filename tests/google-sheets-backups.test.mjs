@@ -66,7 +66,10 @@ test('sales rows survive complete row sorting and a replacement buyer cannot inh
   apply(planSheet(sheet, 'sales', building, snapshot(attempt, 'Updated first buyer'), owner, date), notesColumn);
   assert.equal(grid.rowData[4].values[8].userEnteredValue.stringValue, 'Updated first buyer');
   assert.equal(grid.rowData[4].values[notesColumn], notes);
-  apply(planSheet(sheet, 'sales', building, snapshot(replacement, 'Next buyer'), owner, date), notesColumn);
+  sheet.basicFilter.sortSpecs = [{ dimensionIndex: 0, sortOrder: 'ASCENDING' }];
+  const replacementRequests = planSheet(sheet, 'sales', building, snapshot(replacement, 'Next buyer'), owner, date);
+  assert.equal(replacementRequests.at(-1).setBasicFilter.filter.sortSpecs, undefined);
+  apply(replacementRequests, notesColumn);
   assert.equal(grid.rowData[4].values[2].userEnteredValue.stringValue, 'Historical — no longer current');
   assert.deepEqual(grid.rowData[4].values[8], {});
   assert.equal(grid.rowData[4].values[notesColumn], notes);

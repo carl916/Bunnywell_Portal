@@ -165,7 +165,6 @@ export function planSheet(sheet: Worksheet, kind: Kind, building: { id: string; 
     requests.push(...writeRows(sheetId, 0, [{ index: headerRow, cells: headers.map(rowCell) }]));
   }
   const range = { sheetId, startRowIndex: headerRow, endRowIndex: Math.max(end, dataStart + 1), startColumnIndex: 0, endColumnIndex: width };
-  if (!equalRange(sheet.basicFilter?.range, range)) requests.push({ setBasicFilter: { filter: { ...sheet.basicFilter, range } } });
 
   const protections = sheet.protectedRanges ?? [];
   const existing = protections.find((value) => value.description === protectionName);
@@ -190,5 +189,11 @@ export function planSheet(sheet: Worksheet, kind: Kind, building: { id: string; 
     { index: 0, cells: [rowCell(`${building.name} — ${backupType[kind]}`)] },
     { index: 1, cells: [rowCell(`Last successful sync: ${formatLondon(syncTime)}`)] },
   ]));
+  if (!equalRange(sheet.basicFilter?.range, range)) {
+    // Preserve row order. Reapplying an old sort spec may move rows after the ID lookup.
+    const filter: Filter = { ...sheet.basicFilter, range };
+    delete filter.sortSpecs;
+    requests.push({ setBasicFilter: { filter } });
+  }
   return requests;
 }
